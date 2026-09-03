@@ -148,7 +148,7 @@ export function Dashboard() {
                 navigation: navRes ? navRes.navigationScore : null,
             };
         });
-    }, [reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults]);
+    }, [reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults, navigationResults]);
 
     // Fetch ML Prediction when enough data
     useEffect(() => {
@@ -371,10 +371,63 @@ export function Dashboard() {
                     </Card>
                 )}
 
+                {/* Navigation Score Spotlight Card */}
+                {navigationResults.length > 0 && (() => {
+                    const latest = navigationResults[navigationResults.length - 1];
+                    return (
+                        <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-xl space-y-4 animate-fadeIn">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
+                                        <Icon name="navigation" size={22} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Immersive PoV Navigation & Spatial Memory</h3>
+                                        <p className="text-xs text-slate-400">Latest session biomarker indices and route recall</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl font-extrabold font-mono text-cyan-400">
+                                        {latest.navigationScore}
+                                    </span>
+                                    <span className="text-xs text-slate-400 font-semibold">/ 100</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                                    <span className="text-[11px] text-slate-400 block">Route Accuracy</span>
+                                    <span className="text-sm font-bold font-mono text-white">
+                                        {Math.round(latest.biomarkers.navigationAccuracy * 100)}%
+                                    </span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                                    <span className="text-[11px] text-slate-400 block">Avg Decision Latency</span>
+                                    <span className="text-sm font-bold font-mono text-amber-300">
+                                        {latest.biomarkers.averageDecisionLatencyMs} ms
+                                    </span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                                    <span className="text-[11px] text-slate-400 block">Landmark Sequence</span>
+                                    <span className="text-sm font-bold font-mono text-emerald-400">
+                                        {Math.round(latest.biomarkers.landmarkSequenceAccuracy * 100)}%
+                                    </span>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+                                    <span className="text-[11px] text-slate-400 block">Destination Recall</span>
+                                    <span className="text-sm font-bold font-mono text-cyan-300">
+                                        {latest.biomarkers.destinationRecallAccuracy === 1 ? "Passed" : "Missed"}
+                                    </span>
+                                </div>
+                            </div>
+                        </Card>
+                    );
+                })()}
+
                 {/* Charts Grid */}
                 {hasUserData && (
                     <div className="charts-grid">
-                        {renderChart("3D Spatial Navigation", "Visuospatial memory & spatial orientation index", "navigation", "#06b6d4", [0, 100], "/100")}
+                        {renderChart("Immersive Navigation", "Visuospatial memory & route wayfinding index", "navigation", "#06b6d4", [0, 100], "/100")}
                         {renderChart("Story Narration Recall", "Episodic memory & narrative recall index", "storyRecall", "#60a5fa", [0, 100], "/100")}
                         {renderChart(t('dashboard.memoryAccuracy'), t('dashboard.memoryAccuracySub'), "memory", "#34d399", [0, 100], "%")}
                         {renderChart(t('dashboard.visualMemoryVmra'), t('dashboard.visualMemoryVmraSub'), "vmra", "#f472b6", [0, 100], "%")}
@@ -395,7 +448,7 @@ export function Dashboard() {
                                     <thead>
                                         <tr>
                                             <th>{t('dashboard.date')}</th>
-                                            <th>3D Navigation</th>
+                                            <th>Navigation</th>
                                             <th>Story Recall</th>
                                             <th>{t('dashboard.memory')}</th>
                                             <th>{t('dashboard.visual')}</th>

@@ -36,6 +36,10 @@ cognitive_population_data.csv
 deploy.zip
 .gemini/
 .planning/
+.agents/
+.claude/
+CLAUDE.md
+graphify-out/
 
 # Environment variables
 .env

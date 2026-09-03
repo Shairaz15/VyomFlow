@@ -1,139 +1,114 @@
 /**
- * 3D Navigation Assessment Types
- * Defines data structures for MapLibre 3D nodes, street edges, movement logs,
- * spatial landmark recall, session metadata, biomarkers, and assessment results.
+ * Real-World PoV Video Navigation & Spatial Memory Assessment Types
+ * Defines data structures for route segments, intersection responses,
+ * destination recall, landmark chronology, digital biomarkers, and assessment results.
  */
 
-export type NavigationDifficulty = 1 | 2 | 3 | 4;
+/** Direction choices available at intersections */
+export type NavigationDirection = 'left' | 'right' | 'straight' | 'back';
 
-export interface MapNode {
-    id: string;
-    label: string;
-    emoji: string;
-    lat: number;
-    lng: number;
-    x: number; // Grid layout X
-    y: number; // Grid layout Y
-    isStart?: boolean;
-    isDestination?: boolean;
-    landmark?: string; // Fictional Landmark Name (e.g. "St. Jude Hospital", "Central Park")
-    gridCol?: number;
-    gridRow?: number;
+/** Waypoint labels on the route */
+export type Waypoint = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
+
+/** A single route segment between two adjacent waypoints */
+export interface RouteSegment {
+    segmentId: string;          // e.g. "seg_h_g"
+    videoUrl: string;           // e.g. "/videos/navigation/segment_h_g.mp4"
+    fromWaypoint: Waypoint;     // e.g. "H"
+    toWaypoint: Waypoint;       // e.g. "G"
+    intersectionLabel: string;  // e.g. "Intersection at G"
+    correctDirection: NavigationDirection;
 }
 
-export interface MapEdge {
-    from: string;
-    to: string;
-    weight: number;
-    direction: "north" | "south" | "east" | "west";
-    streetName?: string; // Fictional street name (e.g. "Astra Way")
-}
-
-export interface MapGraph {
+/** A landmark used in the chronology task */
+export interface LandmarkItem {
     id: string;
     name: string;
-    difficulty: NavigationDifficulty;
-    gridDimensions: { cols: number; rows: number };
-    center: [number, number]; // [lng, lat] for MapLibre initial view
-    nodes: MapNode[];
-    edges: MapEdge[];
-    optimalPath: string[]; // Node IDs in sequence from start to destination
-    patternSequence: ("north" | "south" | "east" | "west")[];
-    encodingTimeSeconds: number; // 15s, 12s, 10s, 8s
+    imageUrl: string;
+    isReal: boolean;             // true = on the route, false = distractor
+    chronologicalOrder: number;  // 1-5 for real landmarks, -1 for distractors
 }
 
-/**
- * Single source of truth record logged for every user movement decision.
- */
-export interface MovementRecord {
-    currentNode: string;
-    previousNode: string | null;
-    availableDirections: ("north" | "south" | "east" | "west")[];
-    chosenDirection: "north" | "south" | "east" | "west";
-    correctDirection: "north" | "south" | "east" | "west";
-    decisionTimestamp: number;
-    decisionLatency: number; // Time elapsed since last move in ms
-    distanceTravelled: number; // Cumulative step count or distance
-    backtrackStatus: boolean; // True if step reverses immediately to previous node
-    hesitationFlag: boolean; // True if decision latency > 2500ms
-    sessionTimestamp: number;
+/** Full route configuration */
+export interface RouteConfig {
+    routeId: string;
+    routeName: string;
+    description: string;
+    encodingVideoUrl: string;    // Full A→H route video
+    destination: {
+        question: string;
+        options: string[];
+        correctIndex: number;
+    };
+    segments: RouteSegment[];    // 7 segments: H→G, G→F, F→E, E→D, D→C, C→B, B→A
+    landmarks: LandmarkItem[];   // 10 landmarks: 5 real, 5 distractors
 }
 
-export interface SessionMetadata {
-    browser: string;
-    deviceType: "mobile" | "tablet" | "desktop";
-    screenResolution: string;
-    viewportSize: string;
-    inputMethod: "touch" | "keyboard";
-    fps: number;
+/** Logged response for one intersection decision */
+export interface IntersectionResponse {
+    segmentId: string;
+    chosenDirection: NavigationDirection;
+    correctDirection: NavigationDirection;
+    isCorrect: boolean;
+    decisionLatencyMs: number;
     timestamp: number;
-    durationMs: number;
 }
 
-export type LandmarkRecallQuestionType =
-    | "sequential"
-    | "spatial"
-    | "exclusion"
-    | "temporal"
-    | "destination";
-
-export interface LandmarkRecallQuestion {
-    id: string;
-    type: LandmarkRecallQuestionType;
-    questionText: string;
-    options: string[];
-    correctAnswer: string;
-}
-
-export interface LandmarkRecallResponse {
-    questionId: string;
-    selectedAnswer: string;
+/** Result of the destination MCQ */
+export interface DestinationAnswer {
+    selectedIndex: number;
     isCorrect: boolean;
     responseTimeMs: number;
 }
 
-export interface NavigationBiomarkers {
-    // Basic navigation accuracy & efficiency
-    navigationAccuracy: number; // 0..1 (correct choices / total choices)
-    pathEfficiency: number; // 0..1 (optimal path length / actual moves)
-    wrongTurnCount: number;
-    completionTimeMs: number;
-    routeDeviation: number; // Extra steps beyond optimal path
-
-    // Expanded decision latency analytics
-    decisionLatencyMean: number; // Average latency per decision (ms)
-    decisionLatencyMedian: number; // Median latency (ms)
-    decisionLatencyMax: number; // Maximum single-move latency (ms)
-    decisionLatencyVariance: number; // Latency variance (ms^2)
-
-    // Strategy & behavior metrics
-    hesitationCount: number; // Count of pauses > 2500ms
-    backtrackCount: number; // Count of returning to previous node
-    explorationRatio: number; // Visited unique nodes / Optimal path nodes count
-    landmarkRecallAccuracy: number; // 0..1 accuracy on landmark quiz
-    planningEfficiency: number; // 0..1 optimal vs chosen route cost
-    routeConfidenceIndex: number; // Smoothness & velocity score 0..100
-    navigationStrategy: "Direct Path" | "Trial & Error" | "Systematic Exploration" | "Hesitant Search";
-
-    // Demographic-normalized scores (0..1)
-    normalizedAccuracy: number;
-    normalizedEfficiency: number;
-    normalizedLatency: number;
-    normalizedWrongTurns: number;
+/** Result of the landmark ordering task */
+export interface LandmarkOrderingResult {
+    selectedLandmarkIds: string[];
+    orderedLandmarkIds: string[];
+    correctOrderIds: string[];
+    recognitionAccuracy: number;   // 0-1
+    sequenceAccuracy: number;      // 0-1
+    falseLandmarkCount: number;
 }
 
-export interface NavigationAssessmentResult {
+/** All 17+ digital biomarkers */
+export interface NavigationBiomarkers {
+    // Route Memory
+    destinationRecallAccuracy: number;  // 0 or 1
+    navigationAccuracy: number;         // 0-1 (out of 6 intersections)
+    wrongTurnCount: number;             // out of 6
+    correctDecisionRate: number;        // 0-1
+
+    // Executive Function
+    averageDecisionLatencyMs: number;
+    maxDecisionLatencyMs: number;
+    decisionLatencyVariance: number;
+    hesitationCount: number;            // decisions > 2× average latency
+
+    // Spatial Memory
+    landmarkRecognitionAccuracy: number; // 0-1
+    falseLandmarkRate: number;           // 0-1
+    landmarkSequenceAccuracy: number;    // 0-1
+    chronologicalRecallScore: number;    // 0-1
+
+    // Composite Scores
+    routeMemoryScore: number;            // 0-1
+    visualAttentionScore: number;        // 0-1
+    episodicMemoryScore: number;         // 0-1
+
+    // Final
+    navigationScore: number;             // 0-100
+}
+
+/** Full assessment result — this is what gets saved to Firestore */
+export interface ImmersiveNavigationResult {
     id: string;
     sessionId: string;
+    routeId: string;
     timestamp: Date;
-    difficulty: NavigationDifficulty;
-    mapId: string;
-    moves: MovementRecord[];
-    sessionMetadata: SessionMetadata;
-    landmarkRecallResponses: LandmarkRecallResponse[];
+    destinationAnswer: DestinationAnswer;
+    intersectionResponses: IntersectionResponse[];  // 6 responses
+    landmarkOrdering: LandmarkOrderingResult;
     biomarkers: NavigationBiomarkers;
-    navigationScore: number; // 0..100 composite score
-    totalMoves: number;
-    optimalMoves: number;
-    completionTimeMs: number;
+    navigationScore: number;  // 0-100
 }

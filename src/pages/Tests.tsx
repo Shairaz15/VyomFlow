@@ -68,10 +68,10 @@ export function Tests() {
         },
         {
             id: "navigation",
-            title: "3D Spatial Navigation Assessment",
-            description: "Navigate through 3D fictional neighborhood environments using MapLibre vector maps to evaluate visuospatial memory, executive planning, decision latency, and landmark recall.",
+            title: "Immersive Navigation",
+            description: "Watch a real-world walking video from A to H, then navigate back by choosing directions at each intersection. Measures spatial memory, route learning, and executive function.",
             iconName: "navigation",
-            duration: "4 min",
+            duration: "5 min",
         },
     ];
 

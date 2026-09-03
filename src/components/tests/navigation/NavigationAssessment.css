@@ -1,111 +1,111 @@
-/* 3D Navigation Assessment Module Styles */
-@import "maplibre-gl/dist/maplibre-gl.css";
+/* ==========================================================================
+   Immersive Navigation Assessment Styles
+   Modern Dark Glassmorphic Design System matching VyomFlow tokens
+   ========================================================================== */
 
-.navigation-assessment-container {
-    font-family: inherit;
+.navigation-assessment {
+    max-width: 1080px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-/* MapLibre 3D Canvas Container */
-.map-view-container {
-    position: relative;
-    background-color: #020617 !important;
-    border-radius: 1.5rem;
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.map-view-container canvas {
-    background-color: #020617 !important;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
-.maplibregl-map {
-    background-color: #020617 !important;
-    font-family: inherit;
-}
-
-.maplibregl-canvas {
-    background-color: #020617 !important;
-}
-
-.map-overlay-vignette {
-    box-shadow: inset 0 0 80px rgba(2, 6, 23, 0.7);
-}
-
-/* 3D Map HTML Node Badges */
-.map-3d-node-marker {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.node-badge {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.75rem;
-    border-radius: 9999px;
-    background: rgba(15, 23, 42, 0.95);
-    border: 1.5px solid rgba(148, 163, 184, 0.4);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #f8fafc;
-    font-size: 0.85rem;
-}
-
-.node-badge:hover {
-    transform: translateY(-2px) scale(1.05);
-}
-
-.node-badge.current {
-    border-color: #38bdf8;
-    background: rgba(14, 165, 233, 0.35);
-    box-shadow: 0 0 25px rgba(56, 189, 248, 0.7);
-    animation: pulse-border 2s infinite;
-}
-
-.node-badge.start {
-    border-color: #10b981;
-    background: rgba(16, 185, 129, 0.35);
-}
-
-.node-badge.destination {
-    border-color: #f59e0b;
-    background: rgba(245, 158, 11, 0.35);
-}
-
-.node-badge.wrong {
-    border-color: #f43f5e;
-    background: rgba(244, 63, 94, 0.35);
-}
-
-.node-badge.backtrack {
-    border-color: #f59e0b;
-    background: rgba(245, 158, 11, 0.35);
-}
-
-.landmark-tooltip {
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-@keyframes pulse-border {
+@keyframes pulseGlow {
     0%, 100% {
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
     }
     50% {
-        box-shadow: 0 0 30px rgba(56, 189, 248, 0.9);
+        box-shadow: 0 0 30px rgba(6, 182, 212, 0.45);
     }
 }
 
-/* Timeline scrubber slider */
-input[type="range"].accent-cyan-500::-webkit-slider-thumb {
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #06b6d4;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
+.animate-fadeInUp {
+    animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Video Player Container */
+.nav-video-container {
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nav-video-placeholder {
+    backdrop-filter: blur(16px);
+    background: radial-gradient(circle at 50% 20%, rgba(6, 182, 212, 0.06), transparent 70%),
+                rgba(15, 23, 42, 0.95);
+}
+
+/* Touch targets and direction selector buttons */
+.nav-direction-btn {
+    min-height: 64px;
+    min-width: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-direction-btn:active {
+    transform: scale(0.96);
+}
+
+/* Landmark drag & drop cards */
+.nav-landmark-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.nav-landmark-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* Score Circle Gauge */
+.nav-score-gauge circle {
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .navigation-assessment {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .nav-direction-btn {
+        min-height: 56px;
+        min-width: 105px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem;
+    }
 }

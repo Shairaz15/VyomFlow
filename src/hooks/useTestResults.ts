@@ -10,7 +10,7 @@ import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
 import type { VmraAssessmentResult } from "../types/vmraTypes";
 import type { StoryAssessmentResult } from "../types/storyTypes";
-import type { NavigationAssessmentResult } from "../types/navigationTypes";
+import type { ImmersiveNavigationResult } from "../types/navigationTypes";
 import { logger } from "../utils/logger";
 import {
     loadResultsFromFirestore,
@@ -726,13 +726,13 @@ export function useStoryResults() {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useNavigationResults() {
-    const [results, setResults] = useState<NavigationAssessmentResult[]>([]);
+    const [results, setResults] = useState<ImmersiveNavigationResult[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
             if (isUserAuthenticated()) {
-                const firestoreResults = await loadResultsFromFirestore<NavigationAssessmentResult>(
+                const firestoreResults = await loadResultsFromFirestore<ImmersiveNavigationResult>(
                     "navigation_results"
                 );
                 if (mounted.current) {
@@ -743,7 +743,7 @@ export function useNavigationResults() {
                     );
                 }
             } else {
-                const parsed = safeJsonParse<NavigationAssessmentResult[]>(
+                const parsed = safeJsonParse<ImmersiveNavigationResult[]>(
                     localStorage.getItem(STORAGE_KEYS.navigationResults),
                     []
                 );
@@ -779,7 +779,7 @@ export function useNavigationResults() {
         };
     }, [loadResults]);
 
-    const saveResult = useCallback((result: NavigationAssessmentResult) => {
+    const saveResult = useCallback((result: ImmersiveNavigationResult) => {
         setResults((prev) => {
             const updated = trimResults([...prev, result]);
             try {
@@ -796,7 +796,7 @@ export function useNavigationResults() {
         });
     }, []);
 
-    const getLatestResult = useCallback((): NavigationAssessmentResult | null => {
+    const getLatestResult = useCallback((): ImmersiveNavigationResult | null => {
         if (results.length === 0) return null;
         return results[results.length - 1];
     }, [results]);

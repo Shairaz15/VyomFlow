@@ -1,185 +1,239 @@
-import type { MapGraph, NavigationAssessmentResult } from "../../../../types/navigationTypes";
-import { Card, Button } from "../../../common";
-import { RouteReplay } from "./RouteReplay";
+import { Button, Card, Icon } from "../../../common";
+import type { ImmersiveNavigationResult } from "../../../../types/navigationTypes";
 
 interface NavigationResultsProps {
-    map: MapGraph;
-    result: NavigationAssessmentResult;
-    isLevelUnlocked: boolean;
-    nextLevel?: number;
+    result: ImmersiveNavigationResult;
     onRetake: () => void;
     onBackToTests: () => void;
 }
 
 export function NavigationResults({
-    map,
     result,
-    isLevelUnlocked,
-    nextLevel,
     onRetake,
     onBackToTests,
 }: NavigationResultsProps) {
-    const { biomarkers, navigationScore, moves, sessionMetadata } = result;
+    const { biomarkers, navigationScore } = result;
 
-    const scoreColor =
-        navigationScore >= 85
-            ? "text-emerald-400 border-emerald-500"
-            : navigationScore >= 70
-            ? "text-cyan-400 border-cyan-500"
-            : "text-amber-400 border-amber-500";
+    // Score Color Scheme & Tier
+    const getScoreTier = (score: number) => {
+        if (score >= 80) return { label: "Excellent Visuospatial Navigation", color: "#10b981", bg: "bg-emerald-500/10", border: "border-emerald-500/30", text: "text-emerald-400" };
+        if (score >= 60) return { label: "Good Spatial Orientation", color: "#38bdf8", bg: "bg-sky-500/10", border: "border-sky-500/30", text: "text-sky-400" };
+        if (score >= 40) return { label: "Fair / Mild Spatial Hesitation", color: "#f59e0b", bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-400" };
+        return { label: "Attention Advised", color: "#f43f5e", bg: "bg-rose-500/10", border: "border-rose-500/30", text: "text-rose-400" };
+    };
+
+    const tier = getScoreTier(navigationScore);
 
     return (
-        <div className="navigation-results-wrapper space-y-6 max-w-4xl mx-auto">
-            {/* Header Score Card */}
-            <Card className="score-summary-card p-6 md:p-8 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl text-center relative overflow-hidden">
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl" />
-
-                <div className="inline-block px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-800 text-cyan-300 font-mono text-xs uppercase tracking-wider mb-4">
-                    3D Spatial Navigation Biomarker Report
+        <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-fadeInUp">
+            {/* Header */}
+            <div className="text-center space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    <Icon name="navigation" size={14} />
+                    <span>Assessment Completed</span>
                 </div>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    Navigation & Spatial Memory Results
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
+                    Multimodal evaluation of first-person route learning, reverse decision-making latency, and landmark sequence recall.
+                </p>
+            </div>
 
-                <div className="flex flex-col items-center justify-center my-4">
-                    <div className={`w-36 h-36 rounded-full border-4 flex flex-col items-center justify-center ${scoreColor} bg-slate-950/80 shadow-2xl`}>
-                        <span className="text-4xl font-extrabold font-mono">{navigationScore}</span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-sans">Out of 100</span>
+            {/* Composite Score Gauge Card */}
+            <Card className="p-8 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center justify-around gap-8 text-center md:text-left">
+                {/* Circular Score Gauge */}
+                <div className="relative w-44 h-44 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                        {/* Background Circle */}
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            className="stroke-slate-800"
+                            strokeWidth="10"
+                            fill="transparent"
+                        />
+                        {/* Progress Arc */}
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            stroke={tier.color}
+                            strokeWidth="10"
+                            strokeDasharray={251.2}
+                            strokeDashoffset={251.2 - (251.2 * navigationScore) / 100}
+                            strokeLinecap="round"
+                            fill="transparent"
+                            className="transition-all duration-1000 ease-out"
+                        />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-4xl font-extrabold text-white font-mono">
+                            {navigationScore}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-400">/ 100</span>
                     </div>
-
-                    <h2 className="text-2xl font-bold text-white mt-4">
-                        Strategy: <span className="text-cyan-400">{biomarkers.navigationStrategy}</span>
-                    </h2>
-                    <p className="text-xs text-slate-400 max-w-md mt-1">
-                        Demographic-normalized evaluation across visuospatial memory, spatial orientation, executive decision stability, and landmark recall.
-                    </p>
                 </div>
 
-                {/* Adaptive Progression Notice (Requirement 2) */}
-                <div className={`p-4 rounded-2xl border text-sm max-w-md mx-auto ${
-                    isLevelUnlocked
-                        ? "bg-emerald-950/50 border-emerald-800/80 text-emerald-300"
-                        : "bg-amber-950/50 border-amber-800/80 text-amber-300"
-                }`}>
-                    {isLevelUnlocked ? (
-                        <div className="flex items-center justify-center gap-2 font-semibold">
-                            <span>🎉</span> Level {nextLevel} Unlocked! (Score ≥ 70)
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-center gap-2 font-semibold">
-                            <span>🔁</span> Practice Level {result.difficulty} again to reach 70+ cutoff.
-                        </div>
-                    )}
+                {/* Score Summary & Key Takeaways */}
+                <div className="space-y-3 max-w-md">
+                    <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${tier.bg} ${tier.border} ${tier.text} border`}>
+                        {tier.label}
+                    </div>
+                    <h2 className="text-xl font-bold text-white">
+                        Visuospatial Navigation Index
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Your performance indicates high spatial orientation fidelity with an average intersection decision time of{" "}
+                        <strong className="text-cyan-400 font-mono">{biomarkers.averageDecisionLatencyMs}ms</strong> and landmark sequence accuracy of{" "}
+                        <strong className="text-emerald-400 font-mono">{Math.round(biomarkers.landmarkSequenceAccuracy * 100)}%</strong>.
+                    </p>
                 </div>
             </Card>
 
-            {/* Biomarker Analytics Grid */}
+            {/* Biomarker Breakdown Grid (4 Categories) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 1. Spatial Memory & Efficiency */}
-                <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl">
-                    <h4 className="text-sm font-mono uppercase text-slate-400 mb-4 flex items-center gap-2">
-                        <span>🧩 Spatial Memory & Path Metrics</span>
-                    </h4>
-
-                    <div className="space-y-4">
+                {/* 1. Route Memory */}
+                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                            <Icon name="navigation" size={18} />
+                        </div>
                         <div>
-                            <div className="flex justify-between text-xs font-mono text-slate-300 mb-1">
-                                <span>Path Efficiency</span>
-                                <span>{Math.round(biomarkers.pathEfficiency * 100)}%</span>
-                            </div>
-                            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                                <div
-                                    className="bg-cyan-400 h-full rounded-full"
-                                    style={{ width: `${Math.min(100, biomarkers.pathEfficiency * 100)}%` }}
-                                />
-                            </div>
+                            <h3 className="text-sm font-bold text-white">Route Learning & Execution</h3>
+                            <span className="text-[11px] text-slate-400">Wayfinding fidelity across 6 intersections</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2.5 text-xs">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Direction Decision Accuracy</span>
+                            <span className="font-mono font-bold text-white">{Math.round(biomarkers.navigationAccuracy * 100)}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${biomarkers.navigationAccuracy * 100}%` }} />
                         </div>
 
-                        <div>
-                            <div className="flex justify-between text-xs font-mono text-slate-300 mb-1">
-                                <span>Navigation Accuracy</span>
-                                <span>{Math.round(biomarkers.navigationAccuracy * 100)}%</span>
-                            </div>
-                            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                                <div
-                                    className="bg-emerald-400 h-full rounded-full"
-                                    style={{ width: `${Math.min(100, biomarkers.navigationAccuracy * 100)}%` }}
-                                />
-                            </div>
+                        <div className="flex justify-between items-center pt-1">
+                            <span className="text-slate-400">Destination Recall</span>
+                            <span className="font-semibold text-emerald-400">{biomarkers.destinationRecallAccuracy === 1 ? "Correct ✓" : "Incorrect ✕"}</span>
                         </div>
 
-                        <div>
-                            <div className="flex justify-between text-xs font-mono text-slate-300 mb-1">
-                                <span>Landmark Recall Accuracy</span>
-                                <span>{Math.round(biomarkers.landmarkRecallAccuracy * 100)}%</span>
-                            </div>
-                            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                                <div
-                                    className="bg-indigo-400 h-full rounded-full"
-                                    style={{ width: `${Math.min(100, biomarkers.landmarkRecallAccuracy * 100)}%` }}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs font-mono">
-                            <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                                <span className="text-slate-400 block text-[10px]">Exploration Ratio</span>
-                                <span className="text-lg font-bold text-amber-300">{biomarkers.explorationRatio}</span>
-                            </div>
-
-                            <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                                <span className="text-slate-400 block text-[10px]">Wrong Turns</span>
-                                <span className="text-lg font-bold text-rose-400">{biomarkers.wrongTurnCount}</span>
-                            </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Wrong Turns</span>
+                            <span className="font-mono font-semibold text-slate-200">{biomarkers.wrongTurnCount} / 6</span>
                         </div>
                     </div>
                 </Card>
 
-                {/* 2. Expanded Decision Latency Analytics (Requirements 6 & 9) */}
-                <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl">
-                    <h4 className="text-sm font-mono uppercase text-slate-400 mb-4 flex items-center gap-2">
-                        <span>⚡ Executive Decision Latency Analytics</span>
-                    </h4>
-
-                    <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                            <span className="text-slate-400 block text-[10px]">Mean Latency</span>
-                            <span className="text-xl font-bold text-cyan-300">{biomarkers.decisionLatencyMean} ms</span>
+                {/* 2. Executive Function & Latency */}
+                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                            <Icon name="reaction" size={18} />
                         </div>
-
-                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                            <span className="text-slate-400 block text-[10px]">Median Latency</span>
-                            <span className="text-xl font-bold text-cyan-300">{biomarkers.decisionLatencyMedian} ms</span>
-                        </div>
-
-                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                            <span className="text-slate-400 block text-[10px]">Max Latency</span>
-                            <span className="text-xl font-bold text-amber-300">{biomarkers.decisionLatencyMax} ms</span>
-                        </div>
-
-                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                            <span className="text-slate-400 block text-[10px]">Latency Variance</span>
-                            <span className="text-xl font-bold text-emerald-300">{biomarkers.decisionLatencyVariance}</span>
+                        <div>
+                            <h3 className="text-sm font-bold text-white">Executive Function & Latency</h3>
+                            <span className="text-[11px] text-slate-400">Processing speed & choice hesitation</span>
                         </div>
                     </div>
 
-                    {/* Session Metadata (Requirement 9) */}
-                    <div className="mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono text-slate-400 flex flex-wrap justify-between gap-2">
-                        <span>Device: {sessionMetadata.deviceType}</span>
-                        <span>FPS: {sessionMetadata.fps}</span>
-                        <span>Input: {sessionMetadata.inputMethod}</span>
+                    <div className="space-y-2.5 text-xs">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Average Decision Latency</span>
+                            <span className="font-mono font-bold text-amber-300">{biomarkers.averageDecisionLatencyMs} ms</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Peak Single-Turn Latency</span>
+                            <span className="font-mono font-semibold text-slate-300">{biomarkers.maxDecisionLatencyMs} ms</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Hesitation Count (&gt; 2× mean)</span>
+                            <span className="font-mono font-semibold text-slate-300">{biomarkers.hesitationCount}</span>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* 3. Spatial Landmark Memory */}
+                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                            <Icon name="memory" size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-white">Spatial Landmark Memory</h3>
+                            <span className="text-[11px] text-slate-400">Visual discrimination & distractor suppression</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2.5 text-xs">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Landmark Recognition</span>
+                            <span className="font-mono font-bold text-white">{Math.round(biomarkers.landmarkRecognitionAccuracy * 100)}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${biomarkers.landmarkRecognitionAccuracy * 100}%` }} />
+                        </div>
+
+                        <div className="flex justify-between items-center pt-1">
+                            <span className="text-slate-400">Chronological Sequence Accuracy</span>
+                            <span className="font-mono font-bold text-emerald-400">{Math.round(biomarkers.landmarkSequenceAccuracy * 100)}%</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">False Landmark Distractor Rate</span>
+                            <span className="font-mono font-semibold text-slate-300">{Math.round(biomarkers.falseLandmarkRate * 100)}%</span>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* 4. Episodic Memory & Composite Indices */}
+                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                            <Icon name="brain-circuit" size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-white">Episodic & Cognitive Indices</h3>
+                            <span className="text-[11px] text-slate-400">Integrative memory encoding scores</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2.5 text-xs">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Route Memory Index</span>
+                            <span className="font-mono font-bold text-purple-300">{Math.round(biomarkers.routeMemoryScore * 100)} / 100</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Visual Attention Index</span>
+                            <span className="font-mono font-bold text-purple-300">{Math.round(biomarkers.visualAttentionScore * 100)} / 100</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Episodic Encoding Index</span>
+                            <span className="font-mono font-bold text-purple-300">{Math.round(biomarkers.episodicMemoryScore * 100)} / 100</span>
+                        </div>
                     </div>
                 </Card>
             </div>
 
-            {/* Route Replay (Requirement 8) */}
-            <RouteReplay graph={map} moves={moves} />
-
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto" onClick={onRetake}>
-                    🔄 {isLevelUnlocked ? `Start Level ${nextLevel}` : "Retake Assessment"}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
+                <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={onRetake}
+                    className="min-w-[180px]"
+                >
+                    Retake Assessment
                 </Button>
-
-                <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={onBackToTests}>
-                    Back to Assessments Dashboard →
+                <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={onBackToTests}
+                    className="min-w-[200px] shadow-xl shadow-cyan-500/20 font-semibold"
+                >
+                    Back to All Tests →
                 </Button>
             </div>
         </div>
