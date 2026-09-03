@@ -9,14 +9,6 @@ import type { LanguageAssessmentResult } from "../../../types/languageTypes";
 import { getLanguageFeedback } from "../../../utils/normativeStats";
 import "./LanguageAssessment.css";
 
-// Polyfill for types
-declare global {
-    interface Window {
-        webkitSpeechRecognition: any;
-        SpeechRecognition: any;
-    }
-}
-
 type Phase = "instructions" | "permission" | "warmup" | "assessment" | "processing" | "complete";
 
 const PROMPTS = [
@@ -41,22 +33,42 @@ export function LanguageAssessment() {
     const [phase, setPhase] = useState<Phase>("instructions");
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState("");
+    const [verbatimTranscript, setVerbatimTranscript] = useState("");
+    const [englishTranslation, setEnglishTranslation] = useState("");
+    const [detectedLanguage, setDetectedLanguage] = useState<string>("Auto-detecting...");
+
     const [prompt, setPrompt] = useState("");
     const [timer, setTimer] = useState(0);
     const [result, setResult] = useState<LanguageAssessmentResult | null>(null);
 
-    // Refs
-    const recognitionRef = useRef<any>(null);
+    // Sarvam Proxy config
+    const [proxyPort] = useState(5001);
+    const [isProxyConnected, setIsProxyConnected] = useState<boolean>(true);
+
+    // Audio & WS Refs
+    const wsVerbatimRef = useRef<WebSocket | null>(null);
+    const wsTranslateRef = useRef<WebSocket | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const processorRef = useRef<ScriptProcessorNode | null>(null);
+    const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+
     const startTimeRef = useRef<number>(0);
     const intervalRef = useRef<any>(null);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+    // Check Proxy Status on Mount
+    useEffect(() => {
+        fetch(`http://localhost:${proxyPort}/health`)
+            .then(res => setIsProxyConnected(res.ok))
+            .catch(() => setIsProxyConnected(false));
+    }, [proxyPort]);
 
     // Scroll to bottom of transcript
     useEffect(() => {
         if (transcriptEndRef.current) {
             transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [transcript]);
+    }, [transcript, verbatimTranscript]);
 
     // Select random prompt on mount
     useEffect(() => {
@@ -75,39 +87,124 @@ export function LanguageAssessment() {
         return () => clearInterval(intervalRef.current);
     }, [isRecording]);
 
-    // Initialize Speech Recognition
-    const startRecording = () => {
-        if (!isAuthenticated) return;
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-            alert("Speech recognition is not supported in this browser. Please use Chrome.");
-            return;
+    // Convert Float32 PCM to Int16 PCM WAV buffer
+    const convertFloat32ToInt16 = (buffer: Float32Array): ArrayBuffer => {
+        let l = buffer.length;
+        let buf = new Int16Array(l);
+        while (l--) {
+            let s = Math.max(-1, Math.min(1, buffer[l]));
+            buf[l] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
+        return buf.buffer;
+    };
 
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
+    // Connect Sarvam AI Multilingual Dual-Stream WebSocket (Auto-Detect Default)
+    const connectSarvamStreams = () => {
+        const apiKey = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+        
+        // 1. Verbatim Stream (Captures filler words, stutters, exact spoken language)
+        const verbatimUrl = `ws://localhost:${proxyPort}?model=saaras:v4&language-code=unknown&mode=verbatim&sample_rate=16000&api_key=${encodeURIComponent(apiKey)}`;
+        const wsVerbatim = new WebSocket(verbatimUrl);
 
-        recognition.onresult = (event: any) => {
-            // Reconstruct full transcript from all results
-            // This handles both final and interim results properly
-            let fullTranscript = '';
-            for (let i = 0; i < event.results.length; ++i) {
-                fullTranscript += event.results[i][0].transcript;
+        wsVerbatim.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.type === 'data') {
+                    const text = msg.data?.transcript || '';
+                    if (text) {
+                        setVerbatimTranscript(prev => prev + (prev ? ' ' : '') + text);
+                        setTranscript(prev => prev + (prev ? ' ' : '') + text);
+                    }
+                    if (msg.data?.language_code) {
+                        setDetectedLanguage(msg.data.language_code);
+                    }
+                }
+            } catch (err) {
+                // Ignore non-json logs
             }
-            setTranscript(fullTranscript);
         };
 
-        recognition.onerror = (event: any) => {
-            console.error("Speech Error:", event.error);
+        // 2. Translation Stream (Translates Indic speech to English for NLP scoring)
+        const translateUrl = `ws://localhost:${proxyPort}?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000&api_key=${encodeURIComponent(apiKey)}`;
+        const wsTranslate = new WebSocket(translateUrl);
+
+        wsTranslate.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.type === 'data') {
+                    const text = msg.data?.transcript || '';
+                    if (text) {
+                        setEnglishTranslation(prev => prev + (prev ? ' ' : '') + text);
+                    }
+                }
+            } catch (err) {
+                // Ignore non-json logs
+            }
         };
 
-        recognitionRef.current = recognition;
-        recognition.start();
-        setIsRecording(true);
-        startTimeRef.current = Date.now();
+        wsVerbatimRef.current = wsVerbatim;
+        wsTranslateRef.current = wsTranslate;
+    };
+
+    // Initialize Sarvam PCM Microphone Recording
+    const startRecording = async () => {
+        if (!isAuthenticated) return;
+
+        try {
+            setTranscript("");
+            setVerbatimTranscript("");
+            setEnglishTranslation("");
+            setDetectedLanguage("Auto-detecting language...");
+
+            connectSarvamStreams();
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+            
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            const audioCtx = new AudioCtx({ sampleRate: 16000 });
+            audioContextRef.current = audioCtx;
+
+            const source = audioCtx.createMediaStreamSource(stream);
+            sourceRef.current = source;
+
+            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+            processorRef.current = processor;
+
+            processor.onaudioprocess = (e) => {
+                const inputData = e.inputBuffer.getChannelData(0);
+                const int16Buffer = convertFloat32ToInt16(inputData);
+                
+                const bytes = new Uint8Array(int16Buffer);
+                let binary = '';
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                const base64Data = btoa(binary);
+
+                const payload = JSON.stringify({
+                    audio: {
+                        data: base64Data,
+                        sample_rate: '16000',
+                        encoding: 'audio/wav',
+                    },
+                });
+
+                [wsVerbatimRef.current, wsTranslateRef.current].forEach(ws => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(payload);
+                    }
+                });
+            };
+
+            source.connect(processor);
+            processor.connect(audioCtx.destination);
+
+            setIsRecording(true);
+            startTimeRef.current = Date.now();
+
+        } catch (err: any) {
+            alert(`Microphone access error: ${err.message}`);
+        }
     };
 
     const stopRecording = () => {
@@ -116,14 +213,31 @@ export function LanguageAssessment() {
             if (!confirmStop) return;
         }
 
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
+        if (processorRef.current && audioContextRef.current) {
+            processorRef.current.disconnect();
+            sourceRef.current?.disconnect();
+            audioContextRef.current.close();
         }
+
+        const flushMsg = JSON.stringify({ type: 'flush' });
+        [wsVerbatimRef.current, wsTranslateRef.current].forEach(ws => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(flushMsg);
+                ws.close();
+            }
+        });
+
+        wsVerbatimRef.current = null;
+        wsTranslateRef.current = null;
+
         setIsRecording(false);
+
         if (phase === 'warmup') {
             setPhase('assessment');
             setTimer(0);
             setTranscript("");
+            setVerbatimTranscript("");
+            setEnglishTranslation("");
         } else {
             setPhase('processing');
             processResults();
@@ -132,30 +246,35 @@ export function LanguageAssessment() {
 
     const processResults = () => {
         const duration = Date.now() - startTimeRef.current;
+        const activeTranscript = verbatimTranscript || transcript;
 
-        // AI Analysis
-        // TODO: Implement pause detection in recorder (requires AudioContext analysis, skipping for simple v1)
+        // Multilingual Biomarker Feature Extraction Engine
         const analysis = extractLanguageFeatures({
-            transcript: transcript,
+            transcript: activeTranscript,
+            verbatimTranscript: verbatimTranscript,
+            englishTranslation: englishTranslation,
             durationMs: duration,
-            pauseCount: 0 // Placeholder
+            detectedLanguage: detectedLanguage
         });
 
         const newResult: LanguageAssessmentResult = {
             id: crypto.randomUUID(),
             sessionId: crypto.randomUUID(),
             timestamp: new Date(),
-            transcript: transcript,
+            transcript: activeTranscript,
+            verbatimTranscript: verbatimTranscript,
+            englishTranslation: englishTranslation,
+            detectedLanguage: detectedLanguage,
             rawMetrics: analysis.raw,
             derivedFeatures: analysis.derived,
             explainability: {
-                keyFactors: [] // Populated by risk engine later
+                keyFactors: []
             }
         };
 
         saveResult(newResult);
         setResult(newResult);
-        setTimeout(() => setPhase('complete'), 1500);
+        setTimeout(() => setPhase('complete'), 1200);
     };
 
     const getInsights = (res: LanguageAssessmentResult) => {
@@ -171,7 +290,7 @@ export function LanguageAssessment() {
         else insights.push({ text: "Steady Pace", type: "positive" });
 
         if (hesitationIndex < 0.05) insights.push({ text: "Consistent Flow", type: "positive" });
-        else if (hesitationIndex > 0.15) insights.push({ text: "Frequent Pauses", type: "attention" });
+        else if (hesitationIndex > 0.15) insights.push({ text: "Frequent Hesitations/Fillers", type: "attention" });
 
         if (lexicalDiversity > 0.6) insights.push({ text: "Rich Vocabulary", type: "positive" });
 
@@ -184,14 +303,14 @@ export function LanguageAssessment() {
                 {phase === 'instructions' && (
                     <div className="assessment-phase instructions-phase">
                         <div className="phase-icon">🎙️</div>
-                        <h2>Language Fluency Assessment</h2>
+                        <h2>Multilingual Language Fluency Assessment</h2>
                         <p className="phase-description">
-                            Spontaneous speech analysis for cognitive trends.
+                            Spontaneous speech analysis for cognitive trends powered by Sarvam AI.
                         </p>
 
-                        <div className="privacy-notice">
-                            <strong>🔒 Privacy Notice</strong>
-                            <p>Audio is processed locally by your browser. No voice recordings are stored or sent to our servers.</p>
+                        <div className="privacy-notice" style={{ background: 'rgba(124, 58, 237, 0.15)', borderColor: 'rgba(139, 92, 246, 0.4)' }}>
+                            <strong>🌐 Multilingual Auto-Detection Active</strong>
+                            <p>You can speak naturally in <strong>English, Hindi, Tamil, Telugu, Marathi, Bengali, Gujarati, Kannada, Malayalam, or Punjabi</strong>. Sarvam AI automatically detects your spoken language.</p>
                         </div>
 
                         <div className="instructions-list">
@@ -201,17 +320,13 @@ export function LanguageAssessment() {
                             </div>
                             <div className="instruction-item">
                                 <span className="instruction-number">2</span>
-                                <span>Speak naturally for at least 30 seconds</span>
+                                <span>Speak naturally in any preferred language for at least 15–30 seconds</span>
                             </div>
                             <div className="instruction-item">
                                 <span className="instruction-number">3</span>
                                 <span>Try to provide as much detail as possible</span>
                             </div>
                         </div>
-
-                        <p className="reassurance-text">
-                            Take your time and speak naturally. There are no right or wrong answers.
-                        </p>
 
                         <div className="button-group">
                             <Button variant="secondary" onClick={() => navigate('/tests')}>Back</Button>
@@ -223,12 +338,8 @@ export function LanguageAssessment() {
                 {phase === 'permission' && (
                     <Card className="permission-card">
                         <h2>🎙️ Microphone Access</h2>
-                        <p>We need access to your microphone to analyze speech patterns.</p>
-                        <Button variant="primary" onClick={() => {
-                            // Request mic logic implicitly handled by startRecording, 
-                            // but let's do a dummy check or just move to warmup
-                            setPhase('warmup');
-                        }}>Enable Microphone</Button>
+                        <p>We need access to your microphone for Sarvam AI audio pattern analysis.</p>
+                        <Button variant="primary" onClick={() => setPhase('warmup')}>Enable Microphone</Button>
                     </Card>
                 )}
 
@@ -236,10 +347,10 @@ export function LanguageAssessment() {
                     <Card className="phase-card">
                         <div className="phase-badge">Warmup</div>
                         <h2>Let's test the microphone</h2>
-                        <p>Read this aloud: "The quick brown fox jumps over the lazy dog."</p>
+                        <p>Read aloud or speak in your preferred language: "The quick brown fox jumps over the lazy dog."</p>
 
                         <div className="transcript-preview">
-                            {transcript || "Listening..."}
+                            {transcript || "Listening (Sarvam AI Auto-Detect)..."}
                         </div>
 
                         {!isRecording ? (
@@ -265,10 +376,19 @@ export function LanguageAssessment() {
 
                 {phase === 'assessment' && (
                     <Card className="phase-card active-assessment">
-                        <div className="phase-badge">Assessment</div>
+                        <div className="phase-badge" style={{ background: 'rgba(124, 58, 237, 0.8)' }}>
+                            Sarvam AI Multilingual
+                        </div>
                         <h2>{prompt}</h2>
-                        <div className="timer" role="timer" aria-live="polite" aria-label={`Recording time: ${timer} seconds`}>
-                            {timer}s
+
+                        {/* Timer & Language Indicator */}
+                        <div className="flex items-center justify-between my-2 px-2">
+                            <div className="timer" role="timer" aria-live="polite">
+                                ⏱️ {timer}s
+                            </div>
+                            <div className="text-xs bg-slate-900 border border-purple-500/40 text-purple-300 px-3 py-1.5 rounded-full font-mono">
+                                🌐 {detectedLanguage}
+                            </div>
                         </div>
 
                         {/* Visualizer Animation */}
@@ -293,7 +413,18 @@ export function LanguageAssessment() {
                             aria-live="polite"
                             aria-label="Speech transcript"
                         >
-                            {transcript || <span className="transcript-placeholder">Your speech will appear here...</span>}
+                            {transcript ? (
+                                <div>
+                                    <p>{transcript}</p>
+                                    {englishTranslation && (
+                                        <p className="text-xs text-purple-400 mt-2 border-t border-purple-900/50 pt-2 italic">
+                                            🇬🇧 English Translation: {englishTranslation}
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <span className="transcript-placeholder">Your speech will appear here in real-time in any spoken language...</span>
+                            )}
                             <div ref={transcriptEndRef} />
                         </div>
 
@@ -324,13 +455,23 @@ export function LanguageAssessment() {
                 {phase === 'processing' && (
                     <div className="processing-state" role="status" aria-live="polite">
                         <div className="spinner" aria-hidden="true"></div>
-                        <h3>Analyzing Speech Patterns...</h3>
+                        <h3>Analyzing Multilingual Biomarkers & Disfluencies...</h3>
                     </div>
                 )}
 
                 {phase === 'complete' && result && (
                     <Card className="results-card">
-                        <h1>Session Complete</h1>
+                        <h1>Language Session Complete</h1>
+                        
+                        {/* Auto-detected Language Header */}
+                        {result.detectedLanguage && (
+                            <div className="text-center mb-4">
+                                <span className="inline-block bg-purple-950 border border-purple-700/60 text-purple-200 text-xs px-3 py-1 rounded-full font-mono">
+                                    🌐 Spoken Language: {result.detectedLanguage}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="metrics-grid">
                             <div className="metric">
                                 <label>Speech Rate</label>
@@ -341,20 +482,39 @@ export function LanguageAssessment() {
                                 <p className="value">{Math.round(result.derivedFeatures.fluencyIndex)}/100</p>
                             </div>
                             <div className="metric">
-                                <label>Hesitation</label>
+                                <label>Hesitation / Fillers</label>
                                 <p className="value">{(result.derivedFeatures.hesitationIndex * 100).toFixed(1)}%</p>
                             </div>
+                        </div>
+
+                        {/* Raw Biomarker Details */}
+                        <div className="my-4 p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 text-xs font-mono text-left">
+                            <div className="text-purple-400 font-bold uppercase tracking-wider mb-1">
+                                🧬 Biomarker Extraction Summary
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-slate-300">
+                                <div>• Total Word Count: <strong>{result.rawMetrics.wordCount}</strong></div>
+                                <div>• Filler Word Count: <strong>{result.rawMetrics.fillerWordCount}</strong></div>
+                                <div>• Word Repetitions: <strong>{result.rawMetrics.repetitions}</strong></div>
+                                <div>• Unique Word TTR: <strong>{(result.derivedFeatures.lexicalDiversity * 100).toFixed(1)}%</strong></div>
+                                <div>• Speech Stability: <strong>{Math.round(result.derivedFeatures.speechStability)}/100</strong></div>
+                                <div>• Coherence Score: <strong>{Math.round(result.derivedFeatures.coherenceProxy)}/100</strong></div>
+                            </div>
+                            {result.englishTranslation && (
+                                <div className="mt-3 pt-2 border-t border-slate-800 text-slate-400">
+                                    <strong className="text-purple-300">English Translation:</strong> "{result.englishTranslation}"
+                                </div>
+                            )}
                         </div>
 
                         {/* Insight Chips */}
                         <div className="insights-grid">
                             {(() => {
                                 const feedback = getLanguageFeedback(result.derivedFeatures.wpm, result.derivedFeatures.hesitationIndex);
-                                const otherInsights = getInsights(result).filter(i => i.text !== "Excellent Fluency" && i.text !== "Good Fluency" && i.text !== "Reduced Fluency" && i.text !== "Fast Pace" && i.text !== "Slower Pace"); // Filter out duplicates if new logic overlaps, or just keep mixture.
+                                const otherInsights = getInsights(result);
 
                                 return (
                                     <>
-                                        {/* Normative Feedback Badge */}
                                         <div className="feedback-badge-wrapper">
                                             <span className={`feedback-badge ${feedback.category === 'Exceptional' || feedback.category === 'Above Average' ? 'positive' : feedback.category === 'Needs Attention' ? 'attention' : 'neutral'}`}>
                                                 {feedback.category}: {feedback.message}

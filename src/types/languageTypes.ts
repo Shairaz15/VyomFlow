@@ -6,6 +6,8 @@ export interface LanguageRawMetrics {
     fillerWordCount: number;
     repetitions: number;
     uniqueWordCount: number;
+    detectedLanguage?: string;
+    detectedLanguageConfidence?: number;
 }
 
 export interface LanguageDerivedFeatures {
@@ -22,6 +24,9 @@ export interface LanguageAssessmentResult {
     sessionId: string;
     timestamp: Date;
     transcript: string;
+    verbatimTranscript?: string;
+    englishTranslation?: string;
+    detectedLanguage?: string;
     rawMetrics: LanguageRawMetrics;
     derivedFeatures: LanguageDerivedFeatures;
     explainability: {
