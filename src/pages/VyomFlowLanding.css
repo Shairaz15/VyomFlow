@@ -1,0 +1,964 @@
+/* ==========================================================================
+   VYOMFLOW DESIGN SYSTEM — ELEGANT, MINIMAL & PREMIUM LANDING
+   ========================================================================== */
+
+:root {
+  --vyom-navy: #17324D;
+  --vyom-teal: #4F7C78;
+  --vyom-sage: #8FAF8B;
+  --vyom-gold: #D8B878;
+  --vyom-ivory: #F7F4EC;
+  --vyom-peach: #FFF3E6;
+  --vyom-mint-haze: #E8F1EC;
+  --vyom-sand: #D8CBB8;
+  --vyom-text-dark: #20313A;
+  --vyom-text-muted: #66757A;
+}
+
+/* Base Landing Styling & Soft Atmospheric Background (Matching Reference Photo) */
+.vyom-sarvam-landing {
+  background: linear-gradient(180deg, #F7F4EC 0%, #F5F2E7 22%, #DCE9F4 48%, #B2D1E7 68%, #86B2D4 85%, #F7F4EC 100%);
+  color: var(--vyom-text-dark);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Serif font utility for headings */
+.vyom-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Top Translucent Blur Mask (Obscures & blurs all content scrolling up behind top viewport) */
+.vyom-top-blur-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5.5rem;
+  z-index: 99;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(247, 244, 236, 0.96) 0%, rgba(247, 244, 236, 0.85) 60%, rgba(247, 244, 236, 0) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* ==========================================================================
+   2 & 3. FLOATING STICKY NAVBAR (Pill Container, Always Visible)
+   ========================================================================== */
+.vyom-navbar-fixed-container {
+  position: fixed;
+  top: 1.25rem;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0 1.5rem;
+}
+
+.vyom-floating-navbar {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 1240px;
+  border-radius: 9999px;
+  background: rgba(247, 244, 236, 0.92);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(23, 50, 77, 0.12);
+  padding: 0.75rem 2rem;
+  box-shadow: 0 10px 30px -10px rgba(23, 50, 77, 0.1), 0 2px 12px rgba(79, 124, 120, 0.06);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vyom-nav-link {
+  color: var(--vyom-text-dark);
+  font-size: 0.775rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+}
+
+.vyom-nav-link:hover {
+  color: var(--vyom-teal);
+  opacity: 0.85;
+}
+
+/* Navbar Buttons */
+.vyom-pill-btn-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  background-color: var(--vyom-navy);
+  color: #FFFFFF;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(23, 50, 77, 0.18);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.vyom-pill-btn-dark:hover {
+  background-color: #0E2235;
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 22px rgba(23, 50, 77, 0.25);
+}
+
+.vyom-pill-btn-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.7);
+  color: var(--vyom-navy);
+  border: 1px solid rgba(79, 124, 120, 0.3);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(23, 50, 77, 0.04);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.vyom-pill-btn-light:hover {
+  background-color: #FFFFFF;
+  border-color: var(--vyom-teal);
+  color: var(--vyom-navy);
+  box-shadow: 0 4px 14px rgba(23, 50, 77, 0.08);
+}
+
+/* ==========================================================================
+   4 & 5. HERO SECTION & EYEBROW
+   ========================================================================== */
+.vyom-hero-section {
+  position: relative;
+  min-height: calc(100vh - 5.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6.5rem;
+  padding-bottom: 2rem;
+  background: radial-gradient(ellipse 90% 85% at 50% 95%, rgba(154, 192, 218, 0.45) 0%, rgba(195, 221, 238, 0.28) 55%, transparent 100%);
+}
+
+.vyom-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--vyom-teal);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* 6. HERO HEADLINE — TWO-TONE SERIF */
+.vyom-hero-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.75rem, 5.5vw, 70px);
+  line-height: 1.15;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.75rem;
+}
+
+.vyom-title-navy {
+  color: var(--vyom-navy);
+  font-weight: 500;
+}
+
+.vyom-title-teal {
+  color: var(--vyom-teal);
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* 7. HERO DESCRIPTION */
+.vyom-hero-sub {
+  font-size: clamp(1.1rem, 1.75vw, 22px);
+  color: var(--vyom-text-muted);
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.vyom-trust-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  color: var(--vyom-text-muted);
+  font-size: 0.825rem;
+  font-weight: 500;
+}
+
+.vyom-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--vyom-text-muted);
+}
+
+.vyom-trust-icon {
+  color: var(--vyom-teal);
+  width: 1rem;
+  height: 1rem;
+}
+
+.vyom-dot-separator {
+  opacity: 0.35;
+  color: var(--vyom-teal);
+}
+
+/* 11. HERO VISUAL — SEAMLESS TRANSPARENT BRAIN CUTOUT WRAPPER */
+.vyom-brain-visual-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 1.25rem auto 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+
+.vyom-brain-glow-backdrop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  height: 85%;
+  background: radial-gradient(ellipse at center, rgba(247, 244, 236, 0.7) 0%, rgba(216, 184, 120, 0.18) 35%, rgba(79, 124, 120, 0.1) 65%, transparent 85%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+@keyframes vyomFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-vyomFloat {
+  animation: vyomFloat 6s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   13. HOW VYOMFLOW WORKS — 3 STEP EDITORIAL LAYOUT
+   ========================================================================== */
+.vyom-section {
+  padding: 6rem 1.5rem;
+  width: 100%;
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+/* Dark Heading Utility & Sharp Contrast Rules */
+.vyom-heading-dark {
+  color: #17324D !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em;
+  opacity: 1 !important;
+}
+
+.vyom-sub-dark {
+  color: #43545D !important;
+  font-weight: 450 !important;
+  opacity: 1 !important;
+}
+
+/* ==========================================================================
+   12. INSTITUTIONAL BRAND TICKER MARQUEE (NIMHANS, AIIMS, Stanford, etc.)
+   ========================================================================== */
+.vyom-ticker-wrapper {
+  width: 100%;
+  margin: 1.5rem 0 4.5rem 0;
+  padding: 1.75rem 0;
+  border-top: none;
+  border-bottom: 1px solid rgba(23, 50, 77, 0.12);
+  background: transparent;
+  overflow: hidden;
+  position: relative;
+}
+
+.vyom-ticker-track {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  width: max-content;
+  animation: vyomTickerScroll 35s linear infinite;
+}
+
+@keyframes vyomTickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.vyom-ticker-item {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #17324D;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.vyom-ticker-item:hover {
+  opacity: 1;
+  color: var(--vyom-teal);
+}
+
+.vyom-ticker-dot {
+  color: var(--vyom-sage);
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   13. CIRCULAR COGNITIVE LOOP ("HOW VYOMFLOW WORKS")
+   ========================================================================== */
+.vyom-circular-loop-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  min-height: 560px;
+  margin: 1.5rem auto 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ==========================================================================
+   13. TRUE ORBITAL SYSTEM (How VyomFlow Works)
+   ========================================================================== */
+.vyom-orbit-stage {
+  position: relative;
+  width: 680px;
+  height: 680px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mathematically Centered Core Node */
+.vyom-central-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: #F7F4EC;
+  border: 1.5px solid rgba(79, 124, 120, 0.35);
+  box-shadow: 0 10px 30px rgba(23, 50, 77, 0.08), 0 2px 8px rgba(79, 124, 120, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 25;
+  pointer-events: auto;
+}
+
+/* Continuous Orbiting Ring Container */
+.vyom-orbit-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  z-index: 15;
+  animation: vyomOrbitRevolution 22s linear infinite;
+  pointer-events: none;
+}
+
+/* Counter-Rotation Wrapper to keep step text 100% upright at all times */
+.vyom-orbit-counter-rotate {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  animation: vyomOrbitCounterRevolution 22s linear infinite;
+  pointer-events: auto;
+}
+
+@keyframes vyomOrbitRevolution {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes vyomOrbitCounterRevolution {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Individual Orbiting Step Nodes (180px Circle Cards) */
+.vyom-orbit-node {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: #F7F4EC;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 32px -8px rgba(23, 50, 77, 0.10), 0 2px 10px rgba(79, 124, 120, 0.05);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  pointer-events: auto;
+}
+
+.vyom-orbit-node:hover {
+  box-shadow: 0 18px 45px -10px rgba(23, 50, 77, 0.18), 0 4px 16px rgba(79, 124, 120, 0.12);
+}
+
+/* Step 01: PLAY (Top, 12 o'clock) */
+.vyom-orbit-node-play {
+  top: 60px;
+  left: 340px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(143, 175, 139, 0.45);
+}
+
+/* Step 02: TRACK (Bottom Right, 4 o'clock) */
+.vyom-orbit-node-track {
+  top: 480px;
+  left: 582px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(79, 124, 120, 0.45);
+}
+
+/* Step 03: UNDERSTAND (Bottom Left, 8 o'clock) */
+.vyom-orbit-node-understand {
+  top: 480px;
+  left: 98px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(216, 184, 120, 0.45);
+}
+
+.vyom-loop-number {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.vyom-loop-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #17324D;
+  margin-bottom: 0.3rem;
+}
+
+.vyom-loop-desc {
+  font-size: 0.725rem;
+  color: #4A5D68;
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vyom-orbit-ring,
+  .vyom-orbit-counter-rotate {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   14. COGNITIVE JOURNEY RADIAL ORBITAL MAP
+   ========================================================================== */
+.vyom-journey-orbit-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 2rem auto 0 auto;
+  min-height: 640px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.vyom-orbital-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(23, 50, 77, 0.16);
+  border-radius: 1.25rem;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  box-shadow: 0 8px 24px -6px rgba(23, 50, 77, 0.10), 0 2px 8px rgba(79, 124, 120, 0.06);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  width: 230px;
+  z-index: 30;
+}
+
+.vyom-orbital-card:hover {
+  background: #FFFFFF;
+  border-color: var(--vyom-teal);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 14px 32px -8px rgba(23, 50, 77, 0.18), 0 4px 12px rgba(79, 124, 120, 0.12);
+}
+
+.vyom-orbital-card h4,
+.vyom-journey-pill h4 {
+  color: #17324D !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  letter-spacing: -0.01em;
+  opacity: 1 !important;
+}
+
+.vyom-orbital-card p,
+.vyom-journey-pill p {
+  color: #4A5D68 !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+  opacity: 1 !important;
+}
+
+.vyom-orbital-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  background: rgba(79, 124, 120, 0.12);
+  color: var(--vyom-teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.vyom-orbital-card:hover .vyom-orbital-icon {
+  transform: scale(1.1);
+  background: rgba(79, 124, 120, 0.2);
+}
+
+.vyom-journey-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.vyom-journey-pill {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(23, 50, 77, 0.08);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.vyom-journey-pill:hover {
+  background: #FFFFFF;
+  border-color: var(--vyom-teal);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(23, 50, 77, 0.06);
+}
+
+.vyom-journey-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: rgba(79, 124, 120, 0.1);
+  color: var(--vyom-teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   15. REDESIGNED PRIVACY & TRUST SECTION (Editorial Ivory Panel over Soft Blue Gradient)
+   ========================================================================== */
+.vyom-privacy-section {
+  width: 100%;
+  padding: 5rem 1.5rem;
+  background: linear-gradient(180deg, #DDECF5 0%, #C9DFED 50%, #B7D4E7 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.vyom-privacy-panel {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  background: #F8F6F0;
+  border-radius: 2rem;
+  border: 1.5px solid rgba(23, 50, 77, 0.10);
+  box-shadow: 0 20px 50px -15px rgba(23, 50, 77, 0.08), 0 4px 16px rgba(79, 124, 120, 0.04);
+  padding: 4rem 3.5rem;
+  position: relative;
+  z-index: 10;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.vyom-privacy-panel:hover {
+  box-shadow: 0 25px 60px -12px rgba(23, 50, 77, 0.12), 0 6px 20px rgba(79, 124, 120, 0.06);
+}
+
+.vyom-privacy-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 1rem auto 2.75rem auto;
+  color: var(--vyom-teal);
+  opacity: 0.45;
+}
+
+.vyom-privacy-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2.25rem 1.75rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px -10px rgba(23, 50, 77, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.vyom-privacy-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -8px rgba(23, 50, 77, 0.10);
+}
+
+/* Card 1: Private by Design (Soft Sage) */
+.vyom-privacy-card-sage {
+  background: #EAF3EF !important;
+  border: 1px solid rgba(79, 124, 120, 0.22) !important;
+}
+
+.vyom-privacy-card-sage .vyom-privacy-icon-box {
+  background: rgba(79, 124, 120, 0.14) !important;
+  color: #4F7C78 !important;
+}
+
+/* Card 2: You Own Your Data (Soft Muted Blue) */
+.vyom-privacy-card-blue {
+  background: #EEF3F8 !important;
+  border: 1px solid rgba(74, 102, 128, 0.22) !important;
+}
+
+.vyom-privacy-card-blue .vyom-privacy-icon-box {
+  background: rgba(74, 102, 128, 0.14) !important;
+  color: #4A6680 !important;
+}
+
+/* Card 3: Awareness, Not Diagnosis (Soft Warm Gold) */
+.vyom-privacy-card-gold {
+  background: #F7F0E3 !important;
+  border: 1px solid rgba(168, 135, 82, 0.22) !important;
+}
+
+.vyom-privacy-card-gold .vyom-privacy-icon-box {
+  background: rgba(168, 135, 82, 0.14) !important;
+  color: #A88752 !important;
+}
+
+/* Common Card Typography */
+.vyom-privacy-card h3 {
+  color: #17324D !important;
+  font-weight: 700 !important;
+  font-size: 1.125rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.vyom-privacy-card p {
+  color: #607080 !important;
+  font-weight: 450 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
+}
+
+.vyom-privacy-icon-box {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.vyom-privacy-card:hover .vyom-privacy-icon-box {
+  transform: scale(1.08);
+}
+
+@media (max-width: 768px) {
+  .vyom-privacy-panel {
+    padding: 2.75rem 1.25rem;
+    border-radius: 1.5rem;
+  }
+}
+
+/* ==========================================================================
+   16. FINAL CTA BANNER (SARVAM CARD DOUBLE-FRAME REPLICATION)
+   ========================================================================== */
+.vyom-sarvam-cta-wrapper {
+  width: 100%;
+  max-width: 1280px;
+  margin: 2rem auto 5rem auto;
+  padding: 0 1.25rem;
+}
+
+/* Outer White/Ivory Floating Border Frame */
+.vyom-sarvam-cta-frame {
+  background: #FFFFFF;
+  border-radius: 2.75rem;
+  padding: 0.85rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 24px 60px -12px rgba(23, 50, 77, 0.15), 0 6px 24px rgba(0, 0, 0, 0.05);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.vyom-sarvam-cta-frame:hover {
+  box-shadow: 0 30px 75px -10px rgba(23, 50, 77, 0.18), 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Inner Atmospheric Dark Blue Floating Panel */
+.vyom-sarvam-cta-inner {
+  background: linear-gradient(180deg, #182338 0%, #1E2D47 35%, #2B3E60 68%, #4A658E 100%);
+  border-radius: 2.25rem;
+  padding: 5.5rem 2.5rem 5rem 2.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.35);
+}
+
+/* Radial Light Vignette behind Star Emblem */
+.vyom-sarvam-cta-inner::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 140%;
+  background: radial-gradient(ellipse at 50% 65%, rgba(135, 175, 220, 0.28) 0%, rgba(70, 105, 150, 0.12) 45%, transparent 75%);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   17. REDESIGNED VYOMFLOW FOOTER
+   ========================================================================== */
+.vyom-footer {
+  background: linear-gradient(180deg, #17324D 0%, #14283C 60%, #102031 100%);
+  color: #F7F4EC;
+  border-top: 1px solid rgba(247, 244, 236, 0.12);
+  padding: 4.5rem 1.5rem 2.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.vyom-footer-container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.vyom-footer-group-title {
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--vyom-sage);
+  margin-bottom: 1.25rem;
+}
+
+.vyom-footer-link {
+  color: rgba(247, 244, 236, 0.85);
+  font-size: 0.875rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: none;
+  display: block;
+}
+
+.vyom-footer-link:hover {
+  color: #FFFFFF;
+  transform: translateX(2px);
+}
+
+.vyom-trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(247, 244, 236, 0.12);
+  border-radius: 1rem;
+  max-width: 340px;
+  margin-top: 1.5rem;
+}
+
+/* ==========================================================================
+   18. GIANT VIDEO-MASKED TYPOGRAPHY SIGNATURE (VYOMFLOW)
+   ========================================================================== */
+.vyom-giant-brand-wrapper {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  margin-top: 3.5rem;
+  padding: 2rem 1.5rem 0.5rem 1.5rem;
+  user-select: none;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/*
+ * The video plays full-width inside the container.
+ * A dark overlay covers everything EXCEPT where the text is.
+ * The letterforms become "windows" showing the live video.
+ */
+.vyom-video-brand-container {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+/* Looping video — full width background */
+.vyom-video-brand-bg {
+  display: block;
+  width: 100%;
+  height: auto;
+  position: relative;
+  z-index: 0;
+  /* Tint the video slightly to match the dark navy footer atmosphere */
+  filter: brightness(0.9) saturate(1.1);
+}
+
+/* Dark overlay that sits above the video — the text is cut from it */
+.vyom-video-brand-text-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The footer bg color surrounds the letters — creates "video inside letters" illusion */
+  background: #17324D;
+  /* The text is carved out of this dark layer, revealing the video underneath */
+}
+
+/* Giant text carved out of the dark overlay using destination-out in a canvas.
+   We use mix-blend-mode: destination-out on the text to erase the overlay */
+.vyom-video-brand-text-mask > .vyom-giant-brand-text {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(3rem, 14.2vw, 12rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-block;
+
+  /* Transparent text punches hole through the dark overlay */
+  color: transparent;
+  /* Erase the dark overlay where the letters are, revealing video below */
+  mix-blend-mode: destination-out;
+  /* Force solid alpha for clean cut */
+  -webkit-text-fill-color: black;
+  color: black;
+  mix-blend-mode: destination-out;
+}
+
+/* Reduced motion fallback — static text instead of video */
+@media (prefers-reduced-motion: reduce) {
+  .vyom-video-brand-bg {
+    display: none;
+  }
+  .vyom-video-brand-text-mask {
+    background: transparent;
+    position: relative;
+  }
+  .vyom-video-brand-text-mask > .vyom-giant-brand-text {
+    mix-blend-mode: normal;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    background-image: linear-gradient(135deg, #F7F4EC 0%, #D8B878 30%, #8FAF8B 60%, #4F7C78 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.55));
+  }
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .vyom-hero-section {
+    padding-top: 7.5rem;
+  }
+
+  .vyom-floating-navbar {
+    padding: 0.65rem 1.25rem;
+  }
+}

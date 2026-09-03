@@ -16,12 +16,14 @@ type TranslationMap = Record<string, string | Record<string, string>>;
 
 interface LanguageContextType {
     locale: LanguageCode;
+    setLocale: (lang: LanguageCode) => void;
     t: (key: string, vars?: Record<string, string | number>) => string;
     ready: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
     locale: 'en',
+    setLocale: () => {},
     t: (key) => key,
     ready: false,
 });
@@ -168,7 +170,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         return text;
     }, [translations, fallback]);
 
-    const contextValue = useMemo(() => ({ locale, t, ready }), [locale, t, ready]);
+    const contextValue = useMemo(() => ({ locale, setLocale, t, ready }), [locale, setLocale, t, ready]);
 
     return (
         <LanguageContext.Provider value={contextValue}>

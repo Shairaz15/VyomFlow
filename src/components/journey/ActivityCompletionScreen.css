@@ -1,0 +1,172 @@
+/* ActivityCompletionScreen styling */
+
+.completion-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 16px;
+}
+
+.completion-modal-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 24px;
+    padding: 32px 24px 24px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    border: 1px solid #DCE3DF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.completion-icon-wrapper {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #e6f4ea;
+    border: 3px solid #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.check-badge {
+    font-size: 2.2rem;
+    color: #059669;
+    font-weight: 800;
+}
+
+.completion-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #183B56;
+    margin: 0 0 6px;
+}
+
+.completion-subtitle {
+    font-size: 0.98rem;
+    color: #5E6B73;
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.next-activity-preview {
+    width: 100%;
+    background: #F7F8F5;
+    border: 1px solid #DCE3DF;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.next-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #3A9D9B;
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.next-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.next-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.next-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.next-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #183B56;
+    margin: 0;
+}
+
+.next-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 2px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.all-completed-note {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    padding: 14px 16px;
+    border-radius: 16px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+}
+
+.completion-actions {
+    width: 100%;
+}
+
+.continue-btn {
+    width: 100%;
+    padding: 12px 24px;
+    font-size: 1rem;
+}
+
+/* ===== Light Theme "Velora" Moss & Sage Styling Overrides ===== */
+html:not(.dark) .completion-modal-card {
+    background: #FAF8F5 !important;
+    border-color: #E6DFD3 !important;
+    box-shadow: 0 20px 40px rgba(28, 53, 45, 0.08) !important;
+}
+
+html:not(.dark) .completion-icon-wrapper {
+    background: #E2EBE5 !important;
+    border-color: #4F7C78 !important;
+}
+
+html:not(.dark) .check-badge {
+    color: #4F7C78 !important;
+}
+
+html:not(.dark) .completion-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    color: #1C352D !important;
+}
+
+html:not(.dark) .next-activity-preview {
+    background: #F7F4EC !important;
+    border-color: #E6DFD3 !important;
+}
+
+html:not(.dark) .next-label {
+    color: #4F7C78 !important;
+}
+
+html:not(.dark) .next-title {
+    color: #1C352D !important;
+}
+
+html:not(.dark) .all-completed-note {
+    background: #E2EBE5 !important;
+    border-color: #C5D3CD !important;
+    color: #1C352D !important;
+}

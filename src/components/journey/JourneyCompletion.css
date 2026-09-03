@@ -1,0 +1,172 @@
+/* JourneyCompletion styling */
+
+.journey-complete-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    padding: 16px;
+}
+
+.journey-complete-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 28px;
+    padding: 32px 24px 24px;
+    text-align: center;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25);
+    border: 1px solid #DCE3DF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.growth-bloom-header {
+    margin-bottom: 20px;
+}
+
+.bloom-icons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+}
+
+.bloom-arrow {
+    color: #94a3b8;
+    font-size: 1.2rem;
+}
+
+.bloom-active {
+    font-size: 2.4rem;
+}
+
+.journey-complete-title {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #183B56;
+    margin: 0 0 6px;
+}
+
+.journey-complete-subtitle {
+    font-size: 1rem;
+    color: #5E6B73;
+    margin: 0;
+}
+
+.completed-nodes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+    background: #F7F8F5;
+    border: 1px solid #DCE3DF;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+@media (max-width: 480px) {
+    .completed-nodes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.completed-node-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: #183B56;
+    font-weight: 600;
+}
+
+.item-check {
+    color: #059669;
+    font-weight: bold;
+}
+
+.item-icon {
+    font-size: 1.1rem;
+}
+
+.growing-notice {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    padding: 14px 20px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.growing-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #166534;
+    margin: 0 0 4px;
+}
+
+.growing-subtext {
+    font-size: 0.85rem;
+    color: #15803d;
+    margin: 0;
+}
+
+.journey-complete-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 12px;
+}
+
+/* ===== Light Theme "Velora" Moss & Sage Styling Overrides ===== */
+html:not(.dark) .journey-complete-card {
+    background: #FAF8F5 !important;
+    border-color: #E6DFD3 !important;
+    box-shadow: 0 24px 48px rgba(28, 53, 45, 0.08) !important;
+}
+
+html:not(.dark) .journey-complete-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    color: #1C352D !important;
+}
+
+html:not(.dark) .completed-nodes-grid {
+    background: #F7F4EC !important;
+    border-color: #E6DFD3 !important;
+}
+
+html:not(.dark) .completed-node-item {
+    color: #1C352D !important;
+}
+
+html:not(.dark) .item-check {
+    color: #4F7C78 !important;
+}
+
+html:not(.dark) .growing-notice {
+    background: #E2EBE5 !important;
+    border-color: #C5D3CD !important;
+}
+
+html:not(.dark) .growing-text {
+    color: #1C352D !important;
+}
+
+html:not(.dark) .growing-subtext {
+    color: #4F6168 !important;
+}

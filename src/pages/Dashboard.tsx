@@ -16,15 +16,15 @@ import { generateSimulatedData, hasBaseline, getMockBaseline } from "../utils/si
 import { useWeeklyReminder } from "../hooks/useWeeklyReminder";
 import { evaluateLongitudinalDrift } from "../services/statisticalDriftEngine";
 import { generateClinicalAlert } from "../services/clinicalAlertEngine";
-import { evaluateCrossSectionalRisk } from "../services/clinicalModelEngine";
+import { predictCognitiveProfile, type CognitiveModelPrediction } from "../services/clinicalModelEngine";
 import { mapToSessionData, type RawDashboardData } from "../services/dataMapper";
 import { logger } from "../utils/logger";
 import { useLanguage } from "../i18n/LanguageContext";
 import { ClinicalAlertCard } from "../components/dashboard/ClinicalAlertCard";
 import { LongitudinalTrajectoryCard } from "../components/dashboard/LongitudinalTrajectoryCard";
 import { ClinicianReportModal } from "../components/dashboard/ClinicianReportModal";
+import { CognitiveRadarChart } from "../components/dashboard/CognitiveRadarChart";
 import { evaluatePatientTrajectory } from "../services/statisticalDriftEngine";
-import { determineClinicalAlert } from "../services/clinicalAlertService";
 import "./Dashboard.css";
 
 export function Dashboard() {
@@ -46,6 +46,7 @@ export function Dashboard() {
 
     // Clinical Alert & Modal State
     const [clinicalAlert, setClinicalAlert] = useState<any>(null);
+    const [fullPrediction, setFullPrediction] = useState<CognitiveModelPrediction | null>(null);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     // Simulation Controls Toggle
@@ -211,8 +212,6 @@ export function Dashboard() {
         } : undefined
     }), [reactionResults, vmraResults, memoryResults, languageResults, navigationResults, storyResults, patternResults, chartData, latestScores, evaluation, clinicalAlert]);
 
-    const alertDecision = useMemo(() => determineClinicalAlert(alertContext), [alertContext]);
-
     // Fetch Clinical Engine Output (Cross-sectional ONNX + Longitudinal drift)
     useEffect(() => {
         let mounted = true;
@@ -247,11 +246,11 @@ export function Dashboard() {
                         // ignore and use normative defaults
                     }
 
-                    // Cross-sectional risk with full 19-feature NACC biomarker extraction
-                    const crossRisk = await evaluateCrossSectionalRisk(rawData, demographics);
-                    const impairmentRisk = 1 - crossRisk[0]; // 1 - Normal probability
-                    
-                    // Alert engine takes longitudinal trajectory + cross-sectional risk
+                    // Run Multi-Task Clinical Engine across all 72 biomarkers
+                    const cognitivePred = await predictCognitiveProfile(rawData, demographics);
+                    const impairmentRisk = cognitivePred.impairmentRiskScore;
+
+                    // Alert engine evaluates longitudinal drift trajectory + multi-task cross-sectional risk
                     const alertOutput = generateClinicalAlert(
                         driftMetrics ? driftMetrics.overallTrajectory : 'STABLE',
                         impairmentRisk,
@@ -264,17 +263,27 @@ export function Dashboard() {
                         }
                     );
 
-                    // Attach for UI rendering
-                    (alertOutput as any).crossSectionalRisk = crossRisk;
+                    // Attach multi-task model outputs for UI cards
+                    (alertOutput as any).crossSectionalRisk = [
+                        cognitivePred.probabilities.normal,
+                        cognitivePred.probabilities.mci,
+                        cognitivePred.probabilities.dementia
+                    ];
+                    (alertOutput as any).estimatedMoCA = cognitivePred.estimatedMoCA;
+                    (alertOutput as any).cognitiveProfile = cognitivePred;
 
                     if (mounted) {
                         setClinicalAlert(alertOutput);
+                        setFullPrediction(cognitivePred);
                     }
                 } catch (err) {
                     logger.error('Error in clinical engines:', err);
                 }
             } else {
-                if (mounted) setClinicalAlert(null);
+                if (mounted) {
+                    setClinicalAlert(null);
+                    setFullPrediction(null);
+                }
             }
         }
         fetchClinicalAlert();
@@ -326,6 +335,15 @@ export function Dashboard() {
                         <p>{t('dashboard.subtitle')}</p>
                     </div>
                     <div className="header-actions">
+                        <Button
+                            variant="secondary"
+                            onClick={() => window.location.href = "/ml-playground"}
+                            className="playground-btn"
+                            title="Open Multi-Task ML Playground"
+                        >
+                            <Icon name="brain-circuit" size={18} />
+                            ML Playground
+                        </Button>
                         <Button
                             variant="secondary"
                             onClick={() => setShowSimControls(!showSimControls)}
@@ -467,6 +485,19 @@ export function Dashboard() {
                                 </div>
                             </div>
                         )}
+
+                        {fullPrediction && (
+                            <div className="dashboard-radar-section" style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                    <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#cbd5e1' }}>6-Domain Cognitive Radar Envelope</span>
+                                    <Button variant="secondary" onClick={() => setIsReportModalOpen(true)}>
+                                        <Icon name="chart-trend" size={16} />
+                                        Clinician PDF Report
+                                    </Button>
+                                </div>
+                                <CognitiveRadarChart scores={fullPrediction.domainScores} size={280} showNormative={true} />
+                            </div>
+                        )}
                     </Card>
                 )}
 
@@ -545,13 +576,16 @@ export function Dashboard() {
                 )}
 
                 {/* Clinician Summary Report Modal */}
-                <ClinicianReportModal
-                    isOpen={isReportModalOpen}
-                    onClose={() => setIsReportModalOpen(false)}
-                    alertDecision={alertDecision}
-                    evaluation={evaluation}
-                    latestScores={latestScores}
-                />
+                {fullPrediction && (
+                    <ClinicianReportModal
+                        isOpen={isReportModalOpen}
+                        onClose={() => setIsReportModalOpen(false)}
+                        prediction={fullPrediction}
+                        patientAge={70}
+                        patientGender={'Female'}
+                        educationYears={16}
+                    />
+                )}
             </div>
         </PageWrapper>
     );

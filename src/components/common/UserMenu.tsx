@@ -76,6 +76,9 @@ export function UserMenu() {
                     <Link to="/dashboard" className="menu-item" onClick={() => setIsOpen(false)}>
                         {t('common.dashboard')}
                     </Link>
+                    <Link to="/ml-playground" className="menu-item" onClick={() => setIsOpen(false)}>
+                        ⚡ ML Playground
+                    </Link>
                     <Link to="/settings" className="menu-item" onClick={() => setIsOpen(false)}>
                         {t('common.settings')}
                     </Link>

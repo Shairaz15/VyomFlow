@@ -9,13 +9,13 @@ import type { ReactionTestResult } from "../components/tests/reaction/reactionFe
 import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
 import type { VmraAssessmentResult } from "../types/vmraTypes";
+import type { SavtAssessmentResult } from "../types/savtTypes";
 import type { StoryAssessmentResult } from "../types/storyTypes";
 import type { ImmersiveNavigationResult } from "../types/navigationTypes";
 import { logger } from "../utils/logger";
 import {
     loadResultsFromFirestore,
     saveResultToFirestore,
-    upsertResultToFirestore,
     clearAllFirestoreResults,
     clearFirestoreResults,
     isUserAuthenticated,
@@ -37,8 +37,8 @@ function safeJsonParse<T>(value: string | null, fallback: T): T {
     }
 }
 
-/** Get a stable ISO date key (YYYY-MM-DD) for "best of day" comparisons */
-function getDateKey(timestamp: Date | string): string {
+/** Get a stable ISO date key (YYYY-MM-DD) */
+export function getDateKey(timestamp: Date | string): string {
     const d = timestamp instanceof Date ? timestamp : new Date(timestamp);
     return d.toISOString().split("T")[0];
 }
@@ -57,6 +57,7 @@ export const STORAGE_KEYS = {
     patternResults: "vyomflow_pattern_results",
     languageResults: "vyomflow_language_results",
     vmraResults: "vyomflow_vmra_results",
+    attentionResults: "vyomflow_attention_results",
     storyResults: "vyomflow_story_results",
     navigationResults: "vyomflow_navigation_results",
     lastSession: "vyomflow_last_session",
@@ -72,6 +73,7 @@ export async function clearAllTestData(): Promise<void> {
     localStorage.removeItem(STORAGE_KEYS.patternResults);
     localStorage.removeItem(STORAGE_KEYS.languageResults);
     localStorage.removeItem(STORAGE_KEYS.vmraResults);
+    localStorage.removeItem(STORAGE_KEYS.attentionResults);
     localStorage.removeItem(STORAGE_KEYS.storyResults);
     localStorage.removeItem(STORAGE_KEYS.navigationResults);
     localStorage.removeItem(STORAGE_KEYS.lastSession);
@@ -251,23 +253,19 @@ export function useReactionResults() {
         };
     }, [loadResults]);
 
-    // Save a new result (Best of Day logic)
+    // Save a new result (Append or update existing session)
     const saveResult = useCallback((result: ReactionTestResult) => {
         setResults((prev) => {
-            const today = getDateKey(result.timestamp);
             const existingIndex = prev.findIndex(
-                (r) => getDateKey(r.timestamp) === today
+                (r) => (r.sessionId && result.sessionId && r.sessionId === result.sessionId) ||
+                       (new Date(r.timestamp).getTime() === new Date(result.timestamp).getTime())
             );
 
             let updated: ReactionTestResult[];
 
             if (existingIndex !== -1) {
-                if (result.aggregates.avg < prev[existingIndex].aggregates.avg) {
-                    updated = [...prev];
-                    updated[existingIndex] = result;
-                } else {
-                    return prev;
-                }
+                updated = [...prev];
+                updated[existingIndex] = result;
             } else {
                 updated = [...prev, result];
             }
@@ -277,9 +275,8 @@ export function useReactionResults() {
             try {
                 localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify(updated));
                 if (isUserAuthenticated()) {
-                    // Upsert with date key so Firestore mirrors best-of-day logic
-                    upsertResultToFirestore("reaction_results", result, today).catch((e) =>
-                        logger.error("Firestore upsert failed", e)
+                    saveResultToFirestore("reaction_results", result).catch((e) =>
+                        logger.error("Firestore save failed", e)
                     );
                 }
             } catch (error) {
@@ -394,23 +391,18 @@ export function useMemoryResults() {
         };
     }, [loadResults]);
 
-    // Save a new result (Best of Day logic)
+    // Save a new result (Append or update existing session)
     const saveResult = useCallback((result: MemoryTestResult) => {
         setResults((prev) => {
-            const today = getDateKey(result.timestamp);
             const existingIndex = prev.findIndex(
-                (r) => getDateKey(r.timestamp) === today
+                (r) => new Date(r.timestamp).getTime() === new Date(result.timestamp).getTime()
             );
 
             let updated: MemoryTestResult[];
 
             if (existingIndex !== -1) {
-                if (result.accuracy > prev[existingIndex].accuracy) {
-                    updated = [...prev];
-                    updated[existingIndex] = result;
-                } else {
-                    return prev;
-                }
+                updated = [...prev];
+                updated[existingIndex] = result;
             } else {
                 updated = [...prev, result];
             }
@@ -420,8 +412,8 @@ export function useMemoryResults() {
             try {
                 localStorage.setItem(STORAGE_KEYS.memoryResults, JSON.stringify(updated));
                 if (isUserAuthenticated()) {
-                    upsertResultToFirestore("memory_results", result, today).catch((e) =>
-                        logger.error("Firestore upsert failed", e)
+                    saveResultToFirestore("memory_results", result).catch((e) =>
+                        logger.error("Firestore save failed", e)
                     );
                 }
             } catch (error) {
@@ -595,7 +587,22 @@ export function useVmraResults() {
 
     const saveResult = useCallback((result: VmraAssessmentResult) => {
         setResults((prev) => {
-            const updated = trimResults([...prev, result]);
+            const existingIndex = prev.findIndex(
+                (r) => (r.sessionId && result.sessionId && r.sessionId === result.sessionId) ||
+                       (new Date(r.timestamp).getTime() === new Date(result.timestamp).getTime())
+            );
+
+            let updated: VmraAssessmentResult[];
+
+            if (existingIndex !== -1) {
+                updated = [...prev];
+                updated[existingIndex] = result;
+            } else {
+                updated = [...prev, result];
+            }
+
+            updated = trimResults(updated);
+
             try {
                 localStorage.setItem(STORAGE_KEYS.vmraResults, JSON.stringify(updated));
                 if (isUserAuthenticated()) {
@@ -630,6 +637,110 @@ export function useVmraResults() {
         getLatestResult,
         getSessionCount,
         getPreviousAccuracies,
+    };
+}
+
+/**
+/**
+ * Hook for managing SAVT Attention assessment results.
+ * Firestore-first for authenticated users, localStorage fallback for demo mode.
+ */
+export function useAttentionResults() {
+    const [results, setResults] = useState<SavtAssessmentResult[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const loadResults = useCallback(async (mounted: { current: boolean }) => {
+        try {
+            if (isUserAuthenticated()) {
+                const firestoreResults = await loadResultsFromFirestore<SavtAssessmentResult>(
+                    "attention_results"
+                );
+                if (mounted.current) {
+                    setResults(firestoreResults);
+                    localStorage.setItem(
+                        STORAGE_KEYS.attentionResults,
+                        JSON.stringify(trimResults(firestoreResults))
+                    );
+                }
+            } else {
+                const parsed = safeJsonParse<SavtAssessmentResult[]>(
+                    localStorage.getItem(STORAGE_KEYS.attentionResults),
+                    []
+                );
+                if (mounted.current && parsed.length > 0) {
+                    const withDates = parsed.map((r) => ({
+                        ...r,
+                        timestamp: new Date(r.timestamp),
+                    }));
+                    setResults(withDates);
+                }
+            }
+        } catch (error) {
+            logger.error("Failed to load attention results:", error);
+        } finally {
+            if (mounted.current) setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const mounted = { current: true };
+        loadResults(mounted);
+
+        const unsubscribe = onAuthStateChanged(auth, () => {
+            if (mounted.current) {
+                setIsLoading(true);
+                loadResults(mounted);
+            }
+        });
+
+        return () => {
+            mounted.current = false;
+            unsubscribe();
+        };
+    }, [loadResults]);
+
+    const saveResult = useCallback((result: SavtAssessmentResult) => {
+        setResults((prev) => {
+            const existingIndex = prev.findIndex(
+                (r) => (r.sessionId && result.sessionId && r.sessionId === result.sessionId) ||
+                       (new Date(r.timestamp).getTime() === new Date(result.timestamp).getTime())
+            );
+
+            let updated: SavtAssessmentResult[];
+
+            if (existingIndex !== -1) {
+                updated = [...prev];
+                updated[existingIndex] = result;
+            } else {
+                updated = [...prev, result];
+            }
+
+            updated = trimResults(updated);
+
+            try {
+                localStorage.setItem(STORAGE_KEYS.attentionResults, JSON.stringify(updated));
+                if (isUserAuthenticated()) {
+                    saveResultToFirestore("attention_results", result).catch((e) =>
+                        logger.error("Firestore save failed", e)
+                    );
+                }
+            } catch (error) {
+                logger.error("Failed to save attention result:", error);
+            }
+            return updated;
+        });
+    }, []);
+
+    const getLatestResult = useCallback((): SavtAssessmentResult | null => {
+        if (results.length === 0) return null;
+        return results[results.length - 1];
+    }, [results]);
+
+    return {
+        results,
+        isLoading,
+        saveResult,
+        getLatestResult,
     };
 }
 
@@ -808,5 +919,3 @@ export function useNavigationResults() {
         getLatestResult,
     };
 }
-
-

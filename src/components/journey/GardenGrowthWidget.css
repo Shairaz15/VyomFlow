@@ -1,0 +1,120 @@
+/* GardenGrowthWidget styling */
+
+.growth-widget-card {
+    background: #ffffff;
+    border: 1px solid #DCE3DF;
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 16px rgba(24, 59, 86, 0.05);
+    margin-top: 24px;
+}
+
+.growth-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.growth-widget-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.growth-hero-icon {
+    font-size: 2.4rem;
+    line-height: 1;
+}
+
+.growth-stage-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #183B56;
+    margin: 0;
+}
+
+.growth-stage-subtitle {
+    font-size: 0.85rem;
+    color: #5E6B73;
+    margin: 2px 0 0;
+}
+
+.growth-counter-badge {
+    background: #e6f4ea;
+    color: #059669;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.growth-milestones {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    background: #F7F8F5;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid #DCE3DF;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+    .growth-milestones {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.milestone-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 6px 4px;
+    border-radius: 10px;
+    transition: opacity 0.2s;
+}
+
+.milestone-item.is-unlocked {
+    opacity: 1;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.milestone-item.is-locked {
+    opacity: 0.45;
+    filter: grayscale(0.8);
+}
+
+.milestone-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.milestone-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #183B56;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.milestone-min {
+    font-size: 0.68rem;
+    color: #64748b;
+}
+
+.growth-note {
+    font-size: 0.82rem;
+    color: #5E6B73;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}

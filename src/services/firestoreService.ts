@@ -24,7 +24,8 @@ export type ResultCollectionName =
     | "language_results"
     | "vmra_results"
     | "story_results"
-    | "navigation_results";
+    | "navigation_results"
+    | "attention_results";
 
 /**
  * Check if the current user is authenticated.
@@ -162,6 +163,7 @@ export async function clearAllFirestoreResults(): Promise<void> {
         "vmra_results",
         "story_results",
         "navigation_results",
+        "attention_results",
     ];
     await Promise.all(collections.map((c) => clearFirestoreResults(c)));
 }

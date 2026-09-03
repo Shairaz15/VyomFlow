@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Icon, UserMenu, GoogleSignInButton } from "../common";
+import { ThemeToggle } from "../common/ThemeToggle";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { FOOTER_DISCLAIMER } from "../../ethics/disclaimer";
-import brainLogo from "../../assets/logo.png";
 import "./PageWrapper.css";
 
 interface PageWrapperProps {
@@ -37,7 +37,7 @@ export function PageWrapper({
                     <div className="container">
                         <a href="/" className="logo">
                             <img
-                                src={brainLogo}
+                                src="/logo.png"
                                 alt="VyomFlow Logo"
                                 className="logo-img"
                             />
@@ -60,7 +60,8 @@ export function PageWrapper({
                             </a>
                         </nav>
                         {/* User Profile Menu or Sign In Button */}
-                        <div className="header-auth">
+                        <div className="header-auth" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <ThemeToggle />
                             {loading ? (
                                 <div className="auth-loading" />
                             ) : isAuthenticated ? (

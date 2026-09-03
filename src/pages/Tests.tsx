@@ -1,169 +1,168 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, Button, Icon, GoogleSignInButton } from "../components/common";
-import type { IconName } from "../components/common";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Button } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
-import { useLanguage } from "../i18n/LanguageContext";
 import { PageWrapper } from "../components/layout";
+import { useJourneyState, JOURNEY_NODES, type ActivityId, type JourneyNodeInfo } from "../hooks/useJourneyState";
+import { JourneyMap } from "../components/journey/JourneyMap";
+import { ActivityCompletionScreen } from "../components/journey/ActivityCompletionScreen";
+import { JourneyCompletion } from "../components/journey/JourneyCompletion";
+import { ActivityIntroModal } from "../components/journey/ActivityIntroModal";
 import "./Tests.css";
-
-type TestType = "memory" | "reaction" | "pattern" | "language" | "attention" | "story" | "navigation";
-
-interface TestInfo {
-    id: TestType;
-    title: string;
-    description: string;
-    iconName: IconName;
-    duration: string;
-}
 
 export function Tests() {
     const navigate = useNavigate();
-    const [selectedTest, setSelectedTest] = useState<TestType | null>(null);
-    const { isAuthenticated, loading } = useAuth();
-    const { t } = useLanguage();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { user } = useAuth();
 
-    const TESTS: TestInfo[] = [
-        {
-            id: "story",
-            title: "Story Narration Recall",
-            description: "Listen to a narrated story in your language and retell it to assess episodic memory, listening comprehension, and narrative flow.",
-            iconName: "story",
-            duration: "5 min",
-        },
-        {
-            id: "memory",
-            title: t('tests.visualMemory'),
-            description: t('tests.visualMemoryDesc'),
-            iconName: "memory",
-            duration: t('landing.duration', { min: '2' }),
-        },
-        {
-            id: "reaction",
-            title: t('tests.reactionTime'),
-            description: t('tests.reactionTimeDesc'),
-            iconName: "reaction",
-            duration: t('landing.duration', { min: '1' }),
-        },
-        {
-            id: "pattern",
-            title: t('tests.patternRecognition'),
-            description: t('tests.patternRecognitionDesc'),
-            iconName: "pattern",
-            duration: t('landing.duration', { min: '2' }),
-        },
-        {
-            id: "language",
-            title: t('tests.languageTask'),
-            description: t('tests.languageTaskDesc'),
-            iconName: "language",
-            duration: t('landing.duration', { min: '2' }),
-        },
-        {
-            id: "attention",
-            title: t('tests.sustainedAttention'),
-            description: t('tests.sustainedAttentionDesc'),
-            iconName: "attention",
-            duration: t('landing.duration', { min: '3' }),
-        },
-        {
-            id: "navigation",
-            title: "Immersive Navigation",
-            description: "Watch a real-world walking video from A to H, then navigate back by choosing directions at each intersection. Measures spatial memory, route learning, and executive function.",
-            iconName: "navigation",
-            duration: "5 min",
-        },
-    ];
+    const {
+        completedActivityIds,
+        completedCount,
+        totalCount,
+        activeNodeId,
+        isJourneyComplete,
+    } = useJourneyState();
 
-    const handleStartTest = (testId: TestType) => {
-        if (testId === "pattern") {
-            navigate(`/tests/pattern`);
-        } else if (testId === "attention") {
-            navigate(`/test/attention`);
+    // Modals state
+    const [completedActivityToShow, setCompletedActivityToShow] = useState<ActivityId | null>(null);
+    const [showJourneyCompleteModal, setShowJourneyCompleteModal] = useState(false);
+    const [previewNode, setPreviewNode] = useState<JourneyNodeInfo | null>(null);
+
+    // Check query params for completion notification
+    useEffect(() => {
+        const completedParam = searchParams.get("completed") as ActivityId | null;
+        if (completedParam) {
+            setCompletedActivityToShow(completedParam);
+            // Clear URL param after reading
+            searchParams.delete("completed");
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
+
+    // Handle greeting based on time of day
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        const userName = user?.displayName?.split(" ")[0] || "Participant";
+        if (hour < 12) return `Good morning, ${userName} 👋`;
+        if (hour < 18) return `Good afternoon, ${userName} 👋`;
+        return `Good evening, ${userName} 👋`;
+    };
+
+    const activeNode = JOURNEY_NODES.find((n) => n.id === activeNodeId) || JOURNEY_NODES[0];
+
+    const handlePrimaryCtaClick = () => {
+        if (isJourneyComplete) {
+            setShowJourneyCompleteModal(true);
         } else {
-            navigate(`/test/${testId}`);
+            setPreviewNode(activeNode);
+        }
+    };
+
+    const handleContinueJourney = () => {
+        setCompletedActivityToShow(null);
+        if (isJourneyComplete) {
+            setShowJourneyCompleteModal(true);
+        } else {
+            const nextUncompleted = JOURNEY_NODES.find((n) => !completedActivityIds.has(n.id));
+            if (nextUncompleted) {
+                setPreviewNode(nextUncompleted);
+            }
         }
     };
 
     return (
         <PageWrapper>
-            <div className="tests container">
-                <div className="tests-header animate-fadeInUp">
-                    <h1>{t('tests.title')}</h1>
-                    <p className="text-secondary">
-                        {t('tests.subtitle')}
-                    </p>
-                </div>
-
-                {/* Google Sign-In Section */}
-                <div className="tests-signin-card glass-card animate-fadeIn">
-                    <div className="tests-signin-header">
-                        <Icon name="privacy" size={20} />
-                        <h3>{isAuthenticated ? t('tests.signedIn') : t('tests.saveProgress')}</h3>
-                    </div>
-                    {loading ? (
-                        <p className="tests-signin-text">{t('tests.loading')}</p>
-                    ) : isAuthenticated ? (
-                        <p className="tests-signin-text">
-                            {t('tests.progressSaved')}
-                        </p>
-                    ) : (
-                        <>
-                            <p className="tests-signin-text">
-                                {t('tests.signInPrompt')}
-                            </p>
-                            <GoogleSignInButton />
-                        </>
-                    )}
-                </div>
-
-                <div className="tests-grid">
-                    {TESTS.map((test, index) => (
-                        <Card
-                            key={test.id}
-                            floating
-                            className={`test-card animate-fadeInUp delay-${(index + 1) * 100} ${selectedTest === test.id ? "selected" : ""}`}
-                            onClick={() => setSelectedTest(test.id)}
-                            ariaLabel={`${test.title} test - ${test.description}. Duration: ${test.duration}`}
-                        >
-                            <div className="test-icon-wrapper">
-                                <Icon name={test.iconName} size={36} animated />
-                            </div>
-                            <h3 className="test-title">{test.title}</h3>
-                            <p className="test-description">{test.description}</p>
-                            <div className="test-meta">
-                                <span className="test-duration">
-                                    <Icon name="clock" size={14} />
-                                    {test.duration}
+            <div className="journey-page container animate-fadeIn">
+                {/* Compact Hero Greeting Header */}
+                <header className="journey-hero-compact">
+                    <div className="hero-top-row">
+                        <div className="hero-text-col">
+                            <h1 className="hero-greeting-title">{getGreeting()}</h1>
+                            <div className="hero-sub-row">
+                                <span className="journey-badge-pill">✨ Your VyomFlow Journey</span>
+                                <span className="journey-subtitle-dot">•</span>
+                                <span className="journey-subtitle">
+                                    A few short activities to track your cognitive performance over time.
                                 </span>
                             </div>
+                        </div>
+                        <div className="hero-progress-pill">
+                            <div className="progress-info-row">
+                                <span className="progress-label">Today's progress</span>
+                                <span className="progress-pill-count">
+                                    <strong>{completedCount}</strong> of {totalCount} complete
+                                </span>
+                            </div>
+
+                            {/* Dot progress indicator */}
+                            <div className="dots-mini-row" aria-label={`Progress: ${completedCount} of 7 complete`}>
+                                {JOURNEY_NODES.map((node) => {
+                                    const isDone = completedActivityIds.has(node.id);
+                                    const isCurrent = node.id === activeNodeId;
+                                    return (
+                                        <span
+                                            key={node.id}
+                                            className={`dot-mini ${isDone ? "done" : isCurrent ? "current" : "pending"}`}
+                                            title={`${node.title} (${isDone ? "Completed" : isCurrent ? "Up Next" : "Upcoming"})`}
+                                        />
+                                    );
+                                })}
+                            </div>
+
                             <Button
-                                variant="secondary"
-                                className="test-start-btn"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStartTest(test.id);
-                                }}
-                                aria-label={`${t('tests.startTest')} ${test.title}`}
+                                variant="primary"
+                                onClick={handlePrimaryCtaClick}
+                                className="journey-compact-cta"
                             >
-                                {t('tests.startTest')}
+                                {isJourneyComplete ? (
+                                    <>✓ Journey complete</>
+                                ) : completedCount > 0 ? (
+                                    <>Continue ({activeNode.title}) →</>
+                                ) : (
+                                    <>Start today's journey →</>
+                                )}
                             </Button>
-                        </Card>
-                    ))}
+                        </div>
+                    </div>
+                </header>
+
+                {/* Main Feature: Spacious Organic Journey Map Landscape (70-80% Visual Focus) */}
+                <main className="journey-map-main" aria-label="Journey Map">
+                    <JourneyMap
+                        completedActivityIds={completedActivityIds}
+                        activeNodeId={activeNodeId}
+                    />
+                </main>
+
+                {/* Small Supporting Text Links */}
+                <div className="journey-bottom-links">
+                    <button className="link-chip" onClick={() => navigate("/progress")}>
+                        🌱 My Progress & Growth →
+                    </button>
+                    <button className="link-chip" onClick={() => navigate("/privacy")}>
+                        🔒 Privacy & Data Safeguards →
+                    </button>
                 </div>
 
-                <div className="tests-info glass-card animate-fadeIn delay-500">
-                    <div className="tests-info-header">
-                        <Icon name="info" size={20} />
-                        <h3>{t('tests.guidelinesTitle')}</h3>
-                    </div>
-                    <ul>
-                        <li>{t('tests.guideline1')}</li>
-                        <li>{t('tests.guideline2')}</li>
-                        <li>{t('tests.guideline3')}</li>
-                        <li>{t('tests.guideline4')}</li>
-                    </ul>
-                </div>
+                {/* Modals */}
+                {completedActivityToShow && (
+                    <ActivityCompletionScreen
+                        completedActivityId={completedActivityToShow}
+                        onContinue={handleContinueJourney}
+                    />
+                )}
+
+                {showJourneyCompleteModal && (
+                    <JourneyCompletion onClose={() => setShowJourneyCompleteModal(false)} />
+                )}
+
+                {previewNode && (
+                    <ActivityIntroModal
+                        node={previewNode}
+                        isCompleted={completedActivityIds.has(previewNode.id)}
+                        onClose={() => setPreviewNode(null)}
+                    />
+                )}
             </div>
         </PageWrapper>
     );

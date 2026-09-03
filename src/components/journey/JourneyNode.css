@@ -1,0 +1,269 @@
+/* Level Marker styling for World-Based Journey Map — Extra Large Version */
+
+.world-level-node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+    outline-offset: 4px;
+    touch-action: manipulation;
+    z-index: 5;
+}
+
+.world-level-node:focus-visible {
+    outline: 4px solid var(--color-accent, #3A9D9B);
+    border-radius: 50%;
+}
+
+.world-level-node:hover {
+    transform: scale(1.1) translateY(-4px);
+}
+
+/* Step Badge — Large & Prominent */
+.level-step-badge {
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-58px);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--color-brand-primary, #183B56);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    border: 2px solid #ffffff;
+}
+
+/* Halo Pulse for Active Node */
+.level-halo-pulse {
+    position: absolute;
+    top: -6px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: rgba(58, 157, 155, 0.38);
+    animation: levelHaloPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    z-index: 1;
+}
+
+@keyframes levelHaloPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scale(1.35);
+        opacity: 0.15;
+    }
+}
+
+/* Embedded Level Circle Marker — Massive & Eye-Catching */
+.level-circle-marker {
+    position: relative;
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    background: var(--bg-surface, #ffffff);
+    border: 5px solid #DCE3DF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    box-shadow: 0 10px 30px rgba(24, 59, 86, 0.16);
+    transition: all 0.25s ease;
+}
+
+/* Giant Icon Inside Level Circle */
+.level-emoji-icon {
+    font-size: 3.6rem;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18));
+}
+
+/* Status Icon Badge — Large Indicator */
+.level-status-icon-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-surface, #ffffff);
+    border: 3px solid #DCE3DF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    z-index: 3;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.status-symbol.done {
+    color: #059669;
+}
+
+.status-symbol.active {
+    color: #3A9D9B;
+}
+
+.status-symbol.upcoming {
+    color: #94a3b8;
+}
+
+/* Node States */
+.world-level-node.is-completed .level-circle-marker {
+    background: #f0fdf4;
+    border-color: #059669;
+}
+
+[data-theme="dark"] .world-level-node.is-completed .level-circle-marker {
+    background: #064e3b;
+    border-color: #10b981;
+}
+
+.world-level-node.is-active .level-circle-marker {
+    transform: scale(1.12);
+    border-width: 6px;
+    border-color: #3A9D9B;
+    box-shadow: 0 14px 36px rgba(58, 157, 155, 0.45);
+}
+
+/* Destination Name Pill — Bold & High Visibility */
+.level-title-pill {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 18px;
+    background: var(--bg-surface, #ffffff);
+    border: 2px solid var(--glass-border, rgba(220, 227, 223, 0.9));
+    border-radius: 20px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+    z-index: 3;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .level-title-pill {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.level-title-text {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-text-primary, #183B56);
+}
+
+.level-upnext-indicator {
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: #3A9D9B;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.level-completed-indicator {
+    font-size: 0.85rem;
+    color: #059669;
+    font-weight: 800;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .world-level-node {
+        transition: none;
+    }
+    .world-level-node:hover {
+        transform: none;
+    }
+    .level-halo-pulse {
+        animation: none;
+    }
+}
+
+/* ===== Light Theme "Velora" Moss & Sage Styling Overrides ===== */
+html:not(.dark) .world-level-node.is-completed .level-circle-marker {
+    background: #E2EBE5 !important; /* Soft Sage Background */
+    border-color: #4F7C78 !important; /* Moss Green Border */
+}
+
+html:not(.dark) .world-level-node.is-active .level-circle-marker {
+    background: #FAF8F5 !important; /* Cream Background */
+    border-color: #1C352D !important; /* Dark Moss Green Border */
+    border-width: 6px !important;
+}
+
+html:not(.dark) .world-level-node:not(.is-completed):not(.is-active) .level-circle-marker {
+    background: #FAF8F5 !important; /* Soft Warm Gray/Sand Background */
+    border-color: #D8CBB8 !important; /* Light Sand Border */
+}
+
+html:not(.dark) .level-step-badge {
+    background: #D8B878 !important; /* Gold step badge */
+    color: #1C352D !important; /* Moss green number */
+    border-color: #FAF8F5 !important;
+    box-shadow: 0 4px 10px rgba(28, 53, 45, 0.1);
+}
+
+html:not(.dark) .level-halo-pulse {
+    background: rgba(79, 124, 120, 0.25);
+}
+
+html:not(.dark) .level-emoji-icon {
+    filter: drop-shadow(0 4px 8px rgba(28, 53, 45, 0.12));
+}
+
+html:not(.dark) .level-status-icon-badge {
+    background: #FAF8F5 !important;
+    border-color: #E2EBE5 !important;
+    box-shadow: 0 3px 8px rgba(28, 53, 45, 0.08);
+}
+
+html:not(.dark) .status-symbol.done {
+    color: #4F7C78;
+}
+
+html:not(.dark) .status-symbol.active {
+    color: #D8B878;
+}
+
+html:not(.dark) .status-symbol.upcoming {
+    color: #8A9A9F;
+}
+
+html:not(.dark) .level-title-pill {
+    background: #FAF8F5 !important;
+    border-color: #E6DFD3 !important;
+    box-shadow: 0 4px 14px rgba(28, 53, 45, 0.05);
+}
+
+html:not(.dark) .level-title-text {
+    color: #1C352D !important;
+    font-weight: 700;
+}
+
+html:not(.dark) .level-upnext-indicator {
+    background: #4F7C78 !important;
+    color: #FAF8F5 !important;
+}
+
+html:not(.dark) .level-completed-indicator {
+    color: #4F7C78 !important;
+}

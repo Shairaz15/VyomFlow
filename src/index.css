@@ -114,6 +114,49 @@
     --hover-lift: translateY(-4px);
 }
 
+/* === Light Theme Overrides (Warm Ivory, Sage & Moss Green "Velora" Style) === */
+html:not(.dark),
+[data-theme="light"] {
+    --bg-deep: #F7F4EC;        /* Warm Ivory base */
+    --bg-primary: #FAF8F5;     /* Soft warm white card background */
+    --bg-secondary: #EAE5DB;   /* Sand-tinted neutral */
+    --bg-surface: #ffffff;     /* Solid pure white */
+    --bg-glass: rgba(247, 244, 236, 0.9); /* Warm translucent backdrop */
+    --bg-glass-light: rgba(250, 248, 245, 0.7);
+
+    /* Text colors matching Vyom landing page */
+    --color-text-primary: #20313A;   /* Dark slate */
+    --color-text-secondary: #4F6168; /* Slate gray */
+    --color-text-muted: #8A9A9F;     /* Muted sage-slate */
+    --text-glow: none;
+
+    /* Accents matching Vyom landing page and Velora style */
+    --color-accent: #4F7C78;                  /* Vyom Teal / Deep Sage */
+    --color-accent-soft: rgba(79, 124, 120, 0.08);
+    --color-accent-secondary: #8FAF8B;        /* Vyom Sage / Moss Green */
+    --color-accent-secondary-soft: rgba(143, 175, 139, 0.08);
+
+    /* Custom Gradients */
+    --primary-gradient: linear-gradient(135deg, #4F7C78 0%, #8FAF8B 100%);
+    --gradient-accent: linear-gradient(135deg, #4F7C78 0%, #D8B878 100%);
+    --gradient-accent-subtle: linear-gradient(135deg, rgba(79, 124, 120, 0.08) 0%, rgba(143, 175, 139, 0.05) 100%);
+
+    /* Borders & Glass */
+    --glass-bg: rgba(250, 248, 245, 0.95);
+    --glass-border: rgba(23, 50, 77, 0.12);
+    --glass-border-hover: rgba(23, 50, 77, 0.25);
+
+    /* Shadows & Glows */
+    --shadow-sm: 0 1px 3px rgba(32, 49, 58, 0.05);
+    --shadow-card: 0 4px 16px -2px rgba(32, 49, 58, 0.05), 0 2px 6px -2px rgba(32, 49, 58, 0.03);
+    --shadow-lg: 0 12px 32px -4px rgba(32, 49, 58, 0.08);
+
+    --glow-teal: none;
+    --glow-teal-subtle: none;
+    --glow-violet: none;
+    --glow-line: none;
+}
+
 /* === Keyframe Animations === */
 
 /* Antigravity Float - Continuous idle bobbing */

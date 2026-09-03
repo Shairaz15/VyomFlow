@@ -9,7 +9,19 @@ import type { AnomalyResult, BaselineVector } from "./anomalyDetector";
 import type { ExtractedFeatures } from "./featureExtractor";
 import type { RiskLevel } from "../ethics/messagingRules";
 import { RISK_MESSAGES, RISK_LABELS } from "../ethics/messagingRules";
-import type { TrendPrediction } from "../ml/types";
+
+export interface TrendPrediction {
+    direction: 'stable' | 'declining' | 'improving';
+    confidence: number;
+    anomalyProbability: number;
+    domainContributions?: {
+        memory?: number;
+        reaction?: number;
+        pattern?: number;
+        language?: number;
+    };
+    reliabilityFlag: 'high' | 'medium' | 'low';
+}
 
 export interface RiskAnalysis {
     riskLevel: RiskLevel;

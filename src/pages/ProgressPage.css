@@ -1,0 +1,239 @@
+/* Progress Page Styles */
+
+.progress-page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+}
+
+.progress-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    background: var(--color-accent-soft);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+}
+
+.progress-header h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.progress-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+}
+
+.growth-hero-wrapper {
+    margin-bottom: 3rem;
+}
+
+/* Stages Grid */
+.stages-section {
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 1.5rem;
+}
+
+.stages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+}
+
+.stage-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    position: relative;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.stage-card.achieved {
+    opacity: 1;
+    border-color: #3A9D9B;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.stage-card.current {
+    opacity: 1;
+    border-color: #3A9D9B;
+    box-shadow: 0 0 0 2px rgba(58, 157, 155, 0.2);
+}
+
+.stage-icon {
+    font-size: 2.2rem;
+    flex-shrink: 0;
+}
+
+.stage-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 0.2rem;
+}
+
+.stage-req {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+}
+
+.stage-info p {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.stage-checkmark {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #059669;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+/* Today Progress Section */
+.today-progress-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.today-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 1rem;
+}
+
+.today-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.today-count-pill {
+    padding: 0.35rem 0.85rem;
+    background: var(--color-accent-soft);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+.activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.activity-row-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.activity-row-card.completed {
+    background: #e6f4ea;
+    border-color: #bbf7d0;
+}
+
+.activity-row-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.row-step-num {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+}
+
+.row-icon {
+    font-size: 1.5rem;
+}
+
+.activity-row-left h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 0.15rem;
+}
+
+.row-category {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+.status-pill {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+}
+
+.status-pill.done {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-pill.pending {
+    background: var(--bg-surface);
+    color: var(--color-text-muted);
+    border: 1px solid var(--glass-border);
+}
+
+.progress-actions-footer {
+    display: flex;
+    justify-content: center;
+}
