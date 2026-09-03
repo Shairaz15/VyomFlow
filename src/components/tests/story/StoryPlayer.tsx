@@ -117,7 +117,7 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                             target_language_code: languageCode,
                             speaker: 'priya',
                             model: 'bulbul:v3',
-                            pace: 1.0,
+                            pace: 0.85,
                             speech_sample_rate: 22050
                         })
                     });
@@ -134,7 +134,7 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                             target_language_code: languageCode,
                             speaker: 'priya',
                             model: 'bulbul:v3',
-                            pace: 1.0,
+                            pace: 0.85,
                             speech_sample_rate: 22050
                         })
                     });
@@ -156,7 +156,7 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                                 target_language_code: languageCode,
                                 speaker: 'priya',
                                 model: 'bulbul:v3',
-                                pace: 1.0,
+                                pace: 0.85,
                                 speech_sample_rate: 22050
                             })
                         });

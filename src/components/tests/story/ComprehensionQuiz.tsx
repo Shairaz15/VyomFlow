@@ -75,7 +75,7 @@ export function ComprehensionQuiz({ questions, selectedLanguage = 'en-IN', onCom
             </div>
 
             <div className="question-box">
-                <h4>{currentQuestion.questionText}</h4>
+                <h4>{questionDisplayData?.questionText || currentQuestion.questionText}</h4>
             </div>
 
             <div className="options-grid">

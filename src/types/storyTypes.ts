@@ -12,7 +12,8 @@ export type SupportedLanguage =
     | 'kn-IN' 
     | 'bn-IN' 
     | 'mr-IN' 
-    | 'gu-IN';
+    | 'gu-IN'
+    | 'ml-IN';
 
 export interface InformationUnit {
     id: string;

@@ -6,9 +6,9 @@ This document defines the strict workflow for advancing **VyomFlow** using 5-com
 
 ## 📌 Current Tracking State
 
-- **Current CogniTrack Base Commit:** `0616a1826827b5b7b2c56fbe3191991a90c0b0c2` (`0616a18`)
+- **Current CogniTrack Base Commit:** `c35bfe368113da46d9ae9e9745445464b84665cc` (`c35bfe3`)
 - **Date:** `2026-08-03`
-- **Message:** `fix: Rely 100% on Sarvam STT and enhance dual-text matching engine`
+- **Message:** `fix(build): resolve tsconfig compatibility and unused parameter for Vercel deployment`
 - **Target VyomFlow Remote:** `https://github.com/Shairaz15/VyomFlow.git` (`origin/main`)
 
 ---

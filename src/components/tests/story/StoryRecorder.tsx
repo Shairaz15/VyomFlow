@@ -16,11 +16,12 @@ interface StoryRecorderProps {
 
 export function StoryRecorder({ onComplete }: StoryRecorderProps) {
     const [isRecording, setIsRecording] = useState(false);
+    const [isProcessingAudio, setIsProcessingAudio] = useState(false);
     const [timer, setTimer] = useState(0);
-    const [transcript, setTranscript] = useState("");
     const [verbatimTranscript, setVerbatimTranscript] = useState("");
     const [englishTranslation, setEnglishTranslation] = useState("");
     const [detectedLanguage, setDetectedLanguage] = useState("Listening...");
+    const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "error" | "idle">("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -43,14 +44,14 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
         totalPauseDurationMs: 0
     });
 
-    // Auto-scroll transcript box like LanguageAssessment
+    // Auto-scroll transcript box
     useEffect(() => {
         if (transcriptEndRef.current) {
             transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [transcript, verbatimTranscript]);
+    }, [verbatimTranscript, englishTranslation]);
 
-    // Timer logic & unmount cleanup
+    // Timer & unmount cleanup
     useEffect(() => {
         if (isRecording) {
             intervalRef.current = setInterval(() => {
@@ -85,7 +86,7 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
         };
     }, [isRecording]);
 
-    // Convert Float32 PCM to Int16 PCM WAV buffer for WebSocket proxy
+    // Convert Float32 PCM audio to Int16 PCM WAV buffer for Sarvam AI WebSocket
     const convertFloat32ToInt16 = (buffer: Float32Array): ArrayBuffer => {
         let l = buffer.length;
         let buf = new Int16Array(l);
@@ -96,16 +97,23 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
         return buf.buffer;
     };
 
-    // Try starting WebSocket proxy streams (cloud on Render, or local dev)
+    // Try connecting live Sarvam AI WebSocket proxy streams (non-blocking)
     const tryConnectProxyWebSockets = () => {
         try {
+            setConnectionStatus("connecting");
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const proxyBase = isLocalDev 
                 ? 'ws://localhost:5001'
                 : (import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com');
 
+            // 1. Verbatim STT WebSocket stream (Native script)
             const verbatimUrl = `${proxyBase}?model=saaras:v4&language-code=unknown&mode=verbatim&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
             const wsVerbatim = new WebSocket(verbatimUrl);
+
+            wsVerbatim.onopen = () => {
+                console.log("[Sarvam AI] Live Verbatim WebSocket Connected");
+                setConnectionStatus("connected");
+            };
 
             wsVerbatim.onmessage = (event) => {
                 try {
@@ -114,7 +122,6 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                         const text = msg.data?.transcript || '';
                         if (text) {
                             setVerbatimTranscript(prev => prev + (prev ? ' ' : '') + text);
-                            setTranscript(prev => prev + (prev ? ' ' : '') + text);
                         }
                         if (msg.data?.language_code) {
                             setDetectedLanguage(msg.data.language_code);
@@ -123,6 +130,12 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                 } catch {}
             };
 
+            wsVerbatim.onerror = (err) => {
+                console.warn("[Sarvam AI] Verbatim WebSocket error:", err);
+                setConnectionStatus("error");
+            };
+
+            // 2. English Translation STT WebSocket stream
             const translateUrl = `${proxyBase}?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
             const wsTranslate = new WebSocket(translateUrl);
 
@@ -140,12 +153,95 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
 
             wsVerbatimRef.current = wsVerbatim;
             wsTranslateRef.current = wsTranslate;
-        } catch {}
+        } catch (err) {
+            console.warn("[Sarvam AI] WebSocket connection attempt warning:", err);
+            setConnectionStatus("error");
+        }
+    };
+
+    // 100% Authentic Sarvam AI STT & Translation Processing via REST Endpoints
+    const process100PercentSarvamAI = async (audioBlob: Blob) => {
+        setIsProcessingAudio(true);
+        setErrorMessage(null);
+        const totalDurationMs = Date.now() - startTimeRef.current;
+
+        let sarvamNativeScript = "";
+        let sarvamEnglishTranslation = "";
+        let sarvamDetectedLang = "unknown";
+
+        const blobToBase64 = (blob: Blob): Promise<string> => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        };
+
+        try {
+            const base64Audio = await blobToBase64(audioBlob);
+
+            // 1. Sarvam STT Transcription
+            const resSTT = await fetch('/api/sarvam-stt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    audioBase64: base64Audio,
+                    mimeType: audioBlob.type || 'audio/webm',
+                    model: 'saaras:v4',
+                    mode: 'transcribe'
+                }),
+            });
+
+            if (resSTT.ok) {
+                const dataSTT = await resSTT.json();
+                if (dataSTT.transcript) sarvamNativeScript = dataSTT.transcript;
+                if (dataSTT.language_code) sarvamDetectedLang = dataSTT.language_code;
+            }
+
+            // 2. Sarvam Translation to English
+            const resTranslate = await fetch('/api/sarvam-translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    audioBase64: base64Audio,
+                    mimeType: audioBlob.type || 'audio/webm',
+                    model: 'saaras:v3'
+                }),
+            });
+
+            if (resTranslate.ok) {
+                const dataTranslate = await resTranslate.json();
+                if (dataTranslate.transcript) sarvamEnglishTranslation = dataTranslate.transcript;
+                if (dataTranslate.language_code && sarvamDetectedLang === "unknown") {
+                    sarvamDetectedLang = dataTranslate.language_code;
+                }
+            }
+        } catch (err: any) {
+            console.error("Sarvam Serverless Processing Error:", err);
+        }
+
+        const finalVerbatim = sarvamNativeScript || verbatimTranscript || "Story retold by user.";
+        const finalEnglish = sarvamEnglishTranslation || englishTranslation || finalVerbatim;
+
+        if (sarvamDetectedLang !== "unknown") {
+            setDetectedLanguage(sarvamDetectedLang);
+        }
+
+        setIsProcessingAudio(false);
+
+        onComplete({
+            transcript: finalVerbatim,
+            verbatimTranscript: finalVerbatim,
+            englishTranslation: finalEnglish,
+            durationMs: totalDurationMs,
+            pauseCount: pauseTrackerRef.current.pauseCount,
+            pauseDurationMs: pauseTrackerRef.current.totalPauseDurationMs
+        });
     };
 
     const startRecording = async () => {
         try {
-            setTranscript("");
             setVerbatimTranscript("");
             setEnglishTranslation("");
             setErrorMessage(null);
@@ -161,29 +257,37 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                 totalPauseDurationMs: 0
             };
 
+            // Request Microphone Stream
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } 
             });
 
+            // MediaRecorder for Sarvam AI Audio Processing
             let mimeType = 'audio/webm';
             if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
                 mimeType = 'audio/webm;codecs=opus';
             } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
                 mimeType = 'audio/mp4';
+            } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+                mimeType = 'audio/aac';
             }
 
             const mediaRecorder = new MediaRecorder(stream, { mimeType });
             mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data && event.data.size > 0) {
                     audioChunksRef.current.push(event.data);
                 }
             };
+
             mediaRecorder.start(1000);
 
+            // Connect Live Sarvam AI WebSockets (non-blocking)
             tryConnectProxyWebSockets();
 
-            // Web Audio API PCM Streaming & VAD Pause Tracking
+            // Web Audio API PCM Live Streaming to Sarvam AI WebSocket
             try {
                 const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
                 const audioCtx = new AudioCtx({ sampleRate: 16000 });
@@ -223,25 +327,33 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                         pauseTrackerRef.current.lastStateChangeTime = now;
                     }
 
-                    // Stream base64 PCM frames to open WebSockets
-                    if ((wsVerbatimRef.current && wsVerbatimRef.current.readyState === WebSocket.OPEN) ||
-                        (wsTranslateRef.current && wsTranslateRef.current.readyState === WebSocket.OPEN)) {
-                        
-                        const int16Buffer = convertFloat32ToInt16(inputData);
-                        const bytes = new Uint8Array(int16Buffer);
-                        let binary = '';
-                        for (let i = 0; i < bytes.byteLength; i++) {
-                            binary += String.fromCharCode(bytes[i]);
-                        }
-                        const base64Data = btoa(binary);
-
-                        if (wsVerbatimRef.current && wsVerbatimRef.current.readyState === WebSocket.OPEN) {
-                            wsVerbatimRef.current.send(JSON.stringify({ audio_data: base64Data }));
-                        }
-                        if (wsTranslateRef.current && wsTranslateRef.current.readyState === WebSocket.OPEN) {
-                            wsTranslateRef.current.send(JSON.stringify({ audio_data: base64Data }));
-                        }
+                    // Stream base64 Int16 PCM frames to Sarvam WebSockets if open
+                    if ((!wsVerbatimRef.current || wsVerbatimRef.current.readyState !== WebSocket.OPEN) &&
+                        (!wsTranslateRef.current || wsTranslateRef.current.readyState !== WebSocket.OPEN)) {
+                        return;
                     }
+
+                    const int16Buffer = convertFloat32ToInt16(inputData);
+                    const bytes = new Uint8Array(int16Buffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.byteLength; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    const base64Data = btoa(binary);
+
+                    const payload = JSON.stringify({
+                        audio: {
+                            data: base64Data,
+                            sample_rate: '16000',
+                            encoding: 'audio/wav',
+                        },
+                    });
+
+                    [wsVerbatimRef.current, wsTranslateRef.current].forEach(ws => {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(payload);
+                        }
+                    });
                 };
 
                 source.connect(processor);
@@ -251,16 +363,15 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
             }
 
             setIsRecording(true);
-        } catch (err: any) {
+        } catch {
             setErrorMessage("Microphone access is required for story recall assessment.");
         }
     };
 
-    const stopRecording = async () => {
+    const stopRecording = () => {
         if (!isRecording) return;
 
         setIsRecording(false);
-        const totalDurationMs = Date.now() - startTimeRef.current;
 
         if (processorRef.current) {
             try { processorRef.current.disconnect(); } catch {}
@@ -272,63 +383,42 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
             try { audioContextRef.current.close(); } catch {}
         }
 
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-            mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-        }
-
-        if (wsVerbatimRef.current) try { wsVerbatimRef.current.close(); } catch {}
-        if (wsTranslateRef.current) try { wsTranslateRef.current.close(); } catch {}
-
-        // Fallback: If WebSockets didn't return text, use Sarvam AI REST Speech-to-Text API
-        let finalVerbatim = verbatimTranscript || transcript;
-        let finalEnglish = englishTranslation || finalVerbatim;
-
-        if (!finalVerbatim && audioChunksRef.current.length > 0) {
-            try {
-                const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorderRef.current?.mimeType || 'audio/webm' });
-                const formData = new FormData();
-                formData.append('file', audioBlob, 'recording.webm');
-                formData.append('model', 'saaras:v4');
-                formData.append('language_code', 'unknown');
-
-                const sttRes = await fetch('https://api.sarvam.ai/speech-to-text', {
-                    method: 'POST',
-                    headers: { 'api-subscription-key': SARVAM_API_KEY },
-                    body: formData
-                });
-
-                if (sttRes.ok) {
-                    const sttData = await sttRes.json();
-                    if (sttData.transcript) {
-                        finalVerbatim = sttData.transcript;
-                        finalEnglish = sttData.transcript;
-                    }
-                }
-            } catch (err) {
-                console.warn("[StoryRecorder] Sarvam REST STT fallback error:", err);
+        // Send WebSocket flush frame & close
+        const flushMsg = JSON.stringify({ type: 'flush' });
+        [wsVerbatimRef.current, wsTranslateRef.current].forEach(ws => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try {
+                    ws.send(flushMsg);
+                    ws.close();
+                } catch {}
             }
-        }
-
-        if (!finalVerbatim) {
-            finalVerbatim = "The user completed the story recall exercise.";
-            finalEnglish = finalVerbatim;
-        }
-
-        onComplete({
-            transcript: finalVerbatim,
-            verbatimTranscript: finalVerbatim,
-            englishTranslation: finalEnglish,
-            durationMs: totalDurationMs,
-            pauseCount: pauseTrackerRef.current.pauseCount,
-            pauseDurationMs: pauseTrackerRef.current.totalPauseDurationMs
         });
+        wsVerbatimRef.current = null;
+        wsTranslateRef.current = null;
+
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            const currentMime = mediaRecorderRef.current.mimeType || 'audio/webm';
+            mediaRecorderRef.current.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: currentMime });
+                process100PercentSarvamAI(audioBlob);
+            };
+            try {
+                mediaRecorderRef.current.stop();
+                mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+            } catch {
+                const audioBlob = new Blob(audioChunksRef.current, { type: currentMime });
+                process100PercentSarvamAI(audioBlob);
+            }
+        } else {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            process100PercentSarvamAI(audioBlob);
+        }
     };
 
     return (
         <Card className="phase-card active-assessment animate-fadeIn">
             <div className="phase-badge">
-                ⚡ 100% Sarvam AI Engine (saaras:v4)
+                ⚡ 100% Sarvam AI STT & Translation Engine (saaras:v4)
             </div>
             <h2>Story Retelling Phase</h2>
             <p className="text-secondary text-sm mb-4">
@@ -341,7 +431,7 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                     ⏱️ {timer}s
                 </div>
                 <div className="text-xs bg-slate-900 border border-purple-500/40 text-purple-300 px-3 py-1.5 rounded-full font-mono">
-                    🌐 {detectedLanguage}
+                    🌐 {detectedLanguage} {connectionStatus === "connected" ? "• Live WebSocket" : ""}
                 </div>
             </div>
 
@@ -355,21 +445,25 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                         <div className="visual-bar"></div>
                         <div className="visual-bar"></div>
                     </>
+                ) : isProcessingAudio ? (
+                    <div className="flex items-center gap-2 text-purple-400">
+                        <div className="spinner text-xs" /> Processing Sarvam AI Transcription...
+                    </div>
                 ) : (
                     <div className="text-secondary">Ready to record</div>
                 )}
             </div>
 
-            {/* Live Transcript Display - Identical to LanguageAssessment */}
+            {/* Live Sarvam AI WebSocket Transcript Display */}
             <div 
                 className="transcript-box"
                 role="log"
                 aria-live="polite"
                 aria-label="Speech transcript"
             >
-                {transcript || verbatimTranscript ? (
+                {verbatimTranscript || englishTranslation ? (
                     <div>
-                        <p>{verbatimTranscript || transcript}</p>
+                        <p>{verbatimTranscript}</p>
                         {englishTranslation && (
                             <p className="text-xs text-purple-400 mt-2 border-t border-purple-900/50 pt-2 italic">
                                 🇬🇧 English Translation: {englishTranslation}
@@ -379,7 +473,9 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                 ) : (
                     <span className="transcript-placeholder">
                         {isRecording 
-                            ? "🎙️ Recording in progress... Speak naturally. Sarvam AI will process your native speech and acoustics." 
+                            ? "🎙️ Live Sarvam AI streaming... Speak naturally." 
+                            : isProcessingAudio
+                            ? "⏳ Finalizing transcript with Sarvam AI STT..."
                             : "Click Start Recording to begin speaking..."}
                     </span>
                 )}
@@ -397,9 +493,10 @@ export function StoryRecorder({ onComplete }: StoryRecorderProps) {
                     <Button 
                         onClick={startRecording} 
                         className="record-btn"
+                        disabled={isProcessingAudio}
                         aria-label="Start recording"
                     >
-                        Start Recording
+                        {isProcessingAudio ? "Processing..." : "Start Recording"}
                     </Button>
                 ) : (
                     <Button 

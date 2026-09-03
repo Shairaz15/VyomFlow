@@ -8,7 +8,8 @@ export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
     'kn-IN': 'ಕನ್ನಡ (Kannada)',
     'bn-IN': 'বাংলা (Bengali)',
     'mr-IN': 'मराठी (Marathi)',
-    'gu-IN': 'ગુજરાતી (Gujarati)'
+    'gu-IN': 'ગુજરાતી (Gujarati)',
+    'ml-IN': 'മലയാളം (Malayalam)'
 };
 
 export const STORIES: Story[] = [
@@ -25,10 +26,11 @@ export const STORIES: Story[] = [
             'hi-IN': "रविवार की सुबह, रिया ने बाजार से दो किलो टमाटर और तीन मीठे आम खरीदे। वह अपने पड़ोसी मिस्टर शर्मा से मिली और घर लौटने से पहले पचास रुपये चुकाए।",
             'ta-IN': "ஞாயிற்றுக்கிழமை காலையில், ரியா சந்தையில் இரண்டு கிலோ தக்காளியும் மூன்று இனிப்பு மாம்பழங்களும் வாங்கினார். அவர் தனது அண்டைவீட்டு திரு. சர்மாவைச் சந்தித்து ஐம்பது ரூபாய் செலுத்திவிட்டு வீட்டிற்குத் திரும்பினார்.",
             'te-IN': "ఆదివారం ఉదయం, రియా మార్కెట్‌లో రెండు కిలోల టమాటాలు మరియు మూడు తీపి మామిడిపండ్లను కొనుగోలు చేసింది. ఆమె తన పొరుగున ఉన్న మిస్టర్ శర్మను కలిసి యాభై రూపాయలు చెల్లించి ఇంటికి తిరిగొచ్చింది.",
-            'kn-IN': "ರವಿವಾರ ಬೆಳಿಗ್ಗೆ, ರಿಯಾ ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಎರಡು ಕಿಲೋ ಟೊಮೆಟೊ ಮತ್ತು ಮೂರು ಸಿಹಿ ಮಾವಿನ ಹಣ್ಣುಗಳನ್ನು ಖರೀದಿಸಿದಳು. ಅವಳು ನೆರೆಹೊರೆಯ ಶ್ರೀ ಶರ್ಮಾ ಅವರನ್ನು ಭೇಟಿಯಾಗಿ ಐವತ್ತು ರೂಪಾಯಿ ನೀಡಿ ಮನೆಗೆ ಹಿಂತಿರುಗಿದಳು.",
+            'kn-IN': "ರವಿವಾರ ಬೆಳಿಗ್ಗೆ, ರಿಯಾ ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಎರಡು ಕಿಲೋ ಟೊಮೆಟೊ ಮತ್ತು ಮೂರು ಸಿಹಿ ಮಾವಿನ ಹಣ್ಣುಗಳನ್ನು ಖರೀದಿಸಿದಳು. ಅವಳು ನೆರೆಹೊರೆಯ ಶ್ರೀ ಶರ್ಮಾ ಅವರನ್ನು ಭೇಟಿಯಾಗಿ ಐವತ್ತು ರೂಪಾಯಿ ನೀಡಿದ ನಂತರ ಮನೆಗೆ ಹಿಂತಿರುಗಿದಳು.",
             'bn-IN': "রবিবার সকালে, রিয়া বাজারে গিয়ে দুই কেজি টমেটো এবং তিনটি মিষ্টি আম কিনেছিল। সে তার প্রতিবেশী মিস্টার শর্মার সাথে দেখা করে এবং বাড়ি ফেরার আগে পঞ্চাশ টাকা দিয়েছিল।",
             'mr-IN': "रविवारी सकाळी, रियाने बाजारातून दोन किलो टोमॅटो आणि तीन गोड आंबे विकत घेतले. ती तिचे शेजारी मिस्टर शर्मा यांना भेटली आणि घरी परतण्यापूर्वी पन्नास रुपये दिले.",
-            'gu-IN': "રવિવારે સવારે, રિયાએ બજારમાંથી બે કિલો ટામેટાં અને ત્રણ મીઠી કેરીઓ ખરીદી. તે તેના પાડોશી મિસ્ટર શર્માને મળી અને ઘરે પરત ફરતા પહેલા પચાસ રૂપિયા ચૂકવ્યા."
+            'gu-IN': "રવિવારે સવારે, રિયાએ બજારમાંથી બે કિલો ટામેટાં અને ત્રણ મીઠી કેરીઓ ખરીદી. તે તેના પાડોશી મિસ્ટર શર્માને મળી અને ઘરે પરત ફરતા પહેલા પચાસ રૂપિયા ચૂકવ્યા.",
+            'ml-IN': "ഞായറാഴ്ച രാവിലെ, റിയ മാർക്കറ്റിൽ നിന്ന് രണ്ട് കിലോ തക്കാളിയും മൂന്ന് മധുരമുള്ള മാമ്പഴങ്ങളും വാങ്ങി. അവൾ തന്റെ അയൽവാസിയായ മിസ്റ്റർ ശർമ്മയെ കണ്ട് വീട്ടിലേക്ക് മടങ്ങുന്നതിന് മുൻപ് അമ്പത് രൂപ നൽകി."
         },
         informationUnits: [
             { id: "iu1", description: "Market on Sunday morning", keywords: ["sunday", "morning", "market"], weight: 1 },
@@ -55,7 +57,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ರಿಯಾ ವಾರದ ಯಾವ ದಿನ ಮಾರುಕಟ್ಟೆಗೆ ಹೋದಳು?", options: [{ id: "opt_sun", text: "ರವಿವಾರ" }, { id: "opt_sat", text: "ಶನಿವಾರ" }, { id: "opt_fri", text: "ಶುಕ್ರವಾರ" }, { id: "opt_mon", text: "ಸೋಮವಾರ" }] },
                     'bn-IN': { questionText: "রিয়া সপ্তাহের কোন দিনে বাজারে গিয়েছিল?", options: [{ id: "opt_sun", text: "রবিবার" }, { id: "opt_sat", text: "শনিবার" }, { id: "opt_fri", text: "শুক্রবার" }, { id: "opt_mon", text: "সোমবার" }] },
                     'mr-IN': { questionText: "रिया आठवड्याच्या कोणत्या दिवशी बाजारात गेली होती?", options: [{ id: "opt_sun", text: "रविवार" }, { id: "opt_sat", text: "शनिवार" }, { id: "opt_fri", text: "शुक्रवार" }, { id: "opt_mon", text: "सोमवार" }] },
-                    'gu-IN': { questionText: "રિયા અઠવાડિયાના કયા દિવસે બજારમાં ગઈ હતી?", options: [{ id: "opt_sun", text: "રવિવાર" }, { id: "opt_sat", text: "શનિવાર" }, { id: "opt_fri", text: "શુક્રવાર" }, { id: "opt_mon", text: "સોમવાર" }] }
+                    'gu-IN': { questionText: "રિયા અઠવાડિયાના કયા દિવસે બજારમાં ગઈ હતી?", options: [{ id: "opt_sun", text: "રવિવાર" }, { id: "opt_sat", text: "શનિવાર" }, { id: "opt_fri", text: "શુક્રવાર" }, { id: "opt_mon", text: "સોમવાર" }] },
+                    'ml-IN': { questionText: "ആഴ്ചയിലെ ഏത് ദിവസമാണ് റിയ മാർക്കറ്റിൽ പോയത്?", options: [{ id: "opt_sun", text: "ഞായറാഴ്ച" }, { id: "opt_sat", text: "ശനിയാഴ്ച" }, { id: "opt_fri", text: "വെള്ളിയാഴ്ച" }, { id: "opt_mon", text: "തിങ്കളാഴ്ച" }] }
                 }
             },
             {
@@ -76,7 +79,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ರಿಯಾ ಎಷ್ಟು ಮಾವಿನ ಹಣ್ಣುಗಳನ್ನು ಖರೀದಿಸಿದಳು?", options: [{ id: "opt_3", text: "ಮೂರು" }, { id: "opt_2", text: "ಎರಡು" }, { id: "opt_5", text: "ಐದು" }, { id: "opt_4", text: "ನಾಲ್ಕು" }] },
                     'bn-IN': { questionText: "রিয়া কয়টি আম কিনেছিল?", options: [{ id: "opt_3", text: "তিনটি" }, { id: "opt_2", text: "দুটি" }, { id: "opt_5", text: "পাঁচটি" }, { id: "opt_4", text: "চারটি" }] },
                     'mr-IN': { questionText: "रियाने किती आंबे विकत घेतले?", options: [{ id: "opt_3", text: "तीन" }, { id: "opt_2", text: "दोन" }, { id: "opt_5", text: "पाच" }, { id: "opt_4", text: "चार" }] },
-                    'gu-IN': { questionText: "રિયાએ કેટલી કેરીઓ ખરીદી?", options: [{ id: "opt_3", text: "ત્રણ" }, { id: "opt_2", text: "બે" }, { id: "opt_5", text: "પાંચ" }, { id: "opt_4", text: "ચાર" }] }
+                    'gu-IN': { questionText: "રિયાએ કેટલી કેરીઓ ખરીદી?", options: [{ id: "opt_3", text: "ત્રણ" }, { id: "opt_2", text: "બે" }, { id: "opt_5", text: "પાંચ" }, { id: "opt_4", text: "ચાર" }] },
+                    'ml-IN': { questionText: "റിയ എത്ര മാമ്പഴങ്ങളാണ് വാങ്ങിയത്?", options: [{ id: "opt_3", text: "മൂന്ന്" }, { id: "opt_2", text: "രണ്ട്" }, { id: "opt_5", text: "അഞ്ച്" }, { id: "opt_4", text: "നാല്" }] }
                 }
             },
             {
@@ -97,7 +101,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ಮೂಲೆಯ ಅಂಗಡಿಯಲ್ಲಿ ರಿಯಾ ಯಾರನ್ನು ಭೇಟಿಯಾದಳು?", options: [{ id: "opt_sharma", text: "ಅವಳ ನೆರೆಹೊರೆಯ ಶ್ರೀ ಶರ್ಮಾ" }, { id: "opt_teacher", text: "ಅವಳ ಶಾಲಾ ಶಿಕ್ಷಕರು" }, { id: "opt_brother", text: "ಅವಳ ತಮ್ಮ" }, { id: "opt_doctor", text: "ಅವಳ ಕುಟುಂಬದ ವೈದ್ಯರು" }] },
                     'bn-IN': { questionText: "কোণের দোকানে রিয়ার সাথে কার দেখা হয়েছিল?", options: [{ id: "opt_sharma", text: "তার প্রতিবেশী মিস্টার শর্মা" }, { id: "opt_teacher", text: "তার স্কুলের শিক্ষক" }, { id: "opt_brother", text: "তার ছোট ভাই" }, { id: "opt_doctor", text: "তার পারিবারিক ডাক্তার" }] },
                     'mr-IN': { questionText: "कोपऱ्यावरील दुकानावर रिया कोणाला भेटली?", options: [{ id: "opt_sharma", text: "तिचे शेजारी मिस्टर शर्मा" }, { id: "opt_teacher", text: "तिच्या शाळेतील शिक्षक" }, { id: "opt_brother", text: "तिचा लहान भाऊ" }, { id: "opt_doctor", text: "तिचे कौटुंबिक डॉक्टर" }] },
-                    'gu-IN': { questionText: "ખૂણાના સ્ટોલ પર રિયા કોને મળી?", options: [{ id: "opt_sharma", text: "તેમના પાડોશી મિસ્ટર શર્મા" }, { id: "opt_teacher", text: "તેણીના શાળાના શિક્ષક" }, { id: "opt_brother", text: "તેણીનો નાનો ભાઈ" }, { id: "opt_doctor", text: "તેણીના કૌટુંબિક ડૉક્ટર" }] }
+                    'gu-IN': { questionText: "ખૂણાના સ્ટોલ પર રિયા કોને મળી?", options: [{ id: "opt_sharma", text: "તેમના પાડોશી મિસ્ટર શર્મા" }, { id: "opt_teacher", text: "તેણીના શાળાના શિક્ષક" }, { id: "opt_brother", text: "તેણીનો નાનો ભાઈ" }, { id: "opt_doctor", text: "તેણીના કૌટુંબિક ડૉક્ટર" }] },
+                    'ml-IN': { questionText: "കോർണർ സ്റ്റാളിൽ റിയ ആരെയാണ് കണ്ടുമുട്ടിയത്?", options: [{ id: "opt_sharma", text: "തന്റെ അയൽവാസിയായ മിസ്റ്റർ ശർമ്മ" }, { id: "opt_teacher", text: "തന്റെ സ്കൂൾ അധ്യാപകൻ" }, { id: "opt_brother", text: "തന്റെ അനുജൻ" }, { id: "opt_doctor", text: "തന്റെ കുടുംബ ഡോക്ടർ" }] }
                 }
             },
             {
@@ -118,7 +123,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ರಿಯಾ ತರಕಾರಿಗೆ ಎಷ್ಟು ಹಣ ನೀಡಿದಳು?", options: [{ id: "opt_50", text: "ಐವತ್ತು ರೂಪಾಯಿ" }, { id: "opt_100", text: "ನೂರು ರೂಪಾಯಿ" }, { id: "opt_30", text: "ಮೂವತ್ತು ರೂಪಾಯಿ" }, { id: "opt_75", text: "ಎಪ್ಪತ್ತೈದು ರೂಪಾಯಿ" }] },
                     'bn-IN': { questionText: "রিয়া সবজির জন্য কত টাকা দিয়েছিল?", options: [{ id: "opt_50", text: "পঞ্চাশ টাকা" }, { id: "opt_100", text: "একশ টাকা" }, { id: "opt_30", text: "ত্রিশ টাকা" }, { id: "opt_75", text: "পঁচাত্তর টাকা" }] },
                     'mr-IN': { questionText: "रियाने भाजीसाठी किती रुपये दिले?", options: [{ id: "opt_50", text: "पन्नास रुपये" }, { id: "opt_100", text: "शंभर रुपये" }, { id: "opt_30", text: "तीस रुपये" }, { id: "opt_75", text: "पंच्याहत्तर रुपये" }] },
-                    'gu-IN': { questionText: "રિયાએ તેના શાકભાજી માટે કેટલા રૂપિયા ચૂકવ્યા?", options: [{ id: "opt_50", text: "પચાસ રૂપિયા" }, { id: "opt_100", text: "એક સો રૂપિયા" }, { id: "opt_30", text: "ત્રીસ રૂપિયા" }, { id: "opt_75", text: "પંચોતેર રૂપિયા" }] }
+                    'gu-IN': { questionText: "રિયાએ તેના શાકભાજી માટે કેટલા રૂપિયા ચૂકવ્યા?", options: [{ id: "opt_50", text: "પચાસ રૂપિયા" }, { id: "opt_100", text: "એક સો રૂપિયા" }, { id: "opt_30", text: "ત્રીસ રૂપિયા" }, { id: "opt_75", text: "પંચોતેર રૂપિયા" }] },
+                    'ml-IN': { questionText: "പച്ചക്കറികൾക്കായി റിയ എത്ര രൂപ നൽകി?", options: [{ id: "opt_50", text: "അമ്പത് രൂപ" }, { id: "opt_100", text: "നൂറ് രൂപ" }, { id: "opt_30", text: "മുപ്പത് രൂപ" }, { id: "opt_75", text: "എഴുപത്തഞ്ച് രൂപ" }] }
                 }
             }
         ]
@@ -131,21 +137,22 @@ export const STORIES: Story[] = [
         id: "story_train_medium",
         title: "Arjun's Train Journey",
         difficulty: "medium",
-        englishReference: "Arjun took the morning train to Jaipur to visit his grandmother. He ate potato parathas with Uncle Verma during the journey and met his uncle at platform two.",
+        englishReference: "Arjun boarded the morning train to Jaipur in Coach B3, Seat 24 to visit his grandmother. He ate potato parathas with Uncle Verma during the journey and met his uncle at platform number two at eleven fifteen.",
         content: {
-            'en-IN': "Arjun took the morning train to Jaipur to visit his grandmother. He ate potato parathas with Uncle Verma during the journey and met his uncle at platform two.",
-            'hi-IN': "अर्जुन अपनी दादी से मिलने के लिए सुबह की ट्रेन से जयपुर गया। उसने यात्रा के दौरान अंकल वर्मा के साथ आलू के पराठे खाए और प्लेटफॉर्म दो पर अपने चाचा से मिला।",
-            'ta-IN': "அர்ஜுன் தனது பாட்டியைச் சந்திக்க காலை ரயிலில் ஜெய்ப்பூருக்குச் சென்றார். பயணத்தின் போது வர்மா மாமாவுடன் உருளைக்கிழங்கு பரோட்டா சாப்பிட்டு, தளம் இரண்டில் தனது மாமாவைச் சந்தித்தார்.",
-            'te-IN': "అర్జున్ తన అమ్మమ్మను చూడటానికి ఉదయం రైలులో జైపూర్ వెళ్లాడు. ప్రయాణంలో అంకుల్ వర్మాతో బంగాళాదుంప పరాటాలు తిని, ప్లాట్‌ఫారమ్ రెండు వద్ద తన మామయ్యను కలిశాడు.",
-            'kn-IN': "ಅರ್ಜುನ್ ತನ್ನಜ್ಜಿಯನ್ನು ಭೇಟಿಯಾಗಲು ಬೆಳಗಿನ ರೈಲಿನಲ್ಲಿ ಜೈಪುರಕ್ಕೆ ಹೋದನು. ಪ್ರಯಾಣದ ಸಮಯದಲ್ಲಿ ಅವನು ವರ್ಮಾ ಅಂಕಲ್ ಅವರೊಂದಿಗೆ ಆಲೂ ಪರೋಟ ತಿಂದನು ಮತ್ತು ಎರಡನೇ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ನಲ್ಲಿ ತನ್ನ ಮಾವನನ್ನು ಭೇಟಿಯಾದನು.",
-            'bn-IN': "অর্জুন তার ঠাকুমাকে দেখতে সকালের ট্রেনে জয়পুর গিয়েছিল। যাত্রাপথে সে আঙ্কেল বর্মার সাথে আলুর পরোটা খেয়েছিল এবং প্ল্যাটফর্ম দুয়ে তার মামার সাথে দেখা করেছিল।",
-            'mr-IN': "अर्जुन आपल्या आजीला भेटण्यासाठी सकाळच्या ट्रेनने जयपूरला गेला. प्रवासात त्याने अंकल वर्मांसोबत आलू पराठे खाल्ले आणि प्लॅटफॉर्म दोनवर आपल्या काकांना भेटला.",
-            'gu-IN': "અર્જુન તેની દાદીને મળવા સવારની ટ્રેનમાં જયપુર ગયો. મુસાફરી દરમિયાન તેણે વર્મા અંકલ સાથે આલુ પરોઠા ખાધા અને પ્લેટફોર્મ બે પર તેના કાકાને મળ્યો."
+            'en-IN': "Arjun boarded the morning train to Jaipur in Coach B3, Seat 24 to visit his grandmother. He ate potato parathas with Uncle Verma during the journey and met his uncle at platform number two at eleven fifteen.",
+            'hi-IN': "अर्जुन अपनी दादी से मिलने के लिए कोच B3, सीट 24 में जयपुर जाने वाली सुबह की ट्रेन में सवार हुआ। उसने यात्रा के दौरान अंकल वर्मा के साथ आलू के पराठे खाए और ग्यारह बजकर पंद्रह मिनट पर प्लेटफॉर्म नंबर दो पर अपने चाचा से मिला।",
+            'ta-IN': "அர்ஜுன் தனது பாட்டியைச் சந்திக்க கோச் B3, இருக்கை 24 இல் ஜெய்ப்பூர் செல்லும் காலை ரயிலில் ஏறினார். பயணத்தின் போது வர்மா மாமாவுடன் உருளைக்கிழங்கு பரோட்டா சாப்பிட்டு, பதினொன்று பதினைந்துக்கு தளம் இரண்டில் தனது மாமாவைச் சந்தித்தார்.",
+            'te-IN': "అర్జున్ తన అమ్మమ్మను చూడటానికి కోచ్ B3, సీటు 24 లో ఉదయం రైలులో జైపూర్ వెళ్లాడు. ప్రయాణంలో అంకుల్ వర్మాతో బంగాళాదుంప పరాటాలు తిని, పదకొండు పదిహేనుకి ప్లాట్‌ఫారమ్ రెండు వద్ద తన మామయ్యను కలిశాడు.",
+            'kn-IN': "ಅರ್ಜುನ್ ತನ್ನಜ್ಜಿಯನ್ನು ಭೇಟಿಯಾಗಲು ಕೋಚ್ B3, ಸೀಟ್ 24 ರಲ್ಲಿ ಜೈಪುರಕ್ಕೆ ಹೋಗುವ ಬೆಳಗಿನ ರೈಲನ್ನು ಹತ್ತಿದನು. ಪ್ರಯಾಣದ ಸಮಯದಲ್ಲಿ ಅವನು ವರ್ಮಾ ಅಂಕಲ್ ಅವರೊಂದಿಗೆ ಆಲೂ ಪರೋಟ ತಿಂದನು ಮತ್ತು ಹನ್ನೊಂದು ಹದಿನೈದಕ್ಕೆ ಎರಡನೇ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ನಲ್ಲಿ ತನ್ನ ಮಾವನನ್ನು ಭೇಟಿಯಾದನು.",
+            'bn-IN': "অর্জুন তার ঠাকুমাকে দেখতে কোচ B3, সিট ২৪-এ সকালের ট্রেনে জয়পুর গিয়েছিল। যাত্রাপথে সে আঙ্কেল বর্মার সাথে আলুর পরোটা খেয়েছিল এবং এগারোটা পনেরোয় প্ল্যাটফর্ম দুয়ে তার মামার সাথে দেখা করেছিল।",
+            'mr-IN': "अर्जुन आपल्या आजीला भेटण्यासाठी डबा B3, सीट 24 मध्ये सकाळच्या ट्रेनने जयपूरला गेला. प्रवासात त्याने अंकल वर्मांसोबत आलू पराठे खाल्ले आणि अकरा वाजता प्लॅटफॉर्म दोनवर आपल्या काकांना भेटला.",
+            'gu-IN': "અર્જુન તેની દાદીને મળવા કોચ B3, સીટ 24 માં જયપુર જતી સવારની ટ્રેનમાં ચડ્યો. મુસાફરી દરમિયાન તેણે વર્મા અંકલ સાથે આલુ પરોઠા ખાધા અને અગિયાર અને પંદર વાગ્યે પ્લેટફોર્મ બે પર તેના કાકાને મળ્યો.",
+            'ml-IN': "തന്റെ മുത്തശ്ശിയെ കാണാനായി അർജുൻ കോച്ച് B3, സീറ്റ് 24-ൽ ജയ്പൂരിലേക്കുള്ള പ്രഭാത ട്രെയിനിൽ കയറി. യാത്രയ്ക്കിടയിൽ അവൻ വർമ്മ അങ്കിളിനൊപ്പം ഉരുളക്കിഴങ്ങ് പൊറോട്ട കഴിക്കുകയും പതിനൊന്ന് പതിനഞ്ചിന് പ്ലാറ്റ്‌ഫോം രണ്ടിൽ വെച്ച് അമ്മാവനെ കാണുകയും ചെയ്തു."
         },
         informationUnits: [
-            { id: "iu1", description: "Morning train to Jaipur for grandmother", keywords: ["train", "jaipur", "grandmother"], weight: 2 },
+            { id: "iu1", description: "Boarded train to Jaipur in Coach B3, Seat 24", keywords: ["train", "jaipur", "b3", "twenty-four", "24"], weight: 2 },
             { id: "iu2", description: "Ate potato parathas with Uncle Verma", keywords: ["potato", "parathas", "verma"], weight: 3 },
-            { id: "iu3", description: "Met uncle at platform two", keywords: ["platform", "two", "uncle"], weight: 3 }
+            { id: "iu3", description: "Met uncle at platform number two at 11:15", keywords: ["platform", "two", "11:15", "eleven fifteen", "uncle"], weight: 3 }
         ],
         comprehensionQuestions: [
             {
@@ -187,7 +194,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ಅರ್ಜುನ್ ವರ್ಮಾ ಅಂಕಲ್ ಅವರೊಂದಿಗೆ ಯಾವ ಉಪಹಾರವನ್ನು ಹಂಚಿಕೊಂಡರು?", options: [{ id: "opt_paratha", text: "ಆಲೂ ಪರೋಟ" }, { id: "opt_samosa", text: "ತರಕಾರಿ ಸಮೋಸ" }, { id: "opt_sandwich", text: "ಚೀಸ್ ಸ್ಯಾಂಡ್ವಿಚ್" }, { id: "opt_idli", text: "ಬಿಸಿ ಇಡ್ಲಿ" }] },
                     'bn-IN': { questionText: "অর্জুন আঙ্কেল বর্মার সাথে কী জলখাবার ভাগ করে খেয়েছিলেন?", options: [{ id: "opt_paratha", text: "আলুর পরোটা" }, { id: "opt_samosa", text: "সবজি সিঙ্গাড়া" }, { id: "opt_sandwich", text: "চিজ স্যান্ডউইচ" }, { id: "opt_idli", text: "ভাপা ইডলি" }] },
                     'mr-IN': { questionText: "अर्जुनने अंकल वर्मांसोबत कोणता अल्पोपहार शेअर केला?", options: [{ id: "opt_paratha", text: "आलू पराठे" }, { id: "opt_samosa", text: "भाजी समोसे" }, { id: "opt_sandwich", text: "चीझ सँडविच" }, { id: "opt_idli", text: "वाफवलेल्या इडल्या" }] },
-                    'gu-IN': { questionText: "અર્જુને વર્મા અંકલ સાથે કયો નાસ્તો વહેંચ્યો?", options: [{ id: "opt_paratha", text: "આલુ પરોઠા" }, { id: "opt_samosa", text: "શાકભાજી સમોસા" }, { id: "opt_sandwich", text: "ચીઝ સેન્ડવિચ" }, { id: "opt_idli", text: "બાફેલી ઈડલી" }] }
+                    'gu-IN': { questionText: "અર્જુને વર્મા અંકલ સાથે કયો નાસ્તો વહેંચ્યો?", options: [{ id: "opt_paratha", text: "આલુ પરોઠા" }, { id: "opt_samosa", text: "શાકભાજી સમોસા" }, { id: "opt_sandwich", text: "ચીઝ સેન્ડવિચ" }, { id: "opt_idli", text: "બાફેલી ઈડલી" }] },
+                    'ml-IN': { questionText: "അർജുൻ വർമ്മ അങ്കിളുമായി പങ്കിട്ട ലഘുഭക്ഷണം ഏതാണ്?", options: [{ id: "opt_paratha", text: "ഉരുളക്കിഴങ്ങ് പൊറോട്ട" }, { id: "opt_samosa", text: "വെജിറ്റബിൾ സമോസ" }, { id: "opt_sandwich", text: "ചീസ് സാൻഡ്‌വിച്ച്" }, { id: "opt_idli", text: "ഇഡ്ഡലി" }] }
                 }
             },
             {
@@ -208,7 +216,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ರೈಲು ಜೈಪುರ ಜಂಕ್ಷನ್‌ಗೆ ಎಷ್ಟು ಗಂಟೆಗೆ ತಲುಪಿತು?", options: [{ id: "opt_1115", text: "ಬೆಳಿಗ್ಗೆ 11:15" }, { id: "opt_1030", text: "ಬೆಳಿಗ್ಗೆ 10:30" }, { id: "opt_1200", text: "ಮಧ್ಯಾಹ್ನ 12:00" }, { id: "opt_0945", text: "ಬೆಳಿಗ್ಗೆ 9:45" }] },
                     'bn-IN': { questionText: "ট্রেনটি জয়পুর জংশনে কয়টায় পৌঁছেছিল?", options: [{ id: "opt_1115", text: "সকাল ১১:১৫" }, { id: "opt_1030", text: "সকাল ১০:৩০" }, { id: "opt_1200", text: "দুপুর ১২:০০" }, { id: "opt_0945", text: "সকাল ৯:৪৫" }] },
                     'mr-IN': { questionText: "ट्रेन जयपूर जंक्शनवर किती वाजता पोहोचली?", options: [{ id: "opt_1115", text: "सकाळी ११:१५" }, { id: "opt_1030", text: "सकाळी १०:३०" }, { id: "opt_1200", text: "दुपारी १२:००" }, { id: "opt_0945", text: "सकाळी ९:४५" }] },
-                    'gu-IN': { questionText: "ટ્રેન જયપુર જંકશન પર કેટલા વાગ્યે પહોંચી?", options: [{ id: "opt_1115", text: "સવારે 11:15" }, { id: "opt_1030", text: "સવારે 10:30" }, { id: "opt_1200", text: "બપોરે 12:00" }, { id: "opt_0945", text: "સવારે 9:45" }] }
+                    'gu-IN': { questionText: "ટ્રેન જયપુર જંકશન પર કેટલા વાગ્યે પહોંચી?", options: [{ id: "opt_1115", text: "સવારે 11:15" }, { id: "opt_1030", text: "સવારે 10:30" }, { id: "opt_1200", text: "બપોરે 12:00" }, { id: "opt_0945", text: "સવારે 9:45" }] },
+                    'ml-IN': { questionText: "ട്രെയിൻ എത്ര മണിക്ക് ജയ്പൂർ ജംഗ്ഷനിൽ എത്തി?", options: [{ id: "opt_1115", text: "രാവിലെ 11:15" }, { id: "opt_1030", text: "രാവിലെ 10:30" }, { id: "opt_1200", text: "ഉച്ചയ്ക്ക് 12:00" }, { id: "opt_0945", text: "രാവിലെ 9:45" }] }
                 }
             },
             {
@@ -229,7 +238,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ನಲ್ಲಿ ಅರ್ಜುನ್‌ಗಾಗಿ ಯಾರು ಕಾಯುತ್ತಿದ್ದರು?", options: [{ id: "opt_uncle", text: "ಅವನ ಮಾವ" }, { id: "opt_father", text: "ಅವನ ತಂದೆ" }, { id: "opt_friend", text: "ಅವನ ಕಾಲೇಜು ಸ್ನೇಹಿತ" }, { id: "opt_cousin", text: "ಅವನ ಸಹೋದರ" }] },
                     'bn-IN': { questionText: "প্ল্যাটফর্মে অর্জুনের জন্য কে অপেক্ষা করছিলেন?", options: [{ id: "opt_uncle", text: "তার মামা" }, { id: "opt_father", text: "তার বাবা" }, { id: "opt_friend", text: "তার কলেজের বন্ধু" }, { id: "opt_cousin", text: "তার খুরতুতো ভাই" }] },
                     'mr-IN': { questionText: "प्लॅटफॉर्मवर अर्जुनची वाट कोण पाहत होते?", options: [{ id: "opt_uncle", text: "त्यांचे काका" }, { id: "opt_father", text: "त्यांचे वडील" }, { id: "opt_friend", text: "त्याचा कॉलेजचा मित्र" }, { id: "opt_cousin", text: "त्याचा चुलत भाऊ" }] },
-                    'gu-IN': { questionText: "પ્લેટફોર્મ પર અર્જુનની રાહ કોણ જોઈ રહ્યું હતું?", options: [{ id: "opt_uncle", text: "તેમના કાકા" }, { id: "opt_father", text: "તેમના પિતા" }, { id: "opt_friend", text: "તેમના કોલેજના મિત્ર" }, { id: "opt_cousin", text: "તેમના પિતરાઈ ભાઈ" }] }
+                    'gu-IN': { questionText: "પ્લેટફોર્મ પર અર્જુનની રાહ કોણ જોઈ રહ્યું હતું?", options: [{ id: "opt_uncle", text: "તેમના કાકા" }, { id: "opt_father", text: "તેમના પિતા" }, { id: "opt_friend", text: "તેમના કોલેજના મિત્ર" }, { id: "opt_cousin", text: "તેમના પિતરાઈ ભાઈ" }] },
+                    'ml-IN': { questionText: "പ്ലാറ്റ്‌ഫോമിൽ അർജുനെ കാത്ത് നിന്നത് ആരാണ്?", options: [{ id: "opt_uncle", text: "അവന്റെ അമ്മാവൻ" }, { id: "opt_father", text: "അവന്റെ അച്ഛൻ" }, { id: "opt_friend", text: "അവന്റെ കോളേജ് സുഹൃത്ത്" }, { id: "opt_cousin", text: "അവന്റെ കസിൻ" }] }
                 }
             }
         ]
@@ -242,19 +252,20 @@ export const STORIES: Story[] = [
         id: "story_science_hard",
         title: "The School Science Exhibition",
         difficulty: "hard",
-        englishReference: "Ananya won first place at the school science exhibition for her solar water filter. Dr. Sen awarded her a gold trophy and a five thousand rupee scholarship.",
+        englishReference: "Eighth-grade student Ananya won first place at the school science exhibition for her solar water filter. Chief Engineer Dr. Sen awarded her a gold trophy and a five thousand rupee scholarship.",
         content: {
-            'en-IN': "Ananya won first place at the school science exhibition for her solar water filter. Dr. Sen awarded her a gold trophy and a five thousand rupee scholarship.",
-            'hi-IN': "अनन्या ने अपने सोलर वाटर फिल्टर के लिए स्कूल विज्ञान प्रदर्शनी में पहला स्थान हासिल किया। डॉ. सेन ने उन्हें एक स्वर्ण ट्रॉफी और पांच हजार रुपये की छात्रवृत्ति दी।",
-            'ta-IN': "அனன்யா தனது சோலார் நீர் சுத்திகரிப்பு சாதனத்திற்காக பள்ளி அறிவியல் கண்காட்சியில் முதல் இடத்தைப் பிடித்தார். டாக்டர் சென் அவருக்கு தங்கக் கோப்பையையும் ஐந்தாயிரம் ரூபாய் உதவித்தொகையையும் வழங்கினார்.",
-            'te-IN': "అనన్య తన సోలార్ వాటర్ ఫిల్టర్ కోసం పాఠశాల సైన్స్ ఎగ్జిబిషన్‌లో మొదటి స్థానాన్ని గెలుచుకుంది. డాక్టర్ సేన్ ఆమెకు బంగారు ట్రోఫీ మరియు ఐదు వేల రూపాయల స్కాలర్‌షిప్‌ను అందించారు.",
-            'kn-IN': "ಅನನ್ಯಾ ತನ್ನ ಸೌರ ನೀರು ಶುದ್ಧೀಕರಣ ಸಾಧನಕ್ಕಾಗಿ ಶಾಲಾ ವಿಜ್ಞಾನ ಪ್ರದರ್ಶನದಲ್ಲಿ ಪ್ರಥಮ ಸ್ಥಾನ ಪಡೆದಳು. ಡಾ. ಸೇನ್ ಅವಳಿಗೆ ಚಿನ್ನದ ಟ್ರೋಫಿ ಮತ್ತು ಐದು ಸಾವಿರ ರೂಪಾಯಿ ವಿದ್ಯಾರ್ಥಿವೇತನವನ್ನು ನೀಡಿದರು.",
-            'bn-IN': "অনন্যা তার সোলার ওয়াটার ফিল্টারের জন্য স্কুল বিজ্ঞান প্রদর্শনীতে প্রথম স্থান অধিকার করেছিল। ডঃ সেন তাকে একটি সোনার ট্রফি এবং পাঁচ হাজার টাকার স্কলারশিপ দিয়েছিলেন।",
-            'mr-IN': "अनन्याने तिच्या सोलर वॉटर फिल्टरसाठी शालेय विज्ञान प्रदर्शनात प्रथम क्रमांक पटकावला. डॉ. सेन यांनी तिला सुवर्णचषक आणि पाच हजार रुपयांची शिष्यवृत्ती दिली.",
-            'gu-IN': "અનન્યાએ તેના સોલાર વોટર ફિલ્ટર માટે સ્કૂલના વિજ્ઞાન પ્રદર્શનમાં પ્રથમ સ્થાન મેળવ્યું. ડો. સેને તેણીને ગોલ્ડ ટ્રોફી અને પાંચ હજાર રૂપિયાની સ્કોલરશીપ આપી."
+            'en-IN': "Eighth-grade student Ananya won first place at the school science exhibition for her solar water filter. Chief Engineer Dr. Sen awarded her a gold trophy and a five thousand rupee scholarship.",
+            'hi-IN': "आठवीं कक्षा की छात्रा अनन्या ने अपने सोलर वाटर फिल्टर के लिए स्कूल विज्ञान प्रदर्शनी में पहला स्थान हासिल किया। मुख्य इंजीनियर डॉ. सेन ने उन्हें एक स्वर्ण ट्रॉफी और पांच हजार रुपये की छात्रवृत्ति दी।",
+            'ta-IN': "எட்டாம் வகுப்பு மாணவி அனன்யா தனது சோலார் நீர் சுத்திகரிப்பு சாதனத்திற்காக பள்ளி அறிவியல் கண்காட்சியில் முதல் இடத்தைப் பிடித்தார். தலைமைப் பொறியாளர் டாக்டர் சென் அவருக்கு தங்கக் கோப்பையையும் ஐந்தாயிரம் ரூபாய் உதவித்தொகையையும் வழங்கினார்.",
+            'te-IN': "ఎనిమిదో తరగతి విద్యార్థిని అనన్య తన సోలార్ వాటర్ ఫిల్టర్ కోసం పాఠశాల సైన్స్ ఎగ్జిబిషన్‌లో మొదటి స్థానాన్ని గెలుచుకుంది. చీఫ్ ఇంజనీర్ డాక్టర్ సేన్ ఆమెకు బంగారు ట్రోఫీ మరియు ఐదు వేల రూపాయల స్కాలర్‌షిప్‌ను అందించారు.",
+            'kn-IN': "ಎಂಟನೇ ತರಗತಿಯ ವಿದ್ಯಾರ್ಥಿನಿ ಅನನ್ಯಾ ತನ್ನ ಸೌರ ನೀರು ಶುದ್ಧೀಕರಣ ಸಾಧನಕ್ಕಾಗಿ ಶಾಲಾ ವಿಜ್ಞಾನ ಪ್ರದರ್ಶನದಲ್ಲಿ ಪ್ರಥಮ ಸ್ಥಾನ ಪಡೆದಳು. ಮುಖ್ಯ ಎಂಜಿನಿಯರ್ ಡಾ. ಸೇನ್ ಅವಳಿಗೆ ಚಿನ್ನದ ಟ್ರೋಫಿ ಮತ್ತು ಐದು ಸಾವಿರ ರೂಪಾಯಿ ವಿದ್ಯಾರ್ಥಿವೇತನವನ್ನು ನೀಡಿದರು.",
+            'bn-IN': "অষ্টম শ্রেণীর ছাত্রী অনন্যা তার সোলার ওয়াটার ফিল্টারের জন্য স্কুল বিজ্ঞান প্রদর্শনীতে প্রথম স্থান অধিকার করেছিল। প্রধান প্রকৌশলী ডঃ সেন তাকে একটি সোনার ট্রফি এবং পাঁচ হাজার টাকার স্কলারশিপ দিয়েছিলেন।",
+            'mr-IN': "आठवीतील विद्यार्थिनी अनन्याने तिच्या सोलर वॉटर फिल्टरसाठी शालेय विज्ञान प्रदर्शनात प्रथम क्रमांक पटकावला. मुख्य अभियंता डॉ. सेन यांनी तिला सुवर्णचषक आणि पाच हजार रुपयांची शिष्यवृत्ती दिली.",
+            'gu-IN': "આઠમા ધોરણની વિદ્યાર્થીની અનન્યાએ તેના સોલાર વોટર ફિલ્ટર માટે સ્કૂલના વિજ્ઞાન પ્રદર્શનમાં પ્રથમ સ્થાન મેળવ્યું. મુખ્ય ઈજનેર ડો. સેને તેણીને ગોલ્ડ ટ્રોફી અને પાંચ હજાર રૂપિયાની સ્કોલરશીપ આપી.",
+            'ml-IN': "എട്ടാം ക്ലാസ് വിദ്യാർത്ഥിനിയായ അനന്യ തന്റെ സോളാർ വാട്ടർ ഫിൽട്ടറിന് സ്കൂൾ സയൻസ് എക്സിബിഷനിൽ ഒന്നാം സ്ഥാനം നേടി. ചീഫ് എഞ്ചിനീയർ ഡോ. സെൻ അവൾക്ക് ഒരു സ്വർണ്ണ ട്രോഫിയും അയ്യായിരം രൂപയുടെ സ്കോളർഷിപ്പും നൽകി."
         },
         informationUnits: [
-            { id: "iu1", description: "Ananya won first place for solar water filter", keywords: ["ananya", "first", "solar", "water", "filter"], weight: 3 },
+            { id: "iu1", description: "8th grade Ananya won first place for solar water filter", keywords: ["eighth", "ananya", "first", "solar", "water", "filter"], weight: 3 },
             { id: "iu2", description: "Dr. Sen awarded gold trophy & 5000 rupees", keywords: ["sen", "trophy", "five thousand", "5000", "scholarship"], weight: 3 }
         ],
         comprehensionQuestions: [
@@ -276,7 +287,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ಅನನ್ಯಾ ಯಾವ ತರಗತಿಯಲ್ಲಿ ಓದುತ್ತಿದ್ದಳು?", options: [{ id: "opt_8", text: "ಎಂಟನೇ ತರಗತಿ" }, { id: "opt_10", text: "ಹತ್ತನೇ ತರಗತಿ" }, { id: "opt_6", text: "ಆರನೇ ತರಗತಿ" }, { id: "opt_7", text: "ಏಳನೇ ತರಗತಿ" }] },
                     'bn-IN': { questionText: "অনন্যা কোন শ্রেণীতে পড়াশোনা করছিল?", options: [{ id: "opt_8", text: "অষ্টম শ্রেণী" }, { id: "opt_10", text: "দশম শ্রেণী" }, { id: "opt_6", text: "ষষ্ঠ শ্রেণী" }, { id: "opt_7", text: "সপ্তম শ্রেণী" }] },
                     'mr-IN': { questionText: "अनन्या कोणत्या इयत्तेत शिकत होती?", options: [{ id: "opt_8", text: "आठवी इयत्ता" }, { id: "opt_10", text: "दहावी इयत्ता" }, { id: "opt_6", text: "सहावी इयत्ता" }, { id: "opt_7", text: "सातवी इयत्ता" }] },
-                    'gu-IN': { questionText: "અનન્યા કયા ધોરણમાં ભણતી હતી?", options: [{ id: "opt_8", text: "આઠમું ધોરણ" }, { id: "opt_10", text: "દસમું ધોરણ" }, { id: "opt_6", text: "છઠ્ઠું ધોરણ" }, { id: "opt_7", text: "સાતમું ધોરણ" }] }
+                    'gu-IN': { questionText: "અનન્યા કયા ધોરણમાં ભણતી હતી?", options: [{ id: "opt_8", text: "આઠમું ધોરણ" }, { id: "opt_10", text: "દસમું ધોરણ" }, { id: "opt_6", text: "છઠ્ઠું ધોરણ" }, { id: "opt_7", text: "સાતમું ધોરણ" }] },
+                    'ml-IN': { questionText: "അനന്യ ഏത് ക്ലാസിലാണ് പഠിച്ചിരുന്നത്?", options: [{ id: "opt_8", text: "എട്ടാം ക്ലാസ്" }, { id: "opt_10", text: "പത്താം ക്ലാസ്" }, { id: "opt_6", text: "ആറാം ക്ലാസ്" }, { id: "opt_7", text: "ഏഴാം ക്ലാസ്" }] }
                 }
             },
             {
@@ -297,7 +309,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ವಿಜ್ಞಾನ ಮೇಳದ ತೀರ್ಪುಗಾರರ ತಂಡದ ನೇತೃತ್ವವನ್ನು ಯಾರು ವಹಿಸಿದ್ದರು?", options: [{ id: "opt_sen", text: "ಮುಖ್ಯ ಎಂಜಿನಿಯರ್ ಡಾ. ಸೇನ್" }, { id: "opt_patel", text: "ಪ್ರಾಂಶುಪಾಲ ಡಾ. ಪಟೇಲ್" }, { id: "opt_roy", text: "ಪ್ರೊಫೆಸರ್ ರಾಯ್" }, { id: "opt_gupta", text: "ವಿಜ್ಞಾನಿ ಡಾ. ಗುಪ್ತಾ" }] },
                     'bn-IN': { questionText: "বিজ্ঞান মেলায় বিচারক প্যানেলের নেতৃত্ব কে দিয়েছিলেন?", options: [{ id: "opt_sen", text: "প্রধান প্রকৌশলী ডঃ সেন" }, { id: "opt_patel", text: "প্রিন্সিপাল ডঃ প্যাটেল" }, { id: "opt_roy", text: "অধ্যাপক রায়" }, { id: "opt_gupta", text: "বিজ্ঞানী ডঃ গুপ্তা" }] },
                     'mr-IN': { questionText: "विज्ञान प्रदर्शनाच्या परीक्षक समितीचे नेतृत्व कोणी केले?", options: [{ id: "opt_sen", text: "मुख्य अभियंता डॉ. सेन" }, { id: "opt_patel", text: "प्राचार्य डॉ. पटेल" }, { id: "opt_roy", text: "प्राध्यापक रॉय" }, { id: "opt_gupta", text: "शास्त्रज्ञ डॉ. गुप्ता" }] },
-                    'gu-IN': { questionText: "વિજ્ઞાન મેળા માટે જજિંગ પેનલનું નેતૃત્વ કોણે કર્યું?", options: [{ id: "opt_sen", text: "મુખ્ય ઈજનેર ડો. સેન" }, { id: "opt_patel", text: "પ્રિન્સિપાલ ડો. પટેલ" }, { id: "opt_roy", text: "પ્રોફેસર રોય" }, { id: "opt_gupta", text: "વૈજ્ઞાનિક ડો. ગુપ્તા" }] }
+                    'gu-IN': { questionText: "વિજ્ઞાન મેળા માટે જજિંગ પેનલનું નેતૃત્વ કોણે કર્યું?", options: [{ id: "opt_sen", text: "મુખ્ય ઈજનેર ડો. સેન" }, { id: "opt_patel", text: "પ્રિન્સિપાલ ડો. પટેલ" }, { id: "opt_roy", text: "પ્રોફેસર રોય" }, { id: "opt_gupta", text: "વૈજ્ઞાનિક ડો. ગુપ્તા" }] },
+                    'ml-IN': { questionText: "സയൻസ് ഫെയറിലെ വിധിനിർണ്ണയ പാനലിന് നേതൃത്വം നൽകിയത് ആരാണ്?", options: [{ id: "opt_sen", text: "ചീഫ് എഞ്ചിനീയർ ഡോ. സെൻ" }, { id: "opt_patel", text: "പ്രിൻസിപ്പൽ ഡോ. പട്ടേൽ" }, { id: "opt_roy", text: "പ്രൊഫസർ റോയ്" }, { id: "opt_gupta", text: "ശാസ്ത്രജ്ഞൻ ഡോ. ഗുപ്ത" }] }
                 }
             },
             {
@@ -318,7 +331,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ನೀರು ಶುದ್ಧೀಕರಣ ಸಾಧನದಲ್ಲಿ ಯಾವ ವಸ್ತುಗಳನ್ನು ಬಳಸಲಾಗಿತ್ತು?", options: [{ id: "opt_sand_charcoal", text: "ಮರಳು, ಇದ್ದಿಲು ಮತ್ತು ಸೌರ ಫಲಕಗಳು" }, { id: "opt_paper_cotton", text: "ಫಿಲ್ಟರ್ ಪೇಪರ್, ಹತ್ತಿ ಮತ್ತು ಬಲೆ" }, { id: "opt_gravel_clay", text: "ಕಲ್ಲು, ಜೇಡಿಮಣ್ಣು ಮತ್ತು ಬೆಳ್ಳಿ ಫಾಯಿಲ್" }, { id: "opt_plastic_sponge", text: "ಪ್ಲಾಸ್ಟಿಕ್ ಮಣಿಗಳು ಮತ್ತು ಸ್ಪಾಂಜ್" }] },
                     'bn-IN': { questionText: "জল পরিশ্রুতকরণ যন্ত্রে কী কী উপাদান ব্যবহার করা হয়েছিল?", options: [{ id: "opt_sand_charcoal", text: "বালি, কয়লা এবং সোলার প্যানেল" }, { id: "opt_paper_cotton", text: "ফিল্টার পেপার, তুলা এবং নেট" }, { id: "opt_gravel_clay", text: "নুড়ি, কাদা এবং রুপোর ফয়েল" }, { id: "opt_plastic_sponge", text: "প্লাস্টিকের পুঁতি এবং স্পঞ্জ" }] },
                     'mr-IN': { questionText: "पाणी शुद्धीकरण यंत्रात कोणते साहित्य वापरले होते?", options: [{ id: "opt_sand_charcoal", text: "वाळू, कोळसा आणि सोलर पॅनेल" }, { id: "opt_paper_cotton", text: "फिल्टर कागद, कापूस आणि जाळी" }, { id: "opt_gravel_clay", text: "खडी, माती आणि चांदीचे फॉइल" }, { id: "opt_plastic_sponge", text: "प्लास्टिक मणी आणि स्पंज" }] },
-                    'gu-IN': { questionText: "પાણી શુદ્ધિકરણ ઉપકરણમાં કઈ સામગ્રીનો ઉપયોગ કરવામાં આવ્યો હતો?", options: [{ id: "opt_sand_charcoal", text: "રેતી, કોલસો અને સોલાર પેનલ" }, { id: "opt_paper_cotton", text: "ફિલ્ટર પેપર, કપાસ અને જાળી" }, { id: "opt_gravel_clay", text: "કાંકરી, માટી અને સિલ્વર ફોઇલ" }, { id: "opt_plastic_sponge", text: "પ્લાસ્ટિકના મણકા અને સ્પોન્જ" }] }
+                    'gu-IN': { questionText: "પાણી શુદ્ધિકરણ ઉપકરણમાં કઈ સામગ્રીનો ઉપયોગ કરવામાં આવ્યો હતો?", options: [{ id: "opt_sand_charcoal", text: "રેતી, કોલસો અને સોલાર પેનલ" }, { id: "opt_paper_cotton", text: "ફિલ્ટર પેપર, કપાસ અને જાળી" }, { id: "opt_gravel_clay", text: "કાંકરી, માટી અને સિલ્વર ફોઇલ" }, { id: "opt_plastic_sponge", text: "પ્લાસ્ટિકના મણકા અને સ્પોન્જ" }] },
+                    'ml-IN': { questionText: "വാട്ടർ ഫിൽട്ടറേഷൻ ഉപകരണത്തിൽ എന്തെല്ലാം വസ്തുക്കളാണ് ഉപയോഗിച്ചത്?", options: [{ id: "opt_sand_charcoal", text: "മണൽ, കരി, യുവി സോളാർ പാനലുകൾ" }, { id: "opt_paper_cotton", text: "ഫിൽട്ടർ പേപ്പർ, പരുത്തി, മെഷ്" }, { id: "opt_gravel_clay", text: "ചരൽ, കളിമണ്ണ്, വെള്ളി ഫോയിൽ" }, { id: "opt_plastic_sponge", text: "പ്ലാസ്റ്റിക് മുത്തുകൾ, സ്പോഞ്ച്" }] }
                 }
             },
             {
@@ -339,7 +353,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ಅನನ್ಯಾಗೆ ನೀಡಲಾದ ನಗದು ಬಹುಮಾನದ ಮೊತ್ತ ಎಷ್ಟು?", options: [{ id: "opt_5000", text: "ಐದು ಸಾವಿರ ರೂಪಾಯಿ" }, { id: "opt_10000", text: "ಹತ್ತು ಸಾವಿರ ರೂಪಾಯಿ" }, { id: "opt_2500", text: "ಎರಡು ಸಾವಿರದ ಐನೂರು ರೂಪಾಯಿ" }, { id: "opt_1000", text: "ಒಂದು ಸಾವಿರ ರೂಪಾಯಿ" }] },
                     'bn-IN': { questionText: "অনন্যাকে কত টাকা নগদ পুরস্কার দেওয়া হয়েছিল?", options: [{ id: "opt_5000", text: "পাঁচ হাজার টাকা" }, { id: "opt_10000", text: "দশ হাজার টাকা" }, { id: "opt_2500", text: "আড়াই হাজার টাকা" }, { id: "opt_1000", text: "এক হাজার টাকা" }] },
                     'mr-IN': { questionText: "अनन्याला किती रोख पारितोषिक देण्यात आले?", options: [{ id: "opt_5000", text: "पाच हजार रुपये" }, { id: "opt_10000", text: "दहा हजार रुपये" }, { id: "opt_2500", text: "अडीच हजार रुपये" }, { id: "opt_1000", text: "एक हजार रुपये" }] },
-                    'gu-IN': { questionText: "અનન્યાને કેટલી રોકડ ઈનામ રકમ આપવામાં આવી હતી?", options: [{ id: "opt_5000", text: "પાંચ હજાર રૂપિયા" }, { id: "opt_10000", text: "દસ હજાર રૂપિયા" }, { id: "opt_2500", text: "અઢી હજાર રૂપિયા" }, { id: "opt_1000", text: "એક હજાર રૂપિયા" }] }
+                    'gu-IN': { questionText: "અનન્યાને કેટલી રોકડ ઈનામ રકમ આપવામાં આવી હતી?", options: [{ id: "opt_5000", text: "પાંચ હજાર રૂપિયા" }, { id: "opt_10000", text: "દસ હજાર રૂપિયા" }, { id: "opt_2500", text: "અઢી હજાર રૂપિયા" }, { id: "opt_1000", text: "એક હજાર રૂપિયા" }] },
+                    'ml-IN': { questionText: "അനന്യയ്ക്ക് നൽകിയ ക്യാഷ് പ്രൈസ് തുക എത്രയായിരുന്നു?", options: [{ id: "opt_5000", text: "അയ്യായിരം രൂപ" }, { id: "opt_10000", text: "പതിനായിരം രൂപ" }, { id: "opt_2500", text: "രണ്ടായിരത്തി അഞ്ഞൂറ് രൂപ" }, { id: "opt_1000", text: "ആയിരം രൂപ" }] }
                 }
             }
         ]
