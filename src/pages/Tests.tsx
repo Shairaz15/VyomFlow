@@ -7,7 +7,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { PageWrapper } from "../components/layout";
 import "./Tests.css";
 
-type TestType = "memory" | "reaction" | "pattern" | "language" | "attention" | "story";
+type TestType = "memory" | "reaction" | "pattern" | "language" | "attention" | "story" | "navigation";
 
 interface TestInfo {
     id: TestType;
@@ -24,6 +24,13 @@ export function Tests() {
     const { t } = useLanguage();
 
     const TESTS: TestInfo[] = [
+        {
+            id: "navigation",
+            title: "Navigation Assessment",
+            description: "Memorize and navigate an Indian-themed map to test visuospatial memory, planning, and spatial orientation.",
+            iconName: "navigation",
+            duration: "4 min",
+        },
         {
             id: "story",
             title: "Story Narration Recall",

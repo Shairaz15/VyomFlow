@@ -10,6 +10,7 @@ import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
 import type { VmraAssessmentResult } from "../types/vmraTypes";
 import type { StoryAssessmentResult } from "../types/storyTypes";
+import type { NavigationAssessmentResult } from "../types/navigationTypes";
 import { logger } from "../utils/logger";
 import {
     loadResultsFromFirestore,
@@ -57,6 +58,7 @@ export const STORAGE_KEYS = {
     languageResults: "vyomflow_language_results",
     vmraResults: "vyomflow_vmra_results",
     storyResults: "vyomflow_story_results",
+    navigationResults: "vyomflow_navigation_results",
     lastSession: "vyomflow_last_session",
 };
 
@@ -71,6 +73,7 @@ export async function clearAllTestData(): Promise<void> {
     localStorage.removeItem(STORAGE_KEYS.languageResults);
     localStorage.removeItem(STORAGE_KEYS.vmraResults);
     localStorage.removeItem(STORAGE_KEYS.storyResults);
+    localStorage.removeItem(STORAGE_KEYS.navigationResults);
     localStorage.removeItem(STORAGE_KEYS.lastSession);
 
     // Also clear Firestore if user is logged in
@@ -717,4 +720,93 @@ export function useStoryResults() {
         getLatestResult,
     };
 }
+
+/**
+ * Hook for managing Navigation Assessment results.
+ * Firestore-first for authenticated users, localStorage fallback for demo mode.
+ */
+export function useNavigationResults() {
+    const [results, setResults] = useState<NavigationAssessmentResult[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const loadResults = useCallback(async (mounted: { current: boolean }) => {
+        try {
+            if (isUserAuthenticated()) {
+                const firestoreResults = await loadResultsFromFirestore<NavigationAssessmentResult>(
+                    "navigation_results"
+                );
+                if (mounted.current) {
+                    setResults(firestoreResults);
+                    localStorage.setItem(
+                        STORAGE_KEYS.navigationResults,
+                        JSON.stringify(trimResults(firestoreResults))
+                    );
+                }
+            } else {
+                const parsed = safeJsonParse<NavigationAssessmentResult[]>(
+                    localStorage.getItem(STORAGE_KEYS.navigationResults),
+                    []
+                );
+                if (mounted.current && parsed.length > 0) {
+                    const withDates = parsed.map((r) => ({
+                        ...r,
+                        timestamp: new Date(r.timestamp),
+                    }));
+                    setResults(withDates);
+                }
+            }
+        } catch (error) {
+            logger.error("Failed to load navigation results:", error);
+        } finally {
+            if (mounted.current) setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const mounted = { current: true };
+        loadResults(mounted);
+
+        const unsubscribe = onAuthStateChanged(auth, () => {
+            if (mounted.current) {
+                setIsLoading(true);
+                loadResults(mounted);
+            }
+        });
+
+        return () => {
+            mounted.current = false;
+            unsubscribe();
+        };
+    }, [loadResults]);
+
+    const saveResult = useCallback((result: NavigationAssessmentResult) => {
+        setResults((prev) => {
+            const updated = trimResults([...prev, result]);
+            try {
+                localStorage.setItem(STORAGE_KEYS.navigationResults, JSON.stringify(updated));
+                if (isUserAuthenticated()) {
+                    saveResultToFirestore("navigation_results", result).catch((e) =>
+                        logger.error("Firestore save failed", e)
+                    );
+                }
+            } catch (error) {
+                logger.error("Failed to save navigation result:", error);
+            }
+            return updated;
+        });
+    }, []);
+
+    const getLatestResult = useCallback((): NavigationAssessmentResult | null => {
+        if (results.length === 0) return null;
+        return results[results.length - 1];
+    }, [results]);
+
+    return {
+        results,
+        isLoading,
+        saveResult,
+        getLatestResult,
+    };
+}
+
 

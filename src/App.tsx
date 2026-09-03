@@ -9,6 +9,7 @@ import { PatternAssessment } from "./components/tests/pattern/PatternAssessment"
 import { LanguageAssessment } from "./components/tests/language/LanguageAssessment";
 import { SavtAssessment } from "./components/tests/attention/SavtAssessment";
 import { StoryAssessment } from "./components/tests/story/StoryAssessment";
+import { NavigationAssessment } from "./components/tests/navigation/NavigationAssessment";
 import { Settings } from "./pages/Settings";
 import { Demo } from "./pages/Demo";
 // Admin pages
@@ -100,6 +101,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <StoryAssessment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/test/navigation"
+              element={
+                <ProtectedRoute>
+                  <NavigationAssessment />
                 </ProtectedRoute>
               }
             />

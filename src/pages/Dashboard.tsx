@@ -11,7 +11,7 @@ import {
 import { Card, CardHeader, CardContent, RiskBadge, Button, Icon } from "../components/common";
 import { PageWrapper } from "../components/layout";
 import { useAuth } from "../contexts/AuthContext";
-import { useReactionResults, useMemoryResults, usePatternResults, useLanguageResults, useVmraResults, useStoryResults, clearAllTestData } from "../hooks/useTestResults";
+import { useReactionResults, useMemoryResults, usePatternResults, useLanguageResults, useVmraResults, useStoryResults, useNavigationResults, clearAllTestData } from "../hooks/useTestResults";
 import { generateSimulatedData, hasBaseline, getMockBaseline } from "../utils/simulateUserData";
 import { useWeeklyReminder } from "../hooks/useWeeklyReminder";
 import { predictTrend } from "../ml";
@@ -34,6 +34,7 @@ export function Dashboard() {
     const { results: languageResults, saveResult: saveLanguage } = useLanguageResults();
     const { results: vmraResults, saveResult: saveVmra } = useVmraResults();
     const { results: storyResults } = useStoryResults();
+    const { results: navigationResults } = useNavigationResults();
 
     // Weekly Reminder Hook
     useWeeklyReminder();
@@ -108,7 +109,7 @@ export function Dashboard() {
     };
 
     // Determine if user has data
-    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 || languageResults.length > 0 || vmraResults.length > 0 || storyResults.length > 0;
+    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 || languageResults.length > 0 || vmraResults.length > 0 || storyResults.length > 0 || navigationResults.length > 0;
 
     // Prepare chart data
     const chartData = useMemo(() => {
@@ -119,6 +120,7 @@ export function Dashboard() {
         languageResults.forEach(l => allDates.add(new Date(l.timestamp).toDateString()));
         vmraResults.forEach(v => allDates.add(new Date(v.timestamp).toDateString()));
         storyResults.forEach(s => allDates.add(new Date(s.timestamp).toDateString()));
+        navigationResults.forEach(n => allDates.add(new Date(n.timestamp).toDateString()));
 
         const sortedDates = Array.from(allDates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
