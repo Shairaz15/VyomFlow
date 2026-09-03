@@ -56,7 +56,7 @@ export function DestinationQuestion({
                 </p>
             </div>
 
-            <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl space-y-3">
+            <Card className="p-6 shadow-2xl space-y-3">
                 <div className="space-y-3">
                     {options.map((option, idx) => {
                         const isChosen = selectedIndex === idx;

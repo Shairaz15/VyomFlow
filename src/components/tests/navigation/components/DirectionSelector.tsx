@@ -84,7 +84,7 @@ export function DirectionSelector({
                     {intersectionLabel}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400">
-                    Which direction should you take to retrace your path back to Metro Central (Point A)?
+                    Which direction should you take to retrace your path back to Main Gate 1 (Point A)?
                 </p>
             </div>
 

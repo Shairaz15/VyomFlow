@@ -41,7 +41,7 @@ export function NavigationResults({
             </div>
 
             {/* Composite Score Gauge Card */}
-            <Card className="p-8 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center justify-around gap-8 text-center md:text-left">
+            <Card className="p-8 shadow-2xl flex flex-col md:flex-row items-center justify-around gap-8 text-center md:text-left">
                 {/* Circular Score Gauge */}
                 <div className="relative w-44 h-44 flex items-center justify-center flex-shrink-0">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -95,14 +95,14 @@ export function NavigationResults({
             {/* Biomarker Breakdown Grid (4 Categories) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* 1. Route Memory */}
-                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                <Card className="p-5 space-y-4">
                     <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
                         <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
                             <Icon name="navigation" size={18} />
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-white">Route Learning & Execution</h3>
-                            <span className="text-[11px] text-slate-400">Wayfinding fidelity across 6 intersections</span>
+                            <span className="text-[11px] text-slate-400">Wayfinding fidelity across {result.intersectionResponses.length || 8} intersections</span>
                         </div>
                     </div>
 
@@ -122,13 +122,13 @@ export function NavigationResults({
 
                         <div className="flex justify-between items-center">
                             <span className="text-slate-400">Wrong Turns</span>
-                            <span className="font-mono font-semibold text-slate-200">{biomarkers.wrongTurnCount} / 6</span>
+                            <span className="font-mono font-semibold text-slate-200">{biomarkers.wrongTurnCount} / {result.intersectionResponses.length || 8}</span>
                         </div>
                     </div>
                 </Card>
 
                 {/* 2. Executive Function & Latency */}
-                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                <Card className="p-5 space-y-4">
                     <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
                         <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
                             <Icon name="reaction" size={18} />
@@ -156,7 +156,7 @@ export function NavigationResults({
                 </Card>
 
                 {/* 3. Spatial Landmark Memory */}
-                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                <Card className="p-5 space-y-4">
                     <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
                             <Icon name="memory" size={18} />
@@ -189,7 +189,7 @@ export function NavigationResults({
                 </Card>
 
                 {/* 4. Episodic Memory & Composite Indices */}
-                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
+                <Card className="p-5 space-y-4">
                     <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
                         <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
                             <Icon name="brain-circuit" size={18} />

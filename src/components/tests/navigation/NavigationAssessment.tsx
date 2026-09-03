@@ -14,7 +14,7 @@ import type {
 import { VideoPlayer } from "./components/VideoPlayer";
 import { InstructionsPhase } from "./components/InstructionsPhase";
 import { DestinationQuestion } from "./components/DestinationQuestion";
-import { DirectionSelector } from "./components/DirectionSelector";
+import { SeamlessReverseNavigator } from "./components/SeamlessReverseNavigator";
 import { LandmarkOrdering } from "./components/LandmarkOrdering";
 import { NavigationResults } from "./components/NavigationResults";
 import "./NavigationAssessment.css";
@@ -33,8 +33,6 @@ export function NavigationAssessment() {
     const { saveResult } = useNavigationResults();
 
     const [phase, setPhase] = useState<Phase>("instructions");
-    const [currentSegmentIndex, setCurrentSegmentIndex] = useState<number>(0);
-    const [isAwaitingDirection, setIsAwaitingDirection] = useState<boolean>(false);
 
     // Collected session responses
     const [destinationAnswer, setDestinationAnswer] = useState<DestinationAnswer | null>(null);
@@ -46,7 +44,7 @@ export function NavigationAssessment() {
         setPhase("encoding");
     };
 
-    // 2. Encoding Video Finished (Full A → H Route)
+    // 2. Encoding Video Finished (Full A → B Route)
     const handleEncodingEnded = () => {
         setPhase("destination_mcq");
     };
@@ -54,33 +52,16 @@ export function NavigationAssessment() {
     // 3. Destination MCQ Answered
     const handleDestinationAnswer = (answer: DestinationAnswer) => {
         setDestinationAnswer(answer);
-        setCurrentSegmentIndex(0);
-        setIsAwaitingDirection(false);
         setPhase("navigation");
     };
 
-    // 4. Reverse Navigation Clip Ended
-    const handleSegmentClipEnded = () => {
-        const totalSegments = DEMO_ROUTE.segments.length; // 7 segments (0 to 6)
-
-        // For segments 0 through 5, ask direction at the upcoming intersection
-        if (currentSegmentIndex < totalSegments - 1) {
-            setIsAwaitingDirection(true);
-        } else {
-            // Final segment (B→A) arrived at start point A! Move to Landmark Chronology.
-            setIsAwaitingDirection(false);
-            setPhase("landmark_ordering");
-        }
+    // 4. Reverse Navigation Completed (All 8 Intersections finished seamlessly)
+    const handleReverseNavigationComplete = (responses: IntersectionResponse[]) => {
+        setIntersectionResponses(responses);
+        setPhase("landmark_ordering");
     };
 
-    // 5. Intersection Direction Decision Made
-    const handleDirectionDecision = (response: IntersectionResponse) => {
-        setIntersectionResponses((prev) => [...prev, response]);
-        setIsAwaitingDirection(false);
-        setCurrentSegmentIndex((prev) => prev + 1);
-    };
-
-    // 6. Landmark Chronology Task Completed
+    // 5. Landmark Chronology Task Completed
     const handleLandmarkComplete = (result: LandmarkOrderingResult) => {
         setPhase("processing");
 
@@ -111,12 +92,8 @@ export function NavigationAssessment() {
         setDestinationAnswer(null);
         setIntersectionResponses([]);
         setAssessmentResult(null);
-        setCurrentSegmentIndex(0);
-        setIsAwaitingDirection(false);
         setPhase("instructions");
     };
-
-    const currentSegment = DEMO_ROUTE.segments[currentSegmentIndex];
 
     return (
         <PageWrapper>
@@ -126,22 +103,22 @@ export function NavigationAssessment() {
                     <InstructionsPhase onStart={handleStartAssessment} />
                 )}
 
-                {/* Phase 2: Route Encoding Video (A → H) */}
+                {/* Phase 2: Route Encoding Video (Point A → Point B) */}
                 {phase === "encoding" && (
                     <div className="max-w-4xl mx-auto space-y-4 animate-fadeIn">
                         <div className="flex items-center justify-between px-2">
                             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                                Phase 1 of 4: Route Encoding (A → H)
+                                Phase 1 of 4: Route Encoding (A → B)
                             </span>
                             <span className="text-xs text-slate-400">
-                                Watch carefully • Observe key landmarks
+                                Watch carefully • Observe paths & key landmarks
                             </span>
                         </div>
                         <VideoPlayer
                             src={DEMO_ROUTE.encodingVideoUrl}
                             onEnded={handleEncodingEnded}
-                            label="Full Route Encoding (Start A → Destination H)"
-                            subLabel="Observe the entire walking path and all buildings, gates, and monuments you pass."
+                            label="Full Forward Route Encoding (Main Gate 1 → Sports Plaza)"
+                            subLabel="Observe the entire path from Point A to Point B including buildings, turns, and sculptures."
                         />
                     </div>
                 )}
@@ -156,37 +133,12 @@ export function NavigationAssessment() {
                     />
                 )}
 
-                {/* Phase 4: Reverse Navigation (H → A, 7 Segments, 6 Direction Decisions) */}
+                {/* Phase 4: Seamless Reverse Navigation (Point B → Point A, 8 Intersections) */}
                 {phase === "navigation" && (
-                    <div className="max-w-4xl mx-auto space-y-4 animate-fadeIn">
-                        {/* Segment Progress Badge */}
-                        <div className="flex items-center justify-between px-2 text-xs">
-                            <span className="font-semibold text-cyan-400">
-                                Reverse Navigation (H → A): Clip {currentSegmentIndex + 1} of {DEMO_ROUTE.segments.length}
-                            </span>
-                            <span className="text-slate-400">
-                                Waypoint {currentSegment.fromWaypoint} → {currentSegment.toWaypoint}
-                            </span>
-                        </div>
-
-                        {!isAwaitingDirection ? (
-                            <VideoPlayer
-                                key={currentSegment.segmentId}
-                                src={currentSegment.videoUrl}
-                                onEnded={handleSegmentClipEnded}
-                                label={`Segment ${currentSegmentIndex + 1}: Point ${currentSegment.fromWaypoint} to ${currentSegment.toWaypoint}`}
-                                subLabel={currentSegment.intersectionLabel}
-                            />
-                        ) : (
-                            <DirectionSelector
-                                key={`dir_${currentSegment.segmentId}`}
-                                intersectionLabel={currentSegment.intersectionLabel}
-                                correctDirection={currentSegment.correctDirection}
-                                segmentId={currentSegment.segmentId}
-                                onDecision={handleDirectionDecision}
-                            />
-                        )}
-                    </div>
+                    <SeamlessReverseNavigator
+                        route={DEMO_ROUTE}
+                        onComplete={handleReverseNavigationComplete}
+                    />
                 )}
 
                 {/* Phase 5: Landmark Chronology Ordering */}
@@ -205,7 +157,7 @@ export function NavigationAssessment() {
                         </div>
                         <h2 className="text-xl font-bold text-white">Computing Biomarkers...</h2>
                         <p className="text-xs text-slate-400">
-                            Analyzing decision latencies, trajectory accuracy, and spatial landmark sequence fidelity.
+                            Analyzing decision latencies across 8 intersections, trajectory accuracy, and spatial landmark sequence fidelity.
                         </p>
                     </div>
                 )}

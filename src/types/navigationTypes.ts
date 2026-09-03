@@ -10,13 +10,15 @@ export type NavigationDirection = 'left' | 'right' | 'straight' | 'back';
 /** Waypoint labels on the route */
 export type Waypoint = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
 
-/** A single route segment between two adjacent waypoints */
+/** A single route segment between two adjacent waypoints / intersections */
 export interface RouteSegment {
-    segmentId: string;          // e.g. "seg_h_g"
-    videoUrl: string;           // e.g. "/videos/navigation/segment_h_g.mp4"
-    fromWaypoint: Waypoint;     // e.g. "H"
-    toWaypoint: Waypoint;       // e.g. "G"
-    intersectionLabel: string;  // e.g. "Intersection at G"
+    segmentId: string;              // e.g. "seg_01"
+    approachVideoUrl: string;       // e.g. "/videos/navigation/inter-1.mp4"
+    continuationVideoUrl: string;   // e.g. "/videos/navigation/af-1.mp4"
+    videoUrl?: string;              // optional legacy fallback
+    fromWaypoint: string;           // e.g. "Point B"
+    toWaypoint: string;             // e.g. "Intersection 1"
+    intersectionLabel: string;      // e.g. "Intersection 1: Campus Plaza Junction"
     correctDirection: NavigationDirection;
 }
 
@@ -26,7 +28,7 @@ export interface LandmarkItem {
     name: string;
     imageUrl: string;
     isReal: boolean;             // true = on the route, false = distractor
-    chronologicalOrder: number;  // 1-5 for real landmarks, -1 for distractors
+    chronologicalOrder: number;  // 1-N for real landmarks in sequence, -1 for distractors
 }
 
 /** Full route configuration */
@@ -34,14 +36,15 @@ export interface RouteConfig {
     routeId: string;
     routeName: string;
     description: string;
-    encodingVideoUrl: string;    // Full A→H route video
+    encodingVideoUrl: string;    // Full A→B route video
+    startVideoUrl?: string;      // Optional departure video starting from B
     destination: {
         question: string;
         options: string[];
         correctIndex: number;
     };
-    segments: RouteSegment[];    // 7 segments: H→G, G→F, F→E, E→D, D→C, C→B, B→A
-    landmarks: LandmarkItem[];   // 10 landmarks: 5 real, 5 distractors
+    segments: RouteSegment[];    // 8 intersection segments for B→A
+    landmarks: LandmarkItem[];   // 21 landmarks (real + distractors)
 }
 
 /** Logged response for one intersection decision */

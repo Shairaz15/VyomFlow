@@ -19,7 +19,7 @@ This document compiles the exhaustive catalog of all **computational, acoustic, 
 4. [Module 4: Sustained Attention & Vigilance Test (SAVT / Go No-Go)](#module-4-sustained-attention--vigilance-test-savt--go-no-go)
 5. [Module 5: Psychomotor Reaction Time Test (PVT)](#module-5-psychomotor-reaction-time-test-pvt)
 6. [Module 6: Visual Pattern & Sequence Learning Assessment (PatternAssessment)](#module-6-visual-pattern--sequence-learning-assessment-patternassessment)
-7. [Module 7: Verbal Short-Term Memory Assessment](#module-7-verbal-short-term-memory-assessment)
+7. [Module 7: Immersive Video Navigation & Spatial Memory Assessment (NavigationAssessment)](#module-7-immersive-video-navigation--spatial-memory-assessment-navigationassessment)
 8. [Cross-Domain Longitudinal AI Fusion & Trend Biomarkers](#cross-domain-longitudinal-ai-fusion--trend-biomarkers)
 
 ---
@@ -149,18 +149,25 @@ This document compiles the exhaustive catalog of all **computational, acoustic, 
 
 ---
 
-## Module 7: Verbal Short-Term Memory Assessment (Word Recall)
-**Target Neurocognitive Domains:** Immediate verbal recall, phonological working memory, intrusion susceptibility, retroactive interference.
+## Module 7: Immersive Video Navigation & Spatial Memory Assessment (`NavigationAssessment`)
+**Target Neurocognitive Domains:** Visuospatial navigation, topological orientation, landmark recognition & chronology, route reversal, executive decision making.
 
 | Biomarker Name | Type | Mathematical / Computational Formulation | Clinical Significance |
 | :--- | :--- | :--- | :--- |
-| **Word Recall Accuracy** (`recallAccuracy`) | Proportion (0–1) | $\frac{\text{Correct Recalled Words}}{\text{Total Presented Words}}$ | Immediate phonological and verbal memory recall capacity. |
-| **Intrusion Rate** (`intrusionRate`) | Error Ratio (0–1) | $\frac{\text{False Recalls}}{\text{Total Recalled Words}}$ | Tendency to produce non-presented words (confabulations). |
-| **Forgetting Rate** (`forgettingRate`) | Proportion (0–1) | $\frac{\text{Omitted Words}}{\text{Total Presented Words}}$ | Immediate memory decay and verbal omission rate. |
-| **Duplicate / Perseveration Count** (`duplicateCount`) | Error Count | Count of repeated recall words in a single trial. | Executive perseveration and failure to track output buffer. |
-| **Interference Score** (`interferenceScore`) | Retention Metric | Accuracy drop following secondary distractor task. | Measures vulnerability to retroactive interference in working memory. |
-| **Recall Latency Index** (`latencyIndex`) | Temporal (0–1) | $\min(1.0, \frac{\text{Response Latency (ms)}}{45000})$ | Verbal retrieval speed and mental search effort. |
-| **Recall Consistency** (`recallConsistency`) | Longitudinal (0–1) | $1 - 2 \cdot |\text{Current Accuracy} - \text{Historical Mean}|$ | Multi-session verbal memory stability. |
+| **Destination Recall Accuracy** (`destinationRecallAccuracy`) | Binary (0 or 1) | Binary accuracy of identifying arrival destination upon route completion. | Evaluates macro-level destination schema retention. |
+| **Navigation Accuracy** (`navigationAccuracy`) | Proportion (0–1) | $\frac{\text{Correct Intersections Chosen}}{\text{Total Intersections (6)}}$ | Real-world topological route learning and spatial route reversal. |
+| **Wrong Turn Count** (`wrongTurnCount`) | Error Count | Total erroneous turn decisions at junctions. | Quantitative index of topographical disorientation. |
+| **Decision Latency** (`averageDecisionLatencyMs`) | Temporal (ms) | $\frac{1}{N}\sum \text{Decision Latency}_i$ | Processing speed and hesitation during spatial waypoint navigation. |
+| **Decision Latency Variance** (`decisionLatencyVariance`) | Statistical (ms$^2$) | Sample variance of decision reaction times across intersection nodes. | Visuomotor decision uncertainty and micro-hesitations. |
+| **Hesitation Count** (`hesitationCount`) | Error Count | Intersection decisions taking $> 2\times$ average latency. | Spatial dilemma and retrieval stalling events. |
+| **Landmark Recognition Accuracy** (`landmarkRecognitionAccuracy`) | Proportion (0–1) | $\frac{\text{Real Landmarks Selected}}{\text{Total True Landmarks}}$ | Visual object memory and scene recognition fidelity. |
+| **False Landmark Rate** (`falseLandmarkRate`) | Proportion (0–1) | $\frac{\text{Distractor Landmarks Selected}}{\text{Total Selected Landmarks}}$ | Susceptibility to spatial visual confabulation / false positives. |
+| **Landmark Sequence Accuracy** (`landmarkSequenceAccuracy`) | Proportion (0–1) | Exact chronological placement accuracy along the route. | Chronological episodic order preservation. |
+| **Chronological Recall Score** (`chronologicalRecallScore`) | Composite (0–1) | $(0.70 \times \text{SequenceAccuracy}) + (0.30 \times \text{RecognitionAccuracy})$ | High-level visuospatial temporal ordering integrity. |
+| **Route Memory Score** (`routeMemoryScore`) | Composite (0–1) | $(0.70 \times \text{NavAccuracy}) + (0.30 \times \text{DestRecall})$ | Integrated topological route memory index. |
+| **Visual Attention Score** (`visualAttentionScore`) | Composite (0–1) | $\max(0, \text{RecognitionAccuracy} \times (1 - 0.5 \times \text{FalseLandmarkRate}))$ | Visual feature encoding quality during continuous video navigation. |
+| **Episodic Memory Score** (`episodicMemoryScore`) | Composite (0–1) | $(0.60 \times \text{ChronologicalScore}) + (0.40 \times \text{DestRecall})$ | Cross-modal temporal-spatial episodic recall index. |
+| **Composite Navigation Score** (`navigationScore`) | Final Score (0–100) | $30\%\text{Turns} + 20\%\text{Recognition} + 20\%\text{Chronology} + 15\%\text{Latency} + 10\%\text{Destination} + 5\%\text{Precision}$ | Global visuospatial and navigational cognitive integrity score. |
 
 ---
 

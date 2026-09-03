@@ -49,13 +49,13 @@ function DraggableLandmarkCard({
             {...listeners}
             {...attributes}
             onClick={onTap}
-            className={`p-2.5 rounded-xl border transition-all duration-150 flex flex-col items-center text-center space-y-2 select-none touch-none ${
+            className={`p-2 rounded-xl border transition-all duration-150 flex flex-col items-center text-center space-y-1.5 select-none touch-none ${
                 isSelected
-                    ? "bg-slate-900/40 border-slate-800 text-slate-500"
-                    : "bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 hover:border-cyan-500/50 text-slate-200 shadow-md hover:scale-[1.02]"
+                    ? "bg-slate-900/40 border-slate-800 text-slate-500 cursor-default"
+                    : "bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 hover:border-cyan-500/50 text-slate-200 shadow-md hover:scale-[1.02] cursor-pointer"
             }`}
         >
-            <div className="w-full h-20 rounded-lg overflow-hidden bg-slate-950/80 flex items-center justify-center border border-slate-800">
+            <div className="w-full h-24 rounded-lg overflow-hidden bg-slate-950/80 flex items-center justify-center border border-slate-800 relative">
                 {!imgError && landmark.imageUrl ? (
                     <img
                         src={landmark.imageUrl}
@@ -70,9 +70,11 @@ function DraggableLandmarkCard({
                     </div>
                 )}
             </div>
-            <span className="text-xs font-semibold line-clamp-2">{landmark.name}</span>
-            <span className="text-[10px] text-cyan-400/80 font-mono">
-                {isSelected ? "Placed" : "Tap / Drag to place"}
+            <span className="text-[11px] font-semibold line-clamp-2 leading-tight min-h-[28px]">
+                {landmark.name}
+            </span>
+            <span className="text-[9px] text-cyan-400/80 font-mono">
+                {isSelected ? "Placed ✓" : "Tap / Drag"}
             </span>
         </div>
     );
@@ -81,10 +83,12 @@ function DraggableLandmarkCard({
 // Droppable Slot Component
 function LandmarkSlot({
     slotIndex,
+    totalSlots,
     landmark,
     onRemove,
 }: {
     slotIndex: number;
+    totalSlots: number;
     landmark: LandmarkItem | null;
     onRemove: () => void;
 }) {
@@ -98,7 +102,7 @@ function LandmarkSlot({
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-[140px] p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-between text-center relative ${
+            className={`min-h-[140px] p-2.5 rounded-2xl border-2 transition-all flex flex-col items-center justify-between text-center relative ${
                 isOver
                     ? "border-cyan-400 bg-cyan-500/10 shadow-lg shadow-cyan-500/20"
                     : landmark
@@ -108,17 +112,17 @@ function LandmarkSlot({
         >
             {/* Slot Order Badge */}
             <div className="w-full flex items-center justify-between">
-                <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-mono font-bold flex items-center justify-center">
+                <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-mono font-bold flex items-center justify-center">
                     {slotIndex + 1}
                 </span>
-                <span className="text-[11px] font-medium text-slate-400">
-                    {slotIndex === 0 ? "1st Landmark" : slotIndex === 4 ? "5th (Final)" : `Step ${slotIndex + 1}`}
+                <span className="text-[10px] font-medium text-slate-400">
+                    {slotIndex === 0 ? "Start (A)" : slotIndex === totalSlots - 1 ? "End (B)" : `Step ${slotIndex + 1}`}
                 </span>
             </div>
 
             {landmark ? (
-                <div className="w-full space-y-1.5 pt-1">
-                    <div className="w-full h-14 rounded-lg overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+                <div className="w-full space-y-1 pt-1">
+                    <div className="w-full h-16 rounded-lg overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
                         {!imgError && landmark.imageUrl ? (
                             <img
                                 src={landmark.imageUrl}
@@ -130,21 +134,21 @@ function LandmarkSlot({
                             <Icon name="memory" size={20} className="text-cyan-400" />
                         )}
                     </div>
-                    <span className="text-xs font-semibold text-white block truncate">
+                    <span className="text-[11px] font-semibold text-white block truncate">
                         {landmark.name}
                     </span>
                     <button
                         type="button"
                         onClick={onRemove}
-                        className="text-[11px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer underline"
+                        className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer underline"
                     >
                         Remove ✕
                     </button>
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center my-auto text-slate-500 space-y-1">
-                    <span className="text-xs font-medium">Empty Slot</span>
-                    <span className="text-[10px] text-slate-600">Drop or tap landmark</span>
+                    <span className="text-[11px] font-medium">Empty</span>
+                    <span className="text-[9px] text-slate-600">Drop / tap landmark</span>
                 </div>
             )}
         </div>
@@ -152,26 +156,30 @@ function LandmarkSlot({
 }
 
 export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProps) {
-    // 10 shuffled items
+    // Ground truth real landmarks sorted in chronological order (1 to N)
+    const realLandmarksInOrder = useMemo(() => {
+        return landmarks
+            .filter((lm) => lm.isReal && lm.chronologicalOrder > 0)
+            .sort((a, b) => a.chronologicalOrder - b.chronologicalOrder);
+    }, [landmarks]);
+
+    const targetCount = realLandmarksInOrder.length || 8;
+
+    // Shuffled pool of all 21 items
     const shuffledLandmarks = useMemo(() => {
         return [...landmarks].sort(() => Math.random() - 0.5);
     }, [landmarks]);
 
-    // 5 ordered slots (null = empty)
-    const [slots, setSlots] = useState<(LandmarkItem | null)[]>([null, null, null, null, null]);
+    // Ordered slots (null = empty)
+    const [slots, setSlots] = useState<(LandmarkItem | null)[]>(() =>
+        new Array(targetCount).fill(null)
+    );
 
     // Sensor config for mouse and mobile touch
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 5 } })
     );
-
-    // Ground truth real landmarks sorted in chronological order (1 to 5)
-    const realLandmarksInOrder = useMemo(() => {
-        return landmarks
-            .filter((lm) => lm.isReal && lm.chronologicalOrder > 0)
-            .sort((a, b) => a.chronologicalOrder - b.chronologicalOrder);
-    }, [landmarks]);
 
     const selectedIds = useMemo(() => {
         return slots.filter((lm): lm is LandmarkItem => lm !== null).map((lm) => lm.id);
@@ -184,7 +192,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
         const landmark = active.data.current?.landmark as LandmarkItem | undefined;
         const slotIndex = over.data.current?.slotIndex as number | undefined;
 
-        if (landmark && slotIndex !== undefined && slotIndex >= 0 && slotIndex < 5) {
+        if (landmark && slotIndex !== undefined && slotIndex >= 0 && slotIndex < targetCount) {
             setSlots((prev) => {
                 const next = [...prev];
                 // If landmark already in another slot, remove it from that slot
@@ -198,7 +206,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
         }
     };
 
-    // Tap-to-place (for accessible mobile interaction)
+    // Tap-to-place (for accessible quick interaction)
     const handleTapLandmark = (landmark: LandmarkItem) => {
         if (selectedIds.includes(landmark.id)) {
             // Remove from slot
@@ -234,17 +242,17 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
         const correctOrderIds = realLandmarksInOrder.map((lm) => lm.id);
 
         const realCount = orderedPlaced.filter((lm) => lm.isReal).length;
-        const recognitionAccuracy = realCount / 5;
-        const falseLandmarkCount = 5 - realCount;
+        const recognitionAccuracy = realCount / targetCount;
+        const falseLandmarkCount = targetCount - realCount;
 
         // Sequence accuracy: correct item in correct slot index
         let correctPositions = 0;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < targetCount; i++) {
             if (orderedPlaced[i]?.id === correctOrderIds[i]) {
                 correctPositions++;
             }
         }
-        const sequenceAccuracy = correctPositions / 5;
+        const sequenceAccuracy = correctPositions / targetCount;
 
         onComplete({
             selectedLandmarkIds: orderedLandmarkIds,
@@ -257,7 +265,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
     };
 
     return (
-        <div className="max-w-4xl mx-auto py-6 px-4 space-y-8 animate-fadeInUp">
+        <div className="max-w-5xl mx-auto py-6 px-4 space-y-8 animate-fadeInUp">
             {/* Header */}
             <div className="text-center space-y-2">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -268,30 +276,31 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                     Order the Landmarks You Encountered
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
-                    Select the 5 real landmarks seen on the forward route (A → H) and place them in the exact order they appeared.
+                    Select the {targetCount} real landmarks seen on the forward route (A → B) and place them in the exact order they appeared from Main Gate 1 to the Sports Plaza.
                 </p>
             </div>
 
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                {/* 5 Ordered Drop Slots (A → H) */}
+                {/* Ordered Drop Slots (A → B) */}
                 <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                         <div className="flex items-center gap-2">
                             <Icon name="timeline" size={18} className="text-cyan-400" />
-                            <h3 className="text-base font-bold text-white">
-                                Route Chronology Order (Start Point A → Destination Point H)
+                            <h3 className="text-sm sm:text-base font-bold text-white">
+                                Route Chronology Order (Gate 1 Point A → Sports Plaza Point B)
                             </h3>
                         </div>
                         <span className="text-xs font-mono font-semibold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20">
-                            {selectedIds.length} / 5 Selected
+                            {selectedIds.length} / {targetCount} Placed
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 pt-2">
                         {slots.map((landmark, idx) => (
                             <LandmarkSlot
                                 key={idx}
                                 slotIndex={idx}
+                                totalSlots={targetCount}
                                 landmark={landmark}
                                 onRemove={() => handleRemoveSlot(idx)}
                             />
@@ -299,17 +308,21 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                     </div>
                 </Card>
 
-                {/* Available Landmark Cards (10 cards: 5 real, 5 distractors) */}
+                {/* Available Landmark Cards (21 cards: real landmarks + distractors/lures) */}
                 <Card className="p-6 bg-slate-900/80 border border-slate-800 rounded-3xl space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                         <div className="flex items-center gap-2">
                             <Icon name="assess" size={18} className="text-cyan-400" />
-                            <h3 className="text-base font-bold text-white">Available Landmarks Pool</h3>
+                            <h3 className="text-sm sm:text-base font-bold text-white">
+                                Available Landmarks Pool ({landmarks.length} Photos)
+                            </h3>
                         </div>
-                        <span className="text-xs text-slate-400">10 options (5 real + 5 distractors)</span>
+                        <span className="text-xs text-slate-400">
+                            Includes actual route landmarks and distractor lures
+                        </span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-2">
                         {shuffledLandmarks.map((lm) => (
                             <DraggableLandmarkCard
                                 key={lm.id}
@@ -331,7 +344,9 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                     onClick={handleSubmit}
                     className="min-w-[260px] shadow-xl shadow-cyan-500/20 text-base font-semibold"
                 >
-                    {isComplete ? "Submit Route Sequence →" : `Place all 5 landmarks to continue (${selectedIds.length}/5)`}
+                    {isComplete
+                        ? "Submit Route Sequence →"
+                        : `Place all ${targetCount} landmarks to continue (${selectedIds.length}/${targetCount})`}
                 </Button>
             </div>
         </div>

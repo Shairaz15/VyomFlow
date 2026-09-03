@@ -9,8 +9,8 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
         {
             num: "01",
             icon: "navigation" as const,
-            title: "Watch the Route (A → H)",
-            description: "Watch a first-person walking video from Start (A) to Destination (H). Observe the turns, path, and landmarks along the route.",
+            title: "Watch Forward Route (A → B)",
+            description: "Watch a first-person walking video from Main Gate 1 (Point A) to the Sports Plaza (Point B). Observe the turns, pathways, and visual landmarks.",
             badge: "Phase 1",
         },
         {
@@ -23,15 +23,15 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
         {
             num: "03",
             icon: "reaction" as const,
-            title: "Navigate in Reverse (H → A)",
-            description: "Watch short clips retracing the route backwards. At each intersection, choose whether to turn Left, Right, go Straight, or Back.",
+            title: "Navigate in Reverse (B → A)",
+            description: "Watch video clips retracing the route backwards. At each of the 8 intersections, choose whether to go Straight, turn Left, turn Right, or go Back.",
             badge: "Phase 3",
         },
         {
             num: "04",
             icon: "memory" as const,
             title: "Landmark Chronology",
-            description: "Identify the 5 real landmarks you saw along the route and arrange them in the exact order they appeared from A to H.",
+            description: "Identify the real landmarks you saw along the route and arrange them in the exact order they appeared from Point A to Point B.",
             badge: "Phase 4",
         },
     ];
@@ -44,7 +44,15 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
                     <Icon name="navigation" size={16} />
                     <span>Visuospatial Biomarker Protocol</span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                <h1
+                    className="text-3xl sm:text-4xl font-extrabold tracking-tight"
+                    style={{
+                        background: "linear-gradient(135deg, var(--primary), var(--accent, #a78bfa))",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                    }}
+                >
                     Immersive Navigation Assessment
                 </h1>
                 <p className="text-base text-slate-400 max-w-xl mx-auto">
@@ -56,7 +64,9 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
                         Duration: ~5 min
                     </span>
                     <span className="text-slate-600">•</span>
-                    <span>8 Route Waypoints (A–H)</span>
+                    <span>8 Intersections (B → A)</span>
+                    <span className="text-slate-600">•</span>
+                    <span>21 Landmark Pool</span>
                     <span className="text-slate-600">•</span>
                     <span>17+ Digital Biomarkers</span>
                 </div>
@@ -67,7 +77,7 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
                 {steps.map((step) => (
                     <Card
                         key={step.num}
-                        className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl hover:border-cyan-500/40 transition-all space-y-3"
+                        className="p-5 hover:border-cyan-500/40 transition-all space-y-3"
                     >
                         <div className="flex items-center justify-between">
                             <span className="text-2xl font-mono font-bold text-cyan-400/50">
@@ -100,7 +110,7 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
                 <div className="space-y-1">
                     <strong className="text-cyan-300 font-semibold block">Instructions & Tips</strong>
                     <p className="text-slate-400 leading-relaxed">
-                        Pay close attention during the initial encoding video — the video plays once without pausing. You will be tested on your ability to retrace the steps in reverse and identify key buildings and visual landmarks.
+                        Pay close attention during the initial forward route video (Point A to Point B) — the video plays once. You will be tested on your ability to navigate the reverse path (Point B to Point A) at 8 decision points and place key visual landmarks in sequence.
                     </p>
                 </div>
             </div>
