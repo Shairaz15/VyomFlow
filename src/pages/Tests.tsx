@@ -23,11 +23,31 @@ export function Tests() {
         isJourneyComplete,
         activityLastCompletedMap,
         activityLatestScoreMap,
+        isLoading,
     } = useJourneyState();
 
     // Modals state
     const [completedActivityToShow, setCompletedActivityToShow] = useState<ActivityId | null>(null);
     const [showJourneyCompleteModal, setShowJourneyCompleteModal] = useState(false);
+
+    // Auto-scroll smoothly to whatever test is left, or remain at the top if all are completed
+    useEffect(() => {
+        if (isLoading) return;
+
+        // Give the DOM and dynamic SVGs time to render cleanly before scrolling
+        const timer = setTimeout(() => {
+            if (isJourneyComplete) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            } else if (activeNodeId) {
+                const targetElement = document.getElementById(`journey-node-${activeNodeId}`);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }
+        }, 220);
+
+        return () => clearTimeout(timer);
+    }, [activeNodeId, isJourneyComplete, isLoading, filterMode]);
 
     // Check query params for completion notification
     useEffect(() => {
@@ -193,9 +213,6 @@ export function Tests() {
                 <div className="journey-bottom-links">
                     <button className="link-chip" onClick={() => navigate("/dashboard")}>
                         <Icon name="chart-line-up" size={13} /> View Clinical Dashboard →
-                    </button>
-                    <button className="link-chip" onClick={() => navigate("/progress")}>
-                        <Icon name="timeline" size={13} /> My Progress & Growth →
                     </button>
                     <button className="link-chip" onClick={() => navigate("/privacy")}>
                         Privacy & Data Safeguards →

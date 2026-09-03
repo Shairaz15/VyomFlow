@@ -10,7 +10,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from '../../common';
 import { PageWrapper } from '../../layout';
 import type {
@@ -33,7 +35,7 @@ import {
 } from './savtLogic';
 import { createSavtResult } from './savtFeatures';
 import { useAttentionResults } from '../../../hooks/useTestResults';
-import { getAttentionFeedback } from '../../../utils/normativeStats';
+import '../story/StoryAssessment.css';
 import './SavtAssessment.css';
 
 /** Maps target color to a CSS tint for rule cards */
@@ -46,9 +48,42 @@ const COLOR_TINTS: Record<string, { bg: string; border: string; text: string }> 
 
 export function SavtAssessment() {
     const navigate = useNavigate();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
     const { user, isAuthenticated } = useAuth();
-    const { saveResult } = useAttentionResults();
+    const { results, saveResult } = useAttentionResults();
     const config = DEFAULT_SAVT_CONFIG;
+
+    // Custom tick renderer for Radar Chart
+    const renderCustomAxisTick = ({ payload, x, y, cx, cy }: any) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const offsetX = dist > 0 ? x + (dx / dist) * 8 : x;
+        const offsetY = dist > 0 ? y + (dy / dist) * 8 : y;
+
+        let textAnchor: "start" | "middle" | "end" = "middle";
+        if (dx > 12) {
+            textAnchor = "start";
+        } else if (dx < -12) {
+            textAnchor = "end";
+        }
+
+        return (
+            <text
+                x={offsetX}
+                y={offsetY}
+                textAnchor={textAnchor}
+                dominantBaseline="central"
+                fill={isDark ? "#E2ECF2" : "#17324D"}
+                fontSize={10}
+                fontWeight={600}
+                className="radar-axis-tick select-none"
+            >
+                {payload.value}
+            </text>
+        );
+    };
 
     // ─── State ────────────────────────────────────────────────────
     const [phase, setPhase] = useState<SavtPhase>('instructions');
@@ -205,9 +240,7 @@ export function SavtAssessment() {
     const startPractice = useCallback(() => {
         if (!isAuthenticated) return;
         clearAllTimers();
-        const target = pickSessionTarget();
-        setSessionTarget(target);
-        sessionTargetRef.current = target;
+        const target = sessionTargetRef.current;
 
         const seq = generatePracticeSequence(config);
         practiceSeqRef.current = seq;
@@ -220,7 +253,7 @@ export function SavtAssessment() {
         setTimeout(() => {
             runPracticeTrial(seq, 0, target);
         }, 150);
-    }, [config, clearAllTimers, runPracticeTrial]);
+    }, [config, clearAllTimers, runPracticeTrial, isAuthenticated]);
 
     const finishTest = useCallback(() => {
         clearAllTimers();
@@ -473,11 +506,6 @@ export function SavtAssessment() {
                         <span className="back-arrow" aria-hidden="true">←</span>
                         <span>Back to Assessments</span>
                     </button>
-
-                    <div className="story-module-badge">
-                        <span className="badge-dot" aria-hidden="true" />
-                        <span>Cognitive Assessment</span>
-                    </div>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
@@ -671,96 +699,165 @@ export function SavtAssessment() {
                     )}
 
                     {/* 5. Results Phase */}
-                    {phase === 'results' && result && (
-                        <div className="savt-results-container animate-fadeIn">
-                            <Card className="savt-results-card">
-                                <div className="results-overview-header">
-                                    <div>
-                                        <h2 className="vyom-serif">Attention Profile</h2>
-                                        <p className="results-sub">Sustained vigilance, signal sensitivity, and response inhibition.</p>
+                    {phase === 'results' && result && (() => {
+                        const scorePercent = result.profile.compositeScore;
+                        const hitRatePercent = Math.round(result.features.hitRate * 100);
+                        const dPrime = result.features.dPrime.toFixed(2);
+                        const commissionErrorPercent = Math.round(result.features.commissionErrorRate * 100);
+                        const inhibitionPercent = Math.max(0, 100 - commissionErrorPercent);
+                        const meanRt = result.features.meanResponseTimeMs > 0 ? Math.round(result.features.meanResponseTimeMs) : 0;
+                        const stabilityPercent = Math.round(Math.max(10, Math.min(100, 100 - (result.features.omissionErrorRate * 100))));
+
+                        const raw = result.rawMetrics || (result as any).metrics || {};
+                        const totalGo = raw.totalGoTrials ?? 28;
+                        const hits = raw.hits ?? Math.round((result.features?.hitRate || 0) * totalGo);
+                        const blockRates: number[] = raw.blockHitRates && raw.blockHitRates.length > 0
+                            ? raw.blockHitRates
+                            : [result.features?.hitRate || 0.85, result.features?.hitRate || 0.85, result.features?.hitRate || 0.85, result.features?.hitRate || 0.85];
+
+                        const getScoreTier = (score: number) => {
+                            if (score >= 80) return { label: "High Vigilance", level: "stable" as const };
+                            if (score >= 60) return { label: "Moderate Vigilance", level: "change_detected" as const };
+                            return { label: "Needs Practice", level: "possible_risk" as const };
+                        };
+
+                        const tier = getScoreTier(scorePercent);
+
+                        // Trend computation
+                        const pastResults = results || [];
+                        const prevSession = pastResults.length > 0 ? pastResults[pastResults.length - 1] : null;
+                        const prevScore = (prevSession as any)?.profile?.compositeScore ?? (prevSession as any)?.score;
+                        const isImproving = prevScore ? (scorePercent >= prevScore) : (scorePercent >= 60);
+                        const trend: "up" | "down" = isImproving ? "up" : "down";
+
+                        const speedScore = Math.max(15, Math.min(100, Math.round(100 - Math.max(0, (meanRt - 250) / 4.5))));
+                        const sensitivityScore = Math.round(Math.min(100, Math.max(10, (result.features.dPrime / 3.8) * 100)));
+
+                        const radarData = [
+                            { subject: "Sensitivity (d′)", A: sensitivityScore, fullMark: 100 },
+                            { subject: "Target Hit Rate", A: hitRatePercent, fullMark: 100 },
+                            { subject: "Inhibitory Control", A: inhibitionPercent, fullMark: 100 },
+                            { subject: "Response Speed", A: speedScore, fullMark: 100 },
+                            { subject: "Vigilance Stability", A: stabilityPercent, fullMark: 100 },
+                            { subject: "Task Efficiency", A: scorePercent, fullMark: 100 },
+                        ];
+
+                        return (
+                            <div className="story-results-container animate-fadeIn">
+                                {/* Top Overview Card */}
+                                <Card className="results-overview-card">
+                                    <div className="overview-header">
+                                        <div className="overview-title-group">
+                                            <h2 className="vyom-serif">Attention Profile</h2>
+                                            <span className={`story-trend-pill ${trend === "up" ? "trend-up" : "trend-down"}`}>
+                                                <Icon name={trend === "up" ? "trend-up" : "trend-down"} size={13} />
+                                                <span>{trend === "up" ? "Improving" : "Declining"}</span>
+                                            </span>
+                                        </div>
+                                        <div className="score-badge-circle">
+                                            <span className="score-num">{scorePercent}</span>
+                                            <span className="score-denom">/ 100</span>
+                                        </div>
                                     </div>
-                                    <div className="savt-icon-badge">🎯</div>
+                                </Card>
+
+                                <MotivationalQuoteBlock
+                                    category={tier.label}
+                                    score={scorePercent}
+                                />
+
+                                {/* Biomarkers Breakdown Row (2x2 grid) */}
+                                <div className="biomarkers-grid-row">
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Target Sensitivity</h4>
+                                            <p className="metric-desc">Signal discrimination (d′: {dPrime})</p>
+                                        </div>
+                                        <div className="metric-val">{hitRatePercent}%</div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Inhibitory Control</h4>
+                                            <p className="metric-desc">Distractor suppression rate</p>
+                                        </div>
+                                        <div className="metric-val">{inhibitionPercent}%</div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Response Latency</h4>
+                                            <p className="metric-desc">Average target reaction speed</p>
+                                        </div>
+                                        <div className="metric-val">{meanRt > 0 ? meanRt : "—"} <span className="metric-unit">ms</span></div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Vigilance Stability</h4>
+                                            <p className="metric-desc">Sustained attention over blocks</p>
+                                        </div>
+                                        <div className="metric-val">{stabilityPercent}%</div>
+                                    </Card>
                                 </div>
 
-                                {(() => {
-                                    const feedback = getAttentionFeedback(result.features.dPrime);
-                                    const stars = result.profile.starRating;
+                                {/* Full-Length Biomarker Radar & Block Performance Card */}
+                                <Card className="radar-chart-card full-width-radar">
+                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <div className="chart-wrapper">
+                                        <ResponsiveContainer width="100%" height={155}>
+                                            <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
+                                                <PolarGrid stroke={isDark ? "rgba(0, 201, 183, 0.22)" : "rgba(79, 124, 120, 0.22)"} />
+                                                <PolarAngleAxis
+                                                    dataKey="subject"
+                                                    tick={renderCustomAxisTick}
+                                                    tickLine={false}
+                                                />
+                                                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="transparent" tick={false} />
+                                                <Radar
+                                                    name="Biomarkers"
+                                                    dataKey="A"
+                                                    stroke={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fill={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fillOpacity={isDark ? 0.35 : 0.28}
+                                                />
+                                            </RadarChart>
+                                        </ResponsiveContainer>
+                                    </div>
 
-                                    return (
-                                        <>
-                                            <div className="savt-stars-row">
-                                                {[1, 2, 3, 4, 5].map((s) => (
-                                                    <span key={s} className={`savt-star ${s <= stars ? 'filled' : ''}`}>★</span>
-                                                ))}
-                                            </div>
-
-                                            <div className="savt-split-results-grid">
-                                                {/* Left Column: Core Performance Metrics */}
-                                                <div className="savt-metric-column">
-                                                    <div className="savt-summary-box">
-                                                        <div className="savt-score-num">{result.profile.compositeScore}</div>
-                                                        <div className="savt-score-tag">Composite Score</div>
-                                                    </div>
-                                                    <div className="savt-mini-metrics">
-                                                        <div className="mini-metric-item">
-                                                            <span className="mini-lbl">Sensitivity (d′)</span>
-                                                            <span className="mini-val">{result.features.dPrime}</span>
-                                                        </div>
-                                                        <div className="mini-metric-item">
-                                                            <span className="mini-lbl">Hit Rate</span>
-                                                            <span className="mini-val">{Math.round(result.features.hitRate * 100)}%</span>
-                                                        </div>
-                                                        <div className="mini-metric-item">
-                                                            <span className="mini-lbl">False Alarms</span>
-                                                            <span className="mini-val">{Math.round(result.features.falseAlarmRate * 100)}%</span>
-                                                        </div>
-                                                        <div className="mini-metric-item">
-                                                            <span className="mini-lbl">Mean Reaction</span>
-                                                            <span className="mini-val">{result.features.meanResponseTimeMs}ms</span>
-                                                        </div>
-                                                    </div>
+                                    {/* Block-by-Block Vigilance Performance */}
+                                    <div className="savt-blocks-section">
+                                        <div className="savt-blocks-header">
+                                            <span className="savt-blocks-title">Vigilance Over Time</span>
+                                            <span className="savt-blocks-badge">{hits} / {totalGo} Targets Hit</span>
+                                        </div>
+                                        <div className="savt-blocks-grid">
+                                            {blockRates.map((rate, i) => (
+                                                <div key={i} className="savt-block-chip">
+                                                    <span className="block-chip-tag">Quarter {i + 1}</span>
+                                                    <span className="block-chip-val">{Math.round(rate * 100)}% Hit</span>
                                                 </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </Card>
 
-                                                {/* Right Column: Error Breakdown & Feedback */}
-                                                <div className="savt-metric-column">
-                                                    <div className="savt-feedback-box">
-                                                        <div className="feedback-badge">{feedback.category}</div>
-                                                        <p className="feedback-text">{feedback.message}</p>
-                                                    </div>
-
-                                                    <div className="savt-errors-list">
-                                                        <div className="error-item">
-                                                            <span>Commission Errors (Impulsivity)</span>
-                                                            <span className="error-val">{Math.round(result.features.commissionErrorRate * 100)}%</span>
-                                                        </div>
-                                                        <div className="error-item">
-                                                            <span>Omission Errors (Inattention)</span>
-                                                            <span className="error-val">{Math.round(result.features.omissionErrorRate * 100)}%</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <MotivationalQuoteBlock
-                                                category={feedback.category}
-                                                starRating={stars}
-                                                score={result.profile.compositeScore}
-                                            />
-                                        </>
-                                    );
-                                })()}
-
+                                {/* Centered Actions */}
                                 <div className="results-actions">
-                                    <Button variant="secondary" onClick={handleRetake}>
-                                        <Icon name="assess" size={16} /> Retake Test
-                                    </Button>
-                                    <Button variant="primary" onClick={() => navigate('/tests')}>
+                                    <button type="button" onClick={handleRetake} className="story-retake-btn">
+                                        <Icon name="reaction" size={15} /> Retake Test
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="story-primary-start-btn story-back-assessments-btn"
+                                        onClick={() => navigate("/tests")}
+                                    >
                                         Back to Assessments
-                                    </Button>
+                                    </button>
                                 </div>
-                            </Card>
-                        </div>
-                    )}
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Exit Confirmation Dialog */}

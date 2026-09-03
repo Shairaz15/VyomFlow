@@ -43,8 +43,8 @@ export function VyomFlowLogo({
     const currentSize = sizeMap[size] || sizeMap.md;
     const iconDim = height || currentSize.icon;
 
-    // Wordmark Color
-    const wordmarkColor = isDark ? '#FFFFFF' : '#17324D';
+    // Wordmark Color (Harmonious soft white for dark themes)
+    const wordmarkColor = isDark ? '#F7F4EC' : '#17324D';
 
     const IconSvg = (
         <svg
@@ -56,11 +56,27 @@ export function VyomFlowLogo({
             className={`shrink-0 transition-transform duration-300 ${iconClassName}`}
             aria-label="VyomFlow Neural Brain Logo"
         >
+            {isDark && (
+                <defs>
+                    <filter id="vyomBrandLogoDarkFilter" x="-20%" y="-20%" width="140%" height="140%">
+                        <feColorMatrix
+                            type="matrix"
+                            values="
+                                1.3  0.1  0.1  0  0.28
+                                0.1  1.5  0.3  0  0.48
+                                0.1  0.3  1.7  0  0.58
+                                0    0    0    1  0"
+                        />
+                        <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="#5EEAD4" floodOpacity="0.35" />
+                    </filter>
+                </defs>
+            )}
             <image
                 href="/images/vyomflow-brand-logo.png"
                 width="140"
                 height="140"
                 preserveAspectRatio="xMidYMid meet"
+                filter={isDark ? "url(#vyomBrandLogoDarkFilter)" : undefined}
             />
         </svg>
     );

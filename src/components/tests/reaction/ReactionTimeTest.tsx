@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useTheme } from "../../../contexts/ThemeContext";
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
 import type { ReactionState, RoundResult } from "./reactionLogic";
 import {
@@ -12,20 +14,53 @@ import {
 } from "./reactionLogic";
 import { createReactionTestResult } from "./reactionFeatures";
 import { useReactionResults } from "../../../hooks/useTestResults";
-import { getReactionFeedback } from "../../../utils/normativeStats";
 import { PageWrapper } from "../../layout";
+import "../story/StoryAssessment.css";
 import "./ReactionTimeTest.css";
 
 export function ReactionTimeTest() {
     const navigate = useNavigate();
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
     const { isAuthenticated } = useAuth();
-    const { saveResult } = useReactionResults();
+    const { results, saveResult } = useReactionResults();
     const [state, setState] = useState<ReactionState>("idle");
     const [roundIndex, setRoundIndex] = useState(0);
     const [rounds, setRounds] = useState<RoundResult[]>([]);
     const [currentReactionTime, setCurrentReactionTime] = useState<number | null>(null);
     const [message, setMessage] = useState(STATE_MESSAGES.idle);
     const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+    // Custom tick renderer for Radar Chart
+    const renderCustomAxisTick = ({ payload, x, y, cx, cy }: any) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const offsetX = dist > 0 ? x + (dx / dist) * 8 : x;
+        const offsetY = dist > 0 ? y + (dy / dist) * 8 : y;
+
+        let textAnchor: "start" | "middle" | "end" = "middle";
+        if (dx > 12) {
+            textAnchor = "start";
+        } else if (dx < -12) {
+            textAnchor = "end";
+        }
+
+        return (
+            <text
+                x={offsetX}
+                y={offsetY}
+                textAnchor={textAnchor}
+                dominantBaseline="central"
+                fill={isDark ? "#E2ECF2" : "#17324D"}
+                fontSize={10}
+                fontWeight={600}
+                className="radar-axis-tick select-none"
+            >
+                {payload.value}
+            </text>
+        );
+    };
 
     const stimulusStartTime = useRef<number>(0);
     const waitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,8 +78,12 @@ export function ReactionTimeTest() {
     }, []);
 
     // Begin a round (wait phase)
-    const startRound = useCallback(() => {
-        const isCalibration = isCalibrationRound(roundIndex, config);
+    const startRound = useCallback((targetRoundIndex?: number) => {
+        if (waitTimeoutRef.current) clearTimeout(waitTimeoutRef.current);
+        if (responseTimeoutRef.current) clearTimeout(responseTimeoutRef.current);
+
+        const currentRound = targetRoundIndex !== undefined ? targetRoundIndex : roundIndex;
+        const isCalibration = isCalibrationRound(currentRound, config);
         setState(isCalibration ? "calibration" : "wait");
         setMessage(isCalibration ? STATE_MESSAGES.calibration : STATE_MESSAGES.wait);
         setCurrentReactionTime(null);
@@ -58,7 +97,7 @@ export function ReactionTimeTest() {
 
             // Start timeout timer
             responseTimeoutRef.current = setTimeout(() => {
-                handleTimeout();
+                handleTimeout(currentRound);
             }, config.timeoutMs);
         }, waitTime);
     }, [roundIndex, config]);
@@ -68,7 +107,7 @@ export function ReactionTimeTest() {
         if (!isAuthenticated) return;
         setRoundIndex(0);
         setRounds([]);
-        startRound();
+        startRound(0);
     }, [isAuthenticated, startRound]);
 
     // Advance to next round or complete test
@@ -79,10 +118,9 @@ export function ReactionTimeTest() {
             setMessage(STATE_MESSAGES.test_complete);
         } else {
             setRoundIndex(nextRound);
-            setState("round_complete");
-            setMessage(STATE_MESSAGES.round_complete);
+            startRound(nextRound);
         }
-    }, [roundIndex, config]);
+    }, [roundIndex, config, startRound]);
 
     // Handle user click during different states
     const handleClick = useCallback(() => {
@@ -130,8 +168,9 @@ export function ReactionTimeTest() {
     }, [state, roundIndex, config, advanceRound]);
 
     // Handle timeout when user doesn't respond in time
-    const handleTimeout = useCallback(() => {
-        const isCalibration = isCalibrationRound(roundIndex, config);
+    const handleTimeout = useCallback((overrideRoundIndex?: number) => {
+        const activeRound = overrideRoundIndex !== undefined ? overrideRoundIndex : roundIndex;
+        const isCalibration = isCalibrationRound(activeRound, config);
         setState("timeout");
         setMessage(STATE_MESSAGES.timeout);
 
@@ -139,7 +178,7 @@ export function ReactionTimeTest() {
             reactionTime: null,
             isFalseStart: false,
             isTimeout: true,
-            roundIndex,
+            roundIndex: activeRound,
             isCalibration,
         };
         setRounds((prev) => [...prev, result]);
@@ -164,25 +203,21 @@ export function ReactionTimeTest() {
         return () => window.removeEventListener("keydown", handleGlobalKeyDown);
     }, [state, handleClick]);
 
-    // Continue to next round after round_complete
+    // Automatically save result when test completes
+    const hasSavedRef = useRef(false);
     useEffect(() => {
-        if (state === "round_complete") {
-            const timer = setTimeout(() => {
-                startRound();
-            }, 500);
-            return () => clearTimeout(timer);
+        if (state === "test_complete" && rounds.length > 0 && !hasSavedRef.current) {
+            hasSavedRef.current = true;
+            const result = createReactionTestResult(rounds);
+            sessionStorage.setItem("lastReactionResult", JSON.stringify(result));
+            saveResult(result);
+        } else if (state !== "test_complete") {
+            hasSavedRef.current = false;
         }
-    }, [state, startRound]);
-
-    // Complete test and navigate to results
-    const handleFinish = () => {
-        const result = createReactionTestResult(rounds);
-        sessionStorage.setItem("lastReactionResult", JSON.stringify(result));
-        saveResult(result);
-        navigate("/tests");
-    };
+    }, [state, rounds, saveResult]);
 
     const handleRetake = () => {
+        hasSavedRef.current = false;
         setState("idle");
         setRoundIndex(0);
         setRounds([]);
@@ -243,10 +278,6 @@ export function ReactionTimeTest() {
                         <span className="back-arrow" aria-hidden="true">←</span>
                         <span>Back to Assessments</span>
                     </button>
-                    <div className="story-module-badge">
-                        <span className="badge-dot" aria-hidden="true" />
-                        <span>Cognitive Assessment</span>
-                    </div>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
@@ -365,87 +396,190 @@ export function ReactionTimeTest() {
                             {/* Tap Hint */}
                             {["wait", "calibration", "stimulus"].includes(state) && (
                                 <p className="reaction-tap-hint">
-                                    {state === "stimulus" ? "⚡ PRESS SPACEBAR OR TAP NOW ⚡" : "Tap screen or press spacebar"}
+                                    {state === "stimulus" ? "PRESS SPACEBAR OR TAP NOW" : "Tap screen or press spacebar"}
                                 </p>
                             )}
                         </div>
                     )}
 
                     {/* 3. Test Complete / Results Phase */}
-                    {state === "test_complete" && (
-                        <div className="reaction-results-container animate-fadeIn">
-                            <Card className="reaction-results-card">
-                                <div className="results-overview-header">
-                                    <div>
-                                        <h2 className="vyom-serif">Reaction Time Profile</h2>
-                                        <p className="results-sub">Attentional vigilance and motor processing latency.</p>
+                    {state === "test_complete" && (() => {
+                        const testRounds = rounds.filter((r) => !r.isCalibration);
+                        const validRounds = testRounds.filter((r) => !r.isFalseStart && !r.isTimeout && r.reactionTime !== null);
+                        const falseStarts = testRounds.filter((r) => r.isFalseStart).length;
+                        const timeouts = testRounds.filter((r) => r.isTimeout).length;
+                        const avgTime = validRounds.length > 0
+                            ? Math.round(validRounds.reduce((a, b) => a + (b.reactionTime || 0), 0) / validRounds.length)
+                            : 0;
+                        const fastestTime = validRounds.length > 0
+                            ? Math.min(...validRounds.map((r) => r.reactionTime || 9999))
+                            : 0;
+
+                        // Score computation
+                        const baseSpeed = avgTime > 0 ? Math.max(15, Math.min(100, Math.round(100 - Math.max(0, (avgTime - 200) / 4.5)))) : 20;
+                        const penalty = (falseStarts * 8) + (timeouts * 15);
+                        const scorePercent = Math.max(10, Math.min(100, baseSpeed - penalty));
+
+                        const getScoreTier = (score: number) => {
+                            if (score >= 80) return { label: "Fast & Precise", level: "stable" as const };
+                            if (score >= 60) return { label: "Moderate Speed", level: "change_detected" as const };
+                            return { label: "Needs Attention", level: "possible_risk" as const };
+                        };
+
+                        const tier = getScoreTier(scorePercent);
+
+                        // Trend computation
+                        const pastResults = results || [];
+                        const prevSession = pastResults.length > 0 ? pastResults[pastResults.length - 1] : null;
+                        const prevAvg = prevSession?.aggregates?.avg;
+                        const isImproving = prevAvg ? (avgTime > 0 && avgTime <= prevAvg) : (scorePercent >= 60);
+                        const trend: "up" | "down" = isImproving ? "up" : "down";
+
+                        const inhibitionPercent = Math.round(Math.max(0, 100 - (falseStarts / Math.max(1, testRounds.length)) * 100));
+                        const timeoutAvoidancePercent = Math.round(Math.max(0, 100 - (timeouts / Math.max(1, testRounds.length)) * 100));
+                        
+                        // Consistency calculation (variance)
+                        const variance = validRounds.length > 1
+                            ? Math.round(Math.sqrt(validRounds.map(r => Math.pow((r.reactionTime || avgTime) - avgTime, 2)).reduce((a, b) => a + b, 0) / (validRounds.length - 1)))
+                            : 0;
+                        const consistencyPercent = Math.max(20, Math.min(100, Math.round(100 - (variance / 3))));
+
+                        const radarData = [
+                            { subject: "Processing Speed", A: Math.max(10, Math.min(100, Math.round(100 - Math.max(0, (avgTime - 200) / 4.2)))), fullMark: 100 },
+                            { subject: "Peak Reflex", A: Math.max(10, Math.min(100, Math.round(100 - Math.max(0, (fastestTime - 180) / 3.8)))), fullMark: 100 },
+                            { subject: "Inhibitory Control", A: inhibitionPercent, fullMark: 100 },
+                            { subject: "Attentional Vigilance", A: timeoutAvoidancePercent, fullMark: 100 },
+                            { subject: "Consistency", A: consistencyPercent, fullMark: 100 },
+                            { subject: "Task Efficiency", A: scorePercent, fullMark: 100 },
+                        ];
+
+                        return (
+                            <div className="story-results-container animate-fadeIn">
+                                {/* Top Overview Card */}
+                                <Card className="results-overview-card">
+                                    <div className="overview-header">
+                                        <div className="overview-title-group">
+                                            <h2 className="vyom-serif">Reaction Time Profile</h2>
+                                            <span className={`story-trend-pill ${trend === "up" ? "trend-up" : "trend-down"}`}>
+                                                <Icon name={trend === "up" ? "trend-up" : "trend-down"} size={13} />
+                                                <span>{trend === "up" ? "Improving" : "Declining"}</span>
+                                            </span>
+                                        </div>
+                                        <div className="score-badge-circle">
+                                            <span className="score-num">{scorePercent}</span>
+                                            <span className="score-denom">/ 100</span>
+                                        </div>
                                     </div>
-                                    <div className="reaction-icon-badge">⚡</div>
+                                </Card>
+
+                                <MotivationalQuoteBlock
+                                    category={tier.label}
+                                    score={scorePercent}
+                                />
+
+                                {/* Biomarkers Breakdown Row (2x2 grid) */}
+                                <div className="biomarkers-grid-row">
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Processing Speed</h4>
+                                            <p className="metric-desc">Average response latency</p>
+                                        </div>
+                                        <div className="metric-val">{avgTime > 0 ? avgTime : "—"} <span className="metric-unit">ms</span></div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Peak Vigilance</h4>
+                                            <p className="metric-desc">Fastest valid reflex</p>
+                                        </div>
+                                        <div className="metric-val">{fastestTime > 0 ? fastestTime : "—"} <span className="metric-unit">ms</span></div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Inhibitory Control</h4>
+                                            <p className="metric-desc">{falseStarts === 0 ? "Zero premature taps" : `${falseStarts} false start${falseStarts > 1 ? "s" : ""}`}</p>
+                                        </div>
+                                        <div className="metric-val">{inhibitionPercent}%</div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Trial Consistency</h4>
+                                            <p className="metric-desc">{variance > 0 ? `SD: ±${variance}ms variance` : "Uniform response rate"}</p>
+                                        </div>
+                                        <div className="metric-val">{consistencyPercent}%</div>
+                                    </Card>
                                 </div>
 
-                                {(() => {
-                                    const testRounds = rounds.filter((r) => !r.isCalibration);
-                                    const validRounds = testRounds.filter((r) => !r.isFalseStart && !r.isTimeout);
-                                    const falseStarts = testRounds.filter((r) => r.isFalseStart).length;
-                                    const timeouts = testRounds.filter((r) => r.isTimeout).length;
-                                    const avgTime = validRounds.length > 0 
-                                        ? Math.round(validRounds.reduce((a, b) => a + (b.reactionTime || 0), 0) / validRounds.length)
-                                        : 0;
-                                    const fastestTime = validRounds.length > 0
-                                        ? Math.min(...validRounds.map(r => r.reactionTime || 9999))
-                                        : 0;
-                                    const feedback = getReactionFeedback(avgTime || 300);
+                                {/* Full-Length Biomarker Radar & Trial Breakdown Card */}
+                                <Card className="radar-chart-card full-width-radar">
+                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <div className="chart-wrapper">
+                                        <ResponsiveContainer width="100%" height={155}>
+                                            <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
+                                                <PolarGrid stroke={isDark ? "rgba(0, 201, 183, 0.22)" : "rgba(79, 124, 120, 0.22)"} />
+                                                <PolarAngleAxis
+                                                    dataKey="subject"
+                                                    tick={renderCustomAxisTick}
+                                                    tickLine={false}
+                                                />
+                                                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="transparent" tick={false} />
+                                                <Radar
+                                                    name="Biomarkers"
+                                                    dataKey="A"
+                                                    stroke={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fill={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fillOpacity={isDark ? 0.35 : 0.28}
+                                                />
+                                            </RadarChart>
+                                        </ResponsiveContainer>
+                                    </div>
 
-                                    return (
-                                        <>
-                                            <div className="reaction-metrics-grid">
-                                                <div className="reaction-metric-box">
-                                                    <span className="metric-tag">Fastest Response</span>
-                                                    <div className="metric-num">
-                                                        {fastestTime > 0 ? fastestTime : "—"} <span className="unit">ms</span>
+                                    {/* Trial-by-Trial Response Breakdown */}
+                                    <div className="reaction-trials-section">
+                                        <div className="reaction-trials-header">
+                                            <span className="reaction-trials-title">Trial Response Times</span>
+                                            <span className="reaction-trials-badge">{validRounds.length} / {testRounds.length} Valid Trials</span>
+                                        </div>
+                                        <div className="reaction-trials-grid">
+                                            {testRounds.map((r, i) => {
+                                                let statusClass = "valid";
+                                                let label = `${r.reactionTime} ms`;
+                                                if (r.isFalseStart) {
+                                                    statusClass = "false-start";
+                                                    label = "Early";
+                                                } else if (r.isTimeout) {
+                                                    statusClass = "timeout";
+                                                    label = "Timeout";
+                                                }
+                                                return (
+                                                    <div key={i} className={`reaction-trial-chip ${statusClass}`}>
+                                                        <span className="trial-chip-tag">T{i + 1}</span>
+                                                        <span className="trial-chip-val">{label}</span>
                                                     </div>
-                                                </div>
-                                                <div className="reaction-metric-box">
-                                                    <span className="metric-tag">Average Response</span>
-                                                    <div className="metric-num">
-                                                        {avgTime > 0 ? avgTime : "—"} <span className="unit">ms</span>
-                                                    </div>
-                                                </div>
-                                                <div className="reaction-metric-box">
-                                                    <span className="metric-tag">False Starts</span>
-                                                    <div className="metric-num">{falseStarts}</div>
-                                                </div>
-                                                <div className="reaction-metric-box">
-                                                    <span className="metric-tag">Timeouts</span>
-                                                    <div className="metric-num">{timeouts}</div>
-                                                </div>
-                                            </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </Card>
 
-                                            <div className="reaction-feedback-pill">
-                                                <span className="feedback-cat">{feedback.category}</span>
-                                                <span className="feedback-dot">•</span>
-                                                <span className="feedback-desc">{feedback.message}</span>
-                                            </div>
-
-                                            <MotivationalQuoteBlock
-                                                category={feedback.category}
-                                                score={avgTime > 350 ? 45 : 80}
-                                            />
-                                        </>
-                                    );
-                                })()}
-
+                                {/* Centered Actions */}
                                 <div className="results-actions">
-                                    <Button variant="secondary" onClick={handleRetake}>
-                                        <Icon name="assess" size={16} /> Retake Test
-                                    </Button>
-                                    <Button variant="primary" onClick={handleFinish}>
+                                    <button type="button" onClick={handleRetake} className="story-retake-btn">
+                                        <Icon name="reaction" size={15} /> Retake Test
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="story-primary-start-btn story-back-assessments-btn"
+                                        onClick={() => navigate("/tests")}
+                                    >
                                         Back to Assessments
-                                    </Button>
+                                    </button>
                                 </div>
-                            </Card>
-                        </div>
-                    )}
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Exit Confirmation Dialog */}

@@ -1,22 +1,4 @@
 import { useState, useMemo, useCallback } from "react";
-import type { CSSProperties } from "react";
-import {
-    DndContext,
-    closestCenter,
-    PointerSensor,
-    TouchSensor,
-    useSensor,
-    useSensors,
-    DragOverlay,
-} from "@dnd-kit/core";
-import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
-import {
-    SortableContext,
-    useSortable,
-    horizontalListSortingStrategy,
-    arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Button, Icon } from "../../../common";
 import type { LandmarkItem, LandmarkOrderingResult } from "../../../../types/navigationTypes";
 
@@ -34,51 +16,29 @@ const TOTAL_DISPLAY = 10; // 6 correct + 4 random distractors
 function PoolLandmarkCard({
     landmark,
     isSelected,
+    sequenceNumber,
     onTap,
 }: {
     landmark: LandmarkItem;
     isSelected: boolean;
+    sequenceNumber: number | null;
     onTap: () => void;
 }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: landmark.id,
-        disabled: isSelected,
-    });
-
     const [imgError, setImgError] = useState(false);
-
-    const style: CSSProperties = {
-        transform: CSS.Transform.toString(transform),
-        transition: transition || "transform 150ms ease, opacity 150ms ease",
-        opacity: isDragging ? 0.2 : isSelected ? 0.35 : 1,
-        cursor: isSelected ? "default" : "grab",
-        touchAction: "none",
-    };
 
     return (
         <div
-            ref={setNodeRef}
-            style={style}
-            {...listeners}
-            {...attributes}
-            onClick={!isSelected ? onTap : undefined}
+            onClick={onTap}
             className={`vyom-landmark-card group ${
                 isSelected
                     ? "is-selected"
                     : "is-selectable"
             }`}
             role="button"
-            tabIndex={isSelected ? -1 : 0}
-            aria-label={`${landmark.name}${isSelected ? ", already placed" : ", tap or drag to place"}`}
+            tabIndex={0}
+            aria-label={`${landmark.name}${isSelected ? `, placed as stop ${sequenceNumber}, tap to remove` : `, tap to select as stop`}`}
             onKeyDown={(e) => {
-                if (!isSelected && (e.key === "Enter" || e.key === " ")) {
+                if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     onTap();
                 }
@@ -100,11 +60,11 @@ function PoolLandmarkCard({
                     </div>
                 )}
 
-                {/* Selected Checkmark Badge */}
-                {isSelected && (
+                {/* Selected Sequence Number Badge */}
+                {isSelected && sequenceNumber !== null && (
                     <div className="selected-overlay">
-                        <div className="check-badge">
-                            <span>✓</span>
+                        <div className="seq-number-badge">
+                            <span>{sequenceNumber}</span>
                         </div>
                     </div>
                 )}
@@ -115,8 +75,8 @@ function PoolLandmarkCard({
                 <span className="landmark-name" title={landmark.name}>
                     {landmark.name}
                 </span>
-                <span className="card-status-hint">
-                    {isSelected ? "Placed ✓" : "Tap to place"}
+                <span className={`card-status-hint ${isSelected ? "is-selected" : ""}`}>
+                    {isSelected ? `Stop #${sequenceNumber} • Tap to remove` : "Tap to select"}
                 </span>
             </div>
         </div>
@@ -127,53 +87,34 @@ function PoolLandmarkCard({
  * Route Sequence Slot (The Hero Area)
  * ───────────────────────────────────────────────────── */
 function SequenceSlotItem({
-    id,
     slotIndex,
     landmark,
     onRemove,
 }: {
-    id: string;
     slotIndex: number;
     landmark: LandmarkItem | null;
     onRemove: () => void;
 }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isOver,
-        isDragging,
-    } = useSortable({
-        id,
-        data: { slotIndex },
-    });
-
     const [imgError, setImgError] = useState(false);
-
-    const style: CSSProperties = {
-        transform: CSS.Transform.toString(transform),
-        transition: transition || "transform 150ms ease",
-        opacity: isDragging ? 0.4 : 1,
-        touchAction: "none",
-    };
-
     const formattedNum = String(slotIndex + 1).padStart(2, "0");
 
     return (
         <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...(landmark ? listeners : {})}
             className={`vyom-sequence-slot ${
-                isOver && !landmark
-                    ? "is-drop-target"
-                    : landmark
+                landmark
                     ? "is-filled"
                     : "is-empty"
             }`}
+            onClick={landmark ? onRemove : undefined}
+            role={landmark ? "button" : undefined}
+            tabIndex={landmark ? 0 : undefined}
+            title={landmark ? "Click to remove this stop" : undefined}
+            onKeyDown={landmark ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onRemove();
+                }
+            } : undefined}
         >
             {/* Slot Number Tag */}
             <div className="slot-number-badge">
@@ -229,31 +170,9 @@ function SequenceSlotItem({
                             ? "Final Stop"
                             : `Stop ${slotIndex + 1}`}
                     </span>
-                    <span className="slot-empty-sub">Drop or tap</span>
+                    <span className="slot-empty-sub">Tap photo to place</span>
                 </div>
             )}
-        </div>
-    );
-}
-
-/* ─────────────────────────────────────────────────────
- * Drag Overlay Preview
- * ───────────────────────────────────────────────────── */
-function DragOverlayCard({ landmark }: { landmark: LandmarkItem }) {
-    return (
-        <div className="vyom-drag-overlay-card">
-            <div className="overlay-img-wrap">
-                {landmark.imageUrl ? (
-                    <img src={landmark.imageUrl} alt={landmark.name} className="card-img" />
-                ) : (
-                    <div className="card-img-placeholder">
-                        <Icon name="memory" size={20} />
-                    </div>
-                )}
-            </div>
-            <div className="card-meta">
-                <span className="landmark-name">{landmark.name}</span>
-            </div>
         </div>
     );
 }
@@ -288,90 +207,25 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
         new Array(TARGET_COUNT).fill(null)
     );
 
-    // Active drag item for overlay
-    const [activeDragItem, setActiveDragItem] = useState<LandmarkItem | null>(null);
-
-    // Sensors for smooth drag & touch with accurate pointer position
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 5 } })
-    );
-
-    const selectedIds = useMemo(() => {
-        return slots.filter((lm): lm is LandmarkItem => lm !== null).map((lm) => lm.id);
+    const filledCount = useMemo(() => {
+        return slots.filter((lm): lm is LandmarkItem => lm !== null).length;
     }, [slots]);
 
-    const filledCount = selectedIds.length;
     const isComplete = filledCount === TARGET_COUNT;
 
-    // Slot IDs for SortableContext
-    const slotIds = useMemo(() => slots.map((_, idx) => `slot_${idx}`), [slots]);
-
-    // Handle drag start
-    const handleDragStart = useCallback((event: DragStartEvent) => {
-        const { active } = event;
-        const id = active.id as string;
-
-        const poolItem = displayPool.find((lm) => lm.id === id);
-        if (poolItem) {
-            setActiveDragItem(poolItem);
-            return;
-        }
-
-        if (id.startsWith("slot_")) {
-            const slotIdx = parseInt(id.replace("slot_", ""), 10);
-            const slotLm = slots[slotIdx];
-            if (slotLm) {
-                setActiveDragItem(slotLm);
-            }
-        }
-    }, [displayPool, slots]);
-
-    // Handle drag end
-    const handleDragEnd = useCallback((event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveDragItem(null);
-
-        if (!over) return;
-
-        const activeId = active.id as string;
-        const overId = over.id as string;
-
-        // Case 1: Dragging from pool into a slot
-        if (!activeId.startsWith("slot_") && overId.startsWith("slot_")) {
-            const landmark = displayPool.find((lm) => lm.id === activeId);
-            const slotIndex = parseInt(overId.replace("slot_", ""), 10);
-
-            if (landmark && slotIndex >= 0 && slotIndex < TARGET_COUNT) {
-                setSlots((prev) => {
-                    const next = [...prev];
-                    const existingIdx = next.findIndex((item) => item?.id === landmark.id);
-                    if (existingIdx !== -1) {
-                        next[existingIdx] = null;
-                    }
-                    next[slotIndex] = landmark;
-                    return next;
-                });
-            }
-            return;
-        }
-
-        // Case 2: Reordering within slots
-        if (activeId.startsWith("slot_") && overId.startsWith("slot_")) {
-            const oldIdx = parseInt(activeId.replace("slot_", ""), 10);
-            const newIdx = parseInt(overId.replace("slot_", ""), 10);
-
-            if (oldIdx !== newIdx) {
-                setSlots((prev) => arrayMove(prev, oldIdx, newIdx));
-            }
-        }
-    }, [displayPool]);
-
-    // Tap to place / toggle in first available slot
+    // Tap to select or unselect landmark in sequence
     const handleTapLandmark = useCallback((landmark: LandmarkItem) => {
-        if (selectedIds.includes(landmark.id)) {
-            // Remove from slot
-            setSlots((prev) => prev.map((item) => (item?.id === landmark.id ? null : item)));
+        const existingIdx = slots.findIndex((item) => item?.id === landmark.id);
+
+        if (existingIdx !== -1) {
+            // Remove from sequence and shift remaining items left
+            setSlots((prev) => {
+                const remaining = prev.filter((item) => item !== null && item.id !== landmark.id);
+                while (remaining.length < TARGET_COUNT) {
+                    remaining.push(null);
+                }
+                return remaining;
+            });
         } else {
             // Find first empty slot
             const firstEmpty = slots.findIndex((item) => item === null);
@@ -383,12 +237,15 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                 });
             }
         }
-    }, [selectedIds, slots]);
+    }, [slots]);
 
+    // Remove an item by slot index and shift left
     const handleRemoveSlot = useCallback((slotIndex: number) => {
         setSlots((prev) => {
-            const next = [...prev];
-            next[slotIndex] = null;
+            const next = prev.filter((_, idx) => idx !== slotIndex);
+            while (next.length < TARGET_COUNT) {
+                next.push(null);
+            }
             return next;
         });
     }, []);
@@ -440,7 +297,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                     </div>
                     <h1 className="chronology-title vyom-serif">Landmark Chronology Sequence</h1>
                     <p className="chronology-instruction">
-                        Select all 6 landmarks from <strong>Gate 1 (A)</strong> to <strong>Sports Plaza (B)</strong>.
+                        Select all 6 landmarks in order from <strong>Gate 1 (A)</strong> to <strong>Sports Plaza (B)</strong>.
                     </p>
                 </div>
 
@@ -458,103 +315,95 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                 </div>
             </header>
 
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-            >
-                {/* ── 2. YOUR ROUTE SEQUENCE (WITH HORIZONTAL SCROLLBAR) ── */}
-                <section className="chronology-hero-section">
-                    <div className="section-title-bar">
-                        <div className="section-title-wrap">
-                            <span className="section-icon">🧭</span>
-                            <h2 className="section-heading">Your Route Sequence</h2>
-                            <span className="scroll-hint-pill">↔ Scroll to view all stops</span>
-                        </div>
-                        {filledCount > 0 && (
-                            <button
-                                type="button"
-                                onClick={handleClearAll}
-                                className="clear-all-btn"
-                            >
-                                Clear all
-                            </button>
-                        )}
+            {/* ── 2. YOUR ROUTE SEQUENCE (WITH HORIZONTAL SCROLLBAR) ── */}
+            <section className="chronology-hero-section">
+                <div className="section-title-bar">
+                    <div className="section-title-wrap">
+                        <span className="section-icon">🧭</span>
+                        <h2 className="section-heading">Your Route Sequence</h2>
+                        <span className="scroll-hint-pill">↔ Scroll to view all stops</span>
                     </div>
+                    {filledCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={handleClearAll}
+                            className="clear-all-btn"
+                        >
+                            Clear all
+                        </button>
+                    )}
+                </div>
 
-                    {/* Horizontally Scrollable Journey Track Container */}
-                    <div className="route-journey-scroll-viewport">
-                        <div className="route-journey-track">
-                            {/* Start Point A */}
-                            <div className="journey-node start-node">
-                                <div className="node-marker">A</div>
-                                <span className="node-label">Gate 1</span>
-                            </div>
+                {/* Horizontally Scrollable Journey Track Container */}
+                <div className="route-journey-scroll-viewport">
+                    <div className="route-journey-track">
+                        {/* Start Point A */}
+                        <div className="journey-node start-node">
+                            <div className="node-marker">A</div>
+                            <span className="node-label">Gate 1</span>
+                        </div>
 
-                            <div className="journey-connector">
-                                <span className="connector-arrow">→</span>
-                            </div>
+                        <div className="journey-connector">
+                            <span className="connector-arrow">→</span>
+                        </div>
 
-                            {/* 6 Sequence Slots */}
-                            <div className="sequence-slots-row">
-                                <SortableContext items={slotIds} strategy={horizontalListSortingStrategy}>
-                                    {slots.map((landmark, idx) => (
-                                        <div key={`slot_wrap_${idx}`} className="slot-wrapper-cell">
-                                            <SequenceSlotItem
-                                                id={`slot_${idx}`}
-                                                slotIndex={idx}
-                                                landmark={landmark}
-                                                onRemove={() => handleRemoveSlot(idx)}
-                                            />
-                                            {idx < TARGET_COUNT - 1 && (
-                                                <div className="slot-sub-arrow">→</div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </SortableContext>
-                            </div>
+                        {/* 6 Sequence Slots */}
+                        <div className="sequence-slots-row">
+                            {slots.map((landmark, idx) => (
+                                <div key={`slot_wrap_${idx}`} className="slot-wrapper-cell">
+                                    <SequenceSlotItem
+                                        slotIndex={idx}
+                                        landmark={landmark}
+                                        onRemove={() => handleRemoveSlot(idx)}
+                                    />
+                                    {idx < TARGET_COUNT - 1 && (
+                                        <div className="slot-sub-arrow">→</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
 
-                            <div className="journey-connector">
-                                <span className="connector-arrow">→</span>
-                            </div>
+                        <div className="journey-connector">
+                            <span className="connector-arrow">→</span>
+                        </div>
 
-                            {/* End Point B */}
-                            <div className="journey-node end-node">
-                                <div className="node-marker">B</div>
-                                <span className="node-label">Sports Plaza</span>
-                            </div>
+                        {/* End Point B */}
+                        <div className="journey-node end-node">
+                            <div className="node-marker">B</div>
+                            <span className="node-label">Sports Plaza</span>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                {/* ── 3. AVAILABLE LANDMARKS POOL ── */}
-                <section className="chronology-pool-section">
-                    <div className="section-title-bar">
-                        <div className="section-title-wrap">
-                            <span className="section-icon">🏛️</span>
-                            <h2 className="section-heading">Available Landmarks</h2>
-                            <span className="pool-count-tag">10 Photos • Tap or drag to place</span>
-                        </div>
+            {/* ── 3. AVAILABLE LANDMARKS POOL ── */}
+            <section className="chronology-pool-section">
+                <div className="section-title-bar">
+                    <div className="section-title-wrap">
+                        <span className="section-icon">🏛️</span>
+                        <h2 className="section-heading">Available Landmarks</h2>
+                        <span className="pool-count-tag">10 Photos • Tap to select in order</span>
                     </div>
+                </div>
 
-                    <div className="landmark-pool-grid">
-                        {displayPool.map((lm) => (
+                <div className="landmark-pool-grid">
+                    {displayPool.map((lm) => {
+                        const selectedIdx = slots.findIndex((s) => s?.id === lm.id);
+                        const isSelected = selectedIdx !== -1;
+                        const sequenceNumber = isSelected ? selectedIdx + 1 : null;
+
+                        return (
                             <PoolLandmarkCard
                                 key={lm.id}
                                 landmark={lm}
-                                isSelected={selectedIds.includes(lm.id)}
+                                isSelected={isSelected}
+                                sequenceNumber={sequenceNumber}
                                 onTap={() => handleTapLandmark(lm)}
                             />
-                        ))}
-                    </div>
-                </section>
-
-                {/* Drag Overlay Card */}
-                <DragOverlay dropAnimation={{ duration: 150, easing: "ease" }}>
-                    {activeDragItem ? <DragOverlayCard landmark={activeDragItem} /> : null}
-                </DragOverlay>
-            </DndContext>
+                        );
+                    })}
+                </div>
+            </section>
         </div>
     );
 }

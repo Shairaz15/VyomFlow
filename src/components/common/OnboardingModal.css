@@ -39,9 +39,18 @@
 }
 
 .onboarding-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-    animation: float 6s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.85rem;
+}
+
+.onboarding-brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 2px 8px rgba(79, 124, 120, 0.18));
+    transition: transform 0.3s ease;
 }
 
 .onboarding-title {
@@ -154,6 +163,11 @@
 @media (max-width: 480px) {
     .onboarding-card {
         padding: 2rem 1.25rem;
+    }
+
+    .onboarding-brand-logo svg {
+        width: 46px;
+        height: 46px;
     }
 
     .onboarding-title {

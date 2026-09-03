@@ -47,7 +47,7 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         route: '/test/story',
         duration: '5 min',
         iconName: 'story',
-        description: 'Listen to a short narrated story and retell it in your own words to evaluate memory & narrative flow.',
+        description: 'Listen to a short narrated story and retell it in your own words.',
         userPrompt: "Let's begin with a short story.",
         biome: {
             name: 'Story Narration Recall',
@@ -66,7 +66,7 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         route: '/test/vmra',
         duration: '2 min',
         iconName: 'memory',
-        description: 'Observe visual items and identify them from a grid to evaluate short-term recognition.',
+        description: 'Remember a set of pictures and pick them out from a grid.',
         userPrompt: 'Can you remember these visual items?',
         biome: {
             name: 'Visual Memory',
@@ -85,7 +85,7 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         route: '/test/reaction',
         duration: '1.5 min',
         iconName: 'reaction',
-        description: 'Respond rapidly to visual cues to measure motor processing speed and attentional vigilance.',
+        description: 'Tap as quickly as possible when the screen turns green.',
         userPrompt: 'Test your motor speed and vigilance.',
         biome: {
             name: 'Reaction Time',
@@ -104,8 +104,8 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         route: '/tests/pattern',
         duration: '2 min',
         iconName: 'pattern',
-        description: 'Analyze visual sequences and identify the missing piece to measure abstract reasoning and fluid intelligence.',
-        userPrompt: 'Look carefully and find the completing pattern.',
+        description: 'Watch tiles light up and repeat the sequence in order.',
+        userPrompt: 'Look carefully and repeat the sequence.',
         biome: {
             name: 'Pattern Recognition',
             bgGradient: 'linear-gradient(135deg, #1e3a8a 0%, #38bdf8 100%)',
@@ -123,7 +123,7 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         route: '/test/attention',
         duration: '2 min',
         iconName: 'attention',
-        description: 'Maintain vigilance over continuous stimuli and respond rapidly to target cues while filtering distractions.',
+        description: 'Stay focused and tap only when you see or hear the target cue.',
         userPrompt: 'Stay focused and respond only when you see the target cue.',
         biome: {
             name: 'Attention',
@@ -142,7 +142,7 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         route: '/test/navigation',
         duration: '4 min',
         iconName: 'navigation',
-        description: 'Observe a real-world route video and navigate back by making directional choices at key intersections.',
+        description: 'Watch a walking path and choose the right turns to find your way.',
         userPrompt: 'Observe the route and navigate your way back.',
         biome: {
             name: 'Immersive Navigation',
@@ -161,7 +161,7 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         route: '/test/language',
         duration: '2 min',
         iconName: 'language',
-        description: 'Describe an illustrated scene naturally to assess speech fluency, vocabulary richness, and acoustic patterns.',
+        description: 'Speak freely about an image or topic in your own words.',
         userPrompt: 'Describe the scene in your own words.',
         biome: {
             name: 'Language Fluency',

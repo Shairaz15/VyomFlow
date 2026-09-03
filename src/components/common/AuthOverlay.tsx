@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleSignInButton } from './GoogleSignInButton';
+import { useAuth } from '../../contexts/AuthContext';
 import { VyomFlowLogo } from './VyomFlowLogo';
 import { useLanguage } from '../../i18n/LanguageContext';
 import './GoogleSignInModal.css';
@@ -18,6 +18,8 @@ interface AuthOverlayProps {
 
 export function AuthOverlay({ children }: AuthOverlayProps) {
     const navigate = useNavigate();
+    const { signInWithGoogle } = useAuth();
+    const [loading, setLoading] = useState(false);
     const [signInError, setSignInError] = useState<string | null>(null);
     const { t } = useLanguage();
 
@@ -25,11 +27,21 @@ export function AuthOverlay({ children }: AuthOverlayProps) {
         navigate('/tests');
     };
 
-    const handleSignInError = (error: Error) => {
-        if (error.message.includes('popup')) {
-            setSignInError(t('auth.popupBlocked') || 'Sign-in popup was blocked. Please allow popups.');
-        } else {
-            setSignInError(t('auth.signInFailed') || 'Unable to sign in with Google. Please try again.');
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        setSignInError(null);
+        try {
+            await signInWithGoogle();
+        } catch (err: unknown) {
+            const error = err as Error;
+            const msg = error?.message || '';
+            if (msg.includes('popup')) {
+                setSignInError(t('auth.popupBlocked') || 'Sign-in popup was blocked. Please allow popups.');
+            } else {
+                setSignInError(t('auth.signInFailed') || 'Unable to sign in with Google. Please try again.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -48,65 +60,37 @@ export function AuthOverlay({ children }: AuthOverlayProps) {
                 aria-labelledby="test-auth-modal-title"
             >
                 <div 
-                    className="vyom-auth-modal-card animate-scaleUp"
+                    className="form vyom-auth-card animate-scaleUp"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Close / Return Button */}
                     <button 
                         onClick={handleGoBack}
-                        className="vyom-auth-modal-close"
+                        className="vyom-auth-close-btn"
                         aria-label="Return to tests"
                         title="Return to tests"
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
 
-                    {/* Brand / Visual Icon Header */}
-                    <div className="vyom-auth-modal-icon-wrapper">
-                        <div className="vyom-auth-modal-icon-glow" />
-                        <div className="vyom-auth-modal-icon !bg-transparent !border-none !shadow-none">
+                    {/* Brand Logo & Header */}
+                    <div className="vyom-auth-header">
+                        <div className="vyom-auth-logo-wrap">
                             <VyomFlowLogo size="lg" variant="icon" />
                         </div>
-                    </div>
-
-                    {/* Header Text */}
-                    <h2 id="test-auth-modal-title" className="vyom-auth-modal-title">
-                        Welcome to VyomFlow
-                    </h2>
-                    <p className="vyom-auth-modal-subtitle">
-                        Sign in with Google to synchronize your cognitive tests, unlock longitudinal biomarker analytics, and track your brain health journey.
-                    </p>
-
-                    {/* Feature Highlights */}
-                    <div className="vyom-auth-modal-features">
-                        <div className="vyom-auth-feature-item">
-                            <span className="vyom-auth-feature-icon">🧭</span>
-                            <div className="text-left">
-                                <span className="vyom-auth-feature-title">7-Domain Cognitive Battery</span>
-                                <span className="vyom-auth-feature-desc">Story, memory, reaction, pattern, attention & navigation</span>
-                            </div>
-                        </div>
-                        <div className="vyom-auth-feature-item">
-                            <span className="vyom-auth-feature-icon">📊</span>
-                            <div className="text-left">
-                                <span className="vyom-auth-feature-title">Longitudinal AI Biomarkers</span>
-                                <span className="vyom-auth-feature-desc">Interactive radar charts, trend curves & clinical indicators</span>
-                            </div>
-                        </div>
-                        <div className="vyom-auth-feature-item">
-                            <span className="vyom-auth-feature-icon">☁️</span>
-                            <div className="text-left">
-                                <span className="vyom-auth-feature-title">Encrypted Cloud Sync</span>
-                                <span className="vyom-auth-feature-desc">Access your journey and test history securely on any device</span>
-                            </div>
-                        </div>
+                        <h2 id="test-auth-modal-title" className="vyom-auth-title">
+                            Sign In Required
+                        </h2>
+                        <p className="vyom-auth-subtitle">
+                            Please sign in with Google to access cognitive assessments and save your progress.
+                        </p>
                     </div>
 
                     {/* Error Banner */}
                     {signInError && (
-                        <div className="vyom-auth-modal-error">
+                        <div className="vyom-auth-error">
                             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -114,21 +98,54 @@ export function AuthOverlay({ children }: AuthOverlayProps) {
                         </div>
                     )}
 
-                    {/* Action Controls */}
-                    <div className="vyom-auth-modal-actions">
-                        <GoogleSignInButton onError={handleSignInError} />
+                    {/* Primary Google Auth Button */}
+                    <button 
+                        type="button"
+                        className="btn vyom-google-btn"
+                        onClick={handleGoogleSignIn}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <div className="vyom-auth-spinner" />
+                        ) : (
+                            <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                                <path
+                                    fill="#4285F4"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                />
+                                <path
+                                    fill="#34A853"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                />
+                                <path
+                                    fill="#FBBC05"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                />
+                                <path
+                                    fill="#EA4335"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                />
+                            </svg>
+                        )}
+                        <span>{loading ? 'Connecting with Google...' : 'Continue with Google'}</span>
+                    </button>
 
-                        <button 
-                            onClick={handleGoBack}
-                            className="vyom-auth-modal-guest-btn"
-                        >
-                            Return to Cognitive Journey
-                        </button>
-                    </div>
+                    {/* Divider */}
+                    <p className="p vyom-auth-divider">or</p>
 
-                    <div className="vyom-auth-modal-footer">
-                        <span>By continuing, you agree to VyomFlow's privacy terms & data confidentiality.</span>
-                    </div>
+                    {/* Return Action */}
+                    <button 
+                        type="button"
+                        onClick={handleGoBack}
+                        className="button-submit vyom-guest-btn"
+                    >
+                        Return to Cognitive Journey
+                    </button>
+
+                    {/* Footer terms */}
+                    <p className="p vyom-auth-footer">
+                        By continuing, you agree to VyomFlow's <span className="span" onClick={handleGoBack}>Privacy Terms</span> & Data Confidentiality.
+                    </p>
                 </div>
             </div>
         </div>

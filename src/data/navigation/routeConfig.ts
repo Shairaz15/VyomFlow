@@ -128,9 +128,9 @@ export const DEMO_ROUTE: RouteConfig = {
             chronologicalOrder: 3,
         },
         {
-            id: "lm_05",
-            name: "Yellow Blossom Tree Driveway",
-            imageUrl: "https://pkkrxxjinpxctkoxltuy.supabase.co/storage/v1/object/public/navigation-assets/landmarks/landmark_5.jpg",
+            id: "lm_06",
+            name: "Campus Sports Ground & Railing View",
+            imageUrl: "https://pkkrxxjinpxctkoxltuy.supabase.co/storage/v1/object/public/navigation-assets/landmarks/landmark_6.jpg",
             isReal: true,
             chronologicalOrder: 4,
         },
@@ -150,6 +150,13 @@ export const DEMO_ROUTE: RouteConfig = {
         },
 
         // Distractor Landmarks (4 shown per attempt, randomly rotated from this pool)
+        {
+            id: "lm_05",
+            name: "Yellow Blossom Tree Driveway",
+            imageUrl: "https://pkkrxxjinpxctkoxltuy.supabase.co/storage/v1/object/public/navigation-assets/landmarks/landmark_5.jpg",
+            isReal: false,
+            chronologicalOrder: -1,
+        },
         {
             id: "lm_12",
             name: "Vine Pergola Canopy Walkway",

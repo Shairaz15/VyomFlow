@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { PageWrapper } from '../components/layout';
+import { VyomFlowLogo } from '../components/common';
 import { useDashboardV3ViewModel } from '../hooks/useDashboardV3ViewModel';
 import { useWeeklyReminder } from '../hooks/useWeeklyReminder';
 import {
@@ -145,7 +146,9 @@ export function DashboardV3() {
                 {!vm.hasData ? (
                     /* Empty State */
                     <div className="dv2-card dv2-empty-state dv2-animate-in">
-                        <div className="dv2-empty-icon">🧠</div>
+                        <div className="dv2-empty-icon">
+                            <VyomFlowLogo variant="icon" height={56} className="dv2-welcome-brand-logo" />
+                        </div>
                         <h3>Welcome to VyomFlow</h3>
                         <p>Complete your first cognitive assessment to establish your baseline and generate your digital biomarker profile in Supabase.</p>
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.25rem' }}>

@@ -604,9 +604,26 @@ html.dark .dv2-container {
 }
 
 .dv2-empty-state .dv2-empty-icon {
-    font-size: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 1rem;
-    opacity: 0.6;
+    opacity: 1;
+}
+
+.dv2-welcome-brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 2px 8px rgba(79, 124, 120, 0.18));
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 640px) {
+    .dv2-welcome-brand-logo svg {
+        width: 48px;
+        height: 48px;
+    }
 }
 
 .dv2-empty-state h3 {

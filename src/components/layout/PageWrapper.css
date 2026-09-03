@@ -243,20 +243,22 @@ html.dark .vmra-container,
     }
 }
 
-/* ===== Desktop Test Mode Zero-Scroll Anchor (>= 768px) ===== */
+/* ===== Desktop Test Mode Anchor (>= 768px) ===== */
 @media (min-width: 768px) {
     .page-wrapper.is-test-mode {
-        height: 100vh;
-        max-height: 100vh;
-        overflow: hidden;
+        min-height: 100vh;
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
     }
 
     .is-test-mode .page-main {
-        height: 100vh;
-        max-height: 100vh;
-        overflow: hidden;
+        min-height: 100vh;
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
     }
 }

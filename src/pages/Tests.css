@@ -343,21 +343,28 @@ html:not(.dark) .dot-mini.current,
     box-shadow: 0 0 8px rgba(79, 124, 120, 0.5) !important;
 }
 
+.journey-compact-cta,
+.dark .journey-compact-cta,
+[data-theme="dark"] .journey-compact-cta,
 html:not(.dark) .journey-compact-cta,
 [data-theme="light"] .journey-compact-cta {
     background: #4F7C78 !important;
     color: #FFFFFF !important;
-    border: none;
+    border: none !important;
     font-weight: 700;
     box-shadow: 0 4px 14px rgba(79, 124, 120, 0.25) !important;
     transition: all 0.25s ease;
 }
 
+.journey-compact-cta:hover,
+.dark .journey-compact-cta:hover,
+[data-theme="dark"] .journey-compact-cta:hover,
 html:not(.dark) .journey-compact-cta:hover,
 [data-theme="light"] .journey-compact-cta:hover {
-    background: #3d6360 !important;
+    background: #3D665F !important;
     color: #FFFFFF !important;
     transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(79, 124, 120, 0.35) !important;
 }
 
 html:not(.dark) .link-chip,

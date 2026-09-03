@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useTheme } from "../../../contexts/ThemeContext";
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
 import { PageWrapper } from "../../layout";
 import { usePatternResults } from "../../../hooks/useTestResults";
 import { extractPatternFeatures } from "../../../ai/patternFeatures";
 import type { PatternRoundData, PatternAssessmentResult } from "../../../types/patternTypes";
-import { getPatternFeedback } from "../../../utils/normativeStats";
+import "../story/StoryAssessment.css";
 import "./PatternAssessment.css";
 
 type Phase = 'instructions' | 'demonstration' | 'calibration' | 'assessment' | 'complete';
@@ -14,8 +16,41 @@ type GameState = 'idle' | 'showing' | 'waiting';
 
 export function PatternAssessment() {
     const navigate = useNavigate();
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
     const { isAuthenticated } = useAuth();
-    const { saveResult } = usePatternResults();
+    const { results, saveResult } = usePatternResults();
+
+    // Custom tick renderer for Radar Chart
+    const renderCustomAxisTick = ({ payload, x, y, cx, cy }: any) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const offsetX = dist > 0 ? x + (dx / dist) * 8 : x;
+        const offsetY = dist > 0 ? y + (dy / dist) * 8 : y;
+
+        let textAnchor: "start" | "middle" | "end" = "middle";
+        if (dx > 12) {
+            textAnchor = "start";
+        } else if (dx < -12) {
+            textAnchor = "end";
+        }
+
+        return (
+            <text
+                x={offsetX}
+                y={offsetY}
+                textAnchor={textAnchor}
+                dominantBaseline="central"
+                fill={isDark ? "#E2ECF2" : "#17324D"}
+                fontSize={10}
+                fontWeight={600}
+                className="radar-axis-tick select-none"
+            >
+                {payload.value}
+            </text>
+        );
+    };
 
     // Core State
     const [phase, setPhase] = useState<Phase>('instructions');
@@ -300,11 +335,6 @@ export function PatternAssessment() {
                         <span className="back-arrow" aria-hidden="true">←</span>
                         <span>Back to Assessments</span>
                     </button>
-
-                    <div className="story-module-badge">
-                        <span className="badge-dot" aria-hidden="true" />
-                        <span>Cognitive Assessment</span>
-                    </div>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
@@ -402,66 +432,161 @@ export function PatternAssessment() {
                     )}
 
                     {/* 3. Test Complete / Results Phase */}
-                    {phase === 'complete' && (
-                        <div className="pattern-results-container animate-fadeIn">
-                            <Card className="pattern-results-card">
-                                <div className="results-overview-header">
-                                    <div>
-                                        <h2 className="vyom-serif">Pattern Recognition Profile</h2>
-                                        <p className="results-sub">Visuospatial memory span and sequential processing capacity.</p>
+                    {phase === 'complete' && (() => {
+                        const maxLevel = Math.max(...rounds.filter(r => r.isCorrect).map(r => r.level), 0);
+                        const correctRounds = rounds.filter(r => r.isCorrect).length;
+                        const totalRounds = rounds.length;
+                        const accuracy = totalRounds > 0 ? Math.round((correctRounds / totalRounds) * 100) : 0;
+                        const avgLatency = rounds.length > 0
+                            ? Math.round(rounds.reduce((a, b) => a + (b.responseLatency || 0), 0) / rounds.length)
+                            : 0;
+
+                        const spanScore = Math.min(100, Math.round((maxLevel / 6) * 100));
+                        const scorePercent = Math.max(10, Math.min(100, Math.round((accuracy * 0.6) + (spanScore * 0.4))));
+
+                        const getScoreTier = (score: number) => {
+                            if (score >= 80) return { label: "High Working Memory", level: "stable" as const };
+                            if (score >= 60) return { label: "Moderate Span", level: "change_detected" as const };
+                            return { label: "Needs Practice", level: "possible_risk" as const };
+                        };
+
+                        const tier = getScoreTier(scorePercent);
+
+                        // Trend computation
+                        const pastResults = results || [];
+                        const prevSession = pastResults.length > 0 ? pastResults[pastResults.length - 1] : null;
+                        const prevScore = (prevSession as any)?.score ?? (prevSession as any)?.metrics?.correctRounds;
+                        const isImproving = prevScore ? (scorePercent >= prevScore) : (scorePercent >= 60);
+                        const trend: "up" | "down" = isImproving ? "up" : "down";
+
+                        const speedScore = Math.max(15, Math.min(100, Math.round(100 - Math.max(0, (avgLatency - 800) / 25))));
+                        const learningRate = Math.max(20, Math.min(100, Math.round((correctRounds / Math.max(1, totalRounds)) * 100)));
+
+                        const radarData = [
+                            { subject: "Memory Span", A: spanScore, fullMark: 100 },
+                            { subject: "Sequence Accuracy", A: accuracy, fullMark: 100 },
+                            { subject: "Spatial Precision", A: Math.round((spanScore + accuracy) / 2), fullMark: 100 },
+                            { subject: "Processing Speed", A: speedScore, fullMark: 100 },
+                            { subject: "Learning Curve", A: learningRate, fullMark: 100 },
+                            { subject: "Task Efficiency", A: scorePercent, fullMark: 100 },
+                        ];
+
+                        return (
+                            <div className="story-results-container animate-fadeIn">
+                                {/* Top Overview Card */}
+                                <Card className="results-overview-card">
+                                    <div className="overview-header">
+                                        <div className="overview-title-group">
+                                            <h2 className="vyom-serif">Pattern Recognition Profile</h2>
+                                            <span className={`story-trend-pill ${trend === "up" ? "trend-up" : "trend-down"}`}>
+                                                <Icon name={trend === "up" ? "trend-up" : "trend-down"} size={13} />
+                                                <span>{trend === "up" ? "Improving" : "Declining"}</span>
+                                            </span>
+                                        </div>
+                                        <div className="score-badge-circle">
+                                            <span className="score-num">{scorePercent}</span>
+                                            <span className="score-denom">/ 100</span>
+                                        </div>
                                     </div>
-                                    <div className="pattern-icon-badge">🧩</div>
+                                </Card>
+
+                                <MotivationalQuoteBlock
+                                    category={tier.label}
+                                    score={scorePercent}
+                                />
+
+                                {/* Biomarkers Breakdown Row (2x2 grid) */}
+                                <div className="biomarkers-grid-row">
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Memory Span</h4>
+                                            <p className="metric-desc">Max sequence level reached</p>
+                                        </div>
+                                        <div className="metric-val">Level {maxLevel}</div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Sequence Accuracy</h4>
+                                            <p className="metric-desc">{correctRounds} / {totalRounds} trials completed</p>
+                                        </div>
+                                        <div className="metric-val">{accuracy}%</div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Decision Latency</h4>
+                                            <p className="metric-desc">Avg sequence response speed</p>
+                                        </div>
+                                        <div className="metric-val">{(avgLatency / 1000).toFixed(2)} <span className="metric-unit">s</span></div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Visuospatial Capacity</h4>
+                                            <p className="metric-desc">Grid complexity retention</p>
+                                        </div>
+                                        <div className="metric-val">{spanScore}%</div>
+                                    </Card>
                                 </div>
 
-                                {(() => {
-                                    const maxLevel = Math.max(...rounds.filter(r => r.isCorrect).map(r => r.level), 0);
-                                    const correctRounds = rounds.filter(r => r.isCorrect).length;
-                                    const totalRounds = rounds.length;
-                                    const accuracy = totalRounds > 0 ? Math.round((correctRounds / totalRounds) * 100) : 0;
-                                    const feedback = getPatternFeedback(maxLevel);
+                                {/* Full-Length Biomarker Radar & Progression Card */}
+                                <Card className="radar-chart-card full-width-radar">
+                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <div className="chart-wrapper">
+                                        <ResponsiveContainer width="100%" height={155}>
+                                            <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
+                                                <PolarGrid stroke={isDark ? "rgba(0, 201, 183, 0.22)" : "rgba(79, 124, 120, 0.22)"} />
+                                                <PolarAngleAxis
+                                                    dataKey="subject"
+                                                    tick={renderCustomAxisTick}
+                                                    tickLine={false}
+                                                />
+                                                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="transparent" tick={false} />
+                                                <Radar
+                                                    name="Biomarkers"
+                                                    dataKey="A"
+                                                    stroke={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fill={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fillOpacity={isDark ? 0.35 : 0.28}
+                                                />
+                                            </RadarChart>
+                                        </ResponsiveContainer>
+                                    </div>
 
-                                    return (
-                                        <>
-                                            <div className="pattern-metrics-grid">
-                                                <div className="pattern-metric-box">
-                                                    <span className="metric-tag">Max Level</span>
-                                                    <div className="metric-num">{maxLevel}</div>
+                                    {/* Level-by-Level Sequence Progression */}
+                                    <div className="pattern-trials-section">
+                                        <div className="pattern-trials-header">
+                                            <span className="pattern-trials-title">Sequence Progression</span>
+                                            <span className="pattern-trials-badge">{correctRounds} / {totalRounds} Successful</span>
+                                        </div>
+                                        <div className="pattern-trials-grid">
+                                            {rounds.map((r, i) => (
+                                                <div key={i} className={`pattern-trial-chip ${r.isCorrect ? "valid" : "wrong"}`}>
+                                                    <span className="trial-chip-tag">Lvl {r.level}</span>
+                                                    <span className="trial-chip-val">{r.isCorrect ? "✓ Passed" : "✗ Failed"}</span>
                                                 </div>
-                                                <div className="pattern-metric-box">
-                                                    <span className="metric-tag">Accuracy</span>
-                                                    <div className="metric-num">{accuracy}<span className="unit">%</span></div>
-                                                </div>
-                                                <div className="pattern-metric-box">
-                                                    <span className="metric-tag">Sequences Completed</span>
-                                                    <div className="metric-num">{correctRounds} <span className="unit">/ {totalRounds}</span></div>
-                                                </div>
-                                            </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </Card>
 
-                                            <div className="pattern-feedback-pill">
-                                                <span className="feedback-cat">{feedback.category}</span>
-                                                <span className="feedback-dot">•</span>
-                                                <span className="feedback-desc">{feedback.message}</span>
-                                            </div>
-
-                                            <MotivationalQuoteBlock
-                                                category={feedback.category}
-                                                score={maxLevel <= 2 ? 40 : 80}
-                                            />
-                                        </>
-                                    );
-                                })()}
-
+                                {/* Centered Actions */}
                                 <div className="results-actions">
-                                    <Button variant="secondary" onClick={handleRetake}>
-                                        <Icon name="assess" size={16} /> Retake Test
-                                    </Button>
-                                    <Button variant="primary" onClick={() => navigate('/tests')}>
+                                    <button type="button" onClick={handleRetake} className="story-retake-btn">
+                                        <Icon name="reaction" size={15} /> Retake Test
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="story-primary-start-btn story-back-assessments-btn"
+                                        onClick={() => navigate("/tests")}
+                                    >
                                         Back to Assessments
-                                    </Button>
+                                    </button>
                                 </div>
-                            </Card>
-                        </div>
-                    )}
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Exit Confirmation Dialog */}

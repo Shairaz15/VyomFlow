@@ -13,7 +13,6 @@ import { StoryAssessment } from "./components/tests/story/StoryAssessment";
 import { NavigationAssessment } from "./components/tests/navigation/NavigationAssessment";
 import { Settings } from "./pages/Settings";
 import { Demo } from "./pages/Demo";
-import { ProgressPage } from "./pages/ProgressPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 // Admin pages
 import { AdminDashboard } from "./admin/pages/AdminDashboard";
@@ -47,14 +46,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <DashboardV3 />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/progress"
-                element={
-                  <ProtectedRoute>
-                    <ProgressPage />
                   </ProtectedRoute>
                 }
               />

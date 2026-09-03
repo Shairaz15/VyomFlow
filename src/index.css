@@ -23,10 +23,10 @@
     --color-accent-secondary-soft: rgba(167, 139, 250, 0.12);
 
     /* Gradients */
-    --primary-gradient: linear-gradient(135deg, #2dd4bf 0%, #818cf8 100%);
-    --gradient-accent: linear-gradient(135deg, #5eead4 0%, #818cf8 100%);
-    --gradient-accent-subtle: linear-gradient(135deg, rgba(94, 234, 212, 0.15) 0%, rgba(129, 140, 248, 0.1) 100%);
-    --accent-glow: conic-gradient(from 90deg at 50% 50%, #00000000 50%, #5eead4 100%);
+    --primary-gradient: linear-gradient(135deg, #4F7C78 0%, #3D665F 100%);
+    --gradient-accent: linear-gradient(135deg, #4F7C78 0%, #8FAF8B 100%);
+    --gradient-accent-subtle: linear-gradient(135deg, rgba(79, 124, 120, 0.15) 0%, rgba(143, 175, 139, 0.1) 100%);
+    --accent-glow: conic-gradient(from 90deg at 50% 50%, #00000000 50%, #4F7C78 100%);
 
     /* Text Colors */
     --color-text-primary: #f1f5f9;
@@ -153,8 +153,8 @@ html:not(.dark),
     --color-accent-secondary-soft: rgba(143, 175, 139, 0.08);
 
     /* Custom Gradients */
-    --primary-gradient: linear-gradient(135deg, #4F7C78 0%, #8FAF8B 100%);
-    --gradient-accent: linear-gradient(135deg, #4F7C78 0%, #D8B878 100%);
+    --primary-gradient: linear-gradient(135deg, #4F7C78 0%, #3D665F 100%);
+    --gradient-accent: linear-gradient(135deg, #4F7C78 0%, #8FAF8B 100%);
     --gradient-accent-subtle: linear-gradient(135deg, rgba(79, 124, 120, 0.08) 0%, rgba(143, 175, 139, 0.05) 100%);
 
     /* Borders & Glass */

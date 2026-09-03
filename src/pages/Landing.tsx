@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { 
+    Play, 
+    TrendingUp, 
+    Brain,
+    Monitor 
+} from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { ThemeToggle } from "../components/common/ThemeToggle";
@@ -7,6 +13,7 @@ import { GoogleSignInModal, UserMenu } from "../components/common";
 import { ScientificBrainCanvas } from "../components/landing/ScientificBrainCanvas";
 import { VyomFlowVideoBrand } from "../components/landing/VyomFlowVideoBrand";
 import { VyomFlowLogo } from "../components/common/VyomFlowLogo";
+import { CognitiveDomainIcon } from "../components/journey/CognitiveDomainIcons";
 import "./VyomFlowLanding.css";
 
 export function Landing() {
@@ -197,7 +204,7 @@ export function Landing() {
 
                     <div className="flex flex-col gap-3 pt-6 border-t border-white/10 dark:border-[#17324D]/15 mt-auto pb-safe">
                         <div className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#4F7C78]/10 text-xs font-medium text-[#4F7C78] dark:text-[#8FAF8B] text-center">
-                            <span>💻</span>
+                            <Monitor className="w-4 h-4 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
                             <span>Assessment battery accessible on Desktop</span>
                         </div>
                         {isAuthenticated ? (
@@ -228,14 +235,6 @@ export function Landing() {
                    ========================================================================= */}
                 <section id="hero" className="hidden md:flex vyom-hero-section w-full flex-col items-center justify-center text-center px-4 sm:px-6">
                     <div className="max-w-4xl mx-auto flex flex-col items-center justify-center flex-1 py-12 w-full h-full">
-                        {/* Authenticated Welcome Badge */}
-                        {isAuthenticated && user && (
-                            <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#4F7C78]/10 dark:bg-[#8FAF8B]/15 border border-[#4F7C78]/25 dark:border-[#8FAF8B]/30 text-xs sm:text-sm font-medium text-[#4F7C78] dark:text-[#8FAF8B] animate-fadeIn">
-                                <span className="w-2 h-2 rounded-full bg-[#4F7C78] dark:bg-[#8FAF8B] animate-pulse"></span>
-                                <span>Welcome back, <strong>{user.displayName?.split(' ')[0] || 'Explorer'}</strong></span>
-                            </div>
-                        )}
-
                         {/* Hero Text Block */}
                         <div className="flex flex-col items-center justify-center my-auto">
                             <h1 className="vyom-hero-main-title">
@@ -273,13 +272,6 @@ export function Landing() {
                    ========================================================================= */}
                 <section className="md:hidden vyom-mobile-hero-section">
                     <div className="flex flex-col items-center justify-center py-6 w-full">
-                        {isAuthenticated && user && (
-                            <div className="mb-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#4F7C78]/10 dark:bg-[#8FAF8B]/15 border border-[#4F7C78]/25 dark:border-[#8FAF8B]/30 text-xs font-medium text-[#4F7C78] dark:text-[#8FAF8B] animate-fadeIn">
-                                <span className="w-2 h-2 rounded-full bg-[#4F7C78] dark:bg-[#8FAF8B] animate-pulse"></span>
-                                <span>Welcome back, <strong>{user.displayName?.split(' ')[0] || 'Explorer'}</strong></span>
-                            </div>
-                        )}
-
                         <h1 className="vyom-hero-main-title">
                             VyomFlow
                         </h1>
@@ -306,7 +298,7 @@ export function Landing() {
                                 View Cognitive Domains
                             </button>
                             <div className="flex items-center justify-center gap-1.5 text-xs text-[#4F7C78] dark:text-[#8FAF8B] font-medium pt-1">
-                                <span>🖥️</span>
+                                <Monitor className="w-3.5 h-3.5 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
                                 <span>Assessment battery is accessible on Desktop</span>
                             </div>
                         </div>
@@ -360,11 +352,13 @@ export function Landing() {
                                 {/* STEP 01: PLAY (At 12 o'clock / 0°) */}
                                 <div className="vyom-orbit-node vyom-orbit-node-play">
                                     <div className="vyom-orbit-counter-rotate">
-                                        <div className="vyom-orb-bg-emoji">🎮</div>
+                                        <div className="vyom-orb-bg-emoji">
+                                            <Play className="w-20 h-20 text-[#8FAF8B] opacity-15" strokeWidth={1.5} />
+                                        </div>
                                         <div className="vyom-loop-number text-[#8FAF8B]">01</div>
                                         <div className="vyom-loop-title">PLAY</div>
                                         <p className="vyom-loop-desc">
-                                            Complete short cognitive activities designed to engage performance.
+                                             Complete short cognitive activities designed to engage performance.
                                         </p>
                                     </div>
                                 </div>
@@ -372,7 +366,9 @@ export function Landing() {
                                 {/* STEP 02: TRACK (At 4 o'clock / 120°) */}
                                 <div className="vyom-orbit-node vyom-orbit-node-track">
                                     <div className="vyom-orbit-counter-rotate">
-                                        <div className="vyom-orb-bg-emoji">📈</div>
+                                        <div className="vyom-orb-bg-emoji">
+                                            <TrendingUp className="w-20 h-20 text-[#4F7C78] opacity-15" strokeWidth={1.5} />
+                                        </div>
                                         <div className="vyom-loop-number text-[#4F7C78]">02</div>
                                         <div className="vyom-loop-title">TRACK</div>
                                         <p className="vyom-loop-desc">
@@ -384,7 +380,9 @@ export function Landing() {
                                 {/* STEP 03: UNDERSTAND (At 8 o'clock / 240°) */}
                                 <div className="vyom-orbit-node vyom-orbit-node-understand">
                                     <div className="vyom-orbit-counter-rotate">
-                                        <div className="vyom-orb-bg-emoji">🧠</div>
+                                        <div className="vyom-orb-bg-emoji">
+                                            <Brain className="w-20 h-20 text-[#D8B878] opacity-15" strokeWidth={1.5} />
+                                        </div>
                                         <div className="vyom-loop-number text-[#D8B878]">03</div>
                                         <div className="vyom-loop-title">UNDERSTAND</div>
                                         <p className="vyom-loop-desc">
@@ -484,7 +482,9 @@ export function Landing() {
 
                         {/* 1. Story Narration Recall (Top Center) */}
                         <div className="vyom-orbital-card absolute top-[2%] left-1/2 -translate-x-1/2 select-none">
-                            <div className="vyom-orbital-icon">📖</div>
+                            <div className="vyom-orbital-icon vyom-icon-story">
+                                <CognitiveDomainIcon domain="story" size={28} />
+                            </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
                                 <h4 className="font-semibold text-sm text-[#17324D] text-center">Story Narration Recall</h4>
                                 <p className="text-xs text-[#66757A] text-center">Episodic & Verbal Memory</p>
@@ -493,7 +493,9 @@ export function Landing() {
 
                         {/* 2. Visual Memory (VMRA) (Top Left) */}
                         <div className="vyom-orbital-card absolute top-[16%] left-[4%] select-none">
-                            <div className="vyom-orbital-icon">🧠</div>
+                            <div className="vyom-orbital-icon vyom-icon-vmra">
+                                <CognitiveDomainIcon domain="vmra" size={28} />
+                            </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
                                 <h4 className="font-semibold text-sm text-[#17324D] text-center">Visual Memory (VMRA)</h4>
                                 <p className="text-xs text-[#66757A] text-center">Visual Recognition & Recall</p>
@@ -502,7 +504,9 @@ export function Landing() {
 
                         {/* 3. Reaction Time (Top Right) */}
                         <div className="vyom-orbital-card absolute top-[16%] right-[4%] select-none">
-                            <div className="vyom-orbital-icon">⚡</div>
+                            <div className="vyom-orbital-icon vyom-icon-reaction">
+                                <CognitiveDomainIcon domain="reaction" size={28} />
+                            </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
                                 <h4 className="font-semibold text-sm text-[#17324D] text-center">Reaction Time</h4>
                                 <p className="text-xs text-[#66757A] text-center">Motor & Processing Latency</p>
@@ -511,7 +515,9 @@ export function Landing() {
 
                         {/* 4. Pattern Recognition (Mid Left) */}
                         <div className="vyom-orbital-card absolute top-[50%] left-[1%] select-none">
-                            <div className="vyom-orbital-icon">🧩</div>
+                            <div className="vyom-orbital-icon vyom-icon-pattern">
+                                <CognitiveDomainIcon domain="pattern" size={28} />
+                            </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
                                 <h4 className="font-semibold text-sm text-[#17324D] text-center">Pattern Recognition</h4>
                                 <p className="text-xs text-[#66757A] text-center">Abstract & Fluid Reasoning</p>
@@ -520,7 +526,9 @@ export function Landing() {
 
                         {/* 5. Sustained Attention (Mid Right) */}
                         <div className="vyom-orbital-card absolute top-[50%] right-[1%] select-none">
-                            <div className="vyom-orbital-icon">🎯</div>
+                            <div className="vyom-orbital-icon vyom-icon-attention">
+                                <CognitiveDomainIcon domain="attention" size={28} />
+                            </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
                                 <h4 className="font-semibold text-sm text-[#17324D] text-center">Sustained Attention</h4>
                                 <p className="text-xs text-[#66757A] text-center">Vigilance & Focus Control</p>
@@ -529,7 +537,9 @@ export function Landing() {
 
                         {/* 6. Immersive Navigation (Bottom Left) */}
                         <div className="vyom-orbital-card absolute bottom-[4%] left-[12%] select-none">
-                            <div className="vyom-orbital-icon">🧭</div>
+                            <div className="vyom-orbital-icon vyom-icon-navigation">
+                                <CognitiveDomainIcon domain="navigation" size={28} />
+                            </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
                                 <h4 className="font-semibold text-sm text-[#17324D] text-center">Immersive Navigation</h4>
                                 <p className="text-xs text-[#66757A] text-center">Spatial & Route Memory</p>
@@ -538,7 +548,9 @@ export function Landing() {
 
                         {/* 7. Language & Speech (Bottom Right) */}
                         <div className="vyom-orbital-card absolute bottom-[4%] right-[12%] select-none">
-                            <div className="vyom-orbital-icon">🗣️</div>
+                            <div className="vyom-orbital-icon vyom-icon-language">
+                                <CognitiveDomainIcon domain="language" size={28} />
+                            </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
                                 <h4 className="font-semibold text-sm text-[#17324D] text-center">Language & Speech</h4>
                                 <p className="text-xs text-[#66757A] text-center">Acoustic & Semantic Fluency</p>
@@ -554,8 +566,8 @@ export function Landing() {
 
                             {/* 01 Story Narration Recall */}
                             <div className="vyom-mobile-journey-node z-10 select-none">
-                                <div className="vyom-mobile-node-badge border-[#8FAF8B] text-[#8FAF8B]">
-                                    <span className="text-lg">📖</span>
+                                <div className="vyom-mobile-node-badge vyom-icon-story">
+                                    <CognitiveDomainIcon domain="story" size={24} />
                                     <span className="vyom-mobile-node-num">01</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
@@ -566,8 +578,8 @@ export function Landing() {
 
                             {/* 02 Visual Memory (VMRA) */}
                             <div className="vyom-mobile-journey-node z-10 select-none">
-                                <div className="vyom-mobile-node-badge border-[#4F7C78] text-[#4F7C78]">
-                                    <span className="text-lg">🧠</span>
+                                <div className="vyom-mobile-node-badge vyom-icon-vmra">
+                                    <CognitiveDomainIcon domain="vmra" size={24} />
                                     <span className="vyom-mobile-node-num">02</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
@@ -578,8 +590,8 @@ export function Landing() {
 
                             {/* 03 Reaction Time */}
                             <div className="vyom-mobile-journey-node z-10 select-none">
-                                <div className="vyom-mobile-node-badge border-[#D8B878] text-[#D8B878]">
-                                    <span className="text-lg">⚡</span>
+                                <div className="vyom-mobile-node-badge vyom-icon-reaction">
+                                    <CognitiveDomainIcon domain="reaction" size={24} />
                                     <span className="vyom-mobile-node-num">03</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
@@ -590,8 +602,8 @@ export function Landing() {
 
                             {/* 04 Pattern Recognition */}
                             <div className="vyom-mobile-journey-node z-10 select-none">
-                                <div className="vyom-mobile-node-badge border-[#4F7C78] text-[#4F7C78]">
-                                    <span className="text-lg">🧩</span>
+                                <div className="vyom-mobile-node-badge vyom-icon-pattern">
+                                    <CognitiveDomainIcon domain="pattern" size={24} />
                                     <span className="vyom-mobile-node-num">04</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
@@ -602,8 +614,8 @@ export function Landing() {
 
                             {/* 05 Sustained Attention */}
                             <div className="vyom-mobile-journey-node z-10 select-none">
-                                <div className="vyom-mobile-node-badge border-[#8FAF8B] text-[#8FAF8B]">
-                                    <span className="text-lg">🎯</span>
+                                <div className="vyom-mobile-node-badge vyom-icon-attention">
+                                    <CognitiveDomainIcon domain="attention" size={24} />
                                     <span className="vyom-mobile-node-num">05</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
@@ -614,8 +626,8 @@ export function Landing() {
 
                             {/* 06 Immersive Navigation */}
                             <div className="vyom-mobile-journey-node z-10 select-none">
-                                <div className="vyom-mobile-node-badge border-[#4F7C78] text-[#4F7C78]">
-                                    <span className="text-lg">🧭</span>
+                                <div className="vyom-mobile-node-badge vyom-icon-navigation">
+                                    <CognitiveDomainIcon domain="navigation" size={24} />
                                     <span className="vyom-mobile-node-num">06</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
@@ -626,8 +638,8 @@ export function Landing() {
 
                             {/* 07 Language & Speech */}
                             <div className="vyom-mobile-journey-node z-10 select-none">
-                                <div className="vyom-mobile-node-badge border-[#D8B878] text-[#D8B878]">
-                                    <span className="text-lg">🗣️</span>
+                                <div className="vyom-mobile-node-badge vyom-icon-language">
+                                    <CognitiveDomainIcon domain="language" size={24} />
                                     <span className="vyom-mobile-node-num">07</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
@@ -793,26 +805,26 @@ export function Landing() {
                9. FOOTER (Responsive Two-Part Layout)
                ========================================================================= */}
             <footer id="about" className="vyom-footer w-full">
-                <div className="vyom-footer-container">
+                <div className="vyom-footer-container flex flex-col items-center">
                     {/* Centered Brand Block & Explore Navigation */}
-                    <div className="flex flex-col items-center justify-center text-center gap-8 pb-10 border-b border-[#F7F4EC]/12 max-w-2xl mx-auto">
+                    <div className="w-full max-w-2xl mx-auto flex flex-col items-center justify-center text-center gap-8 pb-10 border-b border-[#F7F4EC]/12">
                         {/* Brand Block */}
-                        <div className="flex flex-col items-center justify-center text-center">
-                            <div className="cursor-pointer mb-3 select-none" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                        <div className="w-full flex flex-col items-center justify-center text-center">
+                            <div className="inline-flex items-center justify-center cursor-pointer mb-3 select-none" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                                 <VyomFlowLogo size="lg" theme="dark" />
                             </div>
 
-                            <p className="text-sm sm:text-base text-[#FFFFFF] leading-relaxed max-w-md mx-auto text-center font-medium opacity-95">
+                            <p className="w-full max-w-[480px] mx-auto text-sm sm:text-base text-[#FFFFFF] leading-relaxed text-center font-medium opacity-95">
                                 Cognitive performance tracking designed for awareness and longitudinal self-observation.
                             </p>
                         </div>
 
                         {/* Navigation: EXPLORE */}
-                        <div className="flex flex-col items-center justify-center text-center gap-3 mt-1">
-                            <div className="text-xs sm:text-sm font-bold tracking-[0.22em] text-[#D8B878] dark:text-[#8FAF8B] uppercase text-center">
+                        <div className="w-full flex flex-col items-center justify-center text-center gap-3 mt-1">
+                            <div className="text-xs sm:text-sm font-bold tracking-[0.22em] text-[#D8B878] dark:text-[#8FAF8B] uppercase text-center pl-[0.22em]">
                                 EXPLORE
                             </div>
-                            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+                            <nav className="w-full flex flex-wrap items-center justify-center gap-6 sm:gap-10" aria-label="Footer Navigation">
                                 <button onClick={() => handleScrollTo("how-it-works")} className="vyom-footer-link text-center">
                                     How It Works
                                 </button>
@@ -822,7 +834,7 @@ export function Landing() {
                                 <button onClick={() => handleScrollTo("privacy")} className="vyom-footer-link text-center">
                                     Privacy
                                 </button>
-                            </div>
+                            </nav>
                         </div>
                     </div>
 

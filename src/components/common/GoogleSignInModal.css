@@ -1,5 +1,5 @@
 /* ==========================================================================
-   VyomFlow Google Sign-In Modal Styles
+   VyomFlow Login Modal Styles (From Uiverse.io by micaelgomestavares)
    ========================================================================== */
 
 .vyom-auth-modal-overlay {
@@ -11,318 +11,371 @@
     justify-content: center;
     padding: 1rem;
     background: rgba(10, 20, 30, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     transition: all 0.3s ease;
 }
 
-.vyom-auth-modal-card {
+/* From Uiverse.io by micaelgomestavares */
+.form {
     position: relative;
-    width: 100%;
-    max-width: 480px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(79, 124, 120, 0.18);
-    border-radius: 28px;
-    padding: 2.25rem 2rem 1.75rem;
-    box-shadow: 
-        0 20px 50px -10px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.8) inset;
     display: flex;
-    flex-col: column;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    color: #17324D;
-    overflow: hidden;
-    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.dark .vyom-auth-modal-card,
-[data-theme="dark"] .vyom-auth-modal-card,
-html.dark .vyom-auth-modal-card {
-    background: rgba(16, 28, 44, 0.95);
-    border: 1px solid rgba(143, 175, 139, 0.22);
-    box-shadow: 
-        0 24px 60px -10px rgba(0, 0, 0, 0.65),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    color: #F7F4EC;
-}
-
-.vyom-auth-modal-close {
-    position: absolute;
-    top: 1.25rem;
-    right: 1.25rem;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.04);
-    color: #5A6E72;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.vyom-auth-modal-close:hover {
-    background: rgba(0, 0, 0, 0.08);
-    color: #17324D;
-    transform: scale(1.05);
-}
-
-.dark .vyom-auth-modal-close,
-[data-theme="dark"] .vyom-auth-modal-close,
-html.dark .vyom-auth-modal-close {
-    background: rgba(255, 255, 255, 0.06);
-    color: #A0B0B5;
-}
-
-.dark .vyom-auth-modal-close:hover,
-[data-theme="dark"] .vyom-auth-modal-close:hover,
-html.dark .vyom-auth-modal-close:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #FFFFFF;
-}
-
-/* Icon & Glow */
-.vyom-auth-modal-icon-wrapper {
-    position: relative;
-    margin-bottom: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.vyom-auth-modal-icon-glow {
-    position: absolute;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(79, 124, 120, 0.35) 0%, rgba(79, 124, 120, 0) 70%);
-    filter: blur(10px);
-    animation: authPulse 3s ease-in-out infinite;
-}
-
-.dark .vyom-auth-modal-icon-glow,
-[data-theme="dark"] .vyom-auth-modal-icon-glow,
-html.dark .vyom-auth-modal-icon-glow {
-    background: radial-gradient(circle, rgba(143, 175, 139, 0.35) 0%, rgba(143, 175, 139, 0) 70%);
-}
-
-.vyom-auth-modal-icon {
-    position: relative;
-    width: 58px;
-    height: 58px;
+    gap: 10px;
+    background-color: #ffffff;
+    padding: 30px;
+    width: 100%;
+    max-width: 450px;
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(79, 124, 120, 0.12), rgba(143, 175, 139, 0.2));
-    border: 1px solid rgba(79, 124, 120, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 14px rgba(79, 124, 120, 0.15);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.25);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #151717;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.dark .vyom-auth-modal-icon,
-[data-theme="dark"] .vyom-auth-modal-icon,
-html.dark .vyom-auth-modal-icon {
-    background: linear-gradient(135deg, rgba(79, 124, 120, 0.25), rgba(143, 175, 139, 0.15));
-    border-color: rgba(143, 175, 139, 0.25);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+::placeholder {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #94a3b8;
 }
 
-/* Titles */
-.vyom-auth-modal-title {
-    font-family: 'Outfit', 'Cinzel', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 1.625rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 0 0 0.5rem 0;
-    color: inherit;
+.form button {
+    align-self: normal;
 }
 
-.vyom-auth-modal-subtitle {
-    font-size: 0.925rem;
-    line-height: 1.5;
-    color: #586E75;
-    margin: 0 0 1.5rem 0;
-    max-width: 390px;
-}
-
-.dark .vyom-auth-modal-subtitle,
-[data-theme="dark"] .vyom-auth-modal-subtitle,
-html.dark .vyom-auth-modal-subtitle {
-    color: #A4B8BE;
-}
-
-/* Features List */
-.vyom-auth-modal-features {
-    width: 100%;
+.flex-column {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
-    background: rgba(79, 124, 120, 0.05);
-    border: 1px solid rgba(79, 124, 120, 0.12);
-    border-radius: 18px;
-    padding: 0.9rem 1.1rem;
-    margin-bottom: 1.5rem;
-}
-
-.dark .vyom-auth-modal-features,
-[data-theme="dark"] .vyom-auth-modal-features,
-html.dark .vyom-auth-modal-features {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.08);
-}
-
-.vyom-auth-feature-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-}
-
-.vyom-auth-feature-icon {
-    font-size: 1.15rem;
-    line-height: 1.2;
-    shrink: 0;
-}
-
-.vyom-auth-feature-title {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #17324D;
-}
-
-.dark .vyom-auth-feature-title,
-[data-theme="dark"] .vyom-auth-feature-title,
-html.dark .vyom-auth-feature-title {
-    color: #E2ECE9;
-}
-
-.vyom-auth-feature-desc {
-    display: block;
-    font-size: 0.75rem;
-    color: #6C7F85;
-    line-height: 1.35;
-}
-
-.dark .vyom-auth-feature-desc,
-[data-theme="dark"] .vyom-auth-feature-desc,
-html.dark .vyom-auth-feature-desc {
-    color: #8C9EA3;
-}
-
-/* Error Banner */
-.vyom-auth-modal-error {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: 12px;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    color: #dc2626;
-    font-size: 0.825rem;
-    margin-bottom: 1rem;
+    gap: 4px;
     text-align: left;
 }
 
-.dark .vyom-auth-modal-error,
-[data-theme="dark"] .vyom-auth-modal-error,
-html.dark .vyom-auth-modal-error {
+.flex-column > label {
+    color: #151717;
+    font-weight: 600;
+    font-size: 14.5px;
+}
+
+.inputForm {
+    border: 1.5px solid #ecedec;
+    border-radius: 10px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding-left: 14px;
+    padding-right: 14px;
+    transition: 0.2s ease-in-out;
+    background-color: #ffffff;
+    color: #64748b;
+}
+
+.inputForm svg {
+    shrink: 0;
+}
+
+.input {
+    margin-left: 10px;
+    border-radius: 10px;
+    border: none;
+    width: 100%;
+    height: 100%;
+    font-size: 14.5px;
+    background-color: transparent;
+    color: #151717;
+}
+
+.input:focus {
+    outline: none;
+}
+
+.inputForm:focus-within {
+    border: 1.5px solid #2d79f3;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.flex-row > div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flex-row > div > label {
+    font-size: 14px;
+    color: #151717;
+    font-weight: 400;
+    cursor: pointer;
+    user-select: none;
+}
+
+.flex-row input[type="checkbox"],
+.flex-row input[type="radio"] {
+    cursor: pointer;
+    accent-color: #2d79f3;
+    width: 15px;
+    height: 15px;
+}
+
+.span {
+    font-size: 14px;
+    margin-left: 5px;
+    color: #2d79f3;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.span:hover {
+    text-decoration: underline;
+    color: #1d4ed8;
+}
+
+.button-submit {
+    margin: 18px 0 10px 0;
+    background-color: #151717;
+    border: none;
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 10px;
+    height: 50px;
+    width: 100%;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.button-submit:hover {
+    background-color: #252727;
+}
+
+.button-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.p {
+    text-align: center;
+    color: #151717;
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.p.line {
+    color: #64748b;
+    font-size: 13.5px;
+}
+
+.btn {
+    margin-top: 8px;
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14.5px;
+    font-weight: 500;
+    gap: 10px;
+    border: 1px solid #ededef;
+    background-color: white;
+    color: #151717;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+    user-select: none;
+}
+
+.btn:hover {
+    border: 1px solid #2d79f3;
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Close Button in corner */
+.vyom-auth-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: #6b7280;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.vyom-auth-close-btn:hover {
+    background: #e5e7eb;
+    color: #111827;
+    transform: scale(1.05);
+}
+
+/* Error Banner */
+.vyom-auth-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    font-size: 0.85rem;
+    text-align: left;
+    margin-bottom: 4px;
+}
+
+/* ==========================================================================
+   Dark Mode Support
+   ========================================================================== */
+.dark .form,
+[data-theme="dark"] .form,
+html.dark .form {
+    background-color: #161f2c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.6);
+    color: #f1f5f9;
+}
+
+.dark .flex-column > label,
+[data-theme="dark"] .flex-column > label,
+html.dark .flex-column > label {
+    color: #f1f5f9;
+}
+
+.dark .inputForm,
+[data-theme="dark"] .inputForm,
+html.dark .inputForm {
+    border: 1.5px solid #2a384c;
+    background-color: #1e293b;
+    color: #94a3b8;
+}
+
+.dark .input,
+[data-theme="dark"] .input,
+html.dark .input {
+    color: #f1f5f9;
+}
+
+.dark .inputForm:focus-within,
+[data-theme="dark"] .inputForm:focus-within,
+html.dark .inputForm:focus-within {
+    border: 1.5px solid #5EEAD4;
+}
+
+.dark .flex-row > div > label,
+[data-theme="dark"] .flex-row > div > label,
+html.dark .flex-row > div > label {
+    color: #cbd5e1;
+}
+
+.dark .flex-row input[type="checkbox"],
+.dark .flex-row input[type="radio"],
+[data-theme="dark"] .flex-row input[type="checkbox"],
+[data-theme="dark"] .flex-row input[type="radio"],
+html.dark .flex-row input[type="checkbox"],
+html.dark .flex-row input[type="radio"] {
+    accent-color: #5EEAD4;
+}
+
+.dark .span,
+[data-theme="dark"] .span,
+html.dark .span {
+    color: #5EEAD4;
+}
+
+.dark .span:hover,
+[data-theme="dark"] .span:hover,
+html.dark .span:hover {
+    color: #99f6e4;
+}
+
+.dark .button-submit,
+[data-theme="dark"] .button-submit,
+html.dark .button-submit {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+}
+
+.dark .button-submit:hover,
+[data-theme="dark"] .button-submit:hover,
+html.dark .button-submit:hover {
+    background-color: #1e293b;
+    border-color: #475569;
+}
+
+.dark .p,
+[data-theme="dark"] .p,
+html.dark .p {
+    color: #cbd5e1;
+}
+
+.dark .p.line,
+[data-theme="dark"] .p.line,
+html.dark .p.line {
+    color: #94a3b8;
+}
+
+.dark .btn,
+[data-theme="dark"] .btn,
+html.dark .btn {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+}
+
+.dark .btn:hover,
+[data-theme="dark"] .btn:hover,
+html.dark .btn:hover {
+    border: 1px solid #5EEAD4;
+    background-color: #243248;
+}
+
+.dark .vyom-auth-close-btn,
+[data-theme="dark"] .vyom-auth-close-btn,
+html.dark .vyom-auth-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+}
+
+.dark .vyom-auth-close-btn:hover,
+[data-theme="dark"] .vyom-auth-close-btn:hover,
+html.dark .vyom-auth-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.dark .vyom-auth-error,
+[data-theme="dark"] .vyom-auth-error,
+html.dark .vyom-auth-error {
     background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.35);
+    border-color: rgba(239, 68, 68, 0.3);
     color: #fca5a5;
 }
 
-/* Actions */
-.vyom-auth-modal-actions {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.85rem;
-}
-
-.vyom-auth-modal-actions .google-signin-container {
-    width: 100%;
-}
-
-.vyom-auth-modal-actions .google-signin-button {
-    width: 100%;
-    height: 48px;
-    border-radius: 24px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s ease;
-}
-
-.vyom-auth-modal-actions .google-signin-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-}
-
-.vyom-auth-modal-guest-btn {
-    background: none;
-    border: none;
-    color: #5A6E72;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 0.4rem 0.8rem;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-color: transparent;
-}
-
-.vyom-auth-modal-guest-btn:hover {
-    color: #17324D;
-    text-decoration-color: currentColor;
-}
-
-.dark .vyom-auth-modal-guest-btn,
-[data-theme="dark"] .vyom-auth-modal-guest-btn,
-html.dark .vyom-auth-modal-guest-btn {
-    color: #92A4A8;
-}
-
-.dark .vyom-auth-modal-guest-btn:hover,
-[data-theme="dark"] .vyom-auth-modal-guest-btn:hover,
-html.dark .vyom-auth-modal-guest-btn:hover {
-    color: #FFFFFF;
-}
-
-.vyom-auth-modal-footer {
-    margin-top: 1.25rem;
-    font-size: 0.725rem;
-    color: #8C9DA0;
-    line-height: 1.4;
-    max-width: 360px;
-}
-
-.dark .vyom-auth-modal-footer,
-[data-theme="dark"] .vyom-auth-modal-footer,
-html.dark .vyom-auth-modal-footer {
-    color: #6C7F83;
-}
-
 /* Animations */
-@keyframes authPulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.4;
-    }
-    50% {
-        transform: scale(1.18);
-        opacity: 0.7;
-    }
-}
-
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -331,7 +384,7 @@ html.dark .vyom-auth-modal-footer {
 @keyframes scaleUp {
     from {
         opacity: 0;
-        transform: scale(0.94) translateY(10px);
+        transform: scale(0.95) translateY(8px);
     }
     to {
         opacity: 1;
@@ -347,21 +400,40 @@ html.dark .vyom-auth-modal-footer {
     animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@media (max-width: 640px) {
-    .vyom-auth-modal-card {
-        padding: 2rem 1.25rem 1.5rem;
-        border-radius: 24px;
+/* ==========================================================================
+   Phone UI / Mobile Responsiveness
+   ========================================================================== */
+@media (max-width: 480px) {
+    .form {
+        padding: 24px 18px 20px;
+        border-radius: 16px;
+        gap: 8px;
     }
 
-    .vyom-auth-modal-title {
-        font-size: 1.35rem;
+    .flex-column > label {
+        font-size: 13.5px;
     }
 
-    .vyom-auth-modal-subtitle {
-        font-size: 0.85rem;
+    .inputForm {
+        height: 46px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
-    .vyom-auth-modal-features {
-        padding: 0.75rem 0.85rem;
+    .input {
+        font-size: 14px;
+        margin-left: 8px;
+    }
+
+    .button-submit,
+    .btn {
+        height: 46px;
+        font-size: 14px;
+    }
+
+    .flex-row > div > label,
+    .span,
+    .p {
+        font-size: 13px;
     }
 }

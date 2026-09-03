@@ -7,16 +7,20 @@
 
 .reaction-test-page {
     min-height: 100vh;
+    height: auto;
     box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 @media (min-width: 768px) {
     .reaction-test-page.story-assessment-container {
-        height: 100vh;
-        max-height: 100vh;
-        overflow: hidden;
-        justify-content: center;
-        padding: 0.65rem 1.25rem;
+        min-height: 100vh;
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+        justify-content: flex-start;
+        padding: 1.5rem 1.25rem 4rem;
     }
 }
 
@@ -276,66 +280,130 @@
     flex-shrink: 0;
 }
 
-.reaction-metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 0.65rem;
+/* ─── Trial-by-Trial Response Breakdown in Full-Width Card ───────── */
+
+.reaction-trials-section {
+    margin-top: 1.25rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid rgba(23, 50, 77, 0.08);
+    width: 100%;
+}
+
+.dark .reaction-trials-section,
+[data-theme="dark"] .reaction-trials-section {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.reaction-trials-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.85rem;
+    padding: 0 0.25rem;
 }
 
-.reaction-metric-box {
-    padding: 0.75rem 0.85rem;
-    background: #F7F4EC;
-    border: 1px solid rgba(23, 50, 77, 0.08);
-    border-radius: 12px;
-    text-align: center;
-}
-
-.metric-tag {
-    display: block;
-    font-size: 0.725rem;
-    color: #63788A;
+.reaction-trials-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #17324D;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin-bottom: 0.25rem;
 }
 
-.metric-num {
-    font-size: 1.35rem;
+.dark .reaction-trials-title,
+[data-theme="dark"] .reaction-trials-title {
+    color: #E2ECF2;
+}
+
+.reaction-trials-badge {
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    background: rgba(79, 124, 120, 0.1);
+    color: #4F7C78;
+    border-radius: 9999px;
+}
+
+.dark .reaction-trials-badge,
+[data-theme="dark"] .reaction-trials-badge {
+    background: rgba(0, 201, 183, 0.15);
+    color: #00C9B7;
+}
+
+.reaction-trials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.reaction-trial-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 0.4rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.1);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.dark .reaction-trial-chip,
+[data-theme="dark"] .reaction-trial-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.reaction-trial-chip.valid {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.06);
+}
+
+.reaction-trial-chip.false-start {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.reaction-trial-chip.timeout {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.06);
+}
+
+.trial-chip-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #63788A;
+    text-transform: uppercase;
+    margin-bottom: 0.15rem;
+}
+
+.dark .trial-chip-tag,
+[data-theme="dark"] .trial-chip-tag {
+    color: #A0B0BA;
+}
+
+.trial-chip-val {
+    font-size: 0.88rem;
     font-weight: 800;
     color: #17324D;
-    line-height: 1.1;
 }
 
-.metric-num .unit {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #63788A;
+.dark .trial-chip-val,
+[data-theme="dark"] .trial-chip-val {
+    color: #F7F4EC;
 }
 
-.reaction-feedback-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 0.95rem;
-    background: rgba(79, 124, 120, 0.08);
-    border: 1px solid rgba(79, 124, 120, 0.20);
-    border-radius: 12px;
-    margin-bottom: 1rem;
-    font-size: 0.85rem;
+.reaction-trial-chip.valid .trial-chip-val {
+    color: #10b981;
 }
 
-.feedback-cat {
-    font-weight: 700;
-    color: #4F7C78;
+.reaction-trial-chip.false-start .trial-chip-val {
+    color: #ef4444;
 }
 
-.feedback-dot {
-    color: #63788A;
-}
-
-.feedback-desc {
-    color: #40566B;
+.reaction-trial-chip.timeout .trial-chip-val {
+    color: #f59e0b;
 }
 
 /* ─── Keyboard Focus ───────────────────────────────────────────── */

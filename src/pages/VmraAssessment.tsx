@@ -9,7 +9,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from '../components/common';
 import { PageWrapper } from '../components/layout';
 import { VMRA_ICON_MAP } from '../components/vmra/vmraIcons';
@@ -19,7 +21,7 @@ import {
     buildGrid,
     getSessionConfig,
 } from '../data/vmraImageCatalog';
-import { buildSessionResult, identifyVmraKeyFactors } from '../utils/vmraScoring';
+import { buildSessionResult } from '../utils/vmraScoring';
 import { useVmraResults } from '../hooks/useTestResults';
 import type {
     VmraPhase,
@@ -29,6 +31,7 @@ import type {
     VmraSessionConfig,
     VmraAssessmentResult,
 } from '../types/vmraTypes';
+import '../components/tests/story/StoryAssessment.css';
 import './VmraAssessment.css';
 
 // ─── Shape types for retention distractor task ────────────────────
@@ -56,8 +59,41 @@ function generateRetentionRound(): RetentionRound {
 
 export function VmraAssessment() {
     const navigate = useNavigate();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
     const { isAuthenticated } = useAuth(); // Ensures user is in auth context
     const { saveResult, getSessionCount, getPreviousAccuracies } = useVmraResults();
+
+    // Custom tick renderer for Radar Chart
+    const renderCustomAxisTick = ({ payload, x, y, cx, cy }: any) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const offsetX = dist > 0 ? x + (dx / dist) * 8 : x;
+        const offsetY = dist > 0 ? y + (dy / dist) * 8 : y;
+
+        let textAnchor: 'start' | 'middle' | 'end' = 'middle';
+        if (dx > 12) {
+            textAnchor = 'start';
+        } else if (dx < -12) {
+            textAnchor = 'end';
+        }
+
+        return (
+            <text
+                x={offsetX}
+                y={offsetY}
+                textAnchor={textAnchor}
+                dominantBaseline="central"
+                fill={isDark ? '#E2ECF2' : '#17324D'}
+                fontSize={10}
+                fontWeight={600}
+                className="radar-axis-tick select-none"
+            >
+                {payload.value}
+            </text>
+        );
+    };
 
     // Session config (based on how many sessions user has completed)
     const [config] = useState<VmraSessionConfig>(() => getSessionConfig(getSessionCount() + 1));
@@ -89,7 +125,6 @@ export function VmraAssessment() {
     // Results state
     const [rawMetrics, setRawMetrics] = useState<VmraRawMetrics | null>(null);
     const [sessionResult, setSessionResult] = useState<VmraAssessmentResult | null>(null);
-    const [keyFactors, setKeyFactors] = useState<string[]>([]);
     const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Ref for the active stage card to support smooth auto-centering
@@ -237,6 +272,7 @@ export function VmraAssessment() {
     }, [targetImages, config]);
 
     // ─── Handle image tap in recall grid ──────────────────────────
+    const MAX_SELECTABLE_IMAGES = 10;
 
     const handleImageTap = useCallback((imageId: string, gridPosition: number) => {
         const now = Date.now();
@@ -247,6 +283,12 @@ export function VmraAssessment() {
         lastTapTime.current.set(imageId, now);
 
         const isCurrentlySelected = selectedIds.has(imageId);
+
+        // If trying to select a new image but already reached 10, prevent selection
+        if (!isCurrentlySelected && selectedIds.size >= MAX_SELECTABLE_IMAGES) {
+            return;
+        }
+
         const isDeselection = isCurrentlySelected;
 
         // Record tap event
@@ -263,7 +305,7 @@ export function VmraAssessment() {
             const updated = new Set(prev);
             if (isCurrentlySelected) {
                 updated.delete(imageId);
-            } else {
+            } else if (updated.size < MAX_SELECTABLE_IMAGES) {
                 updated.add(imageId);
             }
             return updated;
@@ -311,7 +353,6 @@ export function VmraAssessment() {
             getPreviousAccuracies()
         );
         setSessionResult(result);
-        setKeyFactors(identifyVmraKeyFactors(result.features));
 
         // Save to Firestore/localStorage
         saveResult(result);
@@ -576,7 +617,12 @@ export function VmraAssessment() {
 
                         <div className="vmra-recall-footer">
                             <p className="vmra-selection-count" aria-live="polite">
-                                Selected: {selectedIds.size} image{selectedIds.size !== 1 ? 's' : ''}
+                                Selected: <span style={{ fontWeight: 700 }}>{selectedIds.size} / 10</span> images
+                                {selectedIds.size >= 10 && (
+                                    <span style={{ marginLeft: '0.5rem', color: '#f59e0b', fontSize: '0.8rem', fontWeight: 600 }}>
+                                        (Maximum 10 reached)
+                                    </span>
+                                )}
                             </p>
                             <Button
                                 variant="primary"
@@ -608,109 +654,189 @@ export function VmraAssessment() {
                 );
 
             // ── RESULTS ──
-            case 'results':
+            case 'results': {
                 if (!rawMetrics || !sessionResult) return null;
 
-                const stars = sessionResult.profile.starRating;
+                const { features, profile } = sessionResult;
+                const scorePercent = Math.round(profile.compositeScore || profile.accuracy * 100);
+
+                const getScoreTier = (score: number) => {
+                    if (score >= 80) return { label: 'Excellent Memory', level: 'stable' as const };
+                    if (score >= 60) return { label: 'Moderate Recall', level: 'change_detected' as const };
+                    return { label: 'Needs Attention', level: 'possible_risk' as const };
+                };
+
+                const tier = getScoreTier(scorePercent);
+                const prevAccuracies = getPreviousAccuracies();
+                const isImproving = prevAccuracies.length > 1
+                    ? (profile.accuracy >= prevAccuracies[prevAccuracies.length - 2])
+                    : (scorePercent >= 60);
+                const trend: 'up' | 'down' = isImproving ? 'up' : 'down';
+
+                const radarData = [
+                    { subject: 'Recall Accuracy', A: Math.round(features.recallAccuracy * 100), fullMark: 100 },
+                    { subject: 'Discrimination', A: Math.round(features.precision * 100), fullMark: 100 },
+                    { subject: 'Visual Precision', A: Math.round(features.f1Score * 100), fullMark: 100 },
+                    { subject: 'Search Coverage', A: Math.round(features.gridCoverage * 100), fullMark: 100 },
+                    { subject: 'Selection Speed', A: Math.max(15, Math.min(100, Math.round(profile.speed * 100))), fullMark: 100 },
+                    { subject: 'Consistency', A: Math.max(20, Math.min(100, Math.round(profile.consistency * 100))), fullMark: 100 },
+                ];
+
                 const targetIdSet = new Set(targetImages.map(t => t.id));
 
                 return (
-                    <div className="vmra-phase vmra-results">
-                        <div className="vmra-phase-icon vmra-success">✓</div>
-                        <h2>Assessment Complete</h2>
-
-                        {/* Star Rating */}
-                        <div className="vmra-stars">
-                            {[1, 2, 3, 4, 5].map(s => (
-                                <span key={s} className={`vmra-star ${s <= stars ? 'filled' : ''}`}>
-                                    ★
-                                </span>
-                            ))}
-                        </div>
-
-                        {/* Visual results grid */}
-                        <div className="vmra-results-grid" style={{ gridTemplateColumns: `repeat(${config.gridColumns}, 1fr)` }}>
-                            {gridImages.map((image) => {
-                                const isTarget = targetIdSet.has(image.id);
-                                const wasSelected = selectedIds.has(image.id);
-                                let status = '';
-
-                                if (isTarget && wasSelected) status = 'correct';       // Green
-                                else if (isTarget && !wasSelected) status = 'missed';   // Amber
-                                else if (!isTarget && wasSelected) status = 'false-pos'; // Red
-                                else status = 'neutral';                                 // Dim
-
-                                return (
-                                    <div key={image.id} className={`vmra-result-item ${status}`}>
-                                        {renderIcon(image, 48)}
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Summary stats */}
-                        <div className="vmra-summary-card">
-                            <div className="vmra-stat-row">
-                                <span className="vmra-stat-label">Correctly recalled</span>
-                                <span className="vmra-stat-value">{rawMetrics.correctHits} / {targetImages.length}</span>
-                            </div>
-                            {rawMetrics.falsePositives > 0 && (
-                                <div className="vmra-stat-row secondary">
-                                    <span className="vmra-stat-label">Incorrect selections</span>
-                                    <span className="vmra-stat-value">{rawMetrics.falsePositives}</span>
+                    <div className="story-results-container animate-fadeIn">
+                        {/* Top Overview Card */}
+                        <Card className="results-overview-card">
+                            <div className="overview-header">
+                                <div className="overview-title-group">
+                                    <h2 className="vyom-serif">Visual Memory Profile</h2>
+                                    <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
+                                        <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
+                                        <span>{trend === 'up' ? 'Improving' : 'Declining'}</span>
+                                    </span>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Key Factors */}
-                        {keyFactors.length > 0 && (
-                            <div className="vmra-factors">
-                                <p className="vmra-factors-label">Key Observations:</p>
-                                <ul className="vmra-factors-list">
-                                    {keyFactors.map((f, i) => (
-                                        <li key={i}>{f}</li>
-                                    ))}
-                                </ul>
+                                <div className="score-badge-circle">
+                                    <span className="score-num">{scorePercent}</span>
+                                    <span className="score-denom">/ 100</span>
+                                </div>
                             </div>
-                        )}
+                        </Card>
 
                         <MotivationalQuoteBlock
-                            starRating={stars}
-                            score={Math.round(sessionResult.profile.accuracy * 100)}
+                            category={tier.label}
+                            score={scorePercent}
                         />
 
-                        <p className="vmra-reassurance">
-                            Occasional variation is normal. Trends over time are more meaningful than a single session.
-                        </p>
+                        {/* Biomarkers Breakdown Row (2x2 grid) */}
+                        <div className="biomarkers-grid-row">
+                            <Card className="metric-card">
+                                <div className="metric-info-col">
+                                    <h4>Visual Recall</h4>
+                                    <p className="metric-desc">{rawMetrics.correctHits} / {targetImages.length} targets recalled</p>
+                                </div>
+                                <div className="metric-val">{Math.round(features.recallAccuracy * 100)}%</div>
+                            </Card>
 
-                        <div className="vmra-actions">
-                            <Button variant="primary" onClick={() => navigate('/dashboard')}>
-                                View Dashboard
-                            </Button>
-                            <Button variant="secondary" onClick={() => navigate('/tests')}>
-                                Back to Assessments
-                            </Button>
+                            <Card className="metric-card">
+                                <div className="metric-info-col">
+                                    <h4>Discrimination</h4>
+                                    <p className="metric-desc">{rawMetrics.falsePositives === 0 ? 'Zero false alarms' : `${rawMetrics.falsePositives} false selections`}</p>
+                                </div>
+                                <div className="metric-val">{Math.round(features.precision * 100)}%</div>
+                            </Card>
+
+                            <Card className="metric-card">
+                                <div className="metric-info-col">
+                                    <h4>Selection Latency</h4>
+                                    <p className="metric-desc">Visual search & motor speed</p>
+                                </div>
+                                <div className="metric-val">{(features.meanSelectionLatencyMs / 1000).toFixed(2)} <span className="metric-unit">s</span></div>
+                            </Card>
+
+                            <Card className="metric-card">
+                                <div className="metric-info-col">
+                                    <h4>Grid Precision</h4>
+                                    <p className="metric-desc">{Math.round(features.gridCoverage * 100)}% spatial exploration</p>
+                                </div>
+                                <div className="metric-val">{Math.round(features.f1Score * 100)}%</div>
+                            </Card>
                         </div>
+
+                        {/* Full-Length Biomarker Radar & Item Verification Card */}
+                        <Card className="radar-chart-card full-width-radar">
+                            <h3 className="radar-title">Biomarker Radar</h3>
+                            <div className="chart-wrapper">
+                                <ResponsiveContainer width="100%" height={155}>
+                                    <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
+                                        <PolarGrid stroke={isDark ? "rgba(0, 201, 183, 0.22)" : "rgba(79, 124, 120, 0.22)"} />
+                                        <PolarAngleAxis 
+                                            dataKey="subject" 
+                                            tick={renderCustomAxisTick} 
+                                            tickLine={false} 
+                                        />
+                                        <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="transparent" tick={false} />
+                                        <Radar
+                                            name="Biomarkers"
+                                            dataKey="A"
+                                            stroke={isDark ? "#00C9B7" : "#4F7C78"}
+                                            fill={isDark ? "#00C9B7" : "#4F7C78"}
+                                            fillOpacity={isDark ? 0.35 : 0.28}
+                                        />
+                                    </RadarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* Stimuli Verification Grid */}
+                            <div className="vmra-results-grid-section">
+                                <div className="vmra-grid-header-row">
+                                    <span className="vmra-grid-section-title">Item Verification Breakdown</span>
+                                    <span className="vmra-grid-count-badge">
+                                        {rawMetrics.correctHits} / {targetImages.length} Recalled
+                                    </span>
+                                </div>
+
+                                <div className="vmra-results-grid" style={{ gridTemplateColumns: `repeat(${config.gridColumns}, 1fr)` }}>
+                                    {gridImages.map((image) => {
+                                        const isTarget = targetIdSet.has(image.id);
+                                        const wasSelected = selectedIds.has(image.id);
+                                        let status = '';
+
+                                        if (isTarget && wasSelected) status = 'correct';       // Green
+                                        else if (isTarget && !wasSelected) status = 'missed';   // Amber
+                                        else if (!isTarget && wasSelected) status = 'false-pos'; // Red
+                                        else status = 'neutral';                                 // Dim
+
+                                        return (
+                                            <div key={image.id} className={`vmra-result-item ${status}`} title={`${image.name} (${status})`}>
+                                                {renderIcon(image, 34)}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="vmra-grid-legend">
+                                    <span className="legend-item"><span className="legend-dot correct" /> Recalled</span>
+                                    <span className="legend-item"><span className="legend-dot missed" /> Missed Target</span>
+                                    <span className="legend-item"><span className="legend-dot false-pos" /> Distractor Selected</span>
+                                </div>
+                            </div>
+                        </Card>
 
                         {/* Delayed Recall Results (if completed) */}
                         {sessionResult.delayedRecall && (
-                            <div className="vmra-summary-card" style={{ marginTop: '1rem' }}>
+                            <div className="vmra-summary-card" style={{ marginTop: '0.75rem' }}>
                                 <div className="vmra-stat-row">
-                                    <span className="vmra-stat-label">Delayed recall</span>
+                                    <span className="vmra-stat-label">Delayed Recall Retention</span>
                                     <span className="vmra-stat-value">
                                         {Math.round(sessionResult.delayedRecall.delayedRecallRatio * 100)}% retained
                                     </span>
                                 </div>
                                 <div className="vmra-stat-row secondary">
-                                    <span className="vmra-stat-label">Delay time</span>
+                                    <span className="vmra-stat-label">Delay Interval</span>
                                     <span className="vmra-stat-value">
                                         {sessionResult.delayedRecall.delayMinutes.toFixed(1)} min
                                     </span>
                                 </div>
                             </div>
                         )}
+
+                        {/* Centered Actions */}
+                        <div className="results-actions">
+                            <button type="button" onClick={startEncoding} className="story-retake-btn">
+                                <Icon name="reaction" size={15} /> Retake Test
+                            </button>
+                            <button 
+                                type="button" 
+                                className="story-primary-start-btn story-back-assessments-btn" 
+                                onClick={() => navigate('/tests')}
+                            >
+                                Back to Assessments
+                            </button>
+                        </div>
                     </div>
                 );
+            }
 
             // ── DELAYED RECALL ──
             case 'delayed-recall':
@@ -780,11 +906,6 @@ export function VmraAssessment() {
                         <span className="back-arrow" aria-hidden="true">←</span>
                         <span>Back to Assessments</span>
                     </button>
-
-                    <div className="story-module-badge">
-                        <span className="badge-dot" aria-hidden="true" />
-                        <span>Cognitive Assessment</span>
-                    </div>
                 </div>
 
                 {/* Primary Test Header (shown on intro) */}

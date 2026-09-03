@@ -131,11 +131,6 @@ export function NavigationAssessment() {
                         <span className="back-arrow" aria-hidden="true">←</span>
                         <span>Back to Assessments</span>
                     </button>
-
-                    <div className="story-module-badge">
-                        <span className="badge-dot" aria-hidden="true" />
-                        <span>Cognitive Assessment</span>
-                    </div>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}

@@ -19,52 +19,52 @@ const DOMAIN_MAP: Record<
 > = {
     story: {
         domain: "Narrative Memory",
-        focus: "Recall accuracy, informational units & sequential preservation",
-        tag: "Episodic Recall",
-        rationale: "Assesses how effectively your brain encodes spoken stories, retains sequential details, and reconstructs the narrative timeline without cues.",
-        biomarkers: "Biomarkers: Precision Recall (%), Verbatim Units, Phonation Hesitation Rate",
+        focus: "Listen to a short story and retell what you remember.",
+        tag: "Story Recall",
+        rationale: "Assesses how well you listen, remember key details, and recount a story in your own words.",
+        biomarkers: "Biomarkers: Story Recall, Key Details, Speech Flow",
     },
     memory: {
         domain: "Visual Memory",
-        focus: "Delayed object recognition & retention across distractors",
-        tag: "Pattern Retention",
-        rationale: "Measures visual short-term encoding and your ability to accurately recognize target objects when placed among visual distractors.",
-        biomarkers: "Biomarkers: Recognition Accuracy (%), False-Alarm Sensitivity, Decision Latency",
+        focus: "Remember a set of pictures and pick them out from a grid.",
+        tag: "Picture Memory",
+        rationale: "Tests your visual memory by checking how easily you recognize pictures you saw earlier.",
+        biomarkers: "Biomarkers: Picture Recognition, Memory Precision, Decision Speed",
     },
     reaction: {
         domain: "Processing Speed",
-        focus: "Motor latency, response speed & attentional consistency",
-        tag: "Motor Latency",
-        rationale: "Evaluates rapid motor response speed and intra-individual neural reaction stability during unpredictable visual stimuli.",
-        biomarkers: "Biomarkers: Median Reaction Time (ms), Response Variability (CV), Attentional Lapses",
+        focus: "Tap as quickly as possible when the screen turns green.",
+        tag: "Reflex Speed",
+        rationale: "Measures your quick reflexes and how steadily you stay alert.",
+        biomarkers: "Biomarkers: Reaction Time, Response Steadiness, Alertness",
     },
     pattern: {
         domain: "Working Memory",
-        focus: "Spatial sequence span & visual-spatial chunking capacity",
-        tag: "Spatial Span",
-        rationale: "Tests non-verbal fluid intelligence, inductive reasoning, and the ability to identify complex completing matrix patterns.",
-        biomarkers: "Biomarkers: Sequence Span, Matrix Match Accuracy (%), Spatial Chunking",
+        focus: "Watch tiles light up and repeat the sequence in order.",
+        tag: "Pattern Memory",
+        rationale: "Evaluates short-term memory by challenging you to repeat patterns that grow longer each round.",
+        biomarkers: "Biomarkers: Sequence Length, Pattern Accuracy, Memory Span",
     },
     attention: {
         domain: "Inhibitory Control",
-        focus: "Signal sensitivity (d′), impulse suppression & vigilance stability",
-        tag: "Vigilance Index",
-        rationale: "Measures sustained vigilance over time and your ability to suppress motor impulses when exposed to non-target distractors.",
-        biomarkers: "Biomarkers: Signal Detection Index (d′), Commission Errors, Reaction Consistency",
+        focus: "Stay focused and tap only when you see or hear the target cue.",
+        tag: "Focus & Alertness",
+        rationale: "Measures how well you stay alert and avoid tapping when distracting signals appear.",
+        biomarkers: "Biomarkers: Target Accuracy, Distractor Avoidance, Alertness",
     },
     navigation: {
         domain: "Spatial Navigation",
-        focus: "Egocentric wayfinding, intersection choice & landmark sequencing",
-        tag: "Route Memory",
-        rationale: "Evaluates real-world topological orientation, spatial mapping, and decision accuracy at video-simulated urban intersections.",
-        biomarkers: "Biomarkers: Route Accuracy (%), Intersection Latency, Landmark Orientation",
+        focus: "Watch a walking path and choose the right turns to find your way.",
+        tag: "Wayfinding",
+        rationale: "Checks how well you remember visual landmarks and make correct turns along a route.",
+        biomarkers: "Biomarkers: Correct Turns, Landmark Memory, Path Speed",
     },
     language: {
         domain: "Speech & Fluency",
-        focus: "Guiraud vocabulary diversity, phonation ratio & fluency index",
-        tag: "Acoustic Biomarkers",
-        rationale: "Captures spontaneous natural speech to assess semantic richness, lexical variation, and acoustic pause dynamics.",
-        biomarkers: "Biomarkers: Guiraud Lexical Richness, Speech-to-Pause Ratio, Acoustic Pitch Entropy",
+        focus: "Speak freely about an image or topic in your own words.",
+        tag: "Speech & Flow",
+        rationale: "Evaluates your natural speech flow, vocabulary ease, and clarity of expression.",
+        biomarkers: "Biomarkers: Vocabulary Diversity, Speaking Rhythm, Articulation",
     },
 };
 
@@ -255,6 +255,8 @@ export function SynapseBeamTrail({
                         return (
                             <div
                                 key={node.id}
+                                id={`journey-node-${node.id}`}
+                                data-activity-id={node.id}
                                 className={`synapse-node-wrapper ${
                                     isLast ? "node-center" : isEven ? "node-left" : "node-right"
                                 } ${isCompleted ? "is-completed" : isActive ? "is-active" : "is-pending"} ${

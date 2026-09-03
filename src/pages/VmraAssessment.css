@@ -9,16 +9,20 @@
 
 .vmra-assessment {
     min-height: 100vh;
+    height: auto;
     box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 @media (min-width: 768px) {
     .vmra-assessment.story-assessment-container {
-        height: 100vh;
-        max-height: 100vh;
-        overflow: hidden;
-        justify-content: center;
-        padding: 0.65rem 1.25rem;
+        min-height: 100vh;
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+        justify-content: flex-start;
+        padding: 1.5rem 1.25rem 4rem;
     }
 }
 
@@ -373,33 +377,73 @@
     margin-bottom: 0.65rem;
 }
 
-.vmra-star {
-    font-size: 1.4rem;
-    color: rgba(23, 50, 77, 0.15);
-    transition: color 0.3s ease;
+/* ─── Results Stimuli Verification Section ──────────────────────── */
+
+.vmra-results-grid-section {
+    margin-top: 1.25rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid rgba(23, 50, 77, 0.08);
+    width: 100%;
 }
 
-.vmra-star.filled {
-    color: #f59e0b;
-    text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+.dark .vmra-results-grid-section,
+[data-theme="dark"] .vmra-results-grid-section {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.vmra-grid-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    padding: 0 0.25rem;
+}
+
+.vmra-grid-section-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #17324D;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.dark .vmra-grid-section-title,
+[data-theme="dark"] .vmra-grid-section-title {
+    color: #E2ECF2;
+}
+
+.vmra-grid-count-badge {
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    background: rgba(79, 124, 120, 0.1);
+    color: #4F7C78;
+    border-radius: 9999px;
+}
+
+.dark .vmra-grid-count-badge,
+[data-theme="dark"] .vmra-grid-count-badge {
+    background: rgba(0, 201, 183, 0.15);
+    color: #00C9B7;
 }
 
 .vmra-results-grid {
     display: grid;
-    gap: 6px;
-    margin: 0.65rem auto;
-    max-width: 320px;
+    gap: 8px;
+    margin: 0.5rem auto;
+    max-width: 360px;
+    width: 100%;
 }
 
 .vmra-result-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
-    border-radius: 8px;
+    padding: 6px;
+    border-radius: 10px;
     border: 1.5px solid transparent;
     aspect-ratio: 1;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .vmra-result-item.correct {
@@ -420,16 +464,108 @@
 }
 
 .vmra-result-item.neutral {
-    opacity: 0.35;
+    opacity: 0.28;
     background: rgba(23, 50, 77, 0.04);
 }
 
+.dark .vmra-result-item.neutral,
+[data-theme="dark"] .vmra-result-item.neutral {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.vmra-grid-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-top: 0.85rem;
+    font-size: 0.76rem;
+    color: #63788A;
+}
+
+.dark .vmra-grid-legend,
+[data-theme="dark"] .vmra-grid-legend {
+    color: #A0B0BA;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.legend-dot.correct {
+    background: #10b981;
+}
+
+.legend-dot.missed {
+    background: #f59e0b;
+}
+
+.legend-dot.false-pos {
+    background: #ef4444;
+}
+
+.vmra-factors {
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+    box-shadow: 0 4px 16px -4px rgba(23, 50, 77, 0.06);
+    text-align: left;
+}
+
+.dark .vmra-factors,
+[data-theme="dark"] .vmra-factors {
+    background: #14283C;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.vmra-factors-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #17324D;
+    margin-bottom: 0.5rem;
+}
+
+.dark .vmra-factors-label,
+[data-theme="dark"] .vmra-factors-label {
+    color: #F7F4EC;
+}
+
+.vmra-factors-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: #40566B;
+}
+
+.dark .vmra-factors-list,
+[data-theme="dark"] .vmra-factors-list {
+    color: #D2DDE2;
+}
+
 .vmra-summary-card {
-    padding: 0.65rem 0.85rem;
-    background: #F7F4EC;
+    padding: 0.75rem 1rem;
+    background: #FFFFFF;
     border: 1px solid rgba(23, 50, 77, 0.08);
-    border-radius: 12px;
+    border-radius: 14px;
     margin: 0.5rem 0;
+    box-shadow: 0 4px 16px -4px rgba(23, 50, 77, 0.04);
+}
+
+.dark .vmra-summary-card,
+[data-theme="dark"] .vmra-summary-card {
+    background: #14283C;
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 .vmra-stat-row {
@@ -444,33 +580,19 @@
     font-weight: 500;
 }
 
+.dark .vmra-stat-label,
+[data-theme="dark"] .vmra-stat-label {
+    color: #A0B0BA;
+}
+
 .vmra-stat-value {
     color: #17324D;
     font-weight: 700;
 }
 
-.vmra-reassurance {
-    font-size: 0.8rem;
-    color: #63788A;
-    font-style: italic;
-    margin: 0.5rem 0 0.75rem;
-    padding: 0.35rem 0.65rem;
-    background: rgba(79, 124, 120, 0.06);
-    border-radius: 8px;
-}
-
-.vmra-actions {
-    display: flex;
-    gap: 0.65rem;
-    justify-content: center;
-    margin-top: 0.65rem;
-    flex-wrap: wrap;
-}
-
-.vmra-actions .btn {
-    min-height: 40px;
-    padding: 0.4rem 0.95rem;
-    font-size: 0.875rem;
+.dark .vmra-stat-value,
+[data-theme="dark"] .vmra-stat-value {
+    color: #F7F4EC;
 }
 
 /* ─── Guessing Warning ─────────────────────────────────────────── */

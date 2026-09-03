@@ -114,7 +114,7 @@ export const STATE_MESSAGES: Record<ReactionState, string> = {
     instructions: "Get Ready",
     calibration: "Practice Round: Wait for Green...",
     wait: "Wait for Green...",
-    stimulus: "⚡ TAP NOW!",
+    stimulus: "TAP NOW!",
     response: "Response recorded",
     false_start: "Too early! Wait for the Green light.",
     timeout: "Time out! No response recorded",

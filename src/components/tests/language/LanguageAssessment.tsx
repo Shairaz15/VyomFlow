@@ -1,12 +1,14 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { useAuth } from "../../../contexts/AuthContext";
-import { PageWrapper } from "../../layout";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { PageWrapper } from "../../layout/PageWrapper";
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
 import { useLanguageResults } from "../../../hooks/useTestResults";
 import { extractLanguageFeatures } from "../../../ai/languageFeatures";
 import type { LanguageAssessmentResult } from "../../../types/languageTypes";
-import { getCSIFeedback } from "../../../utils/normativeStats";
+import "../story/StoryAssessment.css";
 import "./LanguageAssessment.css";
 
 type Phase = "instructions" | "permission" | "warmup" | "assessment" | "processing" | "complete";
@@ -29,7 +31,9 @@ const SARVAM_API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
 export function LanguageAssessment() {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
-    const { saveResult } = useLanguageResults();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
+    const { results, saveResult } = useLanguageResults();
 
     // State
     const [phase, setPhase] = useState<Phase>("instructions");
@@ -47,9 +51,9 @@ export function LanguageAssessment() {
     const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Refs
+    const activeStageRef = useRef<HTMLDivElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
-    const recognitionRef = useRef<any>(null);
 
     const wsVerbatimRef = useRef<WebSocket | null>(null);
     const wsTranslateRef = useRef<WebSocket | null>(null);
@@ -75,8 +79,48 @@ export function LanguageAssessment() {
     const startTimeRef = useRef<number>(0);
     const intervalRef = useRef<any>(null);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
+    const isRecordingRef = useRef<boolean>(false);
 
-    // Scroll to bottom of transcript
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            isRecordingRef.current = false;
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                try {
+                    mediaRecorderRef.current.stop();
+                    mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+                } catch {}
+            }
+        };
+    }, []);
+
+    // Smoothly scroll and center the active stage card within viewport
+    const scrollToActiveStage = useCallback(() => {
+        if (!activeStageRef.current) return;
+
+        requestAnimationFrame(() => {
+            if (!activeStageRef.current) return;
+            const rect = activeStageRef.current.getBoundingClientRect();
+            const topClearance = 80;
+            const isComfortablyVisible = 
+                rect.top >= topClearance && 
+                rect.bottom <= window.innerHeight + 40;
+
+            if (!isComfortablyVisible) {
+                activeStageRef.current.scrollIntoView({
+                    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+                    block: "center",
+                    inline: "nearest"
+                });
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        scrollToActiveStage();
+    }, [phase, scrollToActiveStage]);
+
+    // Scroll to bottom of transcript in live box
     useEffect(() => {
         if (transcriptEndRef.current) {
             transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -100,33 +144,78 @@ export function LanguageAssessment() {
         return () => clearInterval(intervalRef.current);
     }, [isRecording]);
 
-    // Convert Float32 PCM to Int16 PCM WAV buffer for local WebSocket proxy
-    const convertFloat32ToInt16 = (buffer: Float32Array): ArrayBuffer => {
-        let l = buffer.length;
-        let buf = new Int16Array(l);
-        while (l--) {
-            let s = Math.max(-1, Math.min(1, buffer[l]));
-            buf[l] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    // Convert Float32 PCM chunk from ScriptProcessorNode to a valid 16kHz mono WAV Base64 string for Sarvam AI
+    const convertFloat32ToWavBase64 = (float32Array: Float32Array, sampleRate = 16000): string => {
+        const numSamples = float32Array.length;
+        const buffer = new ArrayBuffer(44 + numSamples * 2);
+        const view = new DataView(buffer);
+
+        // RIFF header
+        view.setUint32(0, 0x52494646, false); // "RIFF"
+        view.setUint32(4, 36 + numSamples * 2, true); // file length - 8
+        view.setUint32(8, 0x57415645, false); // "WAVE"
+        // fmt sub-chunk
+        view.setUint32(12, 0x666d7420, false); // "fmt "
+        view.setUint32(16, 16, true); // SubChunk1Size (16 for PCM)
+        view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+        view.setUint16(22, 1, true); // NumChannels (1 mono)
+        view.setUint32(24, sampleRate, true); // SampleRate
+        view.setUint32(28, sampleRate * 2, true); // ByteRate
+        view.setUint16(32, 2, true); // BlockAlign
+        view.setUint16(34, 16, true); // BitsPerSample
+        // data sub-chunk
+        view.setUint32(36, 0x64617461, false); // "data"
+        view.setUint32(40, numSamples * 2, true); // data size
+
+        // Write 16-bit PCM samples
+        let offset = 44;
+        for (let i = 0; i < numSamples; i++, offset += 2) {
+            const s = Math.max(-1, Math.min(1, float32Array[i]));
+            const sample = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            view.setInt16(offset, sample, true);
         }
-        return buf.buffer;
+
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
     };
 
-    // Try starting WebSocket proxy streams (cloud on Render, or local dev)
+    // Connect to Sarvam AI live WebSocket stream (via Vite dev proxy or cloud proxy)
     const tryConnectProxyWebSockets = () => {
         try {
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const proxyBase = isLocalDev 
-                ? 'ws://localhost:5001'
-                : (import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com');
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const verbatimUrl = isLocalDev
+                ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000`
+                : `${import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com'}?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
 
-            const wsVerbatim = new WebSocket(`${proxyBase}/sarvam-stream?model=saaras:v4&mode=transcribe`);
+            console.log("[LanguageAssessment] Connecting to Sarvam WebSocket:", verbatimUrl);
+            const wsVerbatim = new WebSocket(verbatimUrl);
             wsVerbatimRef.current = wsVerbatim;
+
+            wsVerbatim.onopen = () => {
+                console.log("[LanguageAssessment] ✅ Sarvam AI WebSocket connected successfully!");
+            };
 
             wsVerbatim.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    if (data.type === 'transcript' && data.text) {
-                        setVerbatimTranscript(prev => prev ? `${prev} ${data.text}` : data.text);
+                    if (data.type === 'data' && data.data?.transcript) {
+                        const newText = data.data.transcript.trim();
+                        if (newText) {
+                            setVerbatimTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            setTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                        }
+                        if (data.data?.language_code) setDetectedLanguage(data.data.language_code);
+                    } else if (data.type === 'transcript' && data.text) {
+                        const newText = data.text.trim();
+                        if (newText) {
+                            setVerbatimTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            setTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                        }
                         if (data.language_code) setDetectedLanguage(data.language_code);
                     }
                 } catch {
@@ -134,21 +223,11 @@ export function LanguageAssessment() {
                 }
             };
 
-            const wsTranslate = new WebSocket(`${proxyBase}/sarvam-stream?model=saaras:v4&mode=translate`);
-            wsTranslateRef.current = wsTranslate;
-
-            wsTranslate.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'transcript' && data.text) {
-                        setEnglishTranslation(prev => prev ? `${prev} ${data.text}` : data.text);
-                    }
-                } catch {
-                    // Ignore parse errors on raw keepalive signals
-                }
+            wsVerbatim.onerror = (err) => {
+                console.warn("[LanguageAssessment] Sarvam WebSocket event:", err);
             };
         } catch {
-            console.warn("WebSocket proxy connection failed. Will use Sarvam REST batch API upon stop.");
+            console.warn("WebSocket proxy connection failed. Will use Sarvam REST live polling.");
         }
     };
 
@@ -161,6 +240,7 @@ export function LanguageAssessment() {
             setDetectedLanguage("Auto-detecting...");
             setTimer(0);
             audioChunksRef.current = [];
+            isRecordingRef.current = true;
 
             // Reset Acoustic VAD Tracker
             pauseTrackerRef.current = {
@@ -179,19 +259,27 @@ export function LanguageAssessment() {
                 } 
             });
 
-            // 1. Setup MediaRecorder for Full Audio Blob
-            const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            // 1. Setup MediaRecorder for audio processing
+            let mimeType = 'audio/webm';
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                mimeType = 'audio/webm;codecs=opus';
+            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                mimeType = 'audio/mp4';
+            }
+
+            const recorder = new MediaRecorder(stream, { mimeType });
             mediaRecorderRef.current = recorder;
 
-            recorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunksRef.current.push(event.data);
+            recorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    audioChunksRef.current.push(e.data);
                 }
             };
 
-            recorder.start(250);
+            recorder.start(400);
             startTimeRef.current = Date.now();
             setIsRecording(true);
+            isRecordingRef.current = true;
 
             // 2. Setup Real-Time Web Audio VAD + Streaming Processor
             try {
@@ -235,14 +323,17 @@ export function LanguageAssessment() {
                         tracker.lastStateChangeTime = now;
                     }
 
-                    // Forward PCM buffer to streaming WebSockets if available
+                    // Forward real-time 16kHz WAV payload to streaming Sarvam WebSocket
                     if (wsVerbatimRef.current?.readyState === WebSocket.OPEN) {
-                        const pcmData = convertFloat32ToInt16(inputData);
-                        wsVerbatimRef.current.send(pcmData);
-                    }
-                    if (wsTranslateRef.current?.readyState === WebSocket.OPEN) {
-                        const pcmData = convertFloat32ToInt16(inputData);
-                        wsTranslateRef.current.send(pcmData);
+                        const wavBase64 = convertFloat32ToWavBase64(inputData, 16000);
+                        const payload = JSON.stringify({
+                            audio: {
+                                data: wavBase64,
+                                sample_rate: '16000',
+                                encoding: 'audio/wav'
+                            }
+                        });
+                        wsVerbatimRef.current.send(payload);
                     }
                 };
 
@@ -252,40 +343,17 @@ export function LanguageAssessment() {
                 console.warn("Real-time Web Audio VAD initialization skipped:", err);
             }
 
-            // 3. Setup Browser Speech Recognition Fallback
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
-                recognitionRef.current = recognition;
-
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.lang = 'en-US';
-
-                recognition.onresult = (event: any) => {
-                    let fullText = "";
-                    for (let i = 0; i < event.results.length; i++) {
-                        fullText += event.results[i][0].transcript;
-                    }
-                    setTranscript(fullText);
-                };
-
-                recognition.onerror = (e: any) => {
-                    console.warn("Browser SpeechRecognition notice:", e.error);
-                };
-
-                recognition.start();
-            }
-
         } catch (err) {
             console.error("Microphone access failed:", err);
             setErrorMessage("Could not access microphone. Please ensure microphone permissions are granted.");
+            isRecordingRef.current = false;
             setIsRecording(false);
         }
     };
 
     const stopRecording = () => {
-        if (!isRecording) return;
+        if (!isRecordingRef.current && !isRecording) return;
+        isRecordingRef.current = false;
         setIsRecording(false);
 
         // Finalize VAD Tracker
@@ -302,28 +370,19 @@ export function LanguageAssessment() {
         // Close WebSockets
         try {
             wsVerbatimRef.current?.close();
-            wsTranslateRef.current?.close();
-        } catch {
-            // Ignore socket closure errors
-        }
-
-        // Teardown Web Audio VAD
+            wsVerbatimRef.current = null;
+        } catch {}
         try {
-            sourceRef.current?.disconnect();
-            processorRef.current?.disconnect();
-            audioContextRef.current?.close();
-        } catch {
-            // Ignore audio context disconnect errors
-        }
+            wsTranslateRef.current?.close();
+            wsTranslateRef.current = null;
+        } catch {}
 
-        // Stop Browser Recognition
-        if (recognitionRef.current) {
-            try {
-                recognitionRef.current.stop();
-            } catch {
-                // Ignore recognition errors
-            }
-        }
+        // Stop Audio Processing
+        try {
+            processorRef.current?.disconnect();
+            sourceRef.current?.disconnect();
+            audioContextRef.current?.close();
+        } catch {}
 
         // Stop MediaRecorder and trigger biomarker extraction
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -340,74 +399,59 @@ export function LanguageAssessment() {
             mediaRecorderRef.current.stop();
         }
     };
-
-    // Process audio with Sarvam AI Multilingual Batch API + Acoustic Biomarkers
-    const processAssessmentResults = async (audioBlob: Blob) => {
+    // Process audio with Sarvam AI Live Streaming Transcript + Acoustic Biomarkers
+    const processAssessmentResults = async (_audioBlob?: Blob) => {
         setPhase('processing');
         setIsProcessingAudio(true);
 
         const duration = Date.now() - startTimeRef.current;
-        const finalVerbatim = verbatimTranscript.trim() || transcript.trim();
-        let sarvamTranscript = finalVerbatim;
+        const liveCaptured = verbatimTranscript.trim() || transcript.trim();
+        let sarvamTranscript = liveCaptured;
         let sarvamTranslation = englishTranslation;
         let detectedLang = detectedLanguage;
 
         try {
-            const formData = new FormData();
-            formData.append('file', audioBlob, 'recording.webm');
-            formData.append('model', 'saaras:v4');
-            formData.append('mode', 'transcribe');
+            // If non-English detected, translate to English for semantic scoring
+            if (detectedLang && detectedLang !== 'en-IN' && detectedLang !== 'en-US' && detectedLang !== 'unknown') {
+                try {
+                    const translatePayload = JSON.stringify({
+                        input: sarvamTranscript,
+                        source_language_code: detectedLang,
+                        target_language_code: 'en-IN',
+                        model: 'sarvam-translate:v1',
+                        mode: 'formal'
+                    });
 
-            const res = await fetch('https://api.sarvam.ai/speech-to-text', {
-                method: 'POST',
-                headers: {
-                    'api-subscription-key': SARVAM_API_KEY
-                },
-                body: formData
-            });
+                    let translateRes = await fetch('/api/sarvam-translate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: translatePayload
+                    });
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.transcript) {
-                    sarvamTranscript = data.transcript;
-                    setVerbatimTranscript(data.transcript);
-                }
-                if (data.language_code) {
-                    detectedLang = data.language_code;
-                    setDetectedLanguage(data.language_code);
-                }
-
-                // If non-English detected, translate to English for semantic scoring
-                if (detectedLang && detectedLang !== 'en-IN' && detectedLang !== 'en-US' && detectedLang !== 'unknown') {
-                    try {
-                        const translateRes = await fetch('https://api.sarvam.ai/translate', {
+                    if (!translateRes.ok) {
+                        translateRes = await fetch('https://api.sarvam.ai/translate', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'api-subscription-key': SARVAM_API_KEY
                             },
-                            body: JSON.stringify({
-                                input: sarvamTranscript,
-                                source_language_code: detectedLang,
-                                target_language_code: 'en-IN',
-                                model: 'sarvam-translate:v1',
-                                mode: 'formal'
-                            })
+                            body: translatePayload
                         });
-                        if (translateRes.ok) {
-                            const transData = await translateRes.json();
-                            if (transData.translated_text) {
-                                sarvamTranslation = transData.translated_text;
-                                setEnglishTranslation(transData.translated_text);
-                            }
-                        }
-                    } catch (e) {
-                        console.warn("Translation request skipped:", e);
                     }
+
+                    if (translateRes.ok) {
+                        const transData = await translateRes.json();
+                        if (transData.translated_text) {
+                            sarvamTranslation = transData.translated_text;
+                            setEnglishTranslation(transData.translated_text);
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Translation request skipped:", e);
                 }
             }
         } catch (err) {
-            console.warn("Sarvam batch API notice:", err);
+            console.warn("Sarvam processing notice:", err);
         }
 
         setIsProcessingAudio(false);
@@ -469,12 +513,13 @@ export function LanguageAssessment() {
         setPhase('complete');
     };
 
-    const handleBackClick = () => {
-        if (isRecording || phase === "assessment" || phase === "processing") {
-            setShowExitConfirm(true);
-        } else {
+    // Navigation and Exit Controls
+    const handleExitClick = () => {
+        if (phase === "instructions" || phase === "complete") {
             navigate("/tests");
+            return;
         }
+        setShowExitConfirm(true);
     };
 
     const confirmExit = () => {
@@ -488,6 +533,98 @@ export function LanguageAssessment() {
         }
         setShowExitConfirm(false);
         navigate("/tests");
+    };
+
+    const handleCancelExit = () => {
+        setShowExitConfirm(false);
+    };
+
+    const handleRetake = () => {
+        setPhase("instructions");
+        setResult(null);
+        setTranscript("");
+        setVerbatimTranscript("");
+        setEnglishTranslation("");
+        setTimer(0);
+        setIsRecording(false);
+        setPrompt(PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
+    };
+
+    // Score tier calculation matching Story Recall convention
+    const getScoreTier = (score: number) => {
+        if (score >= 80) return { label: 'Exceptional Fluency', level: 'stable' as const };
+        if (score >= 60) return { label: 'Moderate Fluency', level: 'change_detected' as const };
+        return { label: 'Needs Attention', level: 'possible_risk' as const };
+    };
+
+    // Trend calculation comparing with prior sessions
+    const trend: 'up' | 'down' = useMemo(() => {
+        try {
+            if (results && results.length > 0) {
+                const prev = results[results.length - 1];
+                const prevScore = prev?.derivedFeatures?.cognitiveSpeechIndex ?? (prev as any)?.score;
+                if (typeof prevScore === 'number') {
+                    const currentScore = result?.derivedFeatures?.cognitiveSpeechIndex ?? 85;
+                    return currentScore >= prevScore ? 'up' : 'down';
+                }
+            }
+        } catch {
+            // fallback
+        }
+        const currentScore = result?.derivedFeatures?.cognitiveSpeechIndex ?? 85;
+        return currentScore >= 60 ? 'up' : 'down';
+    }, [results, result]);
+
+    // Radar chart data for Language Fluency
+    const radarData = useMemo(() => {
+        if (!result) return [];
+        const df = result.derivedFeatures;
+        const wpmScore = Math.min(100, Math.round((df.wpm / 140) * 100));
+        const ttrScore = Math.min(100, Math.round(((df.rootTTR ?? 0.72) / 0.8) * 100));
+        const phonationScore = Math.min(100, Math.round((df.phonationRatio ?? 0.8) * 100));
+        const fluencyScore = Math.min(100, Math.round(df.fluencyIndex ?? 85));
+        const stabilityScore = Math.min(100, Math.round(df.speechStability ?? 80));
+        const coherenceScore = Math.min(100, Math.round(df.semanticCoherence ?? df.coherenceProxy ?? 85));
+
+        return [
+            { subject: 'Speech Rate', A: wpmScore, fullMark: 100 },
+            { subject: 'Fluency Index', A: fluencyScore, fullMark: 100 },
+            { subject: 'Vocabulary (TTR)', A: ttrScore, fullMark: 100 },
+            { subject: 'Phonation Ratio', A: phonationScore, fullMark: 100 },
+            { subject: 'Speech Stability', A: stabilityScore, fullMark: 100 },
+            { subject: 'Semantic Flow', A: coherenceScore, fullMark: 100 },
+        ];
+    }, [result]);
+
+    // Custom axis tick renderer matching Story Recall
+    const renderCustomAxisTick = ({ payload, x, y, cx, cy }: any) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const offsetX = dist > 0 ? x + (dx / dist) * 8 : x;
+        const offsetY = dist > 0 ? y + (dy / dist) * 8 : y;
+
+        let textAnchor: 'start' | 'middle' | 'end' = 'middle';
+        if (dx > 12) {
+            textAnchor = 'start';
+        } else if (dx < -12) {
+            textAnchor = 'end';
+        }
+
+        return (
+            <text
+                x={offsetX}
+                y={offsetY}
+                textAnchor={textAnchor}
+                dominantBaseline="central"
+                fill={isDark ? '#E2ECF2' : '#17324D'}
+                fontSize={10}
+                fontWeight={600}
+                className="radar-axis-tick select-none"
+            >
+                {payload.value}
+            </text>
+        );
     };
 
     const getInsights = (res: LanguageAssessmentResult) => {
@@ -512,158 +649,148 @@ export function LanguageAssessment() {
 
     return (
         <PageWrapper>
-            <div className="language-assessment-page story-assessment-container">
+            <div className="story-assessment-container container">
                 {/* ── Top Navigation Bar ── */}
                 <div className="story-top-nav">
                     <button
                         type="button"
-                        onClick={handleBackClick}
+                        onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to assessments"
+                        aria-label="Back to Assessments"
                     >
-                        <span className="story-back-arrow">←</span>
+                        <span className="back-arrow" aria-hidden="true">←</span>
                         <span>Back to Assessments</span>
                     </button>
-
-                    <div className="story-nav-badge">
-                        <span className="story-nav-dot"></span>
-                        <span>Cognitive Assessment</span>
-                    </div>
                 </div>
 
-                {/* ── Stage Viewport (Desktop 100vh Zero-Scroll) ── */}
-                <div className="lang-stage-viewport">
-                    {/* ── 1. INSTRUCTIONS PHASE ── */}
+                {/* ── Primary Test Header (shown only on instructions intro) ── */}
+                {phase === "instructions" && (
+                    <div className="story-header animate-fadeInUp">
+                        <h1 className="story-title vyom-serif">Language Fluency</h1>
+                        <p className="story-subtitle">
+                            Speak naturally on the assigned topic to analyze speech fluency, vocabulary depth, and acoustic biomarkers.
+                        </p>
+                    </div>
+                )}
+
+                {/* ── Active Assessment Stage Viewport ── */}
+                <div ref={activeStageRef} className="story-stage-viewport lang-stage-viewport">
+                    {/* ── Phase 1: Instructions Phase (Story Recall Layout & Orientation) ── */}
                     {phase === 'instructions' && (
-                        <div className="lang-instructions-container animate-fadeIn">
-                            <div className="story-header" style={{ marginBottom: '0.65rem' }}>
-                                <h1 className="story-title vyom-serif">Language Fluency</h1>
-                                <p className="story-subtitle">
-                                    Speak naturally on the assigned topic to analyze speech fluency, vocabulary depth, and acoustic biomarkers.
-                                </p>
-                            </div>
-
-                            {/* Desktop 2-Column (Instructions | Tutorial Video) & Mobile Stacked */}
-                            <div className="instructions-with-tutorial-layout">
-                                <Card className="lang-instructions-card">
-                                    <div className="instructions-card-header">
-                                        <div className="instructions-card-icon">🎙️</div>
-                                        <div>
-                                            <h2 className="instructions-card-title">How this assessment works</h2>
-                                            <p className="instructions-card-subtitle">
-                                                Powered by multilingual acoustic & linguistic recognition
-                                            </p>
-                                        </div>
+                        <div className="instructions-with-tutorial-layout animate-fadeIn">
+                            <Card className="instructions-card">
+                                <div className="instructions-content">
+                                    <div className="instructions-icon-wrapper" aria-hidden="true">
+                                        <Icon name="language" size={28} />
                                     </div>
+                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
 
-                                    <div className="instructions-steps-grid">
-                                        <div className="instruction-step-item">
-                                            <div className="step-number-bubble">1</div>
+                                    <ol className="instructions-step-list">
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">1</div>
                                             <div className="step-content">
-                                                <div className="step-heading">View Assigned Topic</div>
-                                                <div className="step-desc">
-                                                    A conversational prompt will be displayed on screen.
-                                                </div>
+                                                <strong>View Prompt:</strong>
+                                                <span>A conversational speaking topic will be displayed on screen.</span>
                                             </div>
-                                        </div>
-
-                                        <div className="instruction-step-item">
-                                            <div className="step-number-bubble">2</div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">2</div>
                                             <div className="step-content">
-                                                <div className="step-heading">Speak Naturally</div>
-                                                <div className="step-desc">
-                                                    Speak in your preferred language for 15–30 seconds.
-                                                </div>
+                                                <strong>Speak Naturally:</strong>
+                                                <span>Express your thoughts in your preferred language for 15–30 seconds.</span>
                                             </div>
-                                        </div>
-
-                                        <div className="instruction-step-item">
-                                            <div className="step-number-bubble">3</div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">3</div>
                                             <div className="step-content">
-                                                <div className="step-heading">Detail & Richness</div>
-                                                <div className="step-desc">
-                                                    Describe your thoughts with descriptive vocabulary.
-                                                </div>
+                                                <strong>Detail & Flow:</strong>
+                                                <span>Describe your ideas with natural vocabulary and descriptive depth.</span>
                                             </div>
-                                        </div>
-
-                                        <div className="instruction-step-item">
-                                            <div className="step-number-bubble">4</div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">4</div>
                                             <div className="step-content">
-                                                <div className="step-heading">Instant Biomarkers</div>
-                                                <div className="step-desc">
-                                                    Speech rate, pause dynamics, and lexical depth are analyzed.
-                                                </div>
+                                                <strong>Instant Biomarkers:</strong>
+                                                <span>Speech rate, pause dynamics, and lexical diversity are analyzed automatically.</span>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </li>
+                                    </ol>
 
-                                    <div className="instructions-cta-row">
+                                    <div className="instructions-action-row">
                                         <Button
                                             variant="primary"
-                                            size="lg"
+                                            className="story-primary-start-btn"
                                             onClick={() => setPhase('permission')}
-                                            className="instructions-start-btn"
                                         >
-                                            Start Assessment →
+                                            Start Test
                                         </Button>
                                     </div>
-                                </Card>
+                                </div>
+                            </Card>
 
-                                {/* Dedicated Tutorial Video Area / Placeholder */}
-                                <TutorialVideoPlaceholder />
-                            </div>
+                            {/* Tutorial Video Placeholder */}
+                            <TutorialVideoPlaceholder />
                         </div>
                     )}
 
-                    {/* ── 2. PERMISSION PHASE ── */}
+                    {/* ── Phase 2: Microphone Permission Phase ── */}
                     {phase === 'permission' && (
                         <div className="lang-step-container animate-fadeIn">
                             <Card className="lang-phase-card">
                                 <div className="lang-card-icon-badge">🎙️</div>
-                                <h2 className="lang-phase-title">Microphone Access</h2>
+                                <h2 className="lang-phase-title vyom-serif">Microphone Access</h2>
                                 <p className="lang-phase-subtitle">
                                     We need access to your microphone to capture voice acoustics and multilingual speech biomarkers securely.
                                 </p>
-                                <div className="mt-4">
-                                    <Button variant="primary" size="lg" onClick={() => setPhase('warmup')}>
-                                        Enable Microphone & Continue →
+                                <div className="instructions-action-row" style={{ marginTop: '1.25rem' }}>
+                                    <Button 
+                                        variant="primary" 
+                                        className="story-primary-start-btn"
+                                        onClick={() => setPhase('warmup')}
+                                    >
+                                        Enable Microphone & Continue
                                     </Button>
                                 </div>
                             </Card>
                         </div>
                     )}
 
-                    {/* ── 3. WARMUP SOUND CHECK ── */}
+                    {/* ── Phase 3: Warmup Sound Check ── */}
                     {phase === 'warmup' && (
                         <div className="lang-step-container animate-fadeIn">
                             <Card className="lang-phase-card">
                                 <div className="lang-phase-tag">Sound Check</div>
-                                <h2 className="lang-phase-title">Microphone Sound Check</h2>
+                                <h2 className="lang-phase-title vyom-serif">Microphone Sound Check</h2>
                                 <p className="lang-phase-subtitle">
                                     Read aloud: <em>"The quick brown fox jumps over the lazy dog."</em>
                                 </p>
 
                                 <div className="lang-live-transcript-box">
-                                    {transcript || "Listening (Auto-Detect)..."}
+                                    {transcript ? (
+                                        transcript
+                                    ) : isRecording ? (
+                                        <span style={{ opacity: 0.8, fontStyle: 'italic' }}>
+                                            🎙️ Listening... Speak aloud: "The quick brown fox jumps over the lazy dog."
+                                        </span>
+                                    ) : (
+                                        "Click Start Warmup to test your microphone."
+                                    )}
                                 </div>
 
-                                <div className="mt-4 flex justify-center gap-3">
+                                <div className="instructions-action-row" style={{ marginTop: '1rem', gap: '0.75rem' }}>
                                     {!isRecording ? (
                                         <Button 
-                                            variant="primary"
-                                            size="lg"
-                                            onClick={startRecording} 
-                                            className="lang-record-btn"
+                                            variant="primary" 
+                                            className="story-primary-start-btn lang-record-btn"
+                                            onClick={startRecording}
                                         >
                                             Start Warmup 🎙️
                                         </Button>
                                     ) : (
                                         <Button 
-                                            variant="secondary"
-                                            size="lg"
-                                            onClick={stopRecording} 
+                                            variant="secondary" 
                                             className="lang-stop-btn"
+                                            onClick={stopRecording}
                                         >
                                             Stop & Continue →
                                         </Button>
@@ -673,7 +800,7 @@ export function LanguageAssessment() {
                         </div>
                     )}
 
-                    {/* ── 4. ACTIVE ASSESSMENT PHASE ── */}
+                    {/* ── Phase 4: Active Assessment Recording Phase ── */}
                     {phase === 'assessment' && (
                         <div className="lang-active-container animate-fadeIn">
                             <Card className="lang-recording-card">
@@ -723,7 +850,7 @@ export function LanguageAssessment() {
                                     ) : (
                                         <p className="transcript-idle-hint">
                                             {isRecording 
-                                                ? "🎙️ Recording in progress... Speak naturally. Transcription appears in real-time."
+                                                ? "🎙️ Listening to your voice... Speak naturally. Transcribed text will appear here as you speak."
                                                 : "Your spoken response will appear here as you speak."}
                                         </p>
                                     )}
@@ -740,19 +867,17 @@ export function LanguageAssessment() {
                                 <div className="lang-controls-row">
                                     {!isRecording ? (
                                         <Button 
-                                            variant="primary"
-                                            size="lg"
-                                            onClick={startRecording} 
-                                            className="lang-start-record-cta"
+                                            variant="primary" 
+                                            className="story-primary-start-btn lang-start-record-cta"
+                                            onClick={startRecording}
                                         >
                                             Start Recording 🎙️
                                         </Button>
                                     ) : (
                                         <Button 
-                                            variant="secondary"
-                                            size="lg"
-                                            onClick={stopRecording} 
+                                            variant="secondary" 
                                             className="lang-finish-record-cta"
+                                            onClick={stopRecording}
                                         >
                                             Finish Recording ✓
                                         </Button>
@@ -768,80 +893,144 @@ export function LanguageAssessment() {
                         </div>
                     )}
 
-                    {/* ── 5. PROCESSING PHASE ── */}
+                    {/* ── Phase 5: Processing Phase ── */}
                     {phase === 'processing' && (
-                        <div className="lang-step-container animate-fadeIn">
-                            <div className="lang-processing-card">
-                                <div className="lang-scoring-spinner"></div>
-                                <h2>{isProcessingAudio ? "Processing Audio with Multilingual Speech Engine..." : "Extracting Multi-Pillar Acoustic & Linguistic Biomarkers..."}</h2>
-                                <p>Analyzing phonation ratios, vocabulary richness (Guiraud TTR), and conversational fluency.</p>
+                        <Card className="processing-card animate-fadeIn">
+                            <div className="processing-body">
+                                <div className="spinner" />
+                                <h3 className="processing-title vyom-serif">
+                                    {isProcessingAudio ? "Processing Audio with Multilingual Engine..." : "Analyzing Speech Biomarkers..."}
+                                </h3>
+                                <p className="processing-desc">
+                                    Analyzing phonation ratios, vocabulary richness (Guiraud TTR), and conversational fluency.
+                                </p>
                             </div>
-                        </div>
+                        </Card>
                     )}
 
-                    {/* ── 6. SIMPLIFIED RESULTS PHASE (WITH SPEECH TRANSCRIPT) ── */}
-                    {phase === 'complete' && result && (
-                        <div className="lang-results-container animate-fadeIn">
-                            <Card className="lang-results-card">
-                                <div className="lang-results-header">
-                                    <div className="results-badge">
-                                        <Icon name="language" size={18} />
-                                        <span>Assessment Complete</span>
+                    {/* ── Phase 6: Results Screen (Story Recall Layout & Orientation) ── */}
+                    {phase === 'complete' && result && (() => {
+                        const csiScore = Math.round(result.derivedFeatures.cognitiveSpeechIndex ?? 85);
+                        const tier = getScoreTier(csiScore);
+
+                        return (
+                            <div className="story-results-container animate-fadeIn">
+                                {/* Top Overview Card */}
+                                <Card className="results-overview-card">
+                                    <div className="overview-header">
+                                        <div className="overview-title-group">
+                                            <h2 className="vyom-serif">Language Fluency Profile</h2>
+                                            <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
+                                                <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
+                                                <span>{trend === 'up' ? 'Improving' : 'Declining'}</span>
+                                            </span>
+                                        </div>
+                                        <div className="score-badge-circle">
+                                            <span className="score-num">{csiScore}</span>
+                                            <span className="score-denom">/ 100</span>
+                                        </div>
                                     </div>
-                                    <h2 className="lang-results-title vyom-serif">Language Fluency Results</h2>
-                                </div>
+                                </Card>
 
                                 <MotivationalQuoteBlock
-                                    category={getCSIFeedback(result.derivedFeatures.cognitiveSpeechIndex ?? 85).category}
-                                    score={result.derivedFeatures.cognitiveSpeechIndex ?? 85}
+                                    category={tier.label}
+                                    score={csiScore}
                                 />
 
-                                {/* 2-Column Split Results Dashboard */}
-                                <div className="lang-results-split-grid">
-                                    {/* Left Column: Composite Score & Metrics */}
-                                    <div className="lang-score-col">
-                                        <div className="lang-hero-score-box">
-                                            <div className="score-top-label">Cognitive Speech Index (CSI)</div>
-                                            <div className="score-val-row">
-                                                <span className="score-num">{result.derivedFeatures.cognitiveSpeechIndex ?? 85}</span>
-                                                <span className="score-denom">/ 100</span>
+                                {/* Biomarkers Breakdown Row (2x2 grid) */}
+                                <div className="biomarkers-grid-row">
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Speech Rate</h4>
+                                            <p className="metric-desc">{result.rawMetrics.wordCount} words • {(result.rawMetrics.speechDuration / 1000).toFixed(1)}s duration</p>
+                                        </div>
+                                        <div className="metric-val">
+                                            {Math.round(result.derivedFeatures.wpm)} <span className="metric-unit">WPM</span>
+                                        </div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Fluency Index</h4>
+                                            <p className="metric-desc">Speech continuity & flow</p>
+                                        </div>
+                                        <div className="metric-val">
+                                            {Math.round(result.derivedFeatures.fluencyIndex ?? 85)}%
+                                        </div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Vocabulary Depth</h4>
+                                            <p className="metric-desc">{result.rawMetrics.uniqueWordCount} unique words (Root TTR)</p>
+                                        </div>
+                                        <div className="metric-val">
+                                            {Math.round((result.derivedFeatures.rootTTR ?? 0.72) * 100)}%
+                                        </div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Acoustic Phonation</h4>
+                                            <p className="metric-desc">{result.rawMetrics.pauseCount} pauses (avg {result.rawMetrics.pauseDurationAvg}ms)</p>
+                                        </div>
+                                        <div className="metric-val">
+                                            {Math.round((result.derivedFeatures.phonationRatio ?? 0.8) * 100)}%
+                                        </div>
+                                    </Card>
+                                </div>
+
+                                {/* Full-Length Biomarker Radar & Speech Transcript Card */}
+                                <Card className="radar-chart-card full-width-radar">
+                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <div className="chart-wrapper">
+                                        <ResponsiveContainer width="100%" height={155}>
+                                            <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
+                                                <PolarGrid stroke={isDark ? "rgba(0, 201, 183, 0.22)" : "rgba(79, 124, 120, 0.22)"} />
+                                                <PolarAngleAxis 
+                                                    dataKey="subject" 
+                                                    tick={renderCustomAxisTick} 
+                                                    tickLine={false} 
+                                                />
+                                                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="transparent" tick={false} />
+                                                <Radar
+                                                    name="Biomarkers"
+                                                    dataKey="A"
+                                                    stroke={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fill={isDark ? "#00C9B7" : "#4F7C78"}
+                                                    fillOpacity={isDark ? 0.35 : 0.28}
+                                                />
+                                            </RadarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    {/* Speech Transcript & Analysis Section */}
+                                    <div className="language-transcript-section">
+                                        <div className="transcript-section-header">
+                                            <div className="transcript-section-title-group">
+                                                <Icon name="language" size={15} />
+                                                <span className="transcript-section-title">Speech Transcript & Analysis</span>
                                             </div>
-                                            {(() => {
-                                                const csiVal = result.derivedFeatures.cognitiveSpeechIndex ?? 85;
-                                                const feedback = getCSIFeedback(csiVal);
-                                                return (
-                                                    <div className="lang-category-pill">
-                                                        <span>📊 {feedback.category}</span>
-                                                    </div>
-                                                );
-                                            })()}
+                                            <span className="transcript-meta-badge">
+                                                {result.rawMetrics.wordCount} words • {(result.rawMetrics.speechDuration / 1000).toFixed(1)}s • {result.detectedLanguage ? result.detectedLanguage.toUpperCase() : "AUTO"}
+                                            </span>
                                         </div>
 
-                                        {/* 4 Core Biomarker Metric Cards */}
-                                        <div className="lang-metrics-quad-grid">
-                                            <div className="lang-metric-cell">
-                                                <span className="metric-label">Speech Rate</span>
-                                                <span className="metric-val">{Math.round(result.derivedFeatures.wpm)} <small>WPM</small></span>
-                                                <span className="metric-sub">Conversational pace</span>
+                                        <div className="transcript-bubble-box">
+                                            <div className="transcript-prompt-line">
+                                                <span className="prompt-label">Topic:</span>
+                                                <span className="prompt-value">"{result.promptTopic || prompt}"</span>
                                             </div>
-
-                                            <div className="lang-metric-cell">
-                                                <span className="metric-label">Phonation Ratio</span>
-                                                <span className="metric-val">{(((result.derivedFeatures.phonationRatio ?? 0.8)) * 100).toFixed(0)}%</span>
-                                                <span className="metric-sub">Active voice time</span>
+                                            <div className="transcript-body-text">
+                                                <span className="transcript-text-label">Spoken:</span>
+                                                <p className="transcript-spoken-content">"{result.transcript}"</p>
                                             </div>
-
-                                            <div className="lang-metric-cell">
-                                                <span className="metric-label">Vocabulary Depth</span>
-                                                <span className="metric-val">{(((result.derivedFeatures.rootTTR ?? 0.72)) * 100).toFixed(0)}%</span>
-                                                <span className="metric-sub">Root TTR diversity</span>
-                                            </div>
-
-                                            <div className="lang-metric-cell">
-                                                <span className="metric-label">Speech Pauses</span>
-                                                <span className="metric-val">{result.rawMetrics.pauseCount}</span>
-                                                <span className="metric-sub">Avg {result.rawMetrics.pauseDurationAvg}ms</span>
-                                            </div>
+                                            {result.englishTranslation && (
+                                                <div className="transcript-translation-line">
+                                                    <span className="translation-tag">🇬🇧 English:</span>
+                                                    <p className="translation-text">"{result.englishTranslation}"</p>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Clinical Insight Chips */}
@@ -853,90 +1042,50 @@ export function LanguageAssessment() {
                                             ))}
                                         </div>
                                     </div>
+                                </Card>
 
-                                    {/* Right Column: Speech Transcripts (Prominently Retained) */}
-                                    <div className="lang-transcript-col">
-                                        <div className="transcript-col-header">
-                                            <span className="transcript-title">📝 Speech Transcript</span>
-                                            <span className="transcript-meta-tag">
-                                                {result.rawMetrics.wordCount} words • {(result.rawMetrics.speechDuration / 1000).toFixed(1)}s
-                                            </span>
-                                        </div>
-
-                                        <div className="lang-full-transcript-box">
-                                            <p className="full-transcript-text">"{result.transcript}"</p>
-
-                                            {result.englishTranslation && (
-                                                <div className="full-translation-box">
-                                                    <span className="translation-tag">🇬🇧 English Translation:</span>
-                                                    <p className="translation-text">"{result.englishTranslation}"</p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="lang-prompt-recap">
-                                            <span className="recap-label">Topic:</span>
-                                            <span className="recap-text">{result.promptTopic}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="lang-results-actions-row">
-                                    <Button
-                                        variant="primary"
-                                        size="md"
-                                        onClick={() => navigate('/dashboard')}
-                                    >
-                                        View Longitudinal Trends →
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        size="md"
-                                        onClick={() => {
-                                            setPhase('instructions');
-                                            setResult(null);
-                                            setPrompt(PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
-                                        }}
-                                    >
-                                        Repeat Assessment
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        size="md"
+                                {/* Centered Actions */}
+                                <div className="results-actions">
+                                    <button type="button" onClick={handleRetake} className="story-retake-btn">
+                                        <Icon name="language" size={16} /> Retake Test
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        className="story-primary-start-btn story-back-assessments-btn" 
                                         onClick={() => navigate('/tests')}
                                     >
-                                        All Assessments
-                                    </Button>
+                                        Back to Assessments
+                                    </button>
                                 </div>
-                            </Card>
-                        </div>
-                    )}
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* ── In-Flight Exit Confirmation Modal ── */}
                 {showExitConfirm && (
-                    <div className="story-modal-backdrop animate-fadeIn">
-                        <div className="story-modal-card">
-                            <div className="story-modal-icon">⚠️</div>
-                            <h3 className="story-modal-title">Leave this assessment?</h3>
-                            <p className="story-modal-text">
+                    <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
+                        <div className="story-exit-modal animate-scaleUp">
+                            <div className="exit-modal-icon">⚠️</div>
+                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <p className="exit-modal-text">
                                 Your current recording or speech progress will be lost if you leave now.
                             </p>
-                            <div className="story-modal-actions">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setShowExitConfirm(false)}
+                            <div className="exit-modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelExit}
+                                    className="modal-btn modal-btn-secondary"
                                 >
-                                    Stay & Continue
-                                </Button>
-                                <Button
-                                    variant="primary"
+                                    Continue Test
+                                </button>
+                                <button
+                                    type="button"
                                     onClick={confirmExit}
-                                    style={{ background: "#DC2626", borderColor: "#DC2626" }}
+                                    className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Assessment
-                                </Button>
+                                    Leave Test
+                                </button>
                             </div>
                         </div>
                     </div>

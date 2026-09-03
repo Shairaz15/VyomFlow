@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { VyomFlowLogo } from './VyomFlowLogo';
 import './OnboardingModal.css';
 
 /** 22 Scheduled Languages of India (8th Schedule) + English */
@@ -97,7 +98,9 @@ export function OnboardingModal() {
             <div className="onboarding-card animate-fadeInUp">
                 {/* Header */}
                 <div className="onboarding-header">
-                    <div className="onboarding-icon">🧠</div>
+                    <div className="onboarding-icon">
+                        <VyomFlowLogo variant="icon" height={54} className="onboarding-brand-logo" />
+                    </div>
                     <h2 className="onboarding-title">
                         {t('onboarding.welcomeTitle')} <span className="text-gradient">{t('onboarding.brandName')}</span>
                     </h2>

@@ -129,6 +129,7 @@
     align-items: center;
     width: 100%;
     transition: transform var(--transition-normal);
+    scroll-margin-top: 6rem;
 }
 
 @media (min-width: 768px) {

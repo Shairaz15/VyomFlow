@@ -642,8 +642,7 @@ html.dark .vyom-floating-navbar span.vyom-serif {
 /* Translucent Background Emojis inside Steps Node */
 .vyom-orb-bg-emoji {
   position: absolute;
-  font-size: 7.5rem;
-  opacity: 0.08;
+  opacity: 0.25;
   pointer-events: none;
   z-index: 0;
   top: 50%;
@@ -788,22 +787,121 @@ html.dark .vyom-central-core div.vyom-serif {
 }
 
 .vyom-orbital-icon {
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.85rem;
+  height: 2.85rem;
   border-radius: 50%;
-  background: rgba(79, 124, 120, 0.12);
-  color: var(--vyom-teal);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(243, 247, 246, 0.9) 100%);
+  border: 1.5px solid rgba(23, 50, 77, 0.12);
+  color: #17324D;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
   flex-shrink: 0;
-  transition: transform 0.3s ease;
+  box-shadow: 0 4px 14px -2px rgba(23, 50, 77, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
 .vyom-orbital-card:hover .vyom-orbital-icon {
-  transform: scale(1.1);
-  background: rgba(79, 124, 120, 0.2);
+  transform: scale(1.06);
+  box-shadow: 0 6px 18px -2px rgba(23, 50, 77, 0.12), inset 0 1px 2px rgba(255, 255, 255, 1);
+}
+
+/* Domain-Specific Soft Container Tints (Light Mode) */
+.vyom-orbital-icon.vyom-icon-story {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0F6F2 100%);
+  border-color: rgba(143, 175, 139, 0.4);
+  color: #244844;
+}
+.vyom-orbital-icon.vyom-icon-vmra {
+  background: linear-gradient(135deg, #FFFFFF 0%, #ECF7F6 100%);
+  border-color: rgba(79, 124, 120, 0.38);
+  color: #153D3A;
+}
+.vyom-orbital-icon.vyom-icon-reaction {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FCF8EE 100%);
+  border-color: rgba(216, 184, 120, 0.45);
+  color: #8C6524;
+}
+.vyom-orbital-icon.vyom-icon-pattern {
+  background: linear-gradient(135deg, #FFFFFF 0%, #EEF2FF 100%);
+  border-color: rgba(99, 102, 241, 0.32);
+  color: #2D2A78;
+}
+.vyom-orbital-icon.vyom-icon-attention {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDF2F0 100%);
+  border-color: rgba(224, 122, 95, 0.4);
+  color: #8B301C;
+}
+.vyom-orbital-icon.vyom-icon-navigation {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0F7FC 100%);
+  border-color: rgba(56, 189, 248, 0.38);
+  color: #073B57;
+}
+.vyom-orbital-icon.vyom-icon-language {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F5F7F2 100%);
+  border-color: rgba(143, 175, 139, 0.4);
+  color: #2E5636;
+}
+
+/* Domain-Specific Dark Mode */
+.dark .vyom-orbital-icon,
+[data-theme="dark"] .vyom-orbital-icon,
+html.dark .vyom-orbital-icon {
+  background: linear-gradient(135deg, #162B42 0%, #0F2033 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  color: #F7F4EC;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.dark .vyom-orbital-icon.vyom-icon-story,
+[data-theme="dark"] .vyom-orbital-icon.vyom-icon-story {
+  border-color: rgba(143, 175, 139, 0.45);
+  color: #A7F3D0;
+  box-shadow: 0 0 14px rgba(143, 175, 139, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+.dark .vyom-orbital-icon.vyom-icon-vmra,
+[data-theme="dark"] .vyom-orbital-icon.vyom-icon-vmra {
+  border-color: rgba(94, 234, 212, 0.45);
+  color: #5EEAD4;
+  box-shadow: 0 0 14px rgba(94, 234, 212, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+.dark .vyom-orbital-icon.vyom-icon-reaction,
+[data-theme="dark"] .vyom-orbital-icon.vyom-icon-reaction {
+  border-color: rgba(252, 211, 77, 0.45);
+  color: #FCD34D;
+  box-shadow: 0 0 14px rgba(252, 211, 77, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+.dark .vyom-orbital-icon.vyom-icon-pattern,
+[data-theme="dark"] .vyom-orbital-icon.vyom-icon-pattern {
+  border-color: rgba(165, 180, 252, 0.45);
+  color: #C7D2FE;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+.dark .vyom-orbital-icon.vyom-icon-attention,
+[data-theme="dark"] .vyom-orbital-icon.vyom-icon-attention {
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #FCA5A5;
+  box-shadow: 0 0 14px rgba(248, 113, 113, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+.dark .vyom-orbital-icon.vyom-icon-navigation,
+[data-theme="dark"] .vyom-orbital-icon.vyom-icon-navigation {
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #7DD3FC;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+.dark .vyom-orbital-icon.vyom-icon-language,
+[data-theme="dark"] .vyom-orbital-icon.vyom-icon-language {
+  border-color: rgba(216, 184, 120, 0.45);
+  color: #FDE68A;
+  box-shadow: 0 0 14px rgba(216, 184, 120, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.dark .vyom-orbital-card:hover .vyom-orbital-icon,
+[data-theme="dark"] .vyom-orbital-card:hover .vyom-orbital-icon,
+html.dark .vyom-orbital-card:hover .vyom-orbital-icon {
+  transform: scale(1.06);
+  box-shadow: 0 0 20px rgba(94, 234, 212, 0.35);
 }
 
 .vyom-journey-grid {
@@ -1030,6 +1128,10 @@ html.dark .vyom-central-core div.vyom-serif {
   padding: 4.5rem 1.5rem 2.25rem 1.5rem;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .vyom-footer p {
@@ -1041,6 +1143,10 @@ html.dark .vyom-central-core div.vyom-serif {
   width: 100%;
   max-width: 1240px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .vyom-footer-group-title {
@@ -1453,33 +1559,88 @@ html.dark .vyom-mobile-drawer,
 
 .vyom-mobile-node-badge {
   position: relative;
-  width: 2.85rem;
-  height: 2.85rem;
+  width: 2.65rem;
+  height: 2.65rem;
   border-radius: 50%;
-  border-width: 2px;
+  border: 1.5px solid rgba(23, 50, 77, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(23, 50, 77, 0.06);
+  background: linear-gradient(135deg, #FFFFFF 0%, #F4F7F6 100%);
+  color: #17324D;
+  box-shadow: 0 3px 10px rgba(23, 50, 77, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  transition: all 0.25s ease;
+}
+
+.vyom-mobile-node-badge.vyom-icon-story {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0F6F2 100%);
+  border-color: rgba(143, 175, 139, 0.4);
+  color: #244844;
+}
+.vyom-mobile-node-badge.vyom-icon-vmra {
+  background: linear-gradient(135deg, #FFFFFF 0%, #ECF7F6 100%);
+  border-color: rgba(79, 124, 120, 0.38);
+  color: #153D3A;
+}
+.vyom-mobile-node-badge.vyom-icon-reaction {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FCF8EE 100%);
+  border-color: rgba(216, 184, 120, 0.45);
+  color: #8C6524;
+}
+.vyom-mobile-node-badge.vyom-icon-pattern {
+  background: linear-gradient(135deg, #FFFFFF 0%, #EEF2FF 100%);
+  border-color: rgba(99, 102, 241, 0.32);
+  color: #2D2A78;
+}
+.vyom-mobile-node-badge.vyom-icon-attention {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDF2F0 100%);
+  border-color: rgba(224, 122, 95, 0.4);
+  color: #8B301C;
+}
+.vyom-mobile-node-badge.vyom-icon-navigation {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0F7FC 100%);
+  border-color: rgba(56, 189, 248, 0.38);
+  color: #073B57;
+}
+.vyom-mobile-node-badge.vyom-icon-language {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F5F7F2 100%);
+  border-color: rgba(143, 175, 139, 0.4);
+  color: #2E5636;
 }
 
 .dark .vyom-mobile-node-badge {
-  background: #1C352D;
+  background: linear-gradient(135deg, #162B42 0%, #0F2033 100%);
+  color: #F7F4EC;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
 }
+
+.dark .vyom-mobile-node-badge.vyom-icon-story { border-color: rgba(143, 175, 139, 0.45); color: #A7F3D0; }
+.dark .vyom-mobile-node-badge.vyom-icon-vmra { border-color: rgba(94, 234, 212, 0.45); color: #5EEAD4; }
+.dark .vyom-mobile-node-badge.vyom-icon-reaction { border-color: rgba(252, 211, 77, 0.45); color: #FCD34D; }
+.dark .vyom-mobile-node-badge.vyom-icon-pattern { border-color: rgba(165, 180, 252, 0.45); color: #C7D2FE; }
+.dark .vyom-mobile-node-badge.vyom-icon-attention { border-color: rgba(248, 113, 113, 0.45); color: #FCA5A5; }
+.dark .vyom-mobile-node-badge.vyom-icon-navigation { border-color: rgba(56, 189, 248, 0.45); color: #7DD3FC; }
+.dark .vyom-mobile-node-badge.vyom-icon-language { border-color: rgba(216, 184, 120, 0.45); color: #FDE68A; }
 
 .vyom-mobile-node-num {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
-  font-size: 9px;
+  bottom: -3px;
+  right: -3px;
+  font-size: 8px;
   font-weight: 800;
-  padding: 1.5px 4.5px;
-  border-radius: 6px;
+  padding: 1px 3.5px;
+  border-radius: 4px;
   background: #17324D;
   color: #FFFFFF;
   letter-spacing: 0.02em;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .vyom-mobile-node-num {
+  background: #5eead4;
+  color: #102A43;
 }
 
 .vyom-node-status-pill {

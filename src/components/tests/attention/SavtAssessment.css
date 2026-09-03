@@ -8,16 +8,20 @@
 
 .savt-test-page {
     min-height: 100vh;
+    height: auto;
     box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 @media (min-width: 768px) {
     .savt-test-page.story-assessment-container {
-        height: 100vh;
-        max-height: 100vh;
-        overflow: hidden;
-        justify-content: center;
-        padding: 0.65rem 1.25rem;
+        min-height: 100vh;
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+        justify-content: flex-start;
+        padding: 1.5rem 1.25rem 4rem;
     }
 }
 
@@ -371,130 +375,103 @@
     flex-shrink: 0;
 }
 
-.savt-stars-row {
-    display: flex;
-    gap: 4px;
-    justify-content: center;
-    margin-bottom: 0.75rem;
+/* ─── Block-by-Block Vigilance Performance Breakdown ───────── */
+
+.savt-blocks-section {
+    margin-top: 1.25rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid rgba(23, 50, 77, 0.08);
+    width: 100%;
 }
 
-.savt-star {
-    font-size: 1.35rem;
-    color: rgba(23, 50, 77, 0.15);
+.dark .savt-blocks-section,
+[data-theme="dark"] .savt-blocks-section {
+    border-top-color: rgba(255, 255, 255, 0.08);
 }
 
-.savt-star.filled {
-    color: #f59e0b;
-    text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
-}
-
-/* Split Grid for Results */
-.savt-split-results-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.85rem;
-    margin-bottom: 0.85rem;
-}
-
-@media (max-width: 600px) {
-    .savt-split-results-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.savt-summary-box {
-    background: #F7F4EC;
-    border: 1px solid rgba(23, 50, 77, 0.08);
-    border-radius: 12px;
-    padding: 0.65rem;
-    text-align: center;
-    margin-bottom: 0.5rem;
-}
-
-.savt-score-num {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: #17324D;
-    line-height: 1;
-}
-
-.savt-score-tag {
-    font-size: 0.75rem;
-    color: #63788A;
-    text-transform: uppercase;
-    font-weight: 600;
-    margin-top: 0.2rem;
-}
-
-.savt-mini-metrics {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.4rem;
-}
-
-.mini-metric-item {
-    background: #F7F4EC;
-    border: 1px solid rgba(23, 50, 77, 0.06);
-    border-radius: 8px;
-    padding: 0.4rem 0.5rem;
-    text-align: center;
-}
-
-.mini-lbl {
-    display: block;
-    font-size: 0.65rem;
-    color: #63788A;
-}
-
-.mini-val {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #17324D;
-}
-
-.savt-feedback-box {
-    background: rgba(79, 124, 120, 0.08);
-    border: 1px solid rgba(79, 124, 120, 0.2);
-    border-radius: 12px;
-    padding: 0.65rem 0.85rem;
-    margin-bottom: 0.5rem;
-}
-
-.feedback-badge {
-    font-weight: 700;
-    color: #4F7C78;
-    font-size: 0.85rem;
-    margin-bottom: 0.2rem;
-}
-
-.feedback-text {
-    font-size: 0.8rem;
-    color: #40566B;
-    margin: 0;
-    line-height: 1.35;
-}
-
-.savt-errors-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.error-item {
+.savt-blocks-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #F7F4EC;
-    border: 1px solid rgba(23, 50, 77, 0.06);
-    border-radius: 8px;
-    padding: 0.45rem 0.65rem;
-    font-size: 0.775rem;
-    color: #40566B;
+    margin-bottom: 0.85rem;
+    padding: 0 0.25rem;
 }
 
-.error-val {
+.savt-blocks-title {
+    font-size: 0.88rem;
     font-weight: 700;
     color: #17324D;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.dark .savt-blocks-title,
+[data-theme="dark"] .savt-blocks-title {
+    color: #E2ECF2;
+}
+
+.savt-blocks-badge {
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    background: rgba(79, 124, 120, 0.1);
+    color: #4F7C78;
+    border-radius: 9999px;
+}
+
+.dark .savt-blocks-badge,
+[data-theme="dark"] .savt-blocks-badge {
+    background: rgba(0, 201, 183, 0.15);
+    color: #00C9B7;
+}
+
+.savt-blocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.savt-block-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 0.4rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.1);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.dark .savt-block-chip,
+[data-theme="dark"] .savt-block-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.block-chip-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #63788A;
+    text-transform: uppercase;
+    margin-bottom: 0.15rem;
+}
+
+.dark .block-chip-tag,
+[data-theme="dark"] .block-chip-tag {
+    color: #A0B0BA;
+}
+
+.block-chip-val {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.dark .block-chip-val,
+[data-theme="dark"] .block-chip-val {
+    color: #34d399;
 }
 
 /* ==========================================================================
