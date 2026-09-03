@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PageWrapper } from "../../layout/PageWrapper";
 import { Button, Card, Icon } from "../../common";
+import { useAuth } from "../../../contexts/AuthContext";
 import { STORIES, LANGUAGE_NAMES, getRandomStory } from "../../../data/stories/storyData";
 import type { Story, SupportedLanguage, ComprehensionResponse, StoryAssessmentResult } from "../../../types/storyTypes";
 import { StoryPlayer } from "./StoryPlayer";
@@ -23,6 +24,7 @@ type Phase =
     | "results";
 
 export function StoryAssessment() {
+    const { isAuthenticated } = useAuth();
     const { saveResult } = useStoryResults();
 
     const [phase, setPhase] = useState<Phase>("instructions");
@@ -33,6 +35,7 @@ export function StoryAssessment() {
 
     // 1. Language Selection
     const handleSelectLanguage = (lang: SupportedLanguage) => {
+        if (!isAuthenticated) return;
         setSelectedLanguage(lang);
         const randomStory = getRandomStory();
         setStory(randomStory);

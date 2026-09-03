@@ -73,20 +73,23 @@ export function UserMenu() {
                         {isAdmin && <span className="admin-badge">{t('common.admin')}</span>}
                     </div>
                     <div className="menu-divider" />
-                    <Link to="/dashboard" className="menu-item" onClick={() => setIsOpen(false)}>
-                        {t('common.dashboard')}
+                    <Link to="/tests" className="menu-item" onClick={() => setIsOpen(false)}>
+                        🧭 Cognitive Journey
                     </Link>
-                    <Link to="/ml-playground" className="menu-item" onClick={() => setIsOpen(false)}>
-                        ⚡ ML Playground
+                    <Link to="/dashboard" className="menu-item" onClick={() => setIsOpen(false)}>
+                        📊 {t('common.dashboard')}
+                    </Link>
+                    <Link to="/progress" className="menu-item" onClick={() => setIsOpen(false)}>
+                        🌱 Progress & Growth
                     </Link>
                     <Link to="/settings" className="menu-item" onClick={() => setIsOpen(false)}>
-                        {t('common.settings')}
+                        ⚙️ {t('common.settings')}
                     </Link>
                     {isAdmin && (
                         <>
                             <div className="menu-divider" />
                             <Link to="/admin" className="menu-item admin-link" onClick={() => setIsOpen(false)}>
-                                {t('common.adminPanel')}
+                                🛡️ {t('common.adminPanel')}
                             </Link>
                         </>
                     )}

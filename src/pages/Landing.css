@@ -94,7 +94,11 @@
     width: 60%;
     height: 60%;
     background: radial-gradient(circle, rgba(45, 212, 191, 0.12) 0%, transparent 70%);
-    animation: float 25s ease-in-out infinite;
+    animation: float 25s ease-in-out infinite, spin 30s linear infinite;
+}
+/* Dark mode pastel fill */
+.dark .bg-orb-1 {
+    background: radial-gradient(circle, rgba(255, 182, 193, 0.15) 0%, transparent 70%); /* Soft pastel pink */
 }
 
 .bg-orb-2 {
@@ -104,6 +108,10 @@
     height: 50%;
     background: radial-gradient(circle, rgba(129, 140, 248, 0.1) 0%, transparent 70%);
     animation: float 30s ease-in-out infinite reverse;
+}
+/* Dark mode pastel fill */
+.dark .bg-orb-2 {
+    background: radial-gradient(circle, rgba(173, 216, 230, 0.15) 0%, transparent 70%); /* Soft pastel blue */
 }
 
 .bg-noise {
@@ -190,6 +198,15 @@
     }
 }
 
+/* Generic float animation used by background orbs */
+@keyframes float {
+    0% { transform: translateY(0) translateX(0) rotate(0deg); }
+    25% { transform: translateY(-10px) translateX(5px) rotate(5deg); }
+    50% { transform: translateY(0) translateX(10px) rotate(0deg); }
+    75% { transform: translateY(10px) translateX(-5px) rotate(-5deg); }
+    100% { transform: translateY(0) translateX(0) rotate(0deg); }
+}
+
 /* ===== BRAND TYPOGRAPHY ===== */
 
 .brand-name {
@@ -206,7 +223,7 @@
 }
 
 .hero-content {
-    text-align: left;
+    text-align: center;
 }
 
 .hero-badge {
@@ -329,7 +346,7 @@
 
 /* Disclaimer Card */
 .disclaimer-card {
-    text-align: left;
+    text-align: center;
     width: 100%;
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
@@ -399,9 +416,9 @@
 .hero-actions {
     display: flex;
     gap: var(--spacing-md);
-    justify-content: flex-start;
+    justify-content: center;
     flex-wrap: wrap;
-    margin-top: var(--spacing-lg);
+    margin-top: var(--spacing-3xl);
 }
 
 /* ===== Section Styles ===== */

@@ -48,10 +48,12 @@ const MODULE_ICONS: Record<string, string> = {
  */
 function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName, unit }: any) {
     const [hoverMs, setHoverMs] = useState(0);
+    const [manualUnlocked, setManualUnlocked] = useState(false);
 
     useEffect(() => {
         if (!active) {
             setHoverMs(0);
+            setManualUnlocked(false);
             return;
         }
 
@@ -69,7 +71,7 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
     const rawResult = dataPoint.rawResult;
     const biomarkerDefs = MODULE_KEY_BIOMARKERS[moduleKey] || [];
 
-    const isUnlocked = hoverMs >= UNLOCK_THRESHOLD_MS;
+    const isUnlocked = manualUnlocked || hoverMs >= UNLOCK_THRESHOLD_MS;
     const progressPercent = Math.min((hoverMs / UNLOCK_THRESHOLD_MS) * 100, 100);
     const secondsLeft = Math.max(0, ((UNLOCK_THRESHOLD_MS - hoverMs) / 1000)).toFixed(1);
 
@@ -101,16 +103,16 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
 
     return (
         <div style={{
-            backgroundColor: '#0f172a',
-            border: isUnlocked ? '1px solid #38bdf8' : '1px solid #334155',
+            backgroundColor: 'var(--dv2-card-bg)',
+            border: isUnlocked ? '1px solid #38bdf8' : '1px solid var(--dv2-card-border)',
             borderRadius: '12px',
             padding: '0.875rem 1rem',
-            color: '#f8fafc',
+            color: 'var(--dv2-text)',
             boxShadow: isUnlocked
                 ? '0 12px 30px -5px rgba(56, 189, 248, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.5)'
-                : '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
-            width: isUnlocked ? '340px' : '260px',
-            maxWidth: '360px',
+                : 'var(--dv2-card-shadow)',
+            width: isUnlocked ? 'min(340px, calc(100vw - 48px))' : 'min(260px, calc(100vw - 48px))',
+            maxWidth: 'calc(100vw - 32px)',
             fontSize: '0.8125rem',
             lineHeight: 1.4,
             backdropFilter: 'blur(10px)',
@@ -118,36 +120,53 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
             zIndex: 1000,
         }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #334155', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--dv2-card-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
                 <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.875rem', color: isUnlocked ? '#38bdf8' : '#e2e8f0' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.875rem', color: isUnlocked ? '#38bdf8' : 'var(--dv2-text)' }}>
                         {moduleName}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)' }}>
                         {dataPoint.sessionLabel} • {dataPoint.date}
                     </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '1.125rem', fontWeight: 800, color: '#f8fafc' }}>
-                        {dataPoint.score}{unit}
+                    <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--dv2-text)' }}>
+                        {typeof dataPoint.score === 'number' ? Math.round(dataPoint.score) : dataPoint.score} {unit}
                     </span>
                 </div>
             </div>
 
-            {/* 3-second Hover Countdown Bar */}
+            {/* 3-second Hover Countdown Bar / Touch Unlock */}
             <div style={{ marginBottom: isUnlocked ? '0.625rem' : '0.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.6875rem', color: isUnlocked ? '#38bdf8' : '#94a3b8', marginBottom: '0.35rem' }}>
                     <span style={{ fontWeight: 600 }}>
                         {isUnlocked ? '🔬 Deep Telemetry Unlocked' : `⏱️ Hold ${secondsLeft}s for Deep Biomarkers`}
                     </span>
-                    <span style={{ fontFamily: 'monospace' }}>
-                        {isUnlocked ? '3.0s' : `${(hoverMs / 1000).toFixed(1)}s / 3.0s`}
-                    </span>
+                    {!isUnlocked && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setManualUnlocked(true);
+                            }}
+                            style={{
+                                background: 'rgba(56, 189, 248, 0.15)',
+                                color: '#38bdf8',
+                                border: '1px solid rgba(56, 189, 248, 0.3)',
+                                borderRadius: '4px',
+                                padding: '0.1rem 0.35rem',
+                                fontSize: '0.625rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Tap to Unlock
+                        </button>
+                    )}
                 </div>
-                <div style={{ height: '4px', width: '100%', background: '#1e293b', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ height: '4px', width: '100%', background: 'var(--dv2-card-border)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{
                         height: '100%',
-                        width: `${progressPercent}%`,
+                        width: isUnlocked ? '100%' : `${progressPercent}%`,
                         background: isUnlocked ? 'linear-gradient(90deg, #38bdf8, #10b981)' : '#38bdf8',
                         transition: 'width 0.1s linear',
                     }} />
@@ -156,10 +175,10 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
 
             {/* Deep Telemetry Section (Revealed strictly AFTER 3 seconds) */}
             {isUnlocked && (
-                <div style={{ marginTop: '0.625rem', paddingTop: '0.5rem', borderTop: '1px solid #1e293b', animation: 'fadeIn 0.3s ease' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', marginBottom: '0.45rem' }}>
+                <div style={{ marginTop: '0.625rem', paddingTop: '0.5rem', borderTop: '1px solid var(--dv2-card-border)', animation: 'fadeIn 0.3s ease' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--dv2-muted)', marginBottom: '0.45rem' }}>
                         <span>Extracted Biomarkers</span>
-                        <span style={{ color: '#38bdf8', fontSize: '0.625rem' }}>{extractedBiomarkers.length} METRICS</span>
+                        <span style={{ color: '#06b6d4', fontSize: '0.625rem' }}>{extractedBiomarkers.length} METRICS</span>
                     </div>
 
                     {extractedBiomarkers.length > 0 ? (
@@ -167,12 +186,12 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
                             {extractedBiomarkers.map((bm: any, idx: number) => {
                                 const statusColor = bm.status === 'concern' ? '#ef4444' : bm.status === 'watch' ? '#fbbf24' : '#10b981';
                                 return (
-                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', padding: '0.2rem 0', borderBottom: '1px solid rgba(51, 65, 85, 0.4)' }}>
-                                        <span style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', padding: '0.25rem 0', borderBottom: '1px solid var(--dv2-card-border)' }}>
+                                        <span style={{ color: 'var(--dv2-text)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
                                             {bm.name}
                                         </span>
-                                        <span style={{ fontWeight: 700, color: '#f1f5f9' }}>
+                                        <span style={{ fontWeight: 700, fontFamily: 'monospace', color: 'var(--dv2-text)' }}>
                                             {bm.value}{bm.unit ? ` ${bm.unit}` : ''}
                                         </span>
                                     </div>
@@ -180,7 +199,7 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
                             })}
                         </div>
                     ) : (
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)' }}>
                             No granular sub-biomarkers recorded for this session.
                         </div>
                     )}
@@ -188,7 +207,7 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
             )}
 
             {/* Tip */}
-            <div style={{ marginTop: '0.5rem', paddingTop: '0.375rem', borderTop: '1px solid #1e293b', fontSize: '0.6875rem', color: '#64748b', textAlign: 'center' }}>
+            <div style={{ marginTop: '0.5rem', paddingTop: '0.375rem', borderTop: '1px solid var(--dv2-card-border)', fontSize: '0.6875rem', color: 'var(--dv2-muted)', textAlign: 'center' }}>
                 💡 Click point to open full side drawer
             </div>
         </div>
@@ -271,7 +290,7 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
                                                 r: 8,
                                                 stroke: trend.chartColor,
                                                 strokeWidth: 2,
-                                                fill: '#0f172a',
+                                                fill: 'var(--dv2-card-bg)',
                                                 cursor: 'pointer',
                                                 onClick: (_e: any, payload: any) => {
                                                     if (payload?.payload) {
@@ -294,14 +313,14 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
                                     flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    background: 'rgba(15, 23, 42, 0.3)',
+                                    background: 'transparent',
                                     borderRadius: '8px',
                                     border: '1px dashed var(--dv2-card-border)',
                                     padding: '1.5rem',
                                     textAlign: 'center',
                                     gap: '0.75rem'
                                 }}>
-                                    <div style={{ fontSize: '1.75rem' }}>{icon}</div>
+                                    <div style={{ fontSize: '1.75rem', opacity: 0.6 }}>{icon}</div>
                                     <div>
                                         <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--dv2-text)' }}>
                                             No sessions recorded yet
@@ -316,21 +335,27 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
                                             display: 'inline-flex',
                                             alignItems: 'center',
                                             gap: '0.35rem',
-                                            padding: '0.4rem 0.85rem',
+                                            padding: '0.35rem 0.85rem',
                                             borderRadius: '8px',
-                                            background: trend.chartColor,
-                                            color: '#0f172a',
+                                            background: 'transparent',
+                                            color: 'var(--dv2-teal)',
+                                            border: '1px solid var(--dv2-teal)',
                                             fontSize: '0.75rem',
-                                            fontWeight: 700,
+                                            fontWeight: 600,
                                             textDecoration: 'none',
                                             marginTop: '0.25rem',
-                                            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                                            transition: 'transform 0.15s ease',
+                                            transition: 'all 0.15s ease',
                                         }}
-                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = 'var(--dv2-teal)';
+                                            e.currentTarget.style.color = '#ffffff';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = 'transparent';
+                                            e.currentTarget.style.color = 'var(--dv2-teal)';
+                                        }}
                                     >
-                                        🧪 Start {trend.moduleName}
+                                        Start Assessment ➔
                                     </a>
                                 </div>
                             )}

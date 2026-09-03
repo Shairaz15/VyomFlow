@@ -46,7 +46,7 @@ const COLOR_TINTS: Record<string, { bg: string; border: string }> = {
 
 export function SavtAssessment() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const { saveResult } = useAttentionResults();
     const config = DEFAULT_SAVT_CONFIG;
 
@@ -196,6 +196,7 @@ export function SavtAssessment() {
     }, [clearAllTimers, hideStimulusFromScreen, runPracticeTrial]);
 
     const startPractice = useCallback(() => {
+        if (!isAuthenticated) return;
         clearAllTimers();
         const target = pickSessionTarget();
         setSessionTarget(target);
@@ -213,7 +214,7 @@ export function SavtAssessment() {
         setTimeout(() => {
             runPracticeTrial(seq, 0, target);
         }, 100);
-    }, [config, clearAllTimers, runPracticeTrial]);
+    }, [config, isAuthenticated, clearAllTimers, runPracticeTrial]);
 
     // ─── Test Logic ───────────────────────────────────────────────
 

@@ -91,12 +91,24 @@ export interface AssessmentModuleViewModel {
     sessionCount: number;
     lastCompletedDate: string | null;
     route: string;
+    domainName: string;
+    accentColor: string;
+    estimatedDuration: string;
+    scoreQuality?: 'optimal' | 'good' | 'monitor' | 'alert';
+    delta?: number | null;
 }
 
 // ─── Section 7: Explainability ──────────────────────────────────
+export interface ExplainabilityFactor {
+    factor: string;
+    title: string;
+    description: string;
+    impactLevel: 'high' | 'moderate' | 'mild';
+}
+
 export interface ExplainabilityViewModel {
-    positive: { factor: string; description: string }[];
-    negative: { factor: string; description: string }[];
+    positive: ExplainabilityFactor[];
+    negative: ExplainabilityFactor[];
 }
 
 // ─── Section 8: Longitudinal Summary ────────────────────────────
@@ -179,7 +191,7 @@ export interface DashboardViewModel {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CONSTANTS & MAPS
+// CONSTANTS & MODULE METADATA
 // ═══════════════════════════════════════════════════════════════════
 
 const DOMAIN_META: { key: string; name: string; icon: string }[] = [
@@ -191,7 +203,7 @@ const DOMAIN_META: { key: string; name: string; icon: string }[] = [
     { key: 'attention', name: 'Attention', icon: '🎯' },
 ];
 
-const MODULE_META: {
+export const MODULE_META: {
     key: string;
     name: string;
     icon: string;
@@ -209,26 +221,47 @@ const MODULE_META: {
     { key: 'navigation', name: 'Immersive Navigation', icon: '🗺️', chartColor: '#06b6d4', unit: '/100', domain: [0, 100], route: '/test/navigation' },
 ];
 
-/** Translates raw biomarker attributions into human-readable descriptions */
-const BIOMARKER_TRANSLATIONS: Record<string, { positive: string; negative: string; domain: string }> = {
-    vmra_recallAccuracy: { positive: 'Strong visual memory recall', negative: 'Reduced visual memory recall', domain: 'Memory' },
-    vmra_delayedRecallAccuracy: { positive: 'Good delayed recall retention', negative: 'Reduced delayed recall', domain: 'Memory' },
-    vmra_forgettingCurveSlope: { positive: 'Slow forgetting rate', negative: 'Rapid forgetting rate', domain: 'Memory' },
-    vmra_intrusionErrors: { positive: 'Low intrusion errors', negative: 'Elevated intrusion errors', domain: 'Memory' },
-    story_recallAccuracy: { positive: 'Strong story recall', negative: 'Reduced story recall', domain: 'Memory' },
-    story_infoUnitsRecalled: { positive: 'Good detail retention', negative: 'Missed key story details', domain: 'Memory' },
-    lang_cognitiveSpeechIndex: { positive: 'Stable speech fluency', negative: 'Reduced speech fluency', domain: 'Language' },
-    lang_lexicalDiversity: { positive: 'Rich vocabulary usage', negative: 'Limited vocabulary usage', domain: 'Language' },
-    lang_hesitationIndex: { positive: 'Fluent speech production', negative: 'Increased speech hesitations', domain: 'Language' },
-    reaction_meanLatencyMs: { positive: 'Fast reaction time', negative: 'Slower reaction time', domain: 'Speed' },
-    reaction_vigilanceDecrement: { positive: 'Sustained attention', negative: 'Declining attention over time', domain: 'Attention' },
-    savt_compositeScore: { positive: 'High sustained attention', negative: 'Reduced sustained attention', domain: 'Attention' },
-    savt_dPrime: { positive: 'High target sensitivity', negative: 'Reduced signal detection', domain: 'Attention' },
-    pattern_maxLevelReached: { positive: 'Strong working memory span', negative: 'Reduced working memory span', domain: 'Executive' },
-    pattern_memoryLoadTolerance: { positive: 'Good cognitive load tolerance', negative: 'Reduced cognitive load capacity', domain: 'Executive' },
-    nav_navigationAccuracy: { positive: 'Accurate route memory', negative: 'Reduced route memory', domain: 'Spatial' },
-    nav_landmarkRecognitionAccuracy: { positive: 'Good landmark recognition', negative: 'Reduced landmark recognition', domain: 'Spatial' },
-    nav_spatialMemoryIndex: { positive: 'Strong spatial awareness', negative: 'Reduced spatial awareness', domain: 'Spatial' },
+/** Translates raw biomarker attributions into clean, human-readable clinical descriptions */
+const BIOMARKER_TRANSLATIONS: Record<string, { title: string; positive: string; negative: string; domain: string }> = {
+    // Language & Speech
+    lang_pausedurationavgms: { title: 'Speech Pause Duration', positive: 'Natural conversational pace with minimal pauses', negative: 'Elevated pause duration during spontaneous speech', domain: 'Language' },
+    lang_semanticcoherence: { title: 'Semantic Coherence', positive: 'High narrative coherence and logical structure', negative: 'Reduced semantic coherence in speech flow', domain: 'Language' },
+    lang_cognitivespeechindex: { title: 'Speech Fluency Index', positive: 'Stable speech fluency and articulation', negative: 'Reduced speech fluency index', domain: 'Language' },
+    lang_lexicaldiversity: { title: 'Lexical Diversity', positive: 'Rich vocabulary and varied word choice', negative: 'Limited vocabulary usage during recall', domain: 'Language' },
+    lang_hesitationindex: { title: 'Speech Hesitations', positive: 'Fluent speech production with few hesitations', negative: 'Increased speech hesitations and filler pauses', domain: 'Language' },
+    lang_wordsperminute: { title: 'Speech Tempo', positive: 'Healthy articulation rate and verbal tempo', negative: 'Slower speech rate during verbal recall', domain: 'Language' },
+
+    // Pattern Working Memory
+    pattern_digitspanforward: { title: 'Forward Memory Span', positive: 'Strong sequential pattern retention', negative: 'Reduced forward sequence capacity', domain: 'Executive' },
+    pattern_digitspanbackward: { title: 'Reverse Working Memory', positive: 'High mental flexibility in sequence manipulation', negative: 'Reduced reverse working memory manipulation', domain: 'Executive' },
+    pattern_maxlevelreached: { title: 'Working Memory Span', positive: 'Strong working memory span and capacity', negative: 'Reduced working memory span under load', domain: 'Executive' },
+    pattern_memoryloadtolerance: { title: 'Cognitive Load Tolerance', positive: 'High cognitive load tolerance', negative: 'Reduced cognitive load capacity', domain: 'Executive' },
+    pattern_accuracy: { title: 'Pattern Recognition', positive: 'High pattern recognition precision', negative: 'Reduced pattern recognition accuracy', domain: 'Executive' },
+
+    // Visual Memory (VMRA)
+    vmra_recallaccuracy: { title: 'Visual Memory Recall', positive: 'Strong visual memory recall and recognition', negative: 'Reduced visual memory recall', domain: 'Memory' },
+    vmra_delayedrecallaccuracy: { title: 'Delayed Retention', positive: 'Good delayed recall retention over time', negative: 'Reduced delayed recall retention', domain: 'Memory' },
+    vmra_forgettingcurveslope: { title: 'Memory Decay Rate', positive: 'Stable retention with slow forgetting rate', negative: 'Accelerated forgetting rate over time', domain: 'Memory' },
+    vmra_intrusionerrors: { title: 'Intrusion Errors', positive: 'Low intrusion errors and high accuracy', negative: 'Elevated false-positive intrusion errors', domain: 'Memory' },
+
+    // Story Recall
+    story_recallaccuracy: { title: 'Story Recall', positive: 'Accurate narrative recall and detail retention', negative: 'Reduced story recall accuracy', domain: 'Memory' },
+    story_infounitsrecalled: { title: 'Narrative Detail Retention', positive: 'Good detail retention across key story units', negative: 'Missed key story detail units', domain: 'Memory' },
+
+    // Reaction Time
+    reaction_meanlatencyms: { title: 'Processing Speed', positive: 'Fast, consistent psychomotor reaction time', negative: 'Slower reaction time and response latency', domain: 'Speed' },
+    reaction_vigilancedecrement: { title: 'Vigilance Consistency', positive: 'Sustained focus maintained across trials', negative: 'Declining attention vigilance over time', domain: 'Attention' },
+    reaction_lapses: { title: 'Attention Lapses', positive: 'Zero attention lapses recorded', negative: 'Transient attention lapses observed', domain: 'Speed' },
+
+    // Attention (SAVT)
+    savt_compositescore: { title: 'Sustained Attention', positive: 'High sustained attention across full duration', negative: 'Reduced sustained attention composite', domain: 'Attention' },
+    savt_dprime: { title: 'Target Sensitivity (d′)', positive: 'High target sensitivity and signal detection', negative: 'Reduced target sensitivity and signal detection', domain: 'Attention' },
+
+    // Spatial Navigation
+    nav_navigationaccuracy: { title: 'Route Memory', positive: 'Accurate route memory and spatial orientation', negative: 'Reduced route memory and orientation', domain: 'Spatial' },
+    nav_landmarkrecognitionaccuracy: { title: 'Landmark Recognition', positive: 'Strong landmark identification and recall', negative: 'Reduced landmark recognition', domain: 'Spatial' },
+    nav_spatialmemoryindex: { title: 'Spatial Memory', positive: 'Strong spatial awareness and heading accuracy', negative: 'Reduced spatial awareness during wayfinding', domain: 'Spatial' },
+    nav_excesspathratio: { title: 'Navigation Efficiency', positive: 'Direct, efficient path to targets', negative: 'Excess route deviation during navigation', domain: 'Spatial' },
 };
 
 /** Top 5 biomarkers per module for the clinician report drill-down */
@@ -297,12 +330,14 @@ function extractModuleScore(moduleKey: string, result: any): number | null {
                 : (result.accuracy != null ? Math.round(result.accuracy * 100) : null);
         case 'story':
             return result.storyRecallScore != null
-                ? result.storyRecallScore
+                ? Math.round(result.storyRecallScore)
                 : (result.biomarkers?.memory?.recallAccuracy != null ? Math.round(result.biomarkers.memory.recallAccuracy * 100) : null);
-        case 'language':
-            return result.derivedFeatures?.cognitiveSpeechIndex
+        case 'language': {
+            const rawLang = result.derivedFeatures?.cognitiveSpeechIndex
                 ?? result.derivedFeatures?.fluencyIndex
                 ?? null;
+            return rawLang != null ? Math.round(rawLang) : null;
+        }
         case 'pattern':
             return result.metrics?.maxLevelReached != null
                 ? Math.min(Math.round(result.metrics.maxLevelReached * 10), 100)
@@ -480,40 +515,114 @@ function buildChanges(domainScores: DomainScoreViewModel[]): ChangesViewModel {
     return { improved, declined, stable };
 }
 
+function cleanFeatureTitle(raw: string): string {
+    if (!raw) return 'Cognitive Biomarker';
+    // Remove module prefixes e.g. "lang.", "pattern ", "vmra_"
+    let clean = raw.replace(/^(lang|pattern|vmra|story|nav|reaction|savt|memory)[\._\s:]+/i, '');
+    // Remove debug numbers or trailing status e.g. ": 1269 (Decreased score)"
+    clean = clean.replace(/:\s*\d+(\.\d+)?/g, '').replace(/\((decreased|increased|stable)[^\)]*\)/gi, '').trim();
+    // Convert camelCase to Words
+    clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
+    
+    const lower = clean.toLowerCase();
+    if (lower.includes('pause duration') || lower.includes('pauseduration')) return 'Speech Pause Duration';
+    if (lower.includes('semantic coherence') || lower.includes('semanticcoherence')) return 'Semantic Coherence';
+    if (lower.includes('digit span forward') || lower.includes('digitspanforward')) return 'Forward Memory Span';
+    if (lower.includes('digit span backward') || lower.includes('digitspanbackward')) return 'Reverse Working Memory';
+    if (lower.includes('max level') || lower.includes('maxlevel')) return 'Working Memory Span';
+    if (lower.includes('words per minute') || lower.includes('wordsperminute')) return 'Speech Rate';
+    if (lower.includes('hesitation index') || lower.includes('hesitationindex')) return 'Speech Hesitations';
+    if (lower.includes('mean latency') || lower.includes('meanlatencyms')) return 'Processing Speed';
+    if (lower.includes('vigilance') || lower.includes('vigilancedecrement')) return 'Vigilance Consistency';
+    if (lower.includes('navigation accuracy') || lower.includes('navigationaccuracy')) return 'Route Memory';
+    if (lower.includes('excess path') || lower.includes('excesspathratio')) return 'Navigation Efficiency';
+    if (lower.includes('recall accuracy') || lower.includes('recallaccuracy')) return 'Memory Recall Accuracy';
+    if (lower.includes('delayed recall') || lower.includes('delayedrecallaccuracy')) return 'Delayed Retention';
+
+    return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
+function cleanFeatureDescription(desc: string, impact: 'protective' | 'risk' | 'neutral' | string): string {
+    if (!desc) {
+        return impact === 'protective' ? 'Performance meets or exceeds expected normative range' : 'Metric indicates area for longitudinal monitoring';
+    }
+    // If it looks like raw debug text: "lang pauseDurationAvgMs: 1269 (Decreased score)"
+    if (desc.includes(':') || desc.toLowerCase().includes('score') || desc.toLowerCase().includes('decreased') || desc.toLowerCase().includes('increased')) {
+        const title = cleanFeatureTitle(desc);
+        return impact === 'protective'
+            ? `Optimal performance recorded in ${title.toLowerCase()}`
+            : `Slight variance recorded in ${title.toLowerCase()}`;
+    }
+    return desc;
+}
+
 function buildExplainability(prediction: CognitiveModelPrediction | null): ExplainabilityViewModel {
     if (!prediction || !prediction.topAttributions || prediction.topAttributions.length === 0) {
         return { positive: [], negative: [] };
     }
 
-    const positive: { factor: string; description: string }[] = [];
-    const negative: { factor: string; description: string }[] = [];
+    const positive: ExplainabilityFactor[] = [];
+    const negative: ExplainabilityFactor[] = [];
 
-    for (const attr of prediction.topAttributions) {
-        // Try to find a human-readable translation
-        const featureKey = attr.featureName.replace(/\./g, '_');
-        const translation = BIOMARKER_TRANSLATIONS[featureKey];
+    prediction.topAttributions.forEach((attr, idx) => {
+        const normKey = attr.featureName.toLowerCase().replace(/[\s\.]+/g, '_');
+        const translation = BIOMARKER_TRANSLATIONS[normKey] ||
+            Object.entries(BIOMARKER_TRANSLATIONS).find(([k]) => normKey.includes(k) || k.includes(normKey))?.[1];
+
+        const impactLevel: 'high' | 'moderate' | 'mild' = idx < 2 ? 'high' : (idx < 4 ? 'moderate' : 'mild');
 
         if (translation) {
             if (attr.impact === 'protective') {
-                positive.push({ factor: attr.domain, description: translation.positive });
+                positive.push({
+                    factor: translation.domain || attr.domain || 'Cognitive',
+                    title: translation.title,
+                    description: translation.positive,
+                    impactLevel,
+                });
             } else if (attr.impact === 'risk') {
-                negative.push({ factor: attr.domain, description: translation.negative });
+                negative.push({
+                    factor: translation.domain || attr.domain || 'Cognitive',
+                    title: translation.title,
+                    description: translation.negative,
+                    impactLevel,
+                });
             }
         } else {
-            // Use the attribution's own description
+            const title = cleanFeatureTitle(attr.featureName);
+            const desc = cleanFeatureDescription(attr.description, attr.impact);
             if (attr.impact === 'protective') {
-                positive.push({ factor: attr.domain, description: attr.description });
+                positive.push({
+                    factor: attr.domain || 'Cognitive',
+                    title,
+                    description: desc,
+                    impactLevel,
+                });
             } else if (attr.impact === 'risk') {
-                negative.push({ factor: attr.domain, description: attr.description });
+                negative.push({
+                    factor: attr.domain || 'Cognitive',
+                    title,
+                    description: desc,
+                    impactLevel,
+                });
             }
         }
-    }
+    });
 
     return {
         positive: positive.slice(0, 5),
         negative: negative.slice(0, 5),
     };
 }
+
+const MODULE_ENRICHMENT: Record<string, { domainName: string; duration: string }> = {
+    reaction: { domainName: 'Processing Speed', duration: '~2 mins' },
+    attention: { domainName: 'Attention & Vigilance', duration: '~3 mins' },
+    vmra: { domainName: 'Visual Episodic Memory', duration: '~4 mins' },
+    story: { domainName: 'Verbal Recall & Narrative', duration: '~4 mins' },
+    language: { domainName: 'Acoustics & Fluency', duration: '~3 mins' },
+    pattern: { domainName: 'Executive Function', duration: '~3 mins' },
+    navigation: { domainName: 'Visuospatial Wayfinding', duration: '~5 mins' },
+};
 
 function buildAssessmentModules(rawData: RawDashboardData): AssessmentModuleViewModel[] {
     const moduleDataMap: Record<string, any[]> = {
@@ -531,10 +640,31 @@ function buildAssessmentModules(rawData: RawDashboardData): AssessmentModuleView
         const results = moduleDataMap[meta.key] || [];
         const isCompleted = results.length > 0;
         const latest = isCompleted ? results[results.length - 1] : null;
+        const first = isCompleted ? results[0] : null;
         const score = latest ? extractModuleScore(meta.key, latest) : null;
+        const firstScore = first ? extractModuleScore(meta.key, first) : null;
+        const delta = (results.length > 1 && score != null && firstScore != null)
+            ? (meta.key === 'reaction' ? firstScore - score : score - firstScore)
+            : null;
+
         const lastDate = latest
             ? new Date(latest.timestamp).toLocaleDateString('en-GB')
             : null;
+
+        const enrichment = MODULE_ENRICHMENT[meta.key] || {
+            domainName: 'Cognitive Domain',
+            duration: '~3 mins',
+        };
+
+        // Classify score quality
+        let scoreQuality: AssessmentModuleViewModel['scoreQuality'] = undefined;
+        if (score != null) {
+            if (meta.key === 'reaction') {
+                scoreQuality = score <= 280 ? 'optimal' : (score <= 400 ? 'good' : (score <= 550 ? 'monitor' : 'alert'));
+            } else {
+                scoreQuality = score >= 80 ? 'optimal' : (score >= 65 ? 'good' : (score >= 50 ? 'monitor' : 'alert'));
+            }
+        }
 
         return {
             key: meta.key,
@@ -546,6 +676,11 @@ function buildAssessmentModules(rawData: RawDashboardData): AssessmentModuleView
             sessionCount: results.length,
             lastCompletedDate: lastDate,
             route: meta.route,
+            domainName: enrichment.domainName,
+            accentColor: meta.chartColor,
+            estimatedDuration: enrichment.duration,
+            scoreQuality,
+            delta,
         };
     });
 }

@@ -22,6 +22,7 @@ import {
     RecommendationCard,
     BiomarkerDrawer,
     SimulationControls,
+    ClinicianReportModal,
 } from '../components/dashboard-v3';
 import './DashboardV3.css';
 
@@ -39,7 +40,7 @@ export function DashboardV3() {
     }>({ isOpen: false, moduleName: '', sessionDate: '', rawResult: null, moduleKey: '' });
 
     // Clinician report modal
-    const [, setIsReportOpen] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
 
     // Simulation controls (dev/demo toggle)
     const [showSimControls, setShowSimControls] = useState(false);
@@ -97,14 +98,32 @@ export function DashboardV3() {
                         <p>Your personalized multi-modal digital biomarker profile</p>
                     </div>
                     <div className="dv2-header-actions">
+                        <button
+                            onClick={() => setIsReportOpen(true)}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '8px',
+                                fontWeight: 600,
+                                fontSize: '0.8125rem',
+                                background: 'transparent',
+                                border: '1px solid var(--dv2-card-border)',
+                                color: 'var(--dv2-text)',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Export Clinical Report
+                        </button>
                         <button onClick={() => setShowSimControls(!showSimControls)}>
-                            🧪 {showSimControls ? 'Hide Data Controls' : 'Mock & Data Controls'}
+                            {showSimControls ? 'Hide Controls' : 'Data Controls'}
                         </button>
                         <button
                             className="dv2-btn-primary"
                             onClick={() => window.location.href = '/tests'}
                         >
-                            🧪 Take Assessment
+                            Take Assessment
                         </button>
                     </div>
                 </header>
@@ -220,6 +239,13 @@ export function DashboardV3() {
                     moduleKey={drawerData.moduleKey}
                     sessionDate={drawerData.sessionDate}
                     rawResult={drawerData.rawResult}
+                />
+
+                {/* Clinician Diagnostic Report & Print Modal */}
+                <ClinicianReportModal
+                    isOpen={isReportOpen}
+                    onClose={() => setIsReportOpen(false)}
+                    vm={vm}
                 />
             </div>
         </PageWrapper>

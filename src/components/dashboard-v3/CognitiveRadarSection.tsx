@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
     CognitiveRadarChart,
     DOMAIN_LABELS,
     DEFAULT_NORMATIVE,
     type CognitiveRadarDomainScores,
+    type RadarGeometryMode,
 } from './CognitiveRadarChart';
+import { interpolateDomainScores } from './radarMath';
 import type { RadarTimelinePoint } from '../../services/dashboardViewModel';
 
 export interface CognitiveRadarSectionProps {
@@ -27,415 +29,438 @@ export function CognitiveRadarSection({
     const [showCurrent, setShowCurrent] = useState(true);
     const [showBaseline, setShowBaseline] = useState(true);
     const [showNormative, setShowNormative] = useState(true);
+    const [geometryMode, setGeometryMode] = useState<RadarGeometryMode>('organic');
 
-    // Time-Lapse Playback & Scrubber State
+    // 60 FPS Continuous Timeline & Playhead State
     const totalSessions = timeline.length > 0 ? timeline.length : 1;
-    const [selectedIdx, setSelectedIdx] = useState<number>(totalSessions - 1);
+    const [playhead, setPlayhead] = useState<number>(totalSessions - 1);
     const [isPlaying, setIsPlaying] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2>(1);
 
-    // Keep selected index in bounds if timeline updates
+    // Keep playhead in bounds if timeline updates
     useEffect(() => {
-        if (selectedIdx >= totalSessions) {
-            setSelectedIdx(Math.max(0, totalSessions - 1));
+        if (playhead >= totalSessions) {
+            setPlayhead(Math.max(0, totalSessions - 1));
         }
-    }, [totalSessions, selectedIdx]);
-
-    // Active session scores being inspected
-    const activeTimelinePoint = timeline.length > 0 ? timeline[selectedIdx] : null;
-    const activeScores: CognitiveRadarDomainScores = activeTimelinePoint
-        ? activeTimelinePoint.scores
-        : scores;
+    }, [totalSessions, playhead]);
 
     // Effective baseline scores (first session in timeline or passed baseline)
     const effectiveBaseline: CognitiveRadarDomainScores = baselineScores || (
         timeline.length > 0 ? timeline[0].scores : scores
     );
 
-    const isLatest = selectedIdx === totalSessions - 1;
-    const isBaseline = selectedIdx === 0;
+    // 60 FPS requestAnimationFrame Continuous Interpolation Engine
+    const animFrameRef = useRef<number | null>(null);
+    const lastTimestampRef = useRef<number | null>(null);
 
-    // Playback loop interval
-    const playTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-    useEffect(() => {
-        if (!isPlaying || totalSessions <= 1) {
-            if (playTimerRef.current) clearInterval(playTimerRef.current);
-            return;
+    const animateStep = useCallback((timestamp: number) => {
+        if (lastTimestampRef.current == null) {
+            lastTimestampRef.current = timestamp;
         }
 
-        const intervalMs = playbackSpeed === 1 ? 1400 : 750;
+        const dtSeconds = (timestamp - lastTimestampRef.current) / 1000;
+        lastTimestampRef.current = timestamp;
 
-        playTimerRef.current = setInterval(() => {
-            setSelectedIdx(prev => {
-                if (prev >= totalSessions - 1) {
-                    return 0; // Loop back to start
+        if (totalSessions > 1) {
+            const sessionDurationSec = playbackSpeed === 1 ? 1.4 : 0.75;
+            const stepDelta = dtSeconds / sessionDurationSec;
+
+            setPlayhead(prev => {
+                const next = prev + stepDelta;
+                if (next >= totalSessions - 1) {
+                    return 0; // Seamless loop
                 }
-                return prev + 1;
+                return next;
             });
-        }, intervalMs);
+        }
+
+        animFrameRef.current = requestAnimationFrame(animateStep);
+    }, [totalSessions, playbackSpeed]);
+
+    useEffect(() => {
+        if (isPlaying && totalSessions > 1) {
+            lastTimestampRef.current = null;
+            animFrameRef.current = requestAnimationFrame(animateStep);
+        } else {
+            if (animFrameRef.current != null) {
+                cancelAnimationFrame(animFrameRef.current);
+                animFrameRef.current = null;
+            }
+            lastTimestampRef.current = null;
+        }
 
         return () => {
-            if (playTimerRef.current) clearInterval(playTimerRef.current);
+            if (animFrameRef.current != null) {
+                cancelAnimationFrame(animFrameRef.current);
+                animFrameRef.current = null;
+            }
         };
-    }, [isPlaying, totalSessions, playbackSpeed]);
+    }, [isPlaying, animateStep, totalSessions]);
+
+    // Compute smooth interpolated display scores
+    const displayScores: CognitiveRadarDomainScores = useMemo(() => {
+        if (timeline.length === 0) return scores;
+        if (timeline.length === 1) return timeline[0].scores;
+
+        const idxFloor = Math.floor(playhead);
+        const idxCeil = Math.min(totalSessions - 1, idxFloor + 1);
+        const alpha = playhead - idxFloor;
+
+        const scoreA = timeline[idxFloor]?.scores || scores;
+        const scoreB = timeline[idxCeil]?.scores || scoreA;
+
+        return interpolateDomainScores(scoreA, scoreB, alpha);
+    }, [playhead, timeline, totalSessions, scores]);
+
+    // Ghost trail scores
+    const ghostScores: CognitiveRadarDomainScores | undefined = useMemo(() => {
+        if (!isPlaying || timeline.length <= 1) return undefined;
+        const prevIdx = Math.max(0, Math.floor(playhead) - 1);
+        return timeline[prevIdx]?.scores;
+    }, [isPlaying, playhead, timeline]);
+
+    // Active session metadata
+    const activeDiscreteIndex = Math.round(playhead);
+    const activeTimelinePoint = timeline.length > 0 ? timeline[activeDiscreteIndex] : null;
+    const isLatest = activeDiscreteIndex === totalSessions - 1;
 
     const handleTogglePlay = () => {
         setIsPlaying(prev => !prev);
     };
 
-    const handleStepBack = () => {
-        setIsPlaying(false);
-        setSelectedIdx(prev => Math.max(0, prev - 1));
-    };
-
-    const handleStepForward = () => {
-        setIsPlaying(false);
-        setSelectedIdx(prev => Math.min(totalSessions - 1, prev + 1));
-    };
-
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setIsPlaying(false);
-        setSelectedIdx(parseInt(e.target.value, 10));
+        setPlayhead(parseFloat(e.target.value));
     };
 
     const handleJumpToLatest = () => {
         setIsPlaying(false);
-        setSelectedIdx(totalSessions - 1);
+        setPlayhead(totalSessions - 1);
     };
 
     return (
-        <div className="dv2-card dv2-animate-in" style={{ padding: '1.5rem', position: 'relative' }}>
-            {/* Header & Controls */}
+        <div className="dv2-card dv2-animate-in" style={{ position: 'relative' }}>
+            {/* Header: Title & Geometry Mode Switcher & Layer Toggles */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'flex-start',
+                alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: '1rem',
-                marginBottom: '1rem',
+                gap: '0.75rem',
+                marginBottom: '0.75rem',
             }}>
-                <div>
-                    <h3 className="dv2-section-title" style={{ margin: 0 }}>
-                        6-Domain Cognitive Envelope & Trajectory
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
+                    <h3 className="dv2-section-title" style={{ margin: 0, fontSize: '1.125rem' }}>
+                        6-Domain Cognitive Envelope
                     </h3>
-                    <p style={{
-                        fontSize: '0.8125rem',
-                        color: 'var(--dv2-muted)',
-                        margin: '0.25rem 0 0',
+
+                    {/* Geometry Mode Toggle Switcher */}
+                    <div style={{
+                        display: 'inline-flex',
+                        background: 'transparent',
+                        padding: '2px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--dv2-card-border)',
                     }}>
-                        Multi-layer comparative overlay across baseline, longitudinal sessions, and age-matched normative benchmarks.
-                    </p>
+                        <button
+                            onClick={() => setGeometryMode('organic')}
+                            style={{
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '4px',
+                                fontSize: '0.6875rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: geometryMode === 'organic' ? 'rgba(79, 124, 120, 0.2)' : 'transparent',
+                                color: geometryMode === 'organic' ? 'var(--dv2-teal)' : 'var(--dv2-muted)',
+                                transition: 'all 0.15s ease',
+                            }}
+                            title="Organic Biological Spline Envelope"
+                        >
+                            ✿ Organic
+                        </button>
+                        <button
+                            onClick={() => setGeometryMode('hexagon')}
+                            style={{
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '4px',
+                                fontSize: '0.6875rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: geometryMode === 'hexagon' ? 'rgba(79, 124, 120, 0.2)' : 'transparent',
+                                color: geometryMode === 'hexagon' ? 'var(--dv2-teal)' : 'var(--dv2-muted)',
+                                transition: 'all 0.15s ease',
+                            }}
+                            title="Geometric Hexagonal Polygon"
+                        >
+                            ⬡ Hexagon
+                        </button>
+                    </div>
                 </div>
 
-                {/* Layer Toggle Pills */}
+                {/* Minimal Segmented Layer Toggles */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
                     flexWrap: 'wrap',
+                    gap: '0.35rem',
+                    background: 'transparent',
+                    padding: '3px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--dv2-card-border)',
                 }}>
                     {/* Current Envelope Toggle */}
                     <button
                         onClick={() => setShowCurrent(!showCurrent)}
                         style={{
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '20px',
-                            fontSize: '0.75rem',
+                            padding: '0.25rem 0.55rem',
+                            borderRadius: '6px',
+                            fontSize: '0.725rem',
                             fontWeight: 600,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.35rem',
-                            background: showCurrent ? 'rgba(6, 182, 212, 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                            color: showCurrent ? '#38bdf8' : '#64748b',
-                            border: showCurrent ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                            transition: 'all 0.2s ease',
+                            gap: '0.3rem',
+                            background: showCurrent ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                            color: showCurrent ? '#06b6d4' : 'var(--dv2-muted)',
+                            border: 'none',
+                            transition: 'all 0.15s ease',
                         }}
                     >
                         <span style={{
-                            width: '8px',
-                            height: '8px',
+                            width: '6px',
+                            height: '6px',
                             borderRadius: '50%',
                             background: '#06b6d4',
                             boxShadow: showCurrent ? '0 0 6px #06b6d4' : 'none',
                         }} />
-                        {isLatest ? 'Current Profile' : 'Scrubbed Profile'}
+                        Profile
                     </button>
 
                     {/* Baseline Toggle */}
-                    <button
-                        onClick={() => setShowBaseline(!showBaseline)}
-                        style={{
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '20px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            background: showBaseline ? 'rgba(245, 158, 11, 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                            color: showBaseline ? '#fbbf24' : '#64748b',
-                            border: showBaseline ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                            transition: 'all 0.2s ease',
-                        }}
-                    >
-                        <span style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '2px',
-                            background: '#f59e0b',
-                            border: '1px dashed #d97706',
-                        }} />
-                        Baseline (First Visit)
-                    </button>
+                    {totalSessions > 1 && (
+                        <button
+                            onClick={() => setShowBaseline(!showBaseline)}
+                            style={{
+                                padding: '0.25rem 0.55rem',
+                                borderRadius: '6px',
+                                fontSize: '0.725rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                background: showBaseline ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                                color: showBaseline ? '#d97706' : 'var(--dv2-muted)',
+                                border: 'none',
+                                transition: 'all 0.15s ease',
+                            }}
+                        >
+                            <span style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '1.5px',
+                                background: '#f59e0b',
+                            }} />
+                            Baseline
+                        </button>
+                    )}
 
                     {/* Normative Toggle */}
                     <button
                         onClick={() => setShowNormative(!showNormative)}
                         style={{
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '20px',
-                            fontSize: '0.75rem',
+                            padding: '0.25rem 0.55rem',
+                            borderRadius: '6px',
+                            fontSize: '0.725rem',
                             fontWeight: 600,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.35rem',
-                            background: showNormative ? 'rgba(16, 185, 129, 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                            color: showNormative ? '#34d399' : '#64748b',
-                            border: showNormative ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                            transition: 'all 0.2s ease',
+                            gap: '0.3rem',
+                            background: showNormative ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                            color: showNormative ? '#10b981' : 'var(--dv2-muted)',
+                            border: 'none',
+                            transition: 'all 0.15s ease',
                         }}
                     >
                         <span style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '2px',
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '1.5px',
                             background: '#10b981',
-                            border: '1px dashed #10b981',
                         }} />
-                        Age-Matched Normal (&gt;80)
+                        Normal (&gt;80)
                     </button>
                 </div>
             </div>
 
-            {/* Time-Lapse Playback & Scrubber Controls (when multiple sessions exist) */}
-            {totalSessions > 1 && (
-                <div style={{
-                    background: 'rgba(15, 23, 42, 0.55)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '12px',
-                    padding: '0.75rem 1rem',
-                    marginBottom: '1.25rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.625rem',
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: '0.5rem',
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            {/* Step Back */}
-                            <button
-                                onClick={handleStepBack}
-                                disabled={selectedIdx === 0}
-                                title="Previous Session"
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.08)',
-                                    color: selectedIdx === 0 ? '#475569' : '#e2e8f0',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    width: '30px',
-                                    height: '30px',
-                                    cursor: selectedIdx === 0 ? 'not-allowed' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '0.875rem',
-                                }}
-                            >
-                                ⏮
-                            </button>
-
-                            {/* Play / Pause */}
-                            <button
-                                onClick={handleTogglePlay}
-                                style={{
-                                    background: isPlaying ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.2)',
-                                    color: isPlaying ? '#f87171' : '#38bdf8',
-                                    border: isPlaying ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(56, 189, 248, 0.4)',
-                                    borderRadius: '6px',
-                                    padding: '0.3rem 0.85rem',
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                    fontSize: '0.8125rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.35rem',
-                                }}
-                            >
-                                {isPlaying ? '⏸ Pause' : '▶ Play Time-Lapse'}
-                            </button>
-
-                            {/* Step Forward */}
-                            <button
-                                onClick={handleStepForward}
-                                disabled={selectedIdx === totalSessions - 1}
-                                title="Next Session"
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.08)',
-                                    color: selectedIdx === totalSessions - 1 ? '#475569' : '#e2e8f0',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    width: '30px',
-                                    height: '30px',
-                                    cursor: selectedIdx === totalSessions - 1 ? 'not-allowed' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '0.875rem',
-                                }}
-                            >
-                                ⏭
-                            </button>
-
-                            {/* Speed Switcher */}
-                            <button
-                                onClick={() => setPlaybackSpeed(prev => prev === 1 ? 2 : 1)}
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    color: '#94a3b8',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                    borderRadius: '6px',
-                                    padding: '0.2rem 0.5rem',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                {playbackSpeed}x Speed
-                            </button>
-                        </div>
-
-                        {/* Active Session Badge */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                color: '#e2e8f0',
-                                background: isLatest ? 'rgba(6, 182, 212, 0.15)' : (isBaseline ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.08)'),
-                                border: isLatest ? '1px solid rgba(6, 182, 212, 0.3)' : (isBaseline ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)'),
-                                padding: '0.25rem 0.65rem',
-                                borderRadius: '6px',
-                            }}>
-                                📅 {activeTimelinePoint ? activeTimelinePoint.label : `Session ${selectedIdx + 1}`} ({activeTimelinePoint?.date || 'N/A'})
-                            </span>
-
-                            {!isLatest && (
-                                <button
-                                    onClick={handleJumpToLatest}
-                                    style={{
-                                        background: 'transparent',
-                                        color: '#38bdf8',
-                                        border: '1px solid rgba(56, 189, 248, 0.3)',
-                                        borderRadius: '6px',
-                                        padding: '0.2rem 0.5rem',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    Jump to Latest ➔
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Timeline Slider Track */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <input
-                            type="range"
-                            min="0"
-                            max={totalSessions - 1}
-                            step="1"
-                            value={selectedIdx}
-                            onChange={handleSliderChange}
-                            style={{
-                                width: '100%',
-                                accentColor: '#06b6d4',
-                                cursor: 'pointer',
-                                height: '6px',
-                            }}
-                        />
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            fontSize: '0.6875rem',
-                            color: '#64748b',
-                            padding: '0 2px',
-                        }}>
-                            <span>Baseline ({timeline[0]?.date})</span>
-                            {timeline.length > 2 && (
-                                <span>{Math.round(timeline.length / 2)} sessions</span>
-                            )}
-                            <span>Latest ({timeline[timeline.length - 1]?.date})</span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Radar Visualizer */}
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '0.25rem 0' }}>
                 <CognitiveRadarChart
-                    scores={activeScores}
+                    scores={displayScores}
                     baselineScores={effectiveBaseline}
                     normativeScores={normativeScores}
+                    ghostScores={ghostScores}
                     size={350}
+                    geometryMode={geometryMode}
                     showCurrent={showCurrent}
                     showBaseline={showBaseline && totalSessions > 1}
                     showNormative={showNormative}
+                    showVolumetricDiff={true}
                     activeSessionLabel={activeTimelinePoint?.label}
                 />
             </div>
 
+            {/* Minimalist Modern 60fps Time-Lapse Scrubber Pill */}
+            {totalSessions > 1 && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.625rem',
+                    background: 'var(--dv2-card-bg)',
+                    border: '1px solid var(--dv2-card-border)',
+                    borderRadius: '24px',
+                    padding: '0.4rem 0.85rem',
+                    margin: '0.5rem auto 1rem',
+                    maxWidth: '540px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    boxShadow: 'var(--dv2-card-shadow)',
+                }}>
+                    {/* Compact Circular Play/Pause Button */}
+                    <button
+                        onClick={handleTogglePlay}
+                        title={isPlaying ? 'Pause Playback' : 'Play 60fps Morphing Timeline'}
+                        style={{
+                            width: '26px',
+                            height: '26px',
+                            borderRadius: '50%',
+                            background: isPlaying ? 'rgba(239, 68, 68, 0.15)' : 'rgba(79, 124, 120, 0.18)',
+                            color: isPlaying ? '#ef4444' : 'var(--dv2-teal)',
+                            border: isPlaying ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--dv2-teal)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            fontSize: '0.7rem',
+                            flexShrink: 0,
+                            padding: 0,
+                            transition: 'all 0.15s ease',
+                        }}
+                    >
+                        {isPlaying ? '⏸' : '▶'}
+                    </button>
+
+                    {/* Slim Continuous Timeline Slider */}
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', margin: '0 0.25rem' }}>
+                        <input
+                            type="range"
+                            min="0"
+                            max={totalSessions - 1}
+                            step="0.01"
+                            value={playhead}
+                            onChange={handleSliderChange}
+                            style={{
+                                width: '100%',
+                                height: '4px',
+                                accentColor: '#4F7C78',
+                                cursor: 'pointer',
+                            }}
+                        />
+                    </div>
+
+                    {/* Session Indicator Pill */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        flexShrink: 0,
+                    }}>
+                        <span style={{
+                            fontSize: '0.725rem',
+                            fontFamily: 'monospace',
+                            color: 'var(--dv2-muted)',
+                            letterSpacing: '-0.02em',
+                        }}>
+                            {activeDiscreteIndex === 0 ? 'Baseline' : (isLatest ? 'Latest' : `Sess ${activeDiscreteIndex + 1}`)}
+                            {' '}• <span style={{ color: 'var(--dv2-text)' }}>{activeTimelinePoint?.date || 'N/A'}</span>
+                        </span>
+
+                        {/* Speed Toggle */}
+                        <button
+                            onClick={() => setPlaybackSpeed(prev => prev === 1 ? 2 : 1)}
+                            style={{
+                                background: 'transparent',
+                                color: 'var(--dv2-muted)',
+                                border: 'none',
+                                padding: '0.1rem 0.3rem',
+                                fontSize: '0.6875rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                borderRadius: '4px',
+                            }}
+                            title="Toggle Playback Speed"
+                        >
+                            {playbackSpeed}x
+                        </button>
+
+                        {/* Quick Jump to Latest */}
+                        {!isLatest && (
+                            <button
+                                onClick={handleJumpToLatest}
+                                title="Jump to Latest Session"
+                                style={{
+                                    background: 'transparent',
+                                    color: 'var(--dv2-teal)',
+                                    border: 'none',
+                                    padding: '0.1rem 0.25rem',
+                                    fontSize: '0.6875rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                ➔
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Domain Delta Comparative Cards */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: '0.625rem',
-                marginTop: '1.25rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                gap: '0.5rem',
+                marginTop: totalSessions > 1 ? '0' : '0.5rem',
             }}>
                 {DOMAIN_LABELS.map(d => {
-                    const currentVal = activeScores[d.key] ?? 50;
-                    const baseVal = effectiveBaseline ? effectiveBaseline[d.key] : currentVal;
+                    const currentVal = Math.round(displayScores[d.key] ?? 50);
+                    const baseVal = effectiveBaseline ? Math.round(effectiveBaseline[d.key] ?? currentVal) : currentVal;
                     const delta = currentVal - baseVal;
                     const isPositive = delta > 0;
-                    const isNegative = delta < 0;
 
                     return (
                         <div
                             key={d.key}
                             style={{
-                                background: 'rgba(255, 255, 255, 0.03)',
-                                border: '1px solid rgba(255, 255, 255, 0.06)',
-                                borderRadius: '10px',
-                                padding: '0.65rem 0.75rem',
+                                background: 'var(--dv2-card-bg)',
+                                border: '1px solid var(--dv2-card-border)',
+                                borderRadius: '8px',
+                                padding: '0.5rem 0.65rem',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '0.2rem',
+                                gap: '0.15rem',
                             }}
                         >
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
-                                fontSize: '0.75rem',
+                                fontSize: '0.725rem',
                                 color: 'var(--dv2-muted)',
                             }}>
                                 <span>{d.icon} {d.label}</span>
@@ -443,7 +468,7 @@ export function CognitiveRadarSection({
                                     <span style={{
                                         fontSize: '0.6875rem',
                                         fontWeight: 700,
-                                        color: isPositive ? '#34d399' : '#f87171',
+                                        color: isPositive ? '#10b981' : '#ef4444',
                                     }}>
                                         {isPositive ? `+${delta}` : delta}
                                     </span>
@@ -453,25 +478,24 @@ export function CognitiveRadarSection({
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'baseline',
-                                gap: '0.35rem',
-                                marginTop: '0.15rem',
+                                gap: '0.25rem',
+                                marginTop: '0.1rem',
                             }}>
                                 <span style={{
-                                    fontSize: '1.125rem',
+                                    fontSize: '1rem',
                                     fontWeight: 700,
                                     fontFamily: 'monospace',
-                                    color: currentVal < 60 ? '#f87171' : 'var(--dv2-text)',
+                                    color: currentVal < 60 ? '#ef4444' : 'var(--dv2-text)',
                                 }}>
                                     {currentVal}
                                 </span>
-                                <span style={{ fontSize: '0.6875rem', color: '#64748b' }}>/100</span>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--dv2-muted)' }}>/100</span>
+                                {totalSessions > 1 && (
+                                    <span style={{ fontSize: '0.65rem', color: 'var(--dv2-muted)', marginLeft: 'auto' }}>
+                                        Base: <strong style={{ color: 'var(--dv2-text)' }}>{baseVal}</strong>
+                                    </span>
+                                )}
                             </div>
-
-                            {totalSessions > 1 && (
-                                <div style={{ fontSize: '0.6875rem', color: '#64748b' }}>
-                                    Base: <strong style={{ color: '#cbd5e1' }}>{baseVal}</strong>
-                                </div>
-                            )}
                         </div>
                     );
                 })}

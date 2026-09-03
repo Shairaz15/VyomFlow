@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageWrapper } from "../../layout/PageWrapper";
+import { useAuth } from "../../../contexts/AuthContext";
 import { useNavigationResults } from "../../../hooks/useTestResults";
 import { DEMO_ROUTE } from "../../../data/navigation/routeConfig";
 import { computeNavigationBiomarkers } from "./services/BiomarkerEngine";
@@ -30,6 +31,7 @@ type Phase =
 
 export function NavigationAssessment() {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const { saveResult } = useNavigationResults();
 
     const [phase, setPhase] = useState<Phase>("instructions");
@@ -41,6 +43,7 @@ export function NavigationAssessment() {
 
     // 1. Begin Assessment
     const handleStartAssessment = () => {
+        if (!isAuthenticated) return;
         setPhase("encoding");
     };
 

@@ -10,3 +10,4 @@ export { LongitudinalSummary } from './LongitudinalSummary';
 export { RecommendationCard } from './RecommendationCard';
 export { BiomarkerDrawer } from './BiomarkerDrawer';
 export { SimulationControls } from './SimulationControls';
+export { ClinicianReportModal } from './ClinicianReportModal';

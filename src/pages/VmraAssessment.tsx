@@ -56,7 +56,7 @@ function generateRetentionRound(): RetentionRound {
 
 export function VmraAssessment() {
     const navigate = useNavigate();
-    useAuth(); // Ensures user is in auth context
+    const { isAuthenticated } = useAuth(); // Ensures user is in auth context
     const { saveResult, getSessionCount, getPreviousAccuracies } = useVmraResults();
 
     // Session config (based on how many sessions user has completed)
@@ -103,13 +103,14 @@ export function VmraAssessment() {
     // ─── Start Encoding ───────────────────────────────────────────
 
     const startEncoding = useCallback(() => {
+        if (!isAuthenticated) return;
         const targets = selectTargetImages(config.targetCount);
         setTargetImages(targets);
         setCurrentImageIndex(0);
         setImageVisible(true);
         encodingStartTime.current = Date.now();
         setPhase('encoding');
-    }, [config.targetCount]);
+    }, [config.targetCount, isAuthenticated]);
 
     // ─── Encoding: cycle through images ───────────────────────────
 

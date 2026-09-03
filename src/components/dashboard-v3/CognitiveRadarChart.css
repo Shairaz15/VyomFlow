@@ -4,7 +4,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding: 0.5rem 0.25rem;
+    padding: 0.25rem;
     position: relative;
 }
 
@@ -12,61 +12,135 @@
     overflow: visible;
     max-width: 100%;
     height: auto;
-    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
 }
 
+/* Concentric Background Grid */
 .radar-grid-polygon {
-    fill: rgba(255, 255, 255, 0.015);
-    stroke: rgba(255, 255, 255, 0.08);
+    fill: rgba(255, 255, 255, 0.012);
+    stroke: rgba(255, 255, 255, 0.06);
     stroke-width: 1;
     stroke-dasharray: 2, 3;
 }
 
 .radar-grid-polygon.outer-ring {
-    stroke: rgba(255, 255, 255, 0.18);
+    stroke: rgba(255, 255, 255, 0.16);
     stroke-dasharray: none;
     stroke-width: 1.5;
 }
 
 .radar-spoke {
-    stroke: rgba(255, 255, 255, 0.08);
+    stroke: rgba(255, 255, 255, 0.06);
     stroke-width: 1;
 }
 
-/* Layer 1: Normative */
-.radar-normative-polygon {
+.radar-spoke-highlight {
+    stroke: rgba(56, 189, 248, 0.3);
+    stroke-width: 1.5;
+}
+
+/* Layer 1: Normative Corridor Zone */
+.radar-normative-corridor {
+    fill: rgba(16, 185, 129, 0.06);
+    stroke: rgba(16, 185, 129, 0.3);
+    stroke-width: 1;
+    stroke-dasharray: 3, 3;
+}
+
+.radar-normative-line {
     stroke: #10b981;
     stroke-width: 1.5;
     stroke-dasharray: 4, 3;
-    transition: all 0.3s ease;
+    fill: none;
 }
 
-/* Layer 2: Baseline (Amber) */
+/* Layer 2: Baseline Envelope (Amber) */
 .radar-baseline-polygon {
     stroke: #f59e0b;
-    stroke-width: 2;
+    stroke-width: 1.8;
     stroke-dasharray: 5, 3;
-    transition: all 0.4s ease;
+    fill: url(#radarBaselineGrad);
 }
 
 .radar-node-baseline {
     fill: #f59e0b;
-    stroke: #0f172a;
+    stroke: var(--dv2-card-bg);
     stroke-width: 1.5;
-    transition: all 0.3s ease;
 }
 
-/* Layer 3: Current / Scrubbed Patient Envelope */
+/* Layer 3: Ghost Trail Overlay (During Motion) */
+.radar-ghost-polygon {
+    stroke: rgba(139, 92, 246, 0.4);
+    stroke-width: 1.5;
+    stroke-dasharray: 3, 2;
+    fill: rgba(139, 92, 246, 0.05);
+}
+
+/* Layer 4: Volumetric Differential Fills */
+.radar-volumetric-deficit {
+    fill: rgba(244, 63, 94, 0.22);
+    stroke: rgba(244, 63, 94, 0.5);
+    stroke-width: 1;
+    stroke-dasharray: 2, 2;
+}
+
+.radar-volumetric-gain {
+    fill: rgba(52, 211, 153, 0.20);
+    stroke: rgba(52, 211, 153, 0.5);
+    stroke-width: 1;
+    stroke-dasharray: 2, 2;
+}
+
+/* Layer 5: Active Patient Envelope */
 .radar-patient-polygon {
     stroke: #06b6d4;
     stroke-width: 2.5;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: url(#radarNeonGlow);
 }
 
+.radar-patient-path-organic {
+    stroke: #38bdf8;
+    stroke-width: 2.5;
+    filter: url(#radarNeonGlow);
+}
+
+/* Center Hub Glowing Orb */
+.radar-center-hub {
+    fill: url(#radarHubGrad);
+    filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6));
+}
+
+/* Magnetic Pulse Ripple on Deficit Vertices (<60) */
+@keyframes radarDeficitPulse {
+    0% {
+        r: 5px;
+        opacity: 0.9;
+        stroke-width: 2px;
+    }
+    50% {
+        r: 14px;
+        opacity: 0.3;
+        stroke-width: 1px;
+    }
+    100% {
+        r: 18px;
+        opacity: 0;
+        stroke-width: 0.5px;
+    }
+}
+
+.radar-pulse-ring {
+    fill: none;
+    stroke: #f43f5e;
+    animation: radarDeficitPulse 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+    pointer-events: none;
+}
+
+/* Vertex Nodes */
 .radar-node {
-    stroke: #0f172a;
+    stroke: var(--dv2-card-bg);
     stroke-width: 2;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: r 0.2s ease, fill 0.2s ease;
 }
 
 .radar-node.normal-score {
@@ -83,12 +157,34 @@
     fill: #38bdf8;
     stroke: #ffffff;
     stroke-width: 2.5;
-    filter: drop-shadow(0 0 8px #38bdf8);
+    filter: drop-shadow(0 0 10px #38bdf8);
+}
+
+/* Floating Spoke Value Badges */
+.radar-floating-badge {
+    pointer-events: none;
+    user-select: none;
+}
+
+.radar-floating-badge-rect {
+    fill: var(--dv2-card-bg);
+    stroke: var(--dv2-card-border);
+    stroke-width: 1;
+    rx: 4;
+}
+
+.radar-floating-badge-text {
+    fill: var(--dv2-text);
+    font-size: 8.5px;
+    font-weight: 700;
+    font-family: monospace;
+    text-anchor: middle;
+    dominant-baseline: central;
 }
 
 /* Axis Labels */
 .radar-label-group {
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .radar-label-group.label-highlight .radar-axis-label {
@@ -97,7 +193,7 @@
 }
 
 .radar-axis-label {
-    fill: #cbd5e1;
+    fill: var(--dv2-muted);
     font-size: 10.5px;
     font-weight: 600;
     font-family: inherit;
@@ -113,7 +209,7 @@
 }
 
 .radar-axis-score.score-ok {
-    fill: #38bdf8;
+    fill: var(--dv2-text);
 }
 
 .radar-axis-score.score-warning {
@@ -121,27 +217,34 @@
 }
 
 .radar-axis-delta {
-    fill: #94a3b8;
     font-size: 8.5px;
     font-weight: 600;
+}
+
+.radar-axis-delta.pos {
+    fill: #10b981;
+}
+
+.radar-axis-delta.neg {
+    fill: #ef4444;
 }
 
 /* Vertex Hover Tooltip */
 .radar-hover-tooltip {
     position: absolute;
-    bottom: -8px;
-    background: rgba(15, 23, 42, 0.94);
-    border: 1px solid rgba(56, 189, 248, 0.4);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.2);
+    bottom: -10px;
+    background: var(--dv2-card-bg);
+    border: 1px solid var(--dv2-card-border);
+    box-shadow: var(--dv2-card-shadow);
     backdrop-filter: blur(12px);
     border-radius: 10px;
     padding: 0.5rem 0.85rem;
     font-size: 0.8125rem;
-    color: #e2e8f0;
+    color: var(--dv2-text);
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    animation: radarTooltipIn 0.2s ease;
+    animation: radarTooltipIn 0.15s ease;
     z-index: 10;
     pointer-events: none;
 }
@@ -149,7 +252,7 @@
 @keyframes radarTooltipIn {
     from {
         opacity: 0;
-        transform: translateY(6px);
+        transform: translateY(4px);
     }
     to {
         opacity: 1;
