@@ -149,9 +149,27 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         });
     }, [locale, fallback]);
 
+const DEFAULT_FALLBACKS: Record<string, string> = {
+    'dashboard.title': 'Cognitive Health Dashboard',
+    'dashboard.subtitle': 'Your personalized multi-modal digital biomarker profile',
+    'dashboard.supabaseLive': 'Supabase Live',
+    'dashboard.exportReport': 'Export Clinical Report',
+    'dashboard.dataControls': 'Data Controls',
+    'dashboard.hideControls': 'Hide Controls',
+    'dashboard.takeAssessment': 'Take Assessment',
+    'dashboard.overallStatus': 'Overall Cognitive Status',
+    'dashboard.confidence': 'Confidence: {{val}}%',
+    'dashboard.lastAssessment': 'Last Assessment: {{date}}',
+    'patientResults.comparedToLastTime': 'Compared to last visit',
+    'dashboard.welcomeTitle': 'Welcome to VyomFlow',
+    'dashboard.welcomeSubtitle': 'Complete your first cognitive assessment to establish your baseline and generate your digital biomarker profile in Supabase.',
+    'dashboard.takeFirstAssessment': 'Take Your First Assessment',
+    'dashboard.previewDemo': '🌟 Preview with Demo Dataset',
+};
+
     // Translation function with variable interpolation
     const t = useCallback((key: string, vars?: Record<string, string | number>): string => {
-        let text = translations[key] || fallback[key] || key;
+        let text = translations[key] || fallback[key] || DEFAULT_FALLBACKS[key] || key;
         if (vars) {
             text = text.replace(VAR_REGEX, (match, p1) => {
                 return vars[p1] !== undefined ? String(vars[p1]) : match;

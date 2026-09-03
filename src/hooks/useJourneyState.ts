@@ -18,6 +18,41 @@ import {
 
 export type ActivityId = 'story' | 'memory' | 'reaction' | 'pattern' | 'attention' | 'navigation' | 'language';
 
+export const PROTOCOL_SESSION_KEY = "vyomflow_protocol_session_started_at";
+export const PROTOCOL_SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24-hour protocol window
+
+export function getProtocolSessionStartTime(): number {
+    try {
+        const raw = localStorage.getItem(PROTOCOL_SESSION_KEY);
+        if (raw) {
+            const time = parseInt(raw, 10);
+            if (!isNaN(time) && Date.now() - time < PROTOCOL_SESSION_MAX_AGE_MS) {
+                return time;
+            }
+        }
+    } catch {
+        // fallback
+    }
+    const now = Date.now();
+    try {
+        localStorage.setItem(PROTOCOL_SESSION_KEY, now.toString());
+    } catch {
+        // fallback
+    }
+    return now;
+}
+
+export function resetProtocolSession(): void {
+    try {
+        localStorage.setItem(PROTOCOL_SESSION_KEY, Date.now().toString());
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("vyomflow_protocol_session_reset"));
+        }
+    } catch {
+        // fallback
+    }
+}
+
 export interface JourneyNodeInfo {
     id: ActivityId;
     order: number;
@@ -211,6 +246,8 @@ export function useJourneyState(): JourneyState {
     const [supabaseData, setSupabaseData] = useState<RawDashboardData | null>(null);
     const [isSupabaseLoading, setIsSupabaseLoading] = useState(true);
 
+    const [protocolSessionStart, setProtocolSessionStart] = useState<number>(() => getProtocolSessionStartTime());
+
     useEffect(() => {
         let mounted = true;
         const uid = getCurrentFirebaseUid();
@@ -232,6 +269,28 @@ export function useJourneyState(): JourneyState {
             }
         }
 
+        const handleSessionReset = () => {
+            setProtocolSessionStart(getProtocolSessionStartTime());
+        };
+
+        const handleCleared = () => {
+            resetProtocolSession();
+            setProtocolSessionStart(Date.now());
+            setSupabaseData({
+                reaction: [],
+                memory: [],
+                pattern: [],
+                language: [],
+                vmra: [],
+                story: [],
+                navigation: [],
+                attention: [],
+            });
+        };
+
+        window.addEventListener("vyomflow_protocol_session_reset", handleSessionReset);
+        window.addEventListener("vyomflow_test_results_cleared", handleCleared);
+
         loadData();
 
         let unsubscribe = () => {};
@@ -243,6 +302,8 @@ export function useJourneyState(): JourneyState {
 
         return () => {
             mounted = false;
+            window.removeEventListener("vyomflow_protocol_session_reset", handleSessionReset);
+            window.removeEventListener("vyomflow_test_results_cleared", handleCleared);
             unsubscribe();
         };
     }, []);
@@ -495,28 +556,27 @@ export function useJourneyState(): JourneyState {
             language: getLatestScore(mergedLanguage, 'language'),
         };
 
-        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
-        const isActivityCompletedWithin7Days = (items: Array<any>, type: ActivityId): boolean => {
+        const isActivityCompletedInProtocol = (items: Array<any>, type: ActivityId): boolean => {
             if (!items || items.length === 0) return false;
-            const now = Date.now();
 
             return items.some((item) => {
                 if (!item) return false;
+                const numericScore = extractNumericValue(item, type);
+                if (numericScore <= 0) return false;
+
                 if (item.timestamp) {
                     const d = item.timestamp instanceof Date ? item.timestamp : new Date(item.timestamp);
                     const timeMs = d.getTime();
                     if (!isNaN(timeMs)) {
-                        const diff = now - timeMs;
-                        // Completed within the 7-day protocol window
-                        if (diff >= 0 && diff <= SEVEN_DAYS_MS) {
+                        // Strict Protocol Isolation: only count as completed if performed in the active protocol session
+                        if (timeMs >= protocolSessionStart && (Date.now() - timeMs) <= PROTOCOL_SESSION_MAX_AGE_MS) {
                             return true;
                         }
                     }
                 }
                 
-                // Fallback: If score exists and was recorded in current session
-                if (extractNumericValue(item, type) > 0 && !item.timestamp) {
+                // Fallback: If score exists and was recorded in current session without timestamp
+                if (!item.timestamp) {
                     return true;
                 }
                 return false;
@@ -524,13 +584,13 @@ export function useJourneyState(): JourneyState {
         };
 
         const completedActivityIds = new Set<ActivityId>();
-        if (isActivityCompletedWithin7Days(mergedStory, 'story')) completedActivityIds.add('story');
-        if (isActivityCompletedWithin7Days(mergedVmra, 'memory')) completedActivityIds.add('memory');
-        if (isActivityCompletedWithin7Days(mergedReaction, 'reaction')) completedActivityIds.add('reaction');
-        if (isActivityCompletedWithin7Days(mergedPattern, 'pattern')) completedActivityIds.add('pattern');
-        if (isActivityCompletedWithin7Days(mergedAttention, 'attention')) completedActivityIds.add('attention');
-        if (isActivityCompletedWithin7Days(mergedNavigation, 'navigation')) completedActivityIds.add('navigation');
-        if (isActivityCompletedWithin7Days(mergedLanguage, 'language')) completedActivityIds.add('language');
+        if (isActivityCompletedInProtocol(mergedStory, 'story')) completedActivityIds.add('story');
+        if (isActivityCompletedInProtocol(mergedVmra, 'memory')) completedActivityIds.add('memory');
+        if (isActivityCompletedInProtocol(mergedReaction, 'reaction')) completedActivityIds.add('reaction');
+        if (isActivityCompletedInProtocol(mergedPattern, 'pattern')) completedActivityIds.add('pattern');
+        if (isActivityCompletedInProtocol(mergedAttention, 'attention')) completedActivityIds.add('attention');
+        if (isActivityCompletedInProtocol(mergedNavigation, 'navigation')) completedActivityIds.add('navigation');
+        if (isActivityCompletedInProtocol(mergedLanguage, 'language')) completedActivityIds.add('language');
 
         const completedCount = completedActivityIds.size;
         const totalCount = JOURNEY_NODES.length;

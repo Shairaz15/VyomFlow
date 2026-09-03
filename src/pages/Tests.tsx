@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ShieldCheck, ArrowRight } from "lucide-react";
+import { LayoutDashboard, ShieldCheck, ArrowRight, RotateCcw } from "lucide-react";
 import { Button, Icon } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { PageWrapper } from "../components/layout";
-import { useJourneyState, JOURNEY_NODES, type ActivityId } from "../hooks/useJourneyState";
+import { useJourneyState, JOURNEY_NODES, resetProtocolSession, type ActivityId } from "../hooks/useJourneyState";
 import { JourneyMap } from "../components/journey/JourneyMap";
 import { ActivityCompletionScreen } from "../components/journey/ActivityCompletionScreen";
 import { JourneyCompletion } from "../components/journey/JourneyCompletion";
+import { clearAllTestData } from "../hooks/useTestResults";
 import "./Tests.css";
 
 export function Tests() {
@@ -104,6 +105,13 @@ export function Tests() {
         }
     };
 
+    const handleResetSession = async () => {
+        if (window.confirm(t("journey.resetConfirm") || "Start a fresh assessment protocol? This will clear current session test progress.")) {
+            resetProtocolSession();
+            await clearAllTestData();
+        }
+    };
+
     return (
         <PageWrapper>
             <div className="journey-page container animate-fadeIn">
@@ -134,6 +142,17 @@ export function Tests() {
                                 <span className="progress-pill-count">
                                     <strong>{completedCount}</strong> of {totalCount} {t("journey.complete")}
                                 </span>
+                                {completedCount > 0 && (
+                                    <button
+                                        type="button"
+                                        className="journey-reset-session-btn"
+                                        onClick={handleResetSession}
+                                        title={t("journey.resetSession") || "Reset Protocol / Start Fresh"}
+                                        aria-label="Reset Protocol"
+                                    >
+                                        <RotateCcw size={12} />
+                                    </button>
+                                )}
                             </div>
 
                             {/* Dot progress indicator */}

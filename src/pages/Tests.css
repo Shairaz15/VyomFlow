@@ -111,6 +111,29 @@ html.dark .hero-top-row,
     font-weight: 600;
 }
 
+.journey-reset-session-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 0;
+    margin-left: 2px;
+}
+
+.journey-reset-session-btn:hover {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.08);
+    transform: rotate(-45deg);
+}
+
 .dots-mini-row {
     display: flex;
     gap: 7px;

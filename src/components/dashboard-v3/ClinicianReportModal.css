@@ -124,9 +124,85 @@
     transition: all 0.15s ease;
 }
 
-.cr-btn-close:hover {
-    background: var(--dv2-card-border);
+.cr-btn-edit-toggle {
+    background: rgba(14, 165, 233, 0.12);
+    color: #0284c7;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+}
+
+.cr-btn-edit-toggle:hover {
+    background: rgba(14, 165, 233, 0.2);
+    transform: translateY(-1px);
+}
+
+:root.dark .cr-btn-edit-toggle,
+.dark .cr-btn-edit-toggle {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Collapsible Editor Drawer */
+.cr-drawer-panel {
+    background: var(--dv2-card-bg);
+    border: 1px solid var(--dv2-card-border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    animation: crFadeIn 0.2s ease-out;
+}
+
+.cr-drawer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem 1rem;
+}
+
+.cr-drawer-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.cr-drawer-field label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--dv2-muted);
+}
+
+.cr-drawer-field input,
+.cr-drawer-field select {
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--dv2-card-border);
+    border-radius: 6px;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8125rem;
     color: var(--dv2-text);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+:root.dark .cr-drawer-field input,
+.dark .cr-drawer-field input,
+:root.dark .cr-drawer-field select,
+.dark .cr-drawer-field select {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.cr-drawer-field input:focus,
+.cr-drawer-field select:focus {
+    border-color: #0ea5e9;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -335,6 +411,12 @@
     border: 1px solid #fecaca;
 }
 
+.cr-tag-pending {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
 /* Explainability 2-Col Grid */
 .cr-explain-grid {
     display: grid;
@@ -401,6 +483,17 @@
     border-bottom: 1px solid #0f172a;
     height: 40px;
     margin-bottom: 0.35rem;
+    position: relative;
+}
+
+.cr-sig-stamp {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    font-family: 'Brush Script MT', cursive, Georgia, serif;
+    font-size: 1.35rem;
+    color: #0f766e;
+    opacity: 0.9;
 }
 
 .cr-sig-caption {

@@ -20,7 +20,7 @@ import {
     clearFirestoreResults,
     isUserAuthenticated,
 } from "../services/firestoreService";
-import { saveModuleResultToSupabase } from "../services/supabaseService";
+import { saveModuleResultToSupabase, deleteAllUserDataFromSupabase, getCurrentFirebaseUid } from "../services/supabaseService";
 import { auth } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -133,8 +133,26 @@ export async function clearAllTestData(): Promise<void> {
         }
     }
 
+    // Also clear all Supabase module and session records
+    const uid = getCurrentFirebaseUid();
+    if (uid) {
+        try {
+            await deleteAllUserDataFromSupabase(uid);
+            logger.info("Cleared all Supabase test data");
+        } catch (error) {
+            logger.error("Failed to clear Supabase data:", error);
+        }
+    }
+
+    try {
+        localStorage.removeItem("vyomflow_protocol_session_started_at");
+    } catch {
+        // fallback
+    }
+
     if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("vyomflow_test_results_cleared"));
+        window.dispatchEvent(new CustomEvent("vyomflow_protocol_session_reset"));
     }
 }
 

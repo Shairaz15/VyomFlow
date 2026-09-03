@@ -23,7 +23,7 @@ import {
     SimulationControls,
     ClinicianReportModal,
 } from '../components/dashboard-v3';
-import { LayoutDashboard, TrendingUp, FileText, SlidersHorizontal } from 'lucide-react';
+import { FileText, SlidersHorizontal } from 'lucide-react';
 import './DashboardV3.css';
 
 export function DashboardV3() {
@@ -31,8 +31,6 @@ export function DashboardV3() {
     const { t } = useLanguage();
     useWeeklyReminder();
 
-    // Active executive tab view ('summary' | 'trends')
-    const [activeView, setActiveView] = useState<'summary' | 'trends'>('summary');
 
     // Drawer state for chart drill-down
     const [drawerData, setDrawerData] = useState<{
@@ -168,75 +166,31 @@ export function DashboardV3() {
                         </div>
                     </div>
                 ) : (
-                    <>
-                        {/* Executive Segmented View Switcher */}
-                        <div className="dv2-view-switcher-bar">
-                            <div className="dv2-view-switcher">
-                                <button
-                                    type="button"
-                                    className={`dv2-view-tab ${activeView === 'summary' ? 'active' : ''}`}
-                                    onClick={() => setActiveView('summary')}
-                                >
-                                    <LayoutDashboard size={15} />
-                                    <span>Executive Summary</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`dv2-view-tab ${activeView === 'trends' ? 'active' : ''}`}
-                                    onClick={() => setActiveView('trends')}
-                                >
-                                    <TrendingUp size={15} />
-                                    <span>Longitudinal Trends</span>
-                                </button>
+                    <div className="dv2-view-content" style={{ marginTop: '0.75rem' }}>
+                        {/* Bento Grid: Status + Radar + Trends on Left; AI MoCA + Domains + Tests on Right */}
+                        <div className="dv2-bento-grid">
+                            {/* Left Bento Column: Overall Status + 6-Domain Cognitive Envelope + Longitudinal Trends */}
+                            <div className="dv2-bento-col">
+                                <HeroSummary overview={vm.overview} sessionCount={vm.sessionCount} />
+                                <CognitiveRadarSection
+                                    scores={vm.radarScores}
+                                    baselineScores={vm.baselineRadarScores}
+                                    timeline={vm.radarTimeline}
+                                />
+                                <ModuleTrendCharts
+                                    trends={vm.moduleTrends}
+                                    onPointClick={handleChartPointClick}
+                                />
                             </div>
 
-                            <div className="dv2-view-meta-tag">
-                                <span>Active Session {vm.sessionCount}</span>
-                                <span>•</span>
-                                <span>Multi-Task Deep Learning Active</span>
+                            {/* Right Bento Column: AI MoCA Assessment + 6 Cognitive Domains + 7 Modules Battery */}
+                            <div className="dv2-bento-col">
+                                <AIPredictionCard prediction={vm.aiPrediction} />
+                                <DomainScoreCards domains={vm.domainScores} />
+                                <AssessmentModuleCards modules={vm.assessmentModules} />
                             </div>
                         </div>
-
-                        {/* View Content based on activeView */}
-                        {activeView === 'summary' && (
-                            <div className="dv2-view-content">
-                                {/* Bento Grid: Status + Radar + Trends on Left; AI MoCA + Domains + Tests on Right */}
-                                <div className="dv2-bento-grid">
-                                    {/* Left Bento Column: Overall Status + 6-Domain Cognitive Envelope + Longitudinal Trends */}
-                                    <div className="dv2-bento-col">
-                                        <HeroSummary overview={vm.overview} sessionCount={vm.sessionCount} />
-                                        <CognitiveRadarSection
-                                            scores={vm.radarScores}
-                                            baselineScores={vm.baselineRadarScores}
-                                            timeline={vm.radarTimeline}
-                                        />
-                                        <ModuleTrendCharts
-                                            trends={vm.moduleTrends}
-                                            onPointClick={handleChartPointClick}
-                                        />
-                                    </div>
-
-                                    {/* Right Bento Column: AI MoCA Assessment + 6 Cognitive Domains + 7 Modules Battery */}
-                                    <div className="dv2-bento-col">
-                                        <AIPredictionCard prediction={vm.aiPrediction} />
-                                        <DomainScoreCards domains={vm.domainScores} />
-                                        <AssessmentModuleCards modules={vm.assessmentModules} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeView === 'trends' && (
-                            <div className="dv2-view-content">
-                                <div className="dv2-section">
-                                    <ModuleTrendCharts
-                                        trends={vm.moduleTrends}
-                                        onPointClick={handleChartPointClick}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </>
+                    </div>
                 )}
 
                 {/* Drill-down Drawer */}

@@ -1081,23 +1081,22 @@ html.dark .dv2-container {
 .dv2-trends-slider-container {
     background: rgba(23, 50, 77, 0.03);
     border: 1px solid var(--dv2-card-border);
-    border-radius: 16px;
-    padding: 0.35rem;
+    border-radius: 12px;
+    padding: 0.25rem;
     position: relative;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 :root.dark .dv2-trends-slider-container,
 .dark .dv2-trends-slider-container {
     background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.07);
 }
 
 .dv2-trends-chips-scroll {
     display: flex;
-    gap: 0.35rem;
+    gap: 0.25rem;
     overflow-x: auto;
-    padding: 0.1rem;
+    padding: 0.05rem;
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -1112,50 +1111,52 @@ html.dark .dv2-container {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.5rem 0.9rem;
-    min-height: 40px;
-    border-radius: 12px;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    min-height: 32px;
+    border-radius: 8px;
     border: 1px solid transparent;
-    font-size: 0.8125rem;
+    font-size: 0.78125rem;
     font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.15s ease;
     scroll-snap-align: center;
     user-select: none;
+    background: transparent;
+    color: var(--dv2-muted);
+}
+
+.dv2-trends-pill:hover {
+    color: var(--dv2-text);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .dv2-trends-pill:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
 }
 
-.dv2-trends-pill-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-}
-
-.dv2-trends-pill.active .dv2-trends-pill-dot {
-    transform: scale(1.2);
+.dv2-trends-pill.active {
+    color: var(--dv2-text);
 }
 
 .dv2-trends-pill-icon {
-    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
     line-height: 1;
 }
 
 .dv2-trends-pill-name {
     white-space: nowrap;
     line-height: 1;
+    letter-spacing: -0.01em;
 }
 
 .dv2-trends-pill-count {
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     font-weight: 700;
-    padding: 0.1rem 0.4rem;
-    border-radius: 9999px;
+    padding: 0.08rem 0.35rem;
+    border-radius: 4px;
     line-height: 1.2;
 }
 

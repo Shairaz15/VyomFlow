@@ -2,8 +2,8 @@ import type { RouteConfig } from "../../types/navigationTypes";
 
 /**
  * Real-World Campus PoV Navigation Route Configuration
- * Encoding Route: Point A (Main Gate 1) → Point B (Basketball Court Plaza)
- * Reverse Navigation: Point B → Point A with 8 Intersections
+ * Encoding Route: Point A (Main Gate 1) → Outdoor Basketball
+ * Reverse Navigation: Outdoor Basketball → Point A with 8 Intersections
  * Video Structure:
  *   - Encoding: /videos/navigation/encoding_full.mp4
  *   - Reverse Departure: /videos/navigation/start.mp4
@@ -13,16 +13,16 @@ import type { RouteConfig } from "../../types/navigationTypes";
  */
 export const DEMO_ROUTE: RouteConfig = {
     routeId: "campus_route_01",
-    routeName: "Main Entrance (Gate 1) to Campus Sports Plaza",
-    description: "First-person walking route from Main Gate 1 (Point A) through campus corridors and central lawn to the Basketball Court Plaza (Point B).",
+    routeName: "Main Entrance (Gate 1) to Outdoor Basketball",
+    description: "First-person walking route from Main Gate 1 (Point A) through campus corridors and central lawn to Outdoor Basketball.",
     encodingVideoUrl: "https://pkkrxxjinpxctkoxltuy.supabase.co/storage/v1/object/public/navigation-assets/videos/encoding_full.mp4",
     // Single reverse video (res.mp4) replaces start.mp4 and all intersection clips.
     // The SeamlessReverseNavigator handles timestamp-based pausing internally.
     startVideoUrl: undefined,
     destination: {
-        question: "Where were you headed at the end of the walking route (Point B)?",
+        question: "Where were you headed at the end of the walking route?",
         options: [
-            "Campus Basketball Court & Sports Plaza",
+            "Outdoor Basketball",
             "Main Administrative Building & Auditorium",
             "Central Library & Information Science Block",
             "Mechanical Engineering Workshops & Labs",
@@ -34,9 +34,9 @@ export const DEMO_ROUTE: RouteConfig = {
             segmentId: "seg_01",
             approachVideoUrl: "/videos/navigation/inter-1.mp4",
             continuationVideoUrl: "/videos/navigation/af-1.mp4",
-            fromWaypoint: "Point B",
+            fromWaypoint: "Outdoor Basketball",
             toWaypoint: "Intersection 1",
-            intersectionLabel: "Intersection 1: Campus Plaza Walkway",
+            intersectionLabel: "Intersection 1: Udupi Canteen",
             correctDirection: "right",
         },
         {
@@ -45,7 +45,7 @@ export const DEMO_ROUTE: RouteConfig = {
             continuationVideoUrl: "/videos/navigation/af-2.mp4",
             fromWaypoint: "Intersection 1",
             toWaypoint: "Intersection 2",
-            intersectionLabel: "Intersection 2: Silver Jubilee Block Corridor",
+            intersectionLabel: "Intersection 2: Netaji Subhas Chandra Bose Block",
             correctDirection: "right",
         },
         {
@@ -54,7 +54,7 @@ export const DEMO_ROUTE: RouteConfig = {
             continuationVideoUrl: "/videos/navigation/af-3.mp4",
             fromWaypoint: "Intersection 2",
             toWaypoint: "Intersection 3",
-            intersectionLabel: "Intersection 3: Central Lawn Walkway Junction",
+            intersectionLabel: "Intersection 3: Main Stage",
             correctDirection: "straight",
         },
         {
@@ -63,7 +63,7 @@ export const DEMO_ROUTE: RouteConfig = {
             continuationVideoUrl: "/videos/navigation/af-4.mp4",
             fromWaypoint: "Intersection 3",
             toWaypoint: "Intersection 4",
-            intersectionLabel: "Intersection 4: Tree Driveway Corner (Green Fence)",
+            intersectionLabel: "Intersection 4: Ground Entrance",
             correctDirection: "left",
         },
         {
@@ -72,7 +72,7 @@ export const DEMO_ROUTE: RouteConfig = {
             continuationVideoUrl: "/videos/navigation/af-5.mp4",
             fromWaypoint: "Intersection 4",
             toWaypoint: "Intersection 5",
-            intersectionLabel: "Intersection 5: Tree-Lined Driveway along Sports Field",
+            intersectionLabel: "Intersection 5: Fountain Lawn Area",
             correctDirection: "left",
         },
         {
@@ -81,7 +81,7 @@ export const DEMO_ROUTE: RouteConfig = {
             continuationVideoUrl: "/videos/navigation/af-6.mp4",
             fromWaypoint: "Intersection 5",
             toWaypoint: "Intersection 6",
-            intersectionLabel: "Intersection 6: Bose Block Corner & Robot Sculpture",
+            intersectionLabel: "Intersection 6: Entrance to Netaji Subhas Chandra Bose block",
             correctDirection: "right",
         },
         {
@@ -90,7 +90,7 @@ export const DEMO_ROUTE: RouteConfig = {
             continuationVideoUrl: "/videos/navigation/af-7.mp4",
             fromWaypoint: "Intersection 6",
             toWaypoint: "Intersection 7",
-            intersectionLabel: "Intersection 7: Entrance Walkway Junction (Bamboo Garden)",
+            intersectionLabel: "Intersection 7: Main lawn next to NesCafe",
             correctDirection: "left",
         },
         {
@@ -99,12 +99,12 @@ export const DEMO_ROUTE: RouteConfig = {
             continuationVideoUrl: "/videos/navigation/af-8.mp4",
             fromWaypoint: "Intersection 7",
             toWaypoint: "Point A (Gate 1)",
-            intersectionLabel: "Intersection 8: Main Gate 1 Arrival Stretch",
+            intersectionLabel: "Intersection 8: Main Entrance Fountain",
             correctDirection: "right",
         },
     ],
     landmarks: [
-        // Real Landmarks in forward chronological order (Point A → Point B)
+        // Real Landmarks in forward chronological order (Point A → Outdoor Basketball)
         // 6 correct answers the participant must identify and sequence
         {
             id: "lm_01",

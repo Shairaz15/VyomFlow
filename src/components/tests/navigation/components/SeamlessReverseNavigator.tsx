@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Compass, Video, ArrowRight } from "lucide-react";
 import { Card, Icon, Button } from "../../../common";
 import { useLanguage } from "../../../../i18n/LanguageContext";
+import "../NavigationAssessment.css";
 import type {
     RouteConfig,
     NavigationDirection,
@@ -36,6 +38,8 @@ export function SeamlessReverseNavigator({
 }: SeamlessReverseNavigatorProps) {
     const { t } = useLanguage();
     const videoRef = useRef<HTMLVideoElement>(null);
+    const videoContainerRef = useRef<HTMLDivElement>(null);
+    const decisionPanelRef = useRef<HTMLDivElement>(null);
 
     const [currentIntersection, setCurrentIntersection] = useState<number>(0); // 0-7 index into PAUSE_TIMESTAMPS
     const [isAwaitingDecision, setIsAwaitingDecision] = useState<boolean>(false);
@@ -251,6 +255,45 @@ export function SeamlessReverseNavigator({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isAwaitingDecision, isSubmitted, handleChooseDirection]);
 
+    // Auto-scroll to reveal the direction D-pad whenever a decision is required (Desktop & Mobile)
+    useEffect(() => {
+        if (isAwaitingDecision) {
+            const timeoutId = setTimeout(() => {
+                requestAnimationFrame(() => {
+                    if (decisionPanelRef.current) {
+                        decisionPanelRef.current.scrollIntoView({
+                            behavior: "smooth",
+                            block: "end",
+                            inline: "nearest",
+                        });
+                    }
+                });
+            }, 80);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [isAwaitingDecision]);
+
+    // When decision is completed and video resumes, ensure video is brought back into view smoothly if scrolled off
+    useEffect(() => {
+        if (!isAwaitingDecision && isPlaying) {
+            const timeoutId = setTimeout(() => {
+                if (videoContainerRef.current) {
+                    const rect = videoContainerRef.current.getBoundingClientRect();
+                    if (rect.top < 30) {
+                        videoContainerRef.current.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                            inline: "nearest",
+                        });
+                    }
+                }
+            }, 120);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [isAwaitingDecision, isPlaying]);
+
     // Touch Swipe Gestures
     const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -378,7 +421,7 @@ export function SeamlessReverseNavigator({
             <div className="flex items-center justify-between px-2 text-xs">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-cyan-700 dark:text-cyan-400">
-                        Reverse Route (Point B → Point A)
+                        Reverse Route (Outdoor Basketball → Point A)
                     </span>
                     <span className="text-slate-400 dark:text-slate-600">•</span>
                     <span className="text-slate-700 dark:text-slate-300 font-mono text-xs">
@@ -409,7 +452,7 @@ export function SeamlessReverseNavigator({
             </div>
 
             {/* Persistent Video Player Frame */}
-            <div className="nav-video-container relative w-full aspect-video max-h-[58vh] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl">
+            <div ref={videoContainerRef} className="nav-video-container relative w-full aspect-video max-h-[58vh] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl">
                 {/* Single Video Element */}
                 <video
                     ref={videoRef}
@@ -520,11 +563,12 @@ export function SeamlessReverseNavigator({
             {/* Area Directly Below Video */}
             {isAwaitingDecision && currentSegment ? (
                 /* Intersection Direction Selector Panel */
-                <Card
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                    className="p-6 bg-slate-900/95 border border-cyan-500/30 rounded-3xl shadow-2xl space-y-4 animate-fadeInUp select-none"
-                >
+                <div ref={decisionPanelRef} className="w-full">
+                    <Card
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        className="p-6 bg-slate-900/95 border border-cyan-500/30 rounded-3xl shadow-2xl space-y-4 animate-fadeInUp select-none"
+                    >
                     <div className="text-center space-y-1">
                         <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                             <Icon name="navigation" size={12} />
@@ -533,7 +577,7 @@ export function SeamlessReverseNavigator({
                         <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                             {currentSegment.intersectionLabel}
                         </h3>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-sm sm:text-base font-medium text-slate-200 dark:text-slate-100 pt-0.5 max-w-xl mx-auto leading-relaxed">
                             {t("navigation.directionRetracePrompt")}
                         </p>
                     </div>
@@ -650,43 +694,47 @@ export function SeamlessReverseNavigator({
                         <span className="font-mono text-slate-500">Instant Telemetry Active</span>
                     </div>
                 </Card>
+                </div>
             ) : (
-                /* Continuous Navigation Status Bar (When Video is moving) */
-                <Card className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-between gap-4 text-xs shadow-md">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 animate-pulse">
-                            <Icon name="navigation" size={16} />
+                /* Continuous Navigation Status Bar (When Video is moving) - Legible & Sleek */
+                <div className="nav-telemetry-banner animate-fadeIn">
+                    <div className="telemetry-left">
+                        <div className="telemetry-icon-box" title={t("navigation.approachingIntersection", { num: currentIntersectionNumber })}>
+                            <Compass size={18} className="telemetry-icon-svg" />
                         </div>
-                        <div className="space-y-0.5 text-left">
-                            <div className="text-slate-800 dark:text-white font-bold text-sm">
+                        <div className="telemetry-text-col">
+                            <h4 className="telemetry-title">
                                 {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
                                     ? t("navigation.approachingIntersection", { num: currentIntersectionNumber })
                                     : t("navigation.arrivingPointA")}
-                            </div>
-                            <div className="text-slate-600 dark:text-slate-400 text-xs">
+                            </h4>
+                            <p className="telemetry-subtitle">
                                 {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
                                     ? `${route.segments[currentIntersection]?.intersectionLabel || t("navigation.observePathways")}`
                                     : t("navigation.finalStretch")}
-                            </div>
+                            </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="hidden sm:inline-block px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
-                            🚶 {t("navigation.continuousPoV")}
-                        </span>
+                    <div className="telemetry-right">
+                        <div className="telemetry-pov-pill" title={t("navigation.continuousPoV")}>
+                            <span className="telemetry-pulse-dot" />
+                            <Video size={13} className="telemetry-pov-icon" />
+                            <span>{t("navigation.continuousPoV")}</span>
+                        </div>
                         {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
+                            <button
+                                type="button"
                                 onClick={handleSkip}
-                                className="text-xs"
+                                className="telemetry-skip-btn"
+                                aria-label={t("navigation.skipToDecision")}
                             >
-                                {t("navigation.skipToDecision")}
-                            </Button>
+                                <span>{t("navigation.skipToDecision")}</span>
+                                <ArrowRight size={13} className="skip-arrow" />
+                            </button>
                         )}
                     </div>
-                </Card>
+                </div>
             )}
         </div>
     );

@@ -998,3 +998,201 @@
     background: rgba(6, 182, 212, 0.10);
     border-color: rgba(6, 182, 212, 0.25);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONTINUOUS NAVIGATION TELEMETRY BANNER (LEGIBLE & SLEEK)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.nav-telemetry-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1.25rem;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    margin-top: 0.75rem;
+    box-sizing: border-box;
+    transition: all 0.25s ease;
+}
+
+.dark .nav-telemetry-banner,
+[data-theme="dark"] .nav-telemetry-banner {
+    background: #0d1527;
+    border-color: rgba(56, 189, 248, 0.20);
+    box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
+}
+
+.telemetry-left {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.telemetry-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.28);
+    color: #0891b2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.dark .telemetry-icon-box,
+[data-theme="dark"] .telemetry-icon-box {
+    background: rgba(6, 182, 212, 0.18);
+    border-color: rgba(6, 182, 212, 0.40);
+    color: #22d3ee;
+}
+
+.telemetry-text-col {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    min-width: 0;
+}
+
+.telemetry-title {
+    margin: 0;
+    font-size: 0.925rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #0f172a !important; /* solid, high-contrast legible title */
+    line-height: 1.25;
+}
+
+.dark .telemetry-title,
+[data-theme="dark"] .telemetry-title {
+    color: #f8fafc !important;
+}
+
+.telemetry-subtitle {
+    margin: 0.2rem 0 0 0;
+    font-size: 0.775rem;
+    font-weight: 500;
+    color: #475569 !important; /* clear secondary text */
+    line-height: 1.35;
+}
+
+.dark .telemetry-subtitle,
+[data-theme="dark"] .telemetry-subtitle {
+    color: #94a3b8 !important;
+}
+
+.telemetry-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+/* Sleek Continuous PoV Pill (No Emoji, Clean Icon + Live Pulse) */
+.telemetry-pov-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.725rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    background: #f1f5f9;
+    color: #1e293b;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.dark .telemetry-pov-pill,
+[data-theme="dark"] .telemetry-pov-pill {
+    background: #1e293b;
+    color: #f1f5f9;
+    border-color: rgba(56, 189, 248, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.telemetry-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+    animation: livePulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    flex-shrink: 0;
+}
+
+@keyframes livePulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.85); }
+}
+
+.telemetry-pov-icon {
+    color: #0891b2;
+    flex-shrink: 0;
+}
+
+.dark .telemetry-pov-icon,
+[data-theme="dark"] .telemetry-pov-icon {
+    color: #22d3ee;
+}
+
+/* Sleek Skip to Decision Button */
+.telemetry-skip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.telemetry-skip-btn:hover {
+    background: #f8fafc;
+    border-color: #0891b2;
+    color: #0891b2;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.15);
+}
+
+.telemetry-skip-btn:active {
+    transform: translateY(0);
+}
+
+.telemetry-skip-btn .skip-arrow {
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+
+.telemetry-skip-btn:hover .skip-arrow {
+    transform: translateX(2px);
+}
+
+.dark .telemetry-skip-btn,
+[data-theme="dark"] .telemetry-skip-btn {
+    background: #1e293b;
+    border-color: rgba(56, 189, 248, 0.3);
+    color: #f8fafc;
+}
+
+.dark .telemetry-skip-btn:hover,
+[data-theme="dark"] .telemetry-skip-btn:hover {
+    background: #334155;
+    border-color: #22d3ee;
+    color: #22d3ee;
+}

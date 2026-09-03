@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     LineChart,
     Line,
@@ -31,7 +31,7 @@ const MODULE_ROUTES: Record<string, string> = {
     navigation: '/test/navigation',
 };
 
-import { Zap, Target, Brain, BookOpen, MessageSquareQuote, Layers, Compass, Activity } from 'lucide-react';
+import { Zap, Target, Brain, BookOpen, MessageSquareQuote, Layers, Compass, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 
 function getTrendIcon(key: string, size = 15) {
     switch (key) {
@@ -228,6 +228,19 @@ function CustomBiomarkerTooltip({ active, payload, label, moduleKey, moduleName,
     );
 }
 
+function getCleanModuleName(moduleKey: string, originalName: string): string {
+    switch (moduleKey) {
+        case 'reaction': return 'Reaction Time';
+        case 'savt': return 'Attention';
+        case 'vmra': return 'Visual Memory';
+        case 'story': return 'Story Recall';
+        case 'language': return 'Language';
+        case 'pattern': return 'Working Memory';
+        case 'navigation': return 'Navigation';
+        default: return originalName.replace(/\s*\([^)]*\)/g, '').trim();
+    }
+}
+
 export function ModuleTrendCharts({ trends, onPointClick }: Props) {
     if (!trends || trends.length === 0) return null;
 
@@ -236,6 +249,39 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
         return withData?.moduleKey || trends[0]?.moduleKey || 'reaction';
     });
 
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(true);
+
+    const checkScrollButtons = () => {
+        if (!scrollRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        setCanScrollLeft(scrollLeft > 4);
+        setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+    };
+
+    useEffect(() => {
+        checkScrollButtons();
+        const handleResize = () => checkScrollButtons();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [trends]);
+
+    const handleScroll = (direction: 'left' | 'right') => {
+        if (!scrollRef.current) return;
+        const amount = direction === 'left' ? -180 : 180;
+        scrollRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+        setTimeout(checkScrollButtons, 260);
+    };
+
+    const handleWheel = (e: React.WheelEvent) => {
+        if (!scrollRef.current) return;
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            scrollRef.current.scrollLeft += e.deltaY;
+            checkScrollButtons();
+        }
+    };
+
     const activeTrend = trends.find(t => t.moduleKey === selectedModuleKey) || trends[0];
 
     const renderTrendCard = (trend: ModuleTrendViewModel) => {
@@ -243,26 +289,46 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
         const route = MODULE_ROUTES[trend.moduleKey] || '/tests';
 
         return (
-            <div key={trend.moduleKey} className="dv2-card dv2-chart-card">
-                <div className="dv2-chart-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span
-                            className="dv2-chart-dot"
-                            style={{ background: trend.chartColor }}
-                        />
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.95rem', fontWeight: 700, color: 'var(--dv2-text)' }}>
-                            <span style={{ color: trend.chartColor, display: 'inline-flex', alignItems: 'center' }}>
-                                {getTrendIcon(trend.moduleKey, 16)}
-                            </span>
+            <div key={trend.moduleKey} className="dv2-card dv2-chart-card" style={{ padding: '1.25rem 1.15rem 0.85rem 1.15rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '8px',
+                            background: `${trend.chartColor}18`,
+                            color: trend.chartColor,
+                        }}>
+                            {getTrendIcon(trend.moduleKey, 15)}
+                        </span>
+                        <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--dv2-text)', letterSpacing: '-0.01em' }}>
                             {trend.moduleName}
                         </span>
                     </div>
                     {!hasData ? (
-                        <span style={{ fontSize: '0.78rem', fontWeight: 600, padding: '0.25rem 0.55rem', borderRadius: '6px', background: 'rgba(148, 163, 184, 0.15)', color: 'var(--dv2-muted)' }}>
+                        <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '6px',
+                            background: 'rgba(148, 163, 184, 0.12)',
+                            color: 'var(--dv2-muted)'
+                        }}>
                             No Data Yet
                         </span>
                     ) : (
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--dv2-muted)', fontWeight: 650 }}>
+                        <span style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--dv2-muted)',
+                            fontWeight: 600,
+                            padding: '0.15rem 0.5rem',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px solid var(--dv2-card-border)',
+                        }}>
                             {trend.sessions.length} {trend.sessions.length === 1 ? 'session' : 'sessions'}
                         </span>
                     )}
@@ -384,26 +450,89 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
 
     return (
         <div className="dv2-trends-unified-view">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.4rem' }}>
                 <div>
-                    <h3 className="dv2-section-title" style={{ margin: 0, fontSize: '1.15rem' }}>
+                    <h3 style={{
+                        margin: 0,
+                        fontSize: '1rem',
+                        fontWeight: 700,
+                        letterSpacing: '-0.015em',
+                        color: 'var(--dv2-text)',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
+                    }}>
                         Longitudinal Assessment Trends
                     </h3>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--dv2-muted)' }}>
-                        Select any of the 7 cognitive biomarker modules to view multi-session trajectory curves
-                    </span>
+                    <p style={{
+                        margin: '0.15rem 0 0',
+                        fontSize: '0.75rem',
+                        color: 'var(--dv2-muted)',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
+                    }}>
+                        Select a biomarker module to inspect trajectory curves
+                    </p>
                 </div>
                 <span className="dv2-trends-active-indicator">
                     {trends.filter(t => t.sessions.length > 0).length}/7 Active
                 </span>
             </div>
 
-            {/* Horizontal Module Switcher Pills for All Screens */}
-            <div className="dv2-trends-slider-container" style={{ marginBottom: '0.85rem' }}>
-                <div className="dv2-trends-chips-scroll">
+            {/* Render Single Active Chart with smooth fade transition (Moved UP) */}
+            <div key={activeTrend.moduleKey} className="dv2-animate-fade">
+                {renderTrendCard(activeTrend)}
+            </div>
+
+            {/* Horizontal Module Switcher Row with Left/Right Chevrons & Wheel Support (Moved DOWN) */}
+            <div className="dv2-trends-slider-container" style={{
+                marginTop: '0.65rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.2rem',
+                position: 'relative',
+            }}>
+                <button
+                    type="button"
+                    onClick={() => handleScroll('left')}
+                    disabled={!canScrollLeft}
+                    title="Scroll left"
+                    aria-label="Scroll options left"
+                    style={{
+                        width: '26px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: 'none',
+                        background: canScrollLeft ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                        color: canScrollLeft ? 'var(--dv2-text)' : 'var(--dv2-muted)',
+                        opacity: canScrollLeft ? 1 : 0.25,
+                        cursor: canScrollLeft ? 'pointer' : 'default',
+                        transition: 'all 0.15s ease',
+                        flexShrink: 0,
+                    }}
+                >
+                    <ChevronLeft size={16} />
+                </button>
+
+                <div
+                    ref={scrollRef}
+                    onScroll={checkScrollButtons}
+                    onWheel={handleWheel}
+                    className="dv2-trends-chips-scroll"
+                    style={{
+                        flex: 1,
+                        display: 'flex',
+                        gap: '0.25rem',
+                        overflowX: 'auto',
+                        padding: '0.05rem 0.1rem',
+                        scrollBehavior: 'smooth',
+                    }}
+                >
                     {trends.map(t => {
                         const isSelected = t.moduleKey === activeTrend.moduleKey;
                         const hasData = t.sessions.length > 0;
+                        const cleanName = getCleanModuleName(t.moduleKey, t.moduleName);
                         return (
                             <button
                                 key={t.moduleKey}
@@ -413,29 +542,28 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
                                 style={{
                                     borderColor: isSelected ? t.chartColor : 'transparent',
                                     background: isSelected
-                                        ? `linear-gradient(135deg, ${t.chartColor}22, ${t.chartColor}10)`
+                                        ? `linear-gradient(135deg, ${t.chartColor}22, ${t.chartColor}0a)`
                                         : 'transparent',
                                     color: isSelected ? 'var(--dv2-text)' : 'var(--dv2-muted)',
-                                    boxShadow: isSelected ? `0 2px 8px ${t.chartColor}25` : 'none',
+                                    boxShadow: isSelected ? `0 2px 6px ${t.chartColor}18` : 'none',
                                 }}
                             >
                                 <span
-                                    className="dv2-trends-pill-dot"
+                                    className="dv2-trends-pill-icon"
                                     style={{
-                                        background: t.chartColor,
-                                        boxShadow: isSelected ? `0 0 6px ${t.chartColor}` : 'none'
+                                        color: t.chartColor,
+                                        opacity: isSelected ? 1 : 0.75,
                                     }}
-                                />
-                                <span className="dv2-trends-pill-icon" style={{ display: 'inline-flex', alignItems: 'center', color: t.chartColor }}>
+                                >
                                     {getTrendIcon(t.moduleKey, 14)}
                                 </span>
-                                <span className="dv2-trends-pill-name" style={{ fontSize: '0.8125rem', fontWeight: 650 }}>{t.moduleName}</span>
+                                <span className="dv2-trends-pill-name">{cleanName}</span>
                                 {hasData && (
                                     <span
                                         className="dv2-trends-pill-count"
                                         style={{
-                                            background: isSelected ? `${t.chartColor}35` : 'rgba(148, 163, 184, 0.15)',
-                                            color: isSelected ? 'var(--dv2-text)' : 'var(--dv2-muted)',
+                                            background: isSelected ? `${t.chartColor}28` : 'rgba(148, 163, 184, 0.12)',
+                                            color: isSelected ? t.chartColor : 'var(--dv2-muted)',
                                         }}
                                     >
                                         {t.sessions.length}
@@ -445,11 +573,31 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
                         );
                     })}
                 </div>
-            </div>
 
-            {/* Render Single Active Chart with smooth fade transition */}
-            <div key={activeTrend.moduleKey} className="dv2-animate-fade">
-                {renderTrendCard(activeTrend)}
+                <button
+                    type="button"
+                    onClick={() => handleScroll('right')}
+                    disabled={!canScrollRight}
+                    title="Scroll right"
+                    aria-label="Scroll options right"
+                    style={{
+                        width: '26px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: 'none',
+                        background: canScrollRight ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                        color: canScrollRight ? 'var(--dv2-text)' : 'var(--dv2-muted)',
+                        opacity: canScrollRight ? 1 : 0.25,
+                        cursor: canScrollRight ? 'pointer' : 'default',
+                        transition: 'all 0.15s ease',
+                        flexShrink: 0,
+                    }}
+                >
+                    <ChevronRight size={16} />
+                </button>
             </div>
         </div>
     );

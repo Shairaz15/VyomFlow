@@ -189,7 +189,7 @@ export function PatternAssessment() {
             setRounds(prev => [...prev, roundData]);
 
             if (success) {
-                setMessage(t("pattern.correctNext"));
+                setMessage(t("pattern.correct"));
                 setTimeout(() => {
                     setLevel(prev => prev + 1);
                 }, 1000);
@@ -201,7 +201,7 @@ export function PatternAssessment() {
                 return;
             }
         } else if (phase === 'demonstration') {
-            setMessage(success ? t("pattern.practiceCompleted") : t("pattern.beginRealAssessment"));
+            setMessage(success ? t("pattern.greatPractice") : t("pattern.letsBeginReal"));
             setTimeout(() => setPhase('calibration'), 1500);
             return;
         } else if (phase === 'calibration') {
@@ -414,7 +414,7 @@ export function PatternAssessment() {
                         <div className="pattern-arena-card animate-fadeIn">
                             <div className="pattern-status-header">
                                 <div className="pattern-level-pill">
-                                    <span>{t("pattern.levelDisplay", { level })}</span>
+                                    <span>{t("pattern.level", { level }) || t("pattern.levelDisplay", { level }) || `Level ${level}`}</span>
                                 </div>
                                 <div className="pattern-mode-badge">
                                     {phase === 'demonstration' ? t("pattern.practiceMode") : phase === 'calibration' ? t("pattern.calibration") : t("pattern.scoredAssessment")}
@@ -504,7 +504,7 @@ export function PatternAssessment() {
                                             <h4>{t("pattern.memorySpan")}</h4>
                                             <p className="metric-desc">{t("pattern.maxLevelReached")}</p>
                                         </div>
-                                        <div className="metric-val">{t("pattern.levelDisplay", { level: maxLevel })}</div>
+                                        <div className="metric-val">{t("pattern.level", { level: maxLevel }) || t("pattern.levelDisplay", { level: maxLevel }) || `Level ${maxLevel}`}</div>
                                     </Card>
 
                                     <Card className="metric-card">
@@ -518,7 +518,7 @@ export function PatternAssessment() {
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
                                             <h4>{t("pattern.decisionLatency")}</h4>
-                                            <p className="metric-desc">{t("pattern.responseSpeed")}</p>
+                                            <p className="metric-desc">{t("pattern.avgResponseSpeed") || t("pattern.responseSpeed") || "Avg sequence response speed"}</p>
                                         </div>
                                         <div className="metric-val">{(avgLatency / 1000).toFixed(2)} <span className="metric-unit">s</span></div>
                                     </Card>
