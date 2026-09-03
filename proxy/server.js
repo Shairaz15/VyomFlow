@@ -31,9 +31,77 @@ const server = createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ 
       status: 'ok', 
-      service: 'VyomFlow Sarvam AI WebSocket Proxy',
+      service: 'VyomFlow Sarvam AI Proxy',
       timestamp: new Date().toISOString()
     }));
+    return;
+  }
+
+  // REST API Proxy: Text to Speech (/api/tts)
+  if (req.method === 'POST' && req.url === '/api/tts') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body);
+        const sarvamRes = await fetch('https://api.sarvam.ai/text-to-speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-subscription-key': req.headers['api-subscription-key'] || API_KEY
+          },
+          body: JSON.stringify({
+            inputs: payload.inputs || [payload.text],
+            target_language_code: payload.target_language_code || payload.language_code || 'en-IN',
+            speaker: payload.speaker || 'priya',
+            pace: payload.pace || 1.0,
+            speech_sample_rate: payload.speech_sample_rate || 22050,
+            model: payload.model || 'bulbul:v3'
+          })
+        });
+
+        const data = await sarvamRes.json();
+        res.writeHead(sarvamRes.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (err) {
+        console.error('[Proxy] TTS Error:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // REST API Proxy: Translate (/api/translate)
+  if (req.method === 'POST' && req.url === '/api/translate') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body);
+        const sarvamRes = await fetch('https://api.sarvam.ai/translate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-subscription-key': req.headers['api-subscription-key'] || API_KEY
+          },
+          body: JSON.stringify({
+            input: payload.input || payload.text,
+            source_language_code: payload.source_language_code || 'en-IN',
+            target_language_code: payload.target_language_code || 'hi-IN',
+            model: payload.model || 'sarvam-translate:v1'
+          })
+        });
+
+        const data = await sarvamRes.json();
+        res.writeHead(sarvamRes.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (err) {
+        console.error('[Proxy] Translate Error:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
     return;
   }
 

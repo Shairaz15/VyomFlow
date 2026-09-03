@@ -22,7 +22,8 @@ export type ResultCollectionName =
     | "memory_results"
     | "pattern_results"
     | "language_results"
-    | "vmra_results";
+    | "vmra_results"
+    | "story_results";
 
 /**
  * Check if the current user is authenticated.

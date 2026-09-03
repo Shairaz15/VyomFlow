@@ -8,6 +8,7 @@ import { ReactionTimeTest } from "./components/tests/reaction/ReactionTimeTest";
 import { PatternAssessment } from "./components/tests/pattern/PatternAssessment";
 import { LanguageAssessment } from "./components/tests/language/LanguageAssessment";
 import { SavtAssessment } from "./components/tests/attention/SavtAssessment";
+import { StoryAssessment } from "./components/tests/story/StoryAssessment";
 import { Settings } from "./pages/Settings";
 import { Demo } from "./pages/Demo";
 // Admin pages
@@ -91,6 +92,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SavtAssessment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/test/story"
+              element={
+                <ProtectedRoute>
+                  <StoryAssessment />
                 </ProtectedRoute>
               }
             />

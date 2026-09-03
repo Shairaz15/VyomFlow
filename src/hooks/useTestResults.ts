@@ -9,6 +9,7 @@ import type { ReactionTestResult } from "../components/tests/reaction/reactionFe
 import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
 import type { VmraAssessmentResult } from "../types/vmraTypes";
+import type { StoryAssessmentResult } from "../types/storyTypes";
 import { logger } from "../utils/logger";
 import {
     loadResultsFromFirestore,
@@ -55,6 +56,7 @@ export const STORAGE_KEYS = {
     patternResults: "vyomflow_pattern_results",
     languageResults: "vyomflow_language_results",
     vmraResults: "vyomflow_vmra_results",
+    storyResults: "vyomflow_story_results",
     lastSession: "vyomflow_last_session",
 };
 
@@ -68,6 +70,7 @@ export async function clearAllTestData(): Promise<void> {
     localStorage.removeItem(STORAGE_KEYS.patternResults);
     localStorage.removeItem(STORAGE_KEYS.languageResults);
     localStorage.removeItem(STORAGE_KEYS.vmraResults);
+    localStorage.removeItem(STORAGE_KEYS.storyResults);
     localStorage.removeItem(STORAGE_KEYS.lastSession);
 
     // Also clear Firestore if user is logged in
@@ -626,3 +629,92 @@ export function useVmraResults() {
         getPreviousAccuracies,
     };
 }
+
+/**
+ * Hook for managing Story Narration Recall Assessment results.
+ * Firestore-first for authenticated users, localStorage fallback for demo mode.
+ */
+export function useStoryResults() {
+    const [results, setResults] = useState<StoryAssessmentResult[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const loadResults = useCallback(async (mounted: { current: boolean }) => {
+        try {
+            if (isUserAuthenticated()) {
+                const firestoreResults = await loadResultsFromFirestore<StoryAssessmentResult>(
+                    "story_results"
+                );
+                if (mounted.current) {
+                    setResults(firestoreResults);
+                    localStorage.setItem(
+                        STORAGE_KEYS.storyResults,
+                        JSON.stringify(trimResults(firestoreResults))
+                    );
+                }
+            } else {
+                const parsed = safeJsonParse<StoryAssessmentResult[]>(
+                    localStorage.getItem(STORAGE_KEYS.storyResults),
+                    []
+                );
+                if (mounted.current && parsed.length > 0) {
+                    const withDates = parsed.map((r) => ({
+                        ...r,
+                        timestamp: new Date(r.timestamp),
+                    }));
+                    setResults(withDates);
+                }
+            }
+        } catch (error) {
+            logger.error("Failed to load story results:", error);
+        } finally {
+            if (mounted.current) setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const mounted = { current: true };
+        loadResults(mounted);
+
+        const unsubscribe = onAuthStateChanged(auth, () => {
+            if (mounted.current) {
+                setIsLoading(true);
+                loadResults(mounted);
+            }
+        });
+
+        return () => {
+            mounted.current = false;
+            unsubscribe();
+        };
+    }, [loadResults]);
+
+    const saveResult = useCallback((result: StoryAssessmentResult) => {
+        setResults((prev) => {
+            const updated = trimResults([...prev, result]);
+            try {
+                localStorage.setItem(STORAGE_KEYS.storyResults, JSON.stringify(updated));
+                if (isUserAuthenticated()) {
+                    saveResultToFirestore("story_results", result).catch((e) =>
+                        logger.error("Firestore save failed", e)
+                    );
+                }
+            } catch (error) {
+                logger.error("Failed to save story result:", error);
+            }
+            return updated;
+        });
+    }, []);
+
+    const getLatestResult = useCallback((): StoryAssessmentResult | null => {
+        if (results.length === 0) return null;
+        return results[results.length - 1];
+    }, [results]);
+
+    return {
+        results,
+        isLoading,
+        saveResult,
+        getLatestResult,
+    };
+}
+

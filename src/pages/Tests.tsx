@@ -7,7 +7,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { PageWrapper } from "../components/layout";
 import "./Tests.css";
 
-type TestType = "memory" | "reaction" | "pattern" | "language" | "attention";
+type TestType = "memory" | "reaction" | "pattern" | "language" | "attention" | "story";
 
 interface TestInfo {
     id: TestType;
@@ -24,6 +24,13 @@ export function Tests() {
     const { t } = useLanguage();
 
     const TESTS: TestInfo[] = [
+        {
+            id: "story",
+            title: "Story Narration Recall",
+            description: "Listen to a narrated story in your language and retell it to assess episodic memory, listening comprehension, and narrative flow.",
+            iconName: "story",
+            duration: "5 min",
+        },
         {
             id: "memory",
             title: t('tests.visualMemory'),

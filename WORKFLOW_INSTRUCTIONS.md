@@ -6,9 +6,9 @@ This document defines the strict workflow for advancing **VyomFlow** using 5-com
 
 ## 📌 Current Tracking State
 
-- **Current CogniTrack Base Commit:** `9e4ca12ad3bc5a88c4f87aef93322c112f552afd` (`9e4ca12`)
-- **Date:** `2026-08-02`
-- **Message:** `feat(language): enhance clinical biomarkers engine, 4-pillar scorecard UI, and CSI dashboard tracking`
+- **Current CogniTrack Base Commit:** `0616a1826827b5b7b2c56fbe3191991a90c0b0c2` (`0616a18`)
+- **Date:** `2026-08-03`
+- **Message:** `fix: Rely 100% on Sarvam STT and enhance dual-text matching engine`
 - **Target VyomFlow Remote:** `https://github.com/Shairaz15/VyomFlow.git` (`origin/main`)
 
 ---

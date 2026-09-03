@@ -11,7 +11,7 @@ import {
 import { Card, CardHeader, CardContent, RiskBadge, Button, Icon } from "../components/common";
 import { PageWrapper } from "../components/layout";
 import { useAuth } from "../contexts/AuthContext";
-import { useReactionResults, useMemoryResults, usePatternResults, useLanguageResults, useVmraResults, clearAllTestData } from "../hooks/useTestResults";
+import { useReactionResults, useMemoryResults, usePatternResults, useLanguageResults, useVmraResults, useStoryResults, clearAllTestData } from "../hooks/useTestResults";
 import { generateSimulatedData, hasBaseline, getMockBaseline } from "../utils/simulateUserData";
 import { useWeeklyReminder } from "../hooks/useWeeklyReminder";
 import { predictTrend } from "../ml";
@@ -33,6 +33,7 @@ export function Dashboard() {
     const { results: patternResults, saveResult: savePattern } = usePatternResults();
     const { results: languageResults, saveResult: saveLanguage } = useLanguageResults();
     const { results: vmraResults, saveResult: saveVmra } = useVmraResults();
+    const { results: storyResults } = useStoryResults();
 
     // Weekly Reminder Hook
     useWeeklyReminder();
@@ -107,7 +108,7 @@ export function Dashboard() {
     };
 
     // Determine if user has data
-    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 || languageResults.length > 0 || vmraResults.length > 0;
+    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 || languageResults.length > 0 || vmraResults.length > 0 || storyResults.length > 0;
 
     // Prepare chart data
     const chartData = useMemo(() => {
@@ -117,6 +118,7 @@ export function Dashboard() {
         patternResults.forEach(p => allDates.add(new Date(p.timestamp).toDateString()));
         languageResults.forEach(l => allDates.add(new Date(l.timestamp).toDateString()));
         vmraResults.forEach(v => allDates.add(new Date(v.timestamp).toDateString()));
+        storyResults.forEach(s => allDates.add(new Date(s.timestamp).toDateString()));
 
         const sortedDates = Array.from(allDates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
@@ -126,6 +128,7 @@ export function Dashboard() {
             const pattern = patternResults.filter(p => new Date(p.timestamp).toDateString() === dateStr).pop();
             const language = languageResults.filter(l => new Date(l.timestamp).toDateString() === dateStr).pop();
             const vmra = vmraResults.filter(v => new Date(v.timestamp).toDateString() === dateStr).pop();
+            const storyRes = storyResults.filter(s => new Date(s.timestamp).toDateString() === dateStr).pop();
 
             const patternScore = pattern ? Math.min(pattern.metrics.maxLevelReached * 10, 100) : null;
 
@@ -138,9 +141,10 @@ export function Dashboard() {
                 speech: language ? Math.round(language.derivedFeatures.wpm) : null,
                 csi: language ? Math.round(language.derivedFeatures.cognitiveSpeechIndex ?? 85) : null,
                 vmra: vmra ? Math.round(vmra.features.recallAccuracy * 100) : null,
+                storyRecall: storyRes ? storyRes.storyRecallScore : null,
             };
         });
-    }, [reactionResults, memoryResults, patternResults, languageResults, vmraResults]);
+    }, [reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults]);
 
     // Fetch ML Prediction when enough data
     useEffect(() => {
@@ -366,6 +370,7 @@ export function Dashboard() {
                 {/* Charts Grid */}
                 {hasUserData && (
                     <div className="charts-grid">
+                        {renderChart("Story Narration Recall", "Episodic memory & narrative recall index", "storyRecall", "#60a5fa", [0, 100], "/100")}
                         {renderChart(t('dashboard.memoryAccuracy'), t('dashboard.memoryAccuracySub'), "memory", "#34d399", [0, 100], "%")}
                         {renderChart(t('dashboard.visualMemoryVmra'), t('dashboard.visualMemoryVmraSub'), "vmra", "#f472b6", [0, 100], "%")}
                         {renderChart(t('dashboard.reactionTime'), t('dashboard.reactionTimeSub'), "reaction", "#fbbf24", ['auto', 'auto'], "ms")}
@@ -385,6 +390,7 @@ export function Dashboard() {
                                     <thead>
                                         <tr>
                                             <th>{t('dashboard.date')}</th>
+                                            <th>Story Recall</th>
                                             <th>{t('dashboard.memory')}</th>
                                             <th>{t('dashboard.visual')}</th>
                                             <th>{t('dashboard.reaction')}</th>
@@ -397,6 +403,7 @@ export function Dashboard() {
                                         {chartData.slice().reverse().map((session, i) => (
                                             <tr key={i}>
                                                 <td>{session.date}</td>
+                                                <td>{session.storyRecall ? `${session.storyRecall}/100` : '-'}</td>
                                                 <td>{session.memory ? `${session.memory}%` : '-'}</td>
                                                 <td>{session.vmra ? `${session.vmra}%` : '-'}</td>
                                                 <td>{session.reaction ? `${session.reaction}ms` : '-'}</td>

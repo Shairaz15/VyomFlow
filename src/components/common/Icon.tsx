@@ -23,7 +23,8 @@ export type IconName =
     | "chart-trend"
     | "play"
     | "info"
-    | "attention";
+    | "attention"
+    | "story";
 
 interface IconProps {
     name: IconName;
@@ -198,6 +199,13 @@ const iconPaths: Record<IconName, React.ReactNode> = {
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
             <circle cx="12" cy="12" r="3" />
             <path d="M12 5v-2M12 21v-2M5 12H3M21 12h-2" opacity="0.4" className="icon-animated-path" />
+        </>
+    ),
+    "story": (
+        <>
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            <path d="M8 7h8M8 11h6" strokeWidth="1.2" opacity="0.7" />
         </>
     ),
 };
