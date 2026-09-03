@@ -173,7 +173,8 @@ export const STORIES: Story[] = [
                     'kn-IN': { questionText: "ಅರ್ಜುನ್ ಅವರಿಗೆ ಯಾವ ಕೋಚ್ ಮತ್ತು ಸೀಟ್ ಸಂಖ್ಯೆ ಇತ್ತು?", options: [{ id: "opt_b3_24", text: "ಕೋಚ್ B3, ಸೀಟ್ 24" }, { id: "opt_a1_12", text: "ಕೋಚ್ A1, ಸೀಟ್ 12" }, { id: "opt_b2_36", text: "ಕೋಚ್ B2, ಸೀಟ್ 36" }, { id: "opt_c4_18", text: "ಕೋಚ್ C4, ಸೀಟ್ 18" }] },
                     'bn-IN': { questionText: "অর্জুনের কোন কোচ এবং সিট নম্বর ছিল?", options: [{ id: "opt_b3_24", text: "কোচ B3, সিট 24" }, { id: "opt_a1_12", text: "কোচ A1, সিট 12" }, { id: "opt_b2_36", text: "কোচ B2, সিট 36" }, { id: "opt_c4_18", text: "কোচ C4, সিট 18" }] },
                     'mr-IN': { questionText: "अर्जुनचा कोणता डबा आणि सीट नंबर होता?", options: [{ id: "opt_b3_24", text: "डबा B3, सीट 24" }, { id: "opt_a1_12", text: "डबा A1, सीट 12" }, { id: "opt_b2_36", text: "डबा B2, सीट 36" }, { id: "opt_c4_18", text: "डबा C4, सीट 18" }] },
-                    'gu-IN': { questionText: "અર્જુનનો કયો કોચ અને સીટ નંબર હતો?", options: [{ id: "opt_b3_24", text: "કોચ B3, સીટ 24" }, { id: "opt_a1_12", text: "કોચ A1, સીટ 12" }, { id: "opt_b2_36", text: "કોચ B2, સીટ 36" }, { id: "opt_c4_18", text: "કોચ C4, સીટ 18" }] }
+                    'gu-IN': { questionText: "અર્જુનનો કયો કોચ અને સીટ નંબર હતો?", options: [{ id: "opt_b3_24", text: "કોચ B3, સીટ 24" }, { id: "opt_a1_12", text: "કોચ A1, સીટ 12" }, { id: "opt_b2_36", text: "કોચ B2, સીટ 36" }, { id: "opt_c4_18", text: "કોચ C4, સીટ 18" }] },
+                    'ml-IN': { questionText: "അർജുൻ സഞ്ചരിച്ച കോച്ചും സീറ്റ് നമ്പറും ഏതാണ്?", options: [{ id: "opt_b3_24", text: "കോച്ച് B3, സീറ്റ് 24" }, { id: "opt_a1_12", text: "കോച്ച് A1, സീറ്റ് 12" }, { id: "opt_b2_36", text: "കോച്ച് B2, സീറ്റ് 36" }, { id: "opt_c4_18", text: "കോച്ച് C4, സീറ്റ് 18" }] }
                 }
             },
             {

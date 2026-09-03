@@ -181,6 +181,7 @@ export function StoryAssessment() {
                 {/* Phase 6: Spoken Story Recall */}
                 {phase === "recall" && (
                     <StoryRecorder
+                        selectedLanguage={selectedLanguage}
                         onComplete={handleRecallComplete}
                     />
                 )}

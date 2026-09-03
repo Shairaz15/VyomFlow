@@ -6,9 +6,9 @@ This document defines the strict workflow for advancing **VyomFlow** using 5-com
 
 ## 📌 Current Tracking State
 
-- **Current CogniTrack Base Commit:** `c35bfe368113da46d9ae9e9745445464b84665cc` (`c35bfe3`)
+- **Current CogniTrack Base Commit:** `0991ede73e60ef8abdc4fed0fffb0692484b6ec7` (`0991ede`)
 - **Date:** `2026-08-03`
-- **Message:** `fix(build): resolve tsconfig compatibility and unused parameter for Vercel deployment`
+- **Message:** `feat(story): add explicit diagnostic error alerts and verify STT API pipeline`
 - **Target VyomFlow Remote:** `https://github.com/Shairaz15/VyomFlow.git` (`origin/main`)
 
 ---
