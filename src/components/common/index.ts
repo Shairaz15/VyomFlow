@@ -15,4 +15,5 @@ export { VyomFlowLogo } from "./VyomFlowLogo";
 export { TutorialVideoPlaceholder } from "./TutorialVideoPlaceholder";
 export { MotivationalQuoteBlock } from "./MotivationalQuoteBlock";
 export type { MotivationalQuoteBlockProps } from "./MotivationalQuoteBlock";
+export { AiAssistantBubble } from "./AiAssistantBubble";
 

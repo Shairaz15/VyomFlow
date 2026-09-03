@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, Icon, Button } from "../../../common";
 import type {
     RouteConfig,
@@ -13,18 +13,18 @@ interface SeamlessReverseNavigatorProps {
 
 /**
  * Pause timestamps for the single reverse-navigation video (res.mp4).
- * Format from user: MM:SS:ms → converted to seconds.
+ * Format: MM:SS:ms -> converted to seconds.
  * The video pauses at each timestamp to prompt a direction decision.
  */
 const PAUSE_TIMESTAMPS_SECONDS: number[] = [
-    0 * 60 + 8 + 5 / 100,    // 00:08:05 → 8.05s
-    0 * 60 + 19 + 2 / 100,   // 00:19:02 → 19.02s
-    0 * 60 + 24 + 14 / 100,  // 00:24:14 → 24.14s
-    0 * 60 + 35 + 3 / 100,   // 00:35:03 → 35.03s
-    0 * 60 + 45 + 17 / 100,  // 00:45:17 → 45.17s
-    0 * 60 + 54 + 0 / 100,   // 00:54:00 → 54.00s
-    1 * 60 + 5 + 8 / 100,    // 01:05:08 → 65.08s
-    1 * 60 + 13 + 0 / 100,   // 01:13:00 → 73.00s
+    0 * 60 + 8 + 5 / 100,    // 00:08:05 -> 8.05s
+    0 * 60 + 19 + 2 / 100,   // 00:19:02 -> 19.02s
+    0 * 60 + 24 + 14 / 100,  // 00:24:14 -> 24.14s
+    0 * 60 + 35 + 3 / 100,   // 00:35:03 -> 35.03s
+    0 * 60 + 45 + 17 / 100,  // 00:45:17 -> 45.17s
+    0 * 60 + 54 + 0 / 100,   // 00:54:00 -> 54.00s
+    1 * 60 + 5 + 8 / 100,    // 01:05:08 -> 65.08s
+    1 * 60 + 13 + 0 / 100,   // 01:13:00 -> 73.00s
 ];
 
 const SINGLE_VIDEO_URL = "https://pkkrxxjinpxctkoxltuy.supabase.co/storage/v1/object/public/navigation-assets/videos/res.mp4";
@@ -50,6 +50,7 @@ export function SeamlessReverseNavigator({
     const triggeredPausesRef = useRef<Set<number>>(new Set());
     // Track whether we're in a post-decision resume phase (to avoid immediate re-trigger)
     const isResumingRef = useRef<boolean>(false);
+    const retryCountRef = useRef<number>(0);
 
     const currentSegment = route.segments[currentIntersection] || null;
 
@@ -61,18 +62,20 @@ export function SeamlessReverseNavigator({
         video.src = SINGLE_VIDEO_URL;
         video.muted = true;
         video.load();
-        // Delay play to let the browser parse the source
+
         const timer = setTimeout(() => {
             video.play()
                 .then(() => {
                     setIsPlaying(true);
                     setNeedsUserGesture(false);
+                    setHasError(false);
                 })
                 .catch(() => {
                     setIsPlaying(false);
                     setNeedsUserGesture(true);
                 });
         }, 150);
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -84,6 +87,7 @@ export function SeamlessReverseNavigator({
                 .then(() => {
                     setIsPlaying(true);
                     setNeedsUserGesture(false);
+                    setHasError(false);
                 })
                 .catch(console.error);
         } else {
@@ -100,6 +104,11 @@ export function SeamlessReverseNavigator({
         const currentTime = video.currentTime;
         const duration = video.duration;
 
+        // Auto-clear transient errors when time moves forward
+        if (hasError) {
+            setHasError(false);
+        }
+
         // Update progress bar relative to entire video
         if (duration) {
             setProgress((currentTime / duration) * 100);
@@ -111,24 +120,28 @@ export function SeamlessReverseNavigator({
         // Check if we've reached the next pause point
         if (currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length) {
             const pauseAt = PAUSE_TIMESTAMPS_SECONDS[currentIntersection];
-            // Use a tolerance window: pause when we're within 0.15s of or past the timestamp
-            if (currentTime >= pauseAt - 0.15 && !triggeredPausesRef.current.has(currentIntersection)) {
+            // Use a tolerance window: pause when we're within 0.20s of or past the timestamp
+            if (currentTime >= pauseAt - 0.20 && !triggeredPausesRef.current.has(currentIntersection)) {
                 triggeredPausesRef.current.add(currentIntersection);
                 video.pause();
-                // Seek exactly to the pause frame for consistency
-                video.currentTime = pauseAt;
+                // Seek to the exact pause frame
+                try {
+                    video.currentTime = pauseAt;
+                } catch {
+                    // Safe ignore
+                }
                 decisionStartTimeRef.current = performance.now();
                 setChosenDirection(null);
                 setIsSubmitted(false);
                 setIsAwaitingDecision(true);
+                setHasError(false);
             }
         }
-    }, [currentIntersection, isAwaitingDecision]);
+    }, [currentIntersection, isAwaitingDecision, hasError]);
 
     // Handle video ending (after all 8 intersections, the video plays to the end)
     const handleVideoEnded = useCallback(() => {
         if (currentIntersection >= PAUSE_TIMESTAMPS_SECONDS.length) {
-            // All intersections done, video finished
             onComplete(allResponses);
         }
     }, [currentIntersection, allResponses, onComplete]);
@@ -143,33 +156,37 @@ export function SeamlessReverseNavigator({
         setIsAwaitingDecision(false);
         setChosenDirection(null);
         setIsSubmitted(false);
+        setHasError(false);
 
         // If all 8 intersections are done, check if there's remaining video
         if (nextIntersection >= PAUSE_TIMESTAMPS_SECONDS.length) {
-            // Let video play to end, then handleVideoEnded fires
             isResumingRef.current = true;
             video.play().catch(() => {});
             setTimeout(() => {
                 isResumingRef.current = false;
             }, 500);
 
-            // If video is already at/near the end, complete immediately
             if (video.duration && video.currentTime >= video.duration - 0.5) {
                 onComplete(allResponses);
             }
             return;
         }
 
-        // Resume playback — set a brief resuming flag to avoid re-triggering the same pause
+        // Resume playback
         isResumingRef.current = true;
-        video.play().catch((err) => {
-            console.warn("Video playback error:", err);
-        });
+        video.play()
+            .then(() => {
+                setIsPlaying(true);
+                setHasError(false);
+            })
+            .catch((err) => {
+                console.warn("Video playback resume notice:", err);
+            });
 
         // Clear the resuming flag after passing the current pause point
         setTimeout(() => {
             isResumingRef.current = false;
-        }, 300);
+        }, 400);
     }, [currentIntersection, allResponses, onComplete]);
 
     // Direction Decision Handler
@@ -250,23 +267,21 @@ export function SeamlessReverseNavigator({
 
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
-        const minSwipeDistance = 35; // Minimum px threshold
+        const minSwipeDistance = 35;
 
         if (Math.max(absDx, absDy) < minSwipeDistance) return;
 
         if (absDy > absDx) {
-            // Vertical swipe
             if (dy < 0) {
-                handleChooseDirection("straight"); // Swipe Up
+                handleChooseDirection("straight");
             } else {
-                handleChooseDirection("back"); // Swipe Down
+                handleChooseDirection("back");
             }
         } else {
-            // Horizontal swipe
             if (dx < 0) {
-                handleChooseDirection("left"); // Swipe Left
+                handleChooseDirection("left");
             } else {
-                handleChooseDirection("right"); // Swipe Right
+                handleChooseDirection("right");
             }
         }
     };
@@ -274,14 +289,58 @@ export function SeamlessReverseNavigator({
     // Skip button: manually advance to next pause point or end
     const handleSkip = useCallback(() => {
         const video = videoRef.current;
-        if (!video || isAwaitingDecision) return;
+        if (!video) return;
 
         const nextPauseIdx = currentIntersection;
         if (nextPauseIdx < PAUSE_TIMESTAMPS_SECONDS.length) {
-            // Jump to the next pause timestamp
             const pauseAt = PAUSE_TIMESTAMPS_SECONDS[nextPauseIdx];
-            video.currentTime = pauseAt;
-            // The timeupdate handler will pick up the pause
+            triggeredPausesRef.current.add(nextPauseIdx);
+            video.pause();
+            try {
+                video.currentTime = pauseAt;
+            } catch {
+                // Safe ignore
+            }
+            decisionStartTimeRef.current = performance.now();
+            setChosenDirection(null);
+            setIsSubmitted(false);
+            setIsAwaitingDecision(true);
+            setHasError(false);
+        }
+    }, [currentIntersection]);
+
+    // Self-healing video error recovery
+    const handleVideoError = useCallback(() => {
+        console.warn("Video stream notice on navigation video player.");
+        const video = videoRef.current;
+        if (!video) return;
+
+        // Attempt automatic self-recovery up to 3 times
+        if (retryCountRef.current < 3) {
+            retryCountRef.current += 1;
+            const currentPos = video.currentTime || PAUSE_TIMESTAMPS_SECONDS[currentIntersection] || 0;
+            video.load();
+            video.currentTime = currentPos;
+            video.play()
+                .then(() => {
+                    setHasError(false);
+                    setIsPlaying(true);
+                })
+                .catch(() => {
+                    // If autoplay blocked or delayed
+                    if (isAwaitingDecision) {
+                        setHasError(false);
+                    } else {
+                        setHasError(true);
+                    }
+                });
+        } else {
+            // If genuinely offline, let the user continue to decision
+            if (isAwaitingDecision) {
+                setHasError(false);
+            } else {
+                setHasError(true);
+            }
         }
     }, [currentIntersection, isAwaitingDecision]);
 
@@ -357,21 +416,33 @@ export function SeamlessReverseNavigator({
                     muted
                     playsInline
                     preload="auto"
+                    crossOrigin="anonymous"
                     disablePictureInPicture
                     controlsList="nodownload nofullscreen noremoteplayback"
                     onContextMenu={(e) => e.preventDefault()}
                     onClick={handleVideoClick}
                     onTimeUpdate={handleTimeUpdate}
                     onEnded={handleVideoEnded}
-                    onPlay={() => setIsPlaying(true)}
+                    onPlay={() => {
+                        setIsPlaying(true);
+                        setHasError(false);
+                    }}
+                    onPlaying={() => {
+                        setIsPlaying(true);
+                        setHasError(false);
+                    }}
+                    onCanPlay={() => {
+                        setHasError(false);
+                    }}
+                    onSeeked={() => {
+                        setHasError(false);
+                    }}
                     onPause={() => setIsPlaying(false)}
-                    onError={() => setHasError(true)}
-                >
-                    <source src={SINGLE_VIDEO_URL} type="video/mp4" />
-                </video>
+                    onError={handleVideoError}
+                />
 
                 {/* Click to Play Overlay if paused or awaiting gesture */}
-                {((!isPlaying && !isAwaitingDecision) || needsUserGesture) && (
+                {((!isPlaying && !isAwaitingDecision) || needsUserGesture) && !hasError && (
                     <div 
                         onClick={handleVideoClick}
                         className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/50 backdrop-blur-[2px] cursor-pointer transition-all"
@@ -405,11 +476,31 @@ export function SeamlessReverseNavigator({
                     )}
                 </div>
 
-                {hasError && (
-                    <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 text-center">
-                        <p className="text-sm font-medium text-rose-300">
-                            Video stream error. Attempting to continue playback...
+                {/* Stream Notice Overlay (only if not at decision point and video is stalled) */}
+                {hasError && !isAwaitingDecision && (
+                    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4 text-center space-y-3">
+                        <p className="text-sm font-medium text-amber-300">
+                            Buffering video stream...
                         </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    setHasError(false);
+                                    videoRef.current?.play().catch(() => {});
+                                }}
+                            >
+                                ▶ Resume Video
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleSkip}
+                            >
+                                Skip to Decision →
+                            </Button>
+                        </div>
                     </div>
                 )}
 
@@ -554,7 +645,7 @@ export function SeamlessReverseNavigator({
                             <span className="text-slate-600">•</span>
                             <span>Touch / Tap Screen</span>
                         </span>
-                        <span className="font-mono text-slate-500">Latency: ~1ms</span>
+                        <span className="font-mono text-slate-500">Instant Telemetry Active</span>
                     </div>
                 </Card>
             ) : (

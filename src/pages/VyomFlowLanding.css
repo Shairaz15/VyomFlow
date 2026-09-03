@@ -398,6 +398,12 @@ html.dark .vyom-floating-navbar span.vyom-serif {
   margin: 0 auto;
 }
 
+@media (max-width: 768px) {
+  .vyom-section {
+    padding: 2.25rem 1.25rem;
+  }
+}
+
 /* Dark Heading Utility & Sharp Contrast Rules */
 .vyom-heading-dark {
   color: #17324D !important;
@@ -1065,7 +1071,7 @@ html.dark .vyom-orbital-card:hover .vyom-orbital-icon {
 
 @media (max-width: 768px) {
   .vyom-privacy-panel {
-    padding: 2.75rem 1.25rem;
+    padding: 1.75rem 1.25rem;
     border-radius: 1.5rem;
   }
 }
@@ -1132,6 +1138,12 @@ html.dark .vyom-orbital-card:hover .vyom-orbital-icon {
   flex-direction: column;
   align-items: center;
   text-align: center;
+}
+
+@media (max-width: 768px) {
+  .vyom-footer {
+    padding: 2.5rem 1.25rem 1.75rem 1.25rem;
+  }
 }
 
 .vyom-footer p {
@@ -1407,7 +1419,7 @@ html.dark .vyom-mobile-drawer,
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 5.5rem 1.25rem 2rem 1.25rem;
+    padding: 2.75rem 1.25rem 0.25rem 1.25rem;
   }
 }
 
@@ -1841,7 +1853,7 @@ html.dark .vyom-mobile-drawer,
 
 @media (max-width: 767px) {
   .vyom-hero-cta-container {
-    margin-top: 3.5rem;
+    margin-top: 1.5rem;
   }
 }
 

@@ -18,7 +18,7 @@ export function ScientificBrainCanvas() {
     }, []);
 
     return (
-        <div className="relative w-full max-w-[680px] mx-auto flex items-center justify-center select-none overflow-visible py-2 sm:py-4">
+        <div className="relative w-full max-w-[680px] mx-auto flex items-center justify-center select-none overflow-visible py-0 sm:py-4">
             {/* Subtle diffuse ambient glow — blends with the site's light blue/sage palette */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
                 <div

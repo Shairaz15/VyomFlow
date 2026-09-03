@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { ProtectedRoute, AdminRoute } from "./components/common";
+import { ProtectedRoute, AdminRoute, AiAssistantBubble } from "./components/common";
 import { OnboardingModal } from "./components/common/OnboardingModal";
 import { Landing, Tests, VmraAssessment, SarvamTest, DashboardV3 } from "./pages";
 import { ReactionTimeTest } from "./components/tests/reaction/ReactionTimeTest";
@@ -160,6 +160,7 @@ function App() {
                 }
               />
             </Routes>
+            <AiAssistantBubble />
           </BrowserRouter>
         </LanguageProvider>
       </AuthProvider>

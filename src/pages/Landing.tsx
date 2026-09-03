@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
     Play, 
     TrendingUp, 
-    Brain,
-    Monitor 
+    Brain
 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -199,10 +198,6 @@ export function Landing() {
                     </nav>
 
                     <div className="flex flex-col gap-3 pt-6 border-t border-white/10 dark:border-[#17324D]/15 mt-auto pb-safe">
-                        <div className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#4F7C78]/10 text-xs font-medium text-[#4F7C78] dark:text-[#8FAF8B] text-center">
-                            <Monitor className="w-4 h-4 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
-                            <span>Assessment battery accessible on Desktop</span>
-                        </div>
                         {isAuthenticated ? (
                             <button
                                 onClick={async () => { setMobileMenuOpen(false); await signOut(); }}
@@ -267,7 +262,7 @@ export function Landing() {
                    4. DEDICATED MOBILE HERO SECTION (< 768px - Focused, Calm, Guided)
                    ========================================================================= */}
                 <section className="md:hidden vyom-mobile-hero-section">
-                    <div className="flex flex-col items-center justify-center py-6 w-full">
+                    <div className="flex flex-col items-center justify-center py-2 sm:py-6 w-full">
                         <h1 className="vyom-hero-main-title">
                             VyomFlow
                         </h1>
@@ -279,7 +274,7 @@ export function Landing() {
                         </h5>
 
                         {/* Primary & Secondary Action Buttons (Stacked, 54px height, 28px radius) */}
-                        <div className="flex flex-col gap-3 w-full max-w-[340px] mx-auto vyom-hero-cta-container mb-7">
+                        <div className="flex flex-col gap-3 w-full max-w-[340px] mx-auto vyom-hero-cta-container mb-4 sm:mb-7">
                             <button
                                 onClick={handleBeginJourney}
                                 className="w-full h-[54px] rounded-[28px] bg-[#17324D] hover:bg-[#102031] text-[#F7F4EC] text-[16px] font-semibold shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
@@ -293,14 +288,10 @@ export function Landing() {
                             >
                                 Know How It Works
                             </button>
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-[#4F7C78] dark:text-[#8FAF8B] font-medium pt-1">
-                                <Monitor className="w-3.5 h-3.5 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
-                                <span>Assessment battery is accessible on Desktop</span>
-                            </div>
                         </div>
 
                         {/* Centered Mobile Brain Visual with Subtle Ambient Radial Glow */}
-                        <div className="relative w-full max-w-[320px] mx-auto flex items-center justify-center pt-2 pb-4">
+                        <div className="relative w-full max-w-[320px] mx-auto flex items-center justify-center pt-1 pb-0">
                             {/* Soft Ambient Aura */}
                             <div className="absolute inset-0 m-auto w-[240px] h-[240px] rounded-full bg-radial from-[#8FAF8B]/15 via-[#4F7C78]/8 to-transparent filter blur-2xl pointer-events-none" />
                             <div className="relative z-10 w-full">
@@ -313,10 +304,10 @@ export function Landing() {
                 {/* =========================================================================
                    5. SECTION AFTER HERO — HOW VYOMFLOW WORKS
                    ========================================================================= */}
-                <section id="how-it-works" className="vyom-section scroll-mt-20 py-12 md:py-16 flex flex-col items-center justify-center">
+                <section id="how-it-works" className="vyom-section scroll-mt-20 py-6 md:py-16 flex flex-col items-center justify-center">
                     {/* Section Header */}
-                    <div className="text-center mb-10 md:mb-16 px-4">
-                        <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-4 tracking-tight">
+                    <div className="text-center mb-6 md:mb-16 px-4">
+                        <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-3 md:mb-4 tracking-tight">
                             How VyomFlow Works
                         </h2>
                         <p className="text-base sm:text-lg vyom-sub-dark max-w-xl mx-auto text-center leading-relaxed">
@@ -391,7 +382,7 @@ export function Landing() {
                     </div>
 
                     {/* DEDICATED MOBILE VERTICAL COGNITIVE FLOW (< 768px - Premium Light Cards) */}
-                    <div className="md:hidden relative flex flex-col items-center gap-4 w-full max-w-[340px] mx-auto px-4 py-2">
+                    <div className="md:hidden relative flex flex-col items-center gap-3 w-full max-w-[340px] mx-auto px-4 py-1">
                         {/* Subtle Vertical Connector Line behind Cards */}
                         <div className="absolute top-8 bottom-8 left-1/2 -translate-x-1/2 w-[2px] bg-gradient-to-b from-[#8FAF8B]/60 via-[#4F7C78]/60 to-[#D8B878]/60 z-0 pointer-events-none" />
 
@@ -443,9 +434,9 @@ export function Landing() {
                 {/* =========================================================================
                    6. JOURNEY SECTION — YOUR COGNITIVE JOURNEY
                    ========================================================================= */}
-                <section id="platform" className="vyom-section scroll-mt-20 relative overflow-hidden py-10">
-                    <div className="flex flex-col items-center justify-center text-center mb-10 relative z-20 px-4 w-full">
-                        <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-4 tracking-tight text-center">
+                <section id="platform" className="vyom-section scroll-mt-20 relative overflow-hidden py-6 md:py-10">
+                    <div className="flex flex-col items-center justify-center text-center mb-6 md:mb-10 relative z-20 px-4 w-full">
+                        <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-3 md:mb-4 tracking-tight text-center">
                             Your Cognitive Journey
                         </h2>
                         <p className="text-base sm:text-lg vyom-sub-dark max-w-xl mx-auto text-center leading-relaxed">
@@ -555,7 +546,7 @@ export function Landing() {
                     </div>
 
                     {/* DEDICATED MOBILE VERTICAL JOURNEY PATH (< 1024px) */}
-                    <div className="lg:hidden w-full max-w-[360px] mx-auto px-4 py-2">
+                    <div className="lg:hidden w-full max-w-[360px] mx-auto px-4 py-1">
                         <div className="flex flex-col gap-3 relative">
                             {/* Connecting Path Track */}
                             <div className="absolute left-[26px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-[#8FAF8B]/60 via-[#4F7C78]/60 to-[#D8B878]/60 z-0" />
@@ -650,11 +641,11 @@ export function Landing() {
                 {/* =========================================================================
                    7. PRIVACY SECTION — SOFT TINTED CARDS
                    ========================================================================= */}
-                <section id="privacy" className="vyom-privacy-section scroll-mt-20 py-12 px-4 sm:px-6 w-full">
+                <section id="privacy" className="vyom-privacy-section scroll-mt-20 py-6 md:py-12 px-4 sm:px-6 w-full">
                     <div className="vyom-privacy-panel max-w-5xl mx-auto">
                         {/* Centered Heading & Subtitle */}
-                        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
-                            <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-12 tracking-tight">
+                        <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-14">
+                            <h2 className="vyom-serif vyom-heading-dark text-3xl sm:text-5xl font-bold mb-4 sm:mb-12 tracking-tight">
                                 Your mind. Your data.
                             </h2>
                             <p className="text-base sm:text-lg vyom-sub-dark text-center leading-relaxed">
@@ -716,10 +707,10 @@ export function Landing() {
                 {/* =========================================================================
                    8. FINAL CTA BANNER (Responsive Floating Card)
                    ========================================================================= */}
-                <section className="px-4 md:px-8 py-10 max-w-[1280px] w-full mx-auto">
+                <section className="px-4 md:px-8 py-6 md:py-10 max-w-[1280px] w-full mx-auto">
                     <div className="bg-white dark:bg-[#1E2D47] rounded-[32px] md:rounded-[64px] border border-black/5 dark:border-white/10 p-2 sm:p-4 shadow-xl">
                         <div 
-                            className="relative flex flex-col justify-center items-center rounded-[24px] md:rounded-[52px] min-h-[380px] sm:min-h-[450px] overflow-hidden p-6 sm:p-10" 
+                            className="relative flex flex-col justify-center items-center rounded-[24px] md:rounded-[52px] min-h-[300px] sm:min-h-[450px] overflow-hidden p-5 sm:p-10" 
                             style={{ background: 'linear-gradient(135deg, #17324D 0%, #102A43 50%, #4F7C78 100%)' }}
                         >
                             {/* White Noise Texture Overlay */}
@@ -802,11 +793,6 @@ export function Landing() {
                                         <span>Back to Top</span>
                                         <span className="text-sm leading-none">↑</span>
                                     </button>
-
-                                    {/* Disclaimer */}
-                                    <p className="text-[11px] sm:text-xs text-[#DCE9F4] font-medium opacity-85 text-center mt-1 px-2 leading-relaxed">
-                                        Clinical assessments are available on Desktop & Tablet
-                                    </p>
                                 </div>
                             </div>
                         </div>
