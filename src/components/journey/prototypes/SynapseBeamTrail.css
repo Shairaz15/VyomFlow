@@ -1,0 +1,532 @@
+/* ===== Sinuous Winding Synapse Beam Trail (Magic UI & Linear Calm-Tech Aesthetic) ===== */
+/* Minimal, clean, winding neural progression design with 100% opaque cards and zero bleed */
+
+.synapse-beam-container {
+    position: relative;
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0.5rem 0.5rem 3rem;
+}
+
+/* Header Status Strip */
+.synapse-header-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-xl, 20px);
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    box-shadow: 0 4px 16px -2px rgba(23, 50, 77, 0.05);
+    margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.synapse-progress-badge {
+    text-align: left;
+}
+
+.synapse-kicker {
+    display: inline-block;
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #4F7C78;
+    margin-bottom: 0.2rem;
+}
+
+.synapse-hero-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #17324D;
+    margin: 0;
+    letter-spacing: var(--letter-spacing-tight);
+}
+
+.synapse-meta-counter {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+@media (max-width: 640px) {
+    .synapse-meta-counter {
+        text-align: left;
+    }
+}
+
+.meta-counter-label {
+    font-size: 0.725rem;
+    color: #63788A;
+}
+
+.meta-counter-val {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #17324D;
+}
+
+.meta-counter-val small {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #63788A;
+}
+
+/* Stream Layout */
+.synapse-stream-layout {
+    position: relative;
+    width: 100%;
+    min-height: 1250px;
+    padding: 0.5rem 0 2rem;
+}
+
+/* Winding SVG Spine (Desktop) - Layer 1 (Underneath Cards) */
+.synapse-svg-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.synapse-path-bg {
+    transition: stroke 0.3s ease;
+}
+
+.synapse-path-pulse {
+    stroke-dasharray: 200 650;
+    animation: synapsePulseFlow 4s linear infinite;
+}
+
+@keyframes synapsePulseFlow {
+    from {
+        stroke-dashoffset: 850;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* Nodes Flow - Layer 2 (Above SVG Spine) */
+.synapse-nodes-flow {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2.25rem;
+}
+
+/* Node Wrapper */
+.synapse-node-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    transition: transform var(--transition-normal);
+}
+
+@media (min-width: 768px) {
+    .synapse-node-wrapper.node-left {
+        justify-content: flex-start;
+        padding-left: 2rem;
+    }
+    .synapse-node-wrapper.node-right {
+        justify-content: flex-end;
+        padding-right: 2rem;
+    }
+    .synapse-node-wrapper.node-center {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 767px) {
+    .synapse-stream-layout {
+        min-height: auto;
+        padding-left: 2.75rem;
+    }
+    .synapse-stream-layout::before {
+        content: '';
+        position: absolute;
+        top: 2rem;
+        bottom: 2rem;
+        left: 20px;
+        width: 3px;
+        background: linear-gradient(180deg, var(--color-accent) 0%, rgba(79, 124, 120, 0.2) 100%);
+        border-radius: 9999px;
+        z-index: 1;
+    }
+    .synapse-node-wrapper {
+        padding-left: 0;
+    }
+    .synapse-junction-orb {
+        left: -32px;
+        top: 24px;
+        transform: none;
+    }
+    .synapse-card {
+        max-width: 100%;
+    }
+}
+
+/* Synaptic Junction Orb (Anchor) */
+.synapse-junction-orb {
+    position: absolute;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (min-width: 768px) {
+    .node-left .synapse-junction-orb {
+        left: 0.5rem;
+    }
+    .node-right .synapse-junction-orb {
+        right: 0.5rem;
+    }
+    .node-center .synapse-junction-orb {
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+.orb-center {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 2px solid rgba(23, 50, 77, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #63788A;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.is-completed .orb-center {
+    background: #15803d;
+    border-color: #15803d;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(21, 128, 61, 0.4);
+}
+
+.is-active .orb-center {
+    background: #4F7C78;
+    border-color: #ffffff;
+    color: #ffffff;
+    box-shadow: 0 0 14px #4F7C78;
+    transform: scale(1.15);
+}
+
+.is-hovered .orb-center {
+    transform: scale(1.12);
+    border-color: #4F7C78;
+}
+
+.orb-halo-pulse {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid #4F7C78;
+    animation: orbPulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes orbPulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    60% { transform: scale(1.4); opacity: 0; }
+    100% { transform: scale(0.9); opacity: 0; }
+}
+
+/* 100% Solid Opaque Card (Covers the trail beneath with zero transparency bleed) */
+.synapse-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 440px;
+    padding: 1.35rem 1.5rem;
+    border-radius: var(--radius-xl, 22px);
+    background: #FFFFFF !important;
+    border: 1.5px solid rgba(23, 50, 77, 0.10);
+    box-shadow: 0 10px 30px -8px rgba(23, 50, 77, 0.08);
+    cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: left;
+}
+
+.synapse-card:hover {
+    border-color: rgba(79, 124, 120, 0.35);
+    transform: translateY(-4px);
+    box-shadow: 0 18px 42px -10px rgba(23, 50, 77, 0.14);
+}
+
+/* Active Focus Mode */
+.is-active .synapse-card {
+    border: 1.5px solid #4F7C78;
+    box-shadow: 0 0 32px rgba(79, 124, 120, 0.20), 0 14px 36px -8px rgba(23, 50, 77, 0.12);
+}
+
+/* Completed Calm State */
+.is-completed .synapse-card {
+    border-color: rgba(21, 128, 61, 0.25);
+}
+
+/* Upcoming State */
+.is-pending .synapse-card {
+    opacity: 0.90;
+}
+
+/* Card Top Line */
+.synapse-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+}
+
+.top-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.synapse-index-chip {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #63788A;
+    font-family: var(--font-display);
+    letter-spacing: 0.05em;
+}
+
+.synapse-domain-badge {
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4F7C78;
+}
+
+.top-meta-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.synapse-time-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.725rem;
+    color: #63788A;
+}
+
+.synapse-status-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(21, 128, 61, 0.10);
+    color: #15803d;
+}
+
+.synapse-status-current {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    background: rgba(79, 124, 120, 0.12);
+    color: #4F7C78;
+    border: 1px solid #4F7C78;
+}
+
+.current-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #4F7C78;
+    box-shadow: 0 0 6px #4F7C78;
+}
+
+/* Card Main */
+.synapse-card-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.synapse-icon-bubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: rgba(79, 124, 120, 0.10);
+    color: #4F7C78;
+    flex-shrink: 0;
+    transition: transform var(--transition-normal);
+}
+
+.synapse-card:hover .synapse-icon-bubble {
+    transform: scale(1.08);
+}
+
+.is-completed .synapse-icon-bubble {
+    background: rgba(21, 128, 61, 0.10);
+    color: #15803d;
+}
+
+.synapse-title-wrap {
+    flex: 1;
+}
+
+.synapse-card-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #17324D;
+    margin: 0 0 0.25rem;
+    letter-spacing: var(--letter-spacing-tight);
+}
+
+.synapse-card-focus {
+    font-size: 0.825rem;
+    color: #40566B;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Card Bottom Strip */
+.synapse-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(23, 50, 77, 0.08);
+    gap: 0.5rem;
+}
+
+.synapse-tag-pill {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #63788A;
+    background: #F7F4EC;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+}
+
+.synapse-cta-btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.35rem 0.95rem;
+    border-radius: var(--radius-sm, 7px);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.cta-btn-active {
+    background: #4F7C78;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(79, 124, 120, 0.3);
+}
+
+.cta-btn-active:hover {
+    filter: brightness(1.1);
+    transform: translateX(2px);
+}
+
+.cta-btn-completed {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(21, 128, 61, 0.08);
+    color: #15803d;
+    border: 1px solid rgba(21, 128, 61, 0.2);
+}
+
+.cta-btn-completed:hover {
+    background: rgba(21, 128, 61, 0.15);
+}
+
+.cta-btn-subtle {
+    background: rgba(79, 124, 120, 0.08);
+    color: #17324D;
+}
+
+.cta-btn-subtle:hover {
+    background: rgba(79, 124, 120, 0.15);
+}
+
+/* ==========================================================================
+   DARK THEME SPECIFIC OVERRIDES
+   ========================================================================== */
+
+.dark .synapse-header-strip,
+.dark .synapse-card,
+[data-theme="dark"] .synapse-header-strip,
+[data-theme="dark"] .synapse-card {
+    background: #142538 !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
+}
+
+.dark .synapse-hero-title,
+.dark .synapse-meta-counter strong,
+.dark .synapse-card-title,
+[data-theme="dark"] .synapse-hero-title,
+[data-theme="dark"] .synapse-meta-counter strong,
+[data-theme="dark"] .synapse-card-title {
+    color: #F7F4EC !important;
+}
+
+.dark .synapse-card-focus,
+.dark .meta-counter-label,
+.dark .synapse-time-chip,
+[data-theme="dark"] .synapse-card-focus,
+[data-theme="dark"] .meta-counter-label,
+[data-theme="dark"] .synapse-time-chip {
+    color: #D2DDE2 !important;
+}
+
+.dark .synapse-tag-pill,
+[data-theme="dark"] .synapse-tag-pill {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #D2DDE2 !important;
+}
+
+.dark .orb-center,
+[data-theme="dark"] .orb-center {
+    background: #142538 !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #D2DDE2 !important;
+}
+
+.dark .cta-btn-subtle,
+[data-theme="dark"] .cta-btn-subtle {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #F7F4EC !important;
+}
+
+.dark .synapse-card-bottom,
+[data-theme="dark"] .synapse-card-bottom {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}

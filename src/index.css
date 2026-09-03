@@ -39,6 +39,17 @@
     --color-status-change: #fbbf24;
     --color-status-attention: #f87171;
 
+    /* Theme Variable Aliases */
+    --color-text: var(--color-text-primary);
+    --color-muted: var(--color-text-muted);
+    --text-secondary: var(--color-text-secondary);
+    --primary: var(--color-accent);
+    --accent: var(--color-accent-secondary);
+    --color-primary: var(--color-accent);
+    --color-success: var(--color-status-stable);
+    --color-warning: var(--color-status-change);
+    --color-danger: var(--color-status-attention);
+
     /* === Glass Effects === */
     --glass-bg: rgba(17, 17, 23, 0.7);
     --glass-bg-light: rgba(30, 30, 40, 0.5);
@@ -150,6 +161,22 @@ html:not(.dark),
     --shadow-sm: 0 1px 3px rgba(32, 49, 58, 0.05);
     --shadow-card: 0 4px 16px -2px rgba(32, 49, 58, 0.05), 0 2px 6px -2px rgba(32, 49, 58, 0.03);
     --shadow-lg: 0 12px 32px -4px rgba(32, 49, 58, 0.08);
+
+    /* Status Colors in Light Mode */
+    --color-status-stable: #15803d;
+    --color-status-change: #b45309;
+    --color-status-attention: #b91c1c;
+
+    /* Theme Variable Aliases */
+    --color-text: var(--color-text-primary);
+    --color-muted: var(--color-text-muted);
+    --text-secondary: var(--color-text-secondary);
+    --primary: var(--color-accent);
+    --accent: var(--color-accent-secondary);
+    --color-primary: var(--color-accent);
+    --color-success: var(--color-status-stable);
+    --color-warning: var(--color-status-change);
+    --color-danger: var(--color-status-attention);
 
     --glow-teal: none;
     --glow-teal-subtle: none;
@@ -306,12 +333,12 @@ html:not(.dark),
 }
 
 /* ===== Global Reset & Base ===== */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+@layer base {
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
 }
 
 html {

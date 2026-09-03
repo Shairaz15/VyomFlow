@@ -229,7 +229,7 @@ export const NeuralFlowBrandVisual: React.FC<NeuralFlowBrandVisualProps> = ({ cl
             {/* VyomFlow Wordmark & Signature Tagline */}
             <div className="neural-flow-brand-text">
                 <span className="neural-flow-wordmark">VyomFlow</span>
-                <span className="neural-flow-tagline">Every Mind Has a Story.</span>
+                <span className="neural-flow-tagline">Measuring Minds, Beyond Memory.</span>
             </div>
         </div>
     );

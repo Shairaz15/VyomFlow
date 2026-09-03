@@ -9,7 +9,7 @@ import {
     useSensors,
     DragOverlay,
 } from "@dnd-kit/core";
-import type { DragStartEvent, DragEndEvent, DragOverEvent } from "@dnd-kit/core";
+import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 import {
     SortableContext,
     useSortable,
@@ -17,7 +17,7 @@ import {
     arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button, Card, Icon } from "../../../common";
+import { Button, Icon } from "../../../common";
 import type { LandmarkItem, LandmarkOrderingResult } from "../../../../types/navigationTypes";
 
 interface LandmarkOrderingProps {
@@ -29,7 +29,7 @@ const TARGET_COUNT = 6;
 const TOTAL_DISPLAY = 10; // 6 correct + 4 random distractors
 
 /* ─────────────────────────────────────────────────────
- * Landmark Card used in the available pool (draggable)
+ * Landmark Card in Available Pool
  * ───────────────────────────────────────────────────── */
 function PoolLandmarkCard({
     landmark,
@@ -56,10 +56,10 @@ function PoolLandmarkCard({
 
     const style: CSSProperties = {
         transform: CSS.Transform.toString(transform),
-        transition: transition || "transform 200ms ease, opacity 200ms ease",
-        opacity: isDragging ? 0.3 : isSelected ? 0.3 : 1,
+        transition: transition || "transform 150ms ease, opacity 150ms ease",
+        opacity: isDragging ? 0.2 : isSelected ? 0.35 : 1,
         cursor: isSelected ? "default" : "grab",
-        zIndex: isDragging ? 50 : "auto",
+        touchAction: "none",
     };
 
     return (
@@ -69,51 +69,53 @@ function PoolLandmarkCard({
             {...listeners}
             {...attributes}
             onClick={!isSelected ? onTap : undefined}
-            className={`group relative rounded-2xl border-2 transition-all duration-200 select-none touch-none overflow-hidden ${
+            className={`vyom-landmark-card group ${
                 isSelected
-                    ? "border-slate-800/50 bg-slate-900/30 pointer-events-none"
-                    : "border-slate-700/80 bg-slate-800/90 hover:border-cyan-500/60 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.03] cursor-pointer active:scale-[0.97]"
+                    ? "is-selected"
+                    : "is-selectable"
             }`}
+            role="button"
+            tabIndex={isSelected ? -1 : 0}
+            aria-label={`${landmark.name}${isSelected ? ", already placed" : ", tap or drag to place"}`}
+            onKeyDown={(e) => {
+                if (!isSelected && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    onTap();
+                }
+            }}
         >
-            {/* Image */}
-            <div className="w-full aspect-[4/3] overflow-hidden bg-slate-950 relative">
+            {/* Visual Image Container */}
+            <div className="card-image-wrap">
                 {!imgError && landmark.imageUrl ? (
                     <img
                         src={landmark.imageUrl}
                         alt={landmark.name}
                         onError={() => setImgError(true)}
-                        className={`w-full h-full object-cover transition-all duration-300 ${
-                            isSelected ? "grayscale blur-[1px]" : "group-hover:scale-105"
-                        }`}
+                        className="card-img"
                         draggable={false}
                     />
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-cyan-400/60 space-y-1">
-                        <Icon name="memory" size={28} />
-                        <span className="text-[10px] text-slate-500 font-medium">Landmark</span>
+                    <div className="card-img-placeholder">
+                        <Icon name="memory" size={24} />
                     </div>
                 )}
 
-                {/* Selected checkmark overlay */}
+                {/* Selected Checkmark Badge */}
                 {isSelected && (
-                    <div className="absolute inset-0 bg-slate-950/60 flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center">
-                            <span className="text-cyan-300 text-lg font-bold">✓</span>
+                    <div className="selected-overlay">
+                        <div className="check-badge">
+                            <span>✓</span>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Label */}
-            <div className="p-2.5 space-y-1">
-                <span className={`text-xs font-semibold leading-snug line-clamp-2 block ${
-                    isSelected ? "text-slate-600" : "text-slate-200"
-                }`}>
+            {/* Label Section */}
+            <div className="card-meta">
+                <span className="landmark-name" title={landmark.name}>
                     {landmark.name}
                 </span>
-                <span className={`text-[10px] font-medium block ${
-                    isSelected ? "text-slate-700" : "text-cyan-400/70"
-                }`}>
+                <span className="card-status-hint">
                     {isSelected ? "Placed ✓" : "Tap to place"}
                 </span>
             </div>
@@ -122,9 +124,9 @@ function PoolLandmarkCard({
 }
 
 /* ─────────────────────────────────────────────────────
- * Sortable Slot in the sequence area
+ * Route Sequence Slot (The Hero Area)
  * ───────────────────────────────────────────────────── */
-function SortableSlot({
+function SequenceSlotItem({
     id,
     slotIndex,
     landmark,
@@ -152,10 +154,12 @@ function SortableSlot({
 
     const style: CSSProperties = {
         transform: CSS.Transform.toString(transform),
-        transition: transition || "transform 200ms ease",
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 50 : "auto",
+        transition: transition || "transform 150ms ease",
+        opacity: isDragging ? 0.4 : 1,
+        touchAction: "none",
     };
+
+    const formattedNum = String(slotIndex + 1).padStart(2, "0");
 
     return (
         <div
@@ -163,67 +167,69 @@ function SortableSlot({
             style={style}
             {...attributes}
             {...(landmark ? listeners : {})}
-            className={`relative rounded-2xl border-2 transition-all duration-200 overflow-hidden ${
+            className={`vyom-sequence-slot ${
                 isOver && !landmark
-                    ? "border-cyan-400 bg-cyan-500/10 shadow-lg shadow-cyan-500/20 scale-[1.02]"
+                    ? "is-drop-target"
                     : landmark
-                    ? "border-cyan-500/40 bg-slate-900/95 cursor-grab active:cursor-grabbing"
-                    : "border-dashed border-slate-700/60 bg-slate-950/40 hover:border-slate-600/80"
+                    ? "is-filled"
+                    : "is-empty"
             }`}
         >
-            {/* Order badge - top left */}
-            <div className="absolute top-2 left-2 z-10">
-                <span className={`w-7 h-7 rounded-full text-xs font-mono font-bold flex items-center justify-center shadow-md ${
-                    landmark
-                        ? "bg-cyan-500/30 text-cyan-200 border border-cyan-400/60"
-                        : "bg-slate-800/90 text-slate-500 border border-slate-700"
-                }`}>
-                    {slotIndex + 1}
-                </span>
+            {/* Slot Number Tag */}
+            <div className="slot-number-badge">
+                <span>{formattedNum}</span>
             </div>
 
             {landmark ? (
-                <>
-                    {/* Filled slot image */}
-                    <div className="w-full aspect-[4/3] overflow-hidden bg-slate-950 relative">
+                /* Filled Slot Content */
+                <div className="slot-filled-content">
+                    <div className="slot-img-wrap">
                         {!imgError && landmark.imageUrl ? (
                             <img
                                 src={landmark.imageUrl}
                                 alt={landmark.name}
                                 onError={() => setImgError(true)}
-                                className="w-full h-full object-cover"
+                                className="slot-img"
                                 draggable={false}
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full">
-                                <Icon name="memory" size={24} className="text-cyan-400" />
+                            <div className="slot-img-fallback">
+                                <Icon name="memory" size={20} />
                             </div>
                         )}
-                    </div>
-
-                    {/* Label + remove */}
-                    <div className="p-2 space-y-1">
-                        <span className="text-xs font-semibold text-white leading-snug line-clamp-2 block">
-                            {landmark.name}
-                        </span>
                         <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                            className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer transition-colors flex items-center gap-0.5"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onRemove();
+                            }}
+                            className="slot-remove-btn"
+                            title="Remove landmark"
+                            aria-label={`Remove ${landmark.name}`}
                         >
-                            <span>✕</span> Remove
+                            ✕
                         </button>
                     </div>
-                </>
-            ) : (
-                /* Empty slot placeholder */
-                <div className="w-full aspect-[4/3] flex flex-col items-center justify-center text-slate-600 space-y-1.5 p-4">
-                    <div className="w-10 h-10 rounded-xl border-2 border-dashed border-slate-700/60 flex items-center justify-center">
-                        <Icon name="add" size={20} className="text-slate-600" />
+                    <div className="slot-meta">
+                        <span className="slot-landmark-name" title={landmark.name}>
+                            {landmark.name}
+                        </span>
                     </div>
-                    <span className="text-[11px] font-medium">
-                        {slotIndex === 0 ? "First seen" : slotIndex === TARGET_COUNT - 1 ? "Last seen" : `Position ${slotIndex + 1}`}
+                </div>
+            ) : (
+                /* Empty Slot Placeholder */
+                <div className="slot-empty-content">
+                    <div className="slot-empty-icon">
+                        <span>+</span>
+                    </div>
+                    <span className="slot-empty-label">
+                        {slotIndex === 0
+                            ? "1st Stop"
+                            : slotIndex === TARGET_COUNT - 1
+                            ? "Final Stop"
+                            : `Stop ${slotIndex + 1}`}
                     </span>
+                    <span className="slot-empty-sub">Drop or tap</span>
                 </div>
             )}
         </div>
@@ -231,30 +237,22 @@ function SortableSlot({
 }
 
 /* ─────────────────────────────────────────────────────
- * Drag Overlay Card (what you see while dragging)
+ * Drag Overlay Preview
  * ───────────────────────────────────────────────────── */
 function DragOverlayCard({ landmark }: { landmark: LandmarkItem }) {
-    const [imgError, setImgError] = useState(false);
-
     return (
-        <div className="w-44 rounded-2xl border-2 border-cyan-400 bg-slate-800 shadow-2xl shadow-cyan-500/30 overflow-hidden opacity-90 rotate-2">
-            <div className="w-full aspect-[4/3] overflow-hidden bg-slate-950">
-                {!imgError && landmark.imageUrl ? (
-                    <img
-                        src={landmark.imageUrl}
-                        alt={landmark.name}
-                        onError={() => setImgError(true)}
-                        className="w-full h-full object-cover"
-                        draggable={false}
-                    />
+        <div className="vyom-drag-overlay-card">
+            <div className="overlay-img-wrap">
+                {landmark.imageUrl ? (
+                    <img src={landmark.imageUrl} alt={landmark.name} className="card-img" />
                 ) : (
-                    <div className="flex items-center justify-center h-full">
-                        <Icon name="memory" size={24} className="text-cyan-400" />
+                    <div className="card-img-placeholder">
+                        <Icon name="memory" size={20} />
                     </div>
                 )}
             </div>
-            <div className="p-2">
-                <span className="text-xs font-semibold text-white line-clamp-1">{landmark.name}</span>
+            <div className="card-meta">
+                <span className="landmark-name">{landmark.name}</span>
             </div>
         </div>
     );
@@ -290,13 +288,13 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
         new Array(TARGET_COUNT).fill(null)
     );
 
-    // Active drag state for overlay
+    // Active drag item for overlay
     const [activeDragItem, setActiveDragItem] = useState<LandmarkItem | null>(null);
 
-    // Sensors for smooth drag
+    // Sensors for smooth drag & touch with accurate pointer position
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } })
+        useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 100, tolerance: 5 } })
     );
 
     const selectedIds = useMemo(() => {
@@ -307,23 +305,19 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
     const isComplete = filledCount === TARGET_COUNT;
 
     // Slot IDs for SortableContext
-    const slotIds = useMemo(() =>
-        slots.map((_, idx) => `slot_${idx}`)
-    , [slots]);
+    const slotIds = useMemo(() => slots.map((_, idx) => `slot_${idx}`), [slots]);
 
     // Handle drag start
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const { active } = event;
         const id = active.id as string;
 
-        // Check if it's a pool item
         const poolItem = displayPool.find((lm) => lm.id === id);
         if (poolItem) {
             setActiveDragItem(poolItem);
             return;
         }
 
-        // Check if it's a slot item being reordered
         if (id.startsWith("slot_")) {
             const slotIdx = parseInt(id.replace("slot_", ""), 10);
             const slotLm = slots[slotIdx];
@@ -332,11 +326,6 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
             }
         }
     }, [displayPool, slots]);
-
-    // Handle drag over (for visual feedback)
-    const handleDragOver = useCallback((_event: DragOverEvent) => {
-        // Visual feedback handled by useSortable's isOver
-    }, []);
 
     // Handle drag end
     const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -356,7 +345,6 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
             if (landmark && slotIndex >= 0 && slotIndex < TARGET_COUNT) {
                 setSlots((prev) => {
                     const next = [...prev];
-                    // Remove if already placed elsewhere
                     const existingIdx = next.findIndex((item) => item?.id === landmark.id);
                     if (existingIdx !== -1) {
                         next[existingIdx] = null;
@@ -379,7 +367,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
         }
     }, [displayPool]);
 
-    // Tap-to-place: places in the first empty slot
+    // Tap to place / toggle in first available slot
     const handleTapLandmark = useCallback((landmark: LandmarkItem) => {
         if (selectedIds.includes(landmark.id)) {
             // Remove from slot
@@ -440,117 +428,117 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
     };
 
     return (
-        <div className="max-w-6xl mx-auto py-6 px-4 space-y-6 animate-fadeInUp">
-            {/* ── Header ── */}
-            <div className="text-center space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                    <Icon name="memory" size={14} />
-                    <span>Phase 4: Landmark Recall & Sequencing</span>
+        <div className="landmark-chronology-container animate-fadeIn">
+            {/* ── 1. HEADER WITH TOP PROMINENT SUBMIT BUTTON ── */}
+            <header className="chronology-top-header">
+                <div className="header-left-info">
+                    <div className="header-meta-row">
+                        <span className="phase-pill">PHASE 4 OF 4</span>
+                        <span className="progress-counter">
+                            {filledCount} of {TARGET_COUNT} placed
+                        </span>
+                    </div>
+                    <h1 className="chronology-title vyom-serif">Landmark Chronology Sequence</h1>
+                    <p className="chronology-instruction">
+                        Select all 6 landmarks from <strong>Gate 1 (A)</strong> to <strong>Sports Plaza (B)</strong>.
+                    </p>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                    Which Landmarks Did You See?
-                </h2>
-                <p className="text-sm text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                    Select <span className="text-cyan-400 font-semibold">{TARGET_COUNT} landmarks</span> from the route and arrange them in the
-                    order you encountered them — from <span className="text-white font-medium">Gate 1 (Point A)</span> to <span className="text-white font-medium">Sports Plaza (Point B)</span>.
-                </p>
-            </div>
+
+                {/* Prominent Top Submit Button */}
+                <div className="header-right-action">
+                    <Button
+                        variant="primary"
+                        size="md"
+                        disabled={!isComplete}
+                        onClick={handleSubmit}
+                        className={`chronology-top-submit-btn ${isComplete ? "is-ready" : "is-incomplete"}`}
+                    >
+                        {isComplete ? "Submit Sequence →" : `Select all 6 to submit (${filledCount}/${TARGET_COUNT})`}
+                    </Button>
+                </div>
+            </header>
 
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
-                {/* ── Sequence Slots (Drop Zone) ── */}
-                <Card className="p-5 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
-                                <Icon name="timeline" size={16} />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-bold text-white">
-                                    Route Sequence
-                                </h3>
-                                <span className="text-[11px] text-slate-500">
-                                    Gate 1 → Sports Plaza (drag to reorder)
-                                </span>
-                            </div>
+                {/* ── 2. YOUR ROUTE SEQUENCE (WITH HORIZONTAL SCROLLBAR) ── */}
+                <section className="chronology-hero-section">
+                    <div className="section-title-bar">
+                        <div className="section-title-wrap">
+                            <span className="section-icon">🧭</span>
+                            <h2 className="section-heading">Your Route Sequence</h2>
+                            <span className="scroll-hint-pill">↔ Scroll to view all stops</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {filledCount > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={handleClearAll}
-                                    className="text-[11px] text-slate-500 hover:text-rose-400 font-medium cursor-pointer transition-colors px-2 py-1 rounded-lg hover:bg-rose-500/10"
-                                >
-                                    Clear all
-                                </button>
-                            )}
-                            <span className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-full border ${
-                                isComplete
-                                    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-                                    : "text-cyan-400 bg-cyan-500/10 border-cyan-500/20"
-                            }`}>
-                                {filledCount} / {TARGET_COUNT}
-                            </span>
-                        </div>
+                        {filledCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleClearAll}
+                                className="clear-all-btn"
+                            >
+                                Clear all
+                            </button>
+                        )}
                     </div>
 
-                    <SortableContext items={slotIds} strategy={horizontalListSortingStrategy}>
-                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                            {slots.map((landmark, idx) => (
-                                <SortableSlot
-                                    key={`slot_${idx}`}
-                                    id={`slot_${idx}`}
-                                    slotIndex={idx}
-                                    landmark={landmark}
-                                    onRemove={() => handleRemoveSlot(idx)}
-                                />
-                            ))}
-                        </div>
-                    </SortableContext>
-
-                    {/* Flow arrow indicators between slots */}
-                    <div className="hidden sm:flex items-center justify-center gap-1 pt-1">
-                        {Array.from({ length: TARGET_COUNT }).map((_, idx) => (
-                            <div key={idx} className="flex items-center">
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                                    slots[idx]
-                                        ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40"
-                                        : "bg-slate-800 text-slate-600 border border-slate-700"
-                                }`}>
-                                    {idx + 1}
-                                </div>
-                                {idx < TARGET_COUNT - 1 && (
-                                    <span className="text-slate-700 text-xs mx-0.5">→</span>
-                                )}
+                    {/* Horizontally Scrollable Journey Track Container */}
+                    <div className="route-journey-scroll-viewport">
+                        <div className="route-journey-track">
+                            {/* Start Point A */}
+                            <div className="journey-node start-node">
+                                <div className="node-marker">A</div>
+                                <span className="node-label">Gate 1</span>
                             </div>
-                        ))}
-                    </div>
-                </Card>
 
-                {/* ── Available Landmarks Pool ── */}
-                <Card className="p-5 bg-slate-900/80 border border-slate-800 rounded-3xl space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-                                <Icon name="assess" size={16} />
+                            <div className="journey-connector">
+                                <span className="connector-arrow">→</span>
                             </div>
-                            <div>
-                                <h3 className="text-sm font-bold text-white">
-                                    Landmark Pool
-                                </h3>
-                                <span className="text-[11px] text-slate-500">
-                                    {displayPool.length} photos — includes real landmarks and distractors
-                                </span>
+
+                            {/* 6 Sequence Slots */}
+                            <div className="sequence-slots-row">
+                                <SortableContext items={slotIds} strategy={horizontalListSortingStrategy}>
+                                    {slots.map((landmark, idx) => (
+                                        <div key={`slot_wrap_${idx}`} className="slot-wrapper-cell">
+                                            <SequenceSlotItem
+                                                id={`slot_${idx}`}
+                                                slotIndex={idx}
+                                                landmark={landmark}
+                                                onRemove={() => handleRemoveSlot(idx)}
+                                            />
+                                            {idx < TARGET_COUNT - 1 && (
+                                                <div className="slot-sub-arrow">→</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </SortableContext>
+                            </div>
+
+                            <div className="journey-connector">
+                                <span className="connector-arrow">→</span>
+                            </div>
+
+                            {/* End Point B */}
+                            <div className="journey-node end-node">
+                                <div className="node-marker">B</div>
+                                <span className="node-label">Sports Plaza</span>
                             </div>
                         </div>
                     </div>
+                </section>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                {/* ── 3. AVAILABLE LANDMARKS POOL ── */}
+                <section className="chronology-pool-section">
+                    <div className="section-title-bar">
+                        <div className="section-title-wrap">
+                            <span className="section-icon">🏛️</span>
+                            <h2 className="section-heading">Available Landmarks</h2>
+                            <span className="pool-count-tag">10 Photos • Tap or drag to place</span>
+                        </div>
+                    </div>
+
+                    <div className="landmark-pool-grid">
                         {displayPool.map((lm) => (
                             <PoolLandmarkCard
                                 key={lm.id}
@@ -560,31 +548,13 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                             />
                         ))}
                     </div>
-                </Card>
+                </section>
 
-                {/* Drag Overlay (ghost card while dragging) */}
-                <DragOverlay dropAnimation={{
-                    duration: 200,
-                    easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
-                }}>
+                {/* Drag Overlay Card */}
+                <DragOverlay dropAnimation={{ duration: 150, easing: "ease" }}>
                     {activeDragItem ? <DragOverlayCard landmark={activeDragItem} /> : null}
                 </DragOverlay>
             </DndContext>
-
-            {/* ── Submit Button ── */}
-            <div className="text-center pt-2">
-                <Button
-                    variant="primary"
-                    size="lg"
-                    disabled={!isComplete}
-                    onClick={handleSubmit}
-                    className="min-w-[280px] shadow-xl shadow-cyan-500/20 text-base font-semibold"
-                >
-                    {isComplete
-                        ? "Submit Route Sequence →"
-                        : `Place ${TARGET_COUNT - filledCount} more landmark${TARGET_COUNT - filledCount !== 1 ? "s" : ""} to continue`}
-                </Button>
-            </div>
         </div>
     );
 }

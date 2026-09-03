@@ -1,33 +1,79 @@
-/* ==========================================================================
-   Immersive Navigation Assessment Styles
-   Modern Dark Glassmorphic Design System matching VyomFlow tokens
-   ========================================================================== */
+/**
+ * ==========================================================================
+ * VYOMFLOW IMMERSIVE NAVIGATION & LANDMARK CHRONOLOGY REDESIGN
+ * Apple-like Simplicity + Premium Cognitive Health Identity
+ * Desktop 100vh Zero-Scroll + Native Mobile Touch Architecture
+ * ==========================================================================
+ */
 
-.navigation-assessment {
-    max-width: 840px;
-    margin: 0 auto;
+.navigation-assessment-page {
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .navigation-assessment-page.story-assessment-container {
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        justify-content: center;
+        padding: 0.5rem 1.25rem;
+    }
+}
+
+.nav-stage-viewport {
+    scroll-margin-top: 80px;
     width: 100%;
 }
 
-/* Animations (pulseGlow is navigation-specific; fadeInUp/fadeIn are in index.css) */
+/* ─── Video & Encoding Stage ───────────────────────────────────── */
 
+.nav-encoding-card {
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+}
 
-/* Video Player Container */
+.nav-phase-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding: 0 0.25rem;
+}
+
+.nav-phase-badge {
+    font-size: 0.725rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    background: rgba(6, 182, 212, 0.12);
+    color: #0891b2;
+    border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.nav-phase-hint {
+    font-size: 0.775rem;
+    color: #63788A;
+}
+
 .nav-video-container {
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 40px -12px rgba(23, 50, 77, 0.15);
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 18px;
+    overflow: hidden;
 }
 
 .nav-video-placeholder {
     backdrop-filter: blur(16px);
     background: radial-gradient(circle at 50% 20%, rgba(6, 182, 212, 0.06), transparent 70%),
-                rgba(15, 23, 42, 0.95);
+                #17324D;
 }
 
 /* Touch targets and direction selector buttons */
 .nav-direction-btn {
-    min-height: 64px;
-    min-width: 130px;
+    min-height: 56px;
+    min-width: 120px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -42,35 +88,886 @@
     transform: scale(0.96);
 }
 
-/* Landmark drag & drop cards */
-.nav-landmark-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+/* ═══════════════════════════════════════════════════════════════════
+   LANDMARK CHRONOLOGY REDESIGN WITH TOP SUBMIT & HORIZONTAL SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════ */
+
+.landmark-chronology-container {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* ── 1. Top Header with Top Submit Action ── */
+.chronology-top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 0.25rem;
+}
+
+.header-left-info {
+    text-align: left;
+}
+
+.header-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.2rem;
+}
+
+.phase-pill {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 0.12rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(6, 182, 212, 0.12);
+    color: #0891b2;
+    border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.progress-counter {
+    font-size: 0.725rem;
+    font-weight: 600;
+    color: #63788A;
+}
+
+.chronology-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #17324D;
+    margin: 0 0 0.1rem;
+    line-height: 1.2;
+}
+
+.chronology-instruction {
+    font-size: 0.8rem;
+    color: #40566B;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.chronology-instruction strong {
+    color: #17324D;
+}
+
+/* Top Prominent Submit Button */
+.header-right-action {
+    flex-shrink: 0;
+}
+
+.chronology-top-submit-btn {
+    min-width: 220px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0.6rem 1.4rem;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.chronology-top-submit-btn.is-incomplete {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.chronology-top-submit-btn.is-ready {
+    opacity: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -4px rgba(6, 182, 212, 0.4);
+    animation: vyomPulse 2s infinite;
+}
+
+@keyframes vyomPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+/* ── 2. Route Sequence Hero Section with Horizontal Scroll ── */
+.chronology-hero-section {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(23, 50, 77, 0.10);
+    border-radius: 18px;
+    padding: 0.65rem 1rem 0.5rem;
+    box-shadow: 0 8px 24px -8px rgba(23, 50, 77, 0.06);
+}
+
+.section-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+.section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.section-icon {
+    font-size: 0.95rem;
+}
+
+.section-heading {
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: #17324D;
+    margin: 0;
+}
+
+.scroll-hint-pill {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #0891B2;
+    background: rgba(6, 182, 212, 0.08);
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    margin-left: 0.25rem;
+}
+
+.pool-count-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #7D8F9D;
+    margin-left: 0.25rem;
+}
+
+.clear-all-btn {
+    font-size: 0.725rem;
+    font-weight: 600;
+    color: #DC2626;
+    background: rgba(220, 38, 38, 0.08);
+    border: none;
+    border-radius: 6px;
+    padding: 0.15rem 0.55rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.clear-all-btn:hover {
+    background: rgba(220, 38, 38, 0.15);
+}
+
+/* Horizontal Scroll Viewport for Sequence Track */
+.route-journey-scroll-viewport {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: #0891B2 rgba(23, 50, 77, 0.06);
+    -webkit-overflow-scrolling: touch;
+}
+
+.route-journey-scroll-viewport::-webkit-scrollbar {
+    height: 6px;
+}
+
+.route-journey-scroll-viewport::-webkit-scrollbar-track {
+    background: rgba(23, 50, 77, 0.05);
+    border-radius: 9999px;
+}
+
+.route-journey-scroll-viewport::-webkit-scrollbar-thumb {
+    background: #0891B2;
+    border-radius: 9999px;
+}
+
+.route-journey-track {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: max-content;
+    min-width: 100%;
+}
+
+.journey-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.journey-node .node-marker {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.start-node .node-marker {
+    background: #0891B2;
+    color: #FFFFFF;
+}
+
+.end-node .node-marker {
+    background: #059669;
+    color: #FFFFFF;
+}
+
+.journey-node .node-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #63788A;
+    white-space: nowrap;
+}
+
+.journey-connector {
+    color: #CBD5E1;
+    font-size: 0.95rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.sequence-slots-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.slot-wrapper-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.slot-sub-arrow {
+    color: #CBD5E1;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Individual Sequence Slot Card */
+.vyom-sequence-slot {
+    width: 140px;
+    min-width: 140px;
+    height: 94px;
+    border-radius: 14px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.vyom-sequence-slot.is-empty {
+    background: #F8FAF9;
+    border: 1.5px dashed rgba(23, 50, 77, 0.2);
+}
+
+.vyom-sequence-slot.is-drop-target {
+    border-color: #0891B2;
+    background: rgba(6, 182, 212, 0.12);
+    transform: scale(1.02);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25);
+}
+
+.vyom-sequence-slot.is-filled {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(8, 145, 178, 0.45);
+    box-shadow: 0 4px 12px -4px rgba(23, 50, 77, 0.12);
+    cursor: grab;
+}
+
+.vyom-sequence-slot.is-filled:active {
+    cursor: grabbing;
+}
+
+/* Slot Number Tag */
+.slot-number-badge {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    z-index: 5;
+    background: rgba(23, 50, 77, 0.85);
+    color: #F7F4EC;
+    font-size: 0.6rem;
+    font-weight: 800;
+    font-family: monospace;
+    padding: 0.1rem 0.35rem;
+    border-radius: 5px;
+    letter-spacing: 0.04em;
+    backdrop-filter: blur(4px);
+}
+
+.vyom-sequence-slot.is-empty .slot-number-badge {
+    background: rgba(23, 50, 77, 0.08);
+    color: #63788A;
+}
+
+/* Empty Slot View */
+.slot-empty-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0.25rem;
+    text-align: center;
+}
+
+.slot-empty-icon {
+    font-size: 0.95rem;
+    color: #94A3B8;
+    line-height: 1;
+    margin-bottom: 0.15rem;
+}
+
+.slot-empty-label {
+    font-size: 0.675rem;
+    font-weight: 700;
+    color: #475569;
+    line-height: 1.1;
+}
+
+.slot-empty-sub {
+    font-size: 0.575rem;
+    color: #94A3B8;
+    margin-top: 0.1rem;
+}
+
+/* Filled Slot View */
+.slot-filled-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.slot-img-wrap {
+    width: 100%;
+    height: 66px;
+    position: relative;
+    overflow: hidden;
+    background: #0F172A;
+}
+
+.slot-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.slot-img-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0891B2;
+}
+
+.slot-remove-btn {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.85);
+    color: #FFFFFF;
+    font-size: 0.65rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(4px);
+    z-index: 6;
+}
+
+.slot-remove-btn:hover {
+    background: #DC2626;
+    transform: scale(1.1);
+}
+
+.slot-meta {
+    padding: 0.2rem 0.35rem;
+    background: #FFFFFF;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.slot-landmark-name {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: #17324D;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+    display: block;
+    width: 100%;
+    text-align: left;
+}
+
+/* ── 3. Available Landmarks Pool ── */
+.chronology-pool-section {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(23, 50, 77, 0.10);
+    border-radius: 18px;
+    padding: 0.65rem 1rem;
+    box-shadow: 0 8px 24px -8px rgba(23, 50, 77, 0.06);
+}
+
+.landmark-pool-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.55rem;
+}
+
+/* Individual Landmark Card */
+.vyom-landmark-card {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(23, 50, 77, 0.12);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none;
+    box-sizing: border-box;
 }
 
-.nav-landmark-card:hover {
+.vyom-landmark-card.is-selectable:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+    border-color: #0891B2;
+    box-shadow: 0 8px 20px -4px rgba(8, 145, 178, 0.25);
 }
 
-/* Score Circle Gauge */
-.nav-score-gauge circle {
-    transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+.vyom-landmark-card.is-selectable:active {
+    transform: scale(0.98);
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-    .navigation-assessment {
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
+.vyom-landmark-card.is-selected {
+    opacity: 0.45;
+    border-color: rgba(23, 50, 77, 0.1);
+    background: #F1F5F9;
+}
+
+.card-image-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    background: #0F172A;
+}
+
+.card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+}
+
+.vyom-landmark-card.is-selectable:hover .card-img {
+    transform: scale(1.04);
+}
+
+.card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0891B2;
+}
+
+.selected-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.check-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #0891B2;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-meta {
+    padding: 0.3rem 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    text-align: left;
+}
+
+.landmark-name {
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: #17324D;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.card-status-hint {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #0891B2;
+}
+
+.vyom-landmark-card.is-selected .card-status-hint {
+    color: #64748B;
+}
+
+/* Dragging Ghost Preview Card */
+.vyom-drag-overlay-card {
+    width: 140px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 2px solid #0891B2;
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    pointer-events: none;
+    transform: scale(1.04);
+}
+
+.overlay-img-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: #0F172A;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE ADAPTATIONS (< 768px)
+   ═════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+    .navigation-assessment-page.story-assessment-container {
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        padding: 0.75rem 0.65rem 2.5rem;
     }
 
-    .nav-direction-btn {
-        min-height: 56px;
-        min-width: 105px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8125rem;
+    .chronology-top-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.65rem;
     }
+
+    .header-right-action {
+        width: 100%;
+    }
+
+    .chronology-top-submit-btn {
+        width: 100%;
+    }
+
+    .chronology-title {
+        font-size: 1.25rem;
+    }
+
+    .chronology-hero-section {
+        padding: 0.65rem 0.65rem 0.45rem;
+    }
+
+    .landmark-pool-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    @media (min-width: 480px) and (max-width: 767px) {
+        .landmark-pool-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROCESSING & SIMPLIFIED RESULTS STYLING
+   ═══════════════════════════════════════════════════════════════════ */
+
+.nav-processing-arena {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    background: #FFFFFF;
+    border-radius: 20px;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.nav-scoring-spinner {
+    width: 42px;
+    height: 42px;
+    border: 3.5px solid rgba(6, 182, 212, 0.15);
+    border-left-color: #0891b2;
+    border-radius: 50%;
+    animation: navSpin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes navSpin {
+    to { transform: rotate(360deg); }
+}
+
+.nav-processing-arena h2 {
+    font-size: 1.25rem;
+    color: #17324D;
+    margin: 0 0 0.4rem;
+}
+
+.nav-processing-arena p {
+    font-size: 0.825rem;
+    color: #63788A;
+    margin: 0;
+    max-width: 380px;
+    line-height: 1.35;
+}
+
+.nav-results-container {
+    width: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+.nav-results-card {
+    padding: 1.35rem 1.5rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 20px;
+    box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
+}
+
+.nav-icon-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(6, 182, 212, 0.12);
+    border: 1.5px solid #0891b2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.nav-split-results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+@media (max-width: 600px) {
+    .nav-split-results-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.nav-summary-box {
+    background: #F7F4EC;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+    border-radius: 12px;
+    padding: 0.65rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.nav-score-num {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #17324D;
+    line-height: 1;
+}
+
+.nav-score-tag {
+    font-size: 0.75rem;
+    color: #63788A;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 0.2rem;
+}
+
+.nav-mini-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+}
+
+.nav-feedback-box {
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.nav-sub-indices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.sub-index-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F7F4EC;
+    border: 1px solid rgba(23, 50, 77, 0.06);
+    border-radius: 8px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.775rem;
+    color: #40566B;
+}
+
+.sub-index-val {
+    font-weight: 700;
+    color: #17324D;
+}
+
+/* ==========================================================================
+   DARK THEME SPECIFIC OVERRIDES
+   ========================================================================== */
+
+.dark .chronology-hero-section,
+.dark .chronology-pool-section,
+.dark .nav-processing-arena,
+.dark .nav-results-card,
+[data-theme="dark"] .chronology-hero-section,
+[data-theme="dark"] .chronology-pool-section,
+[data-theme="dark"] .nav-processing-arena,
+[data-theme="dark"] .nav-results-card {
+    background: rgba(20, 37, 56, 0.88) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
+}
+
+.dark .chronology-title,
+.dark .section-heading,
+.dark .nav-processing-arena h2,
+.dark .results-overview-header h2,
+[data-theme="dark"] .chronology-title,
+[data-theme="dark"] .section-heading,
+[data-theme="dark"] .nav-processing-arena h2,
+[data-theme="dark"] .results-overview-header h2 {
+    color: #F7F4EC !important;
+}
+
+.dark .chronology-instruction,
+.dark .progress-counter,
+.dark .nav-processing-arena p,
+[data-theme="dark"] .chronology-instruction,
+[data-theme="dark"] .progress-counter,
+[data-theme="dark"] .nav-processing-arena p {
+    color: #D2DDE2 !important;
+}
+
+.dark .chronology-instruction strong,
+[data-theme="dark"] .chronology-instruction strong {
+    color: #F7F4EC !important;
+}
+
+.dark .vyom-sequence-slot.is-empty,
+[data-theme="dark"] .vyom-sequence-slot.is-empty {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark .slot-empty-label,
+[data-theme="dark"] .slot-empty-label {
+    color: #CBD5E1;
+}
+
+.dark .vyom-sequence-slot.is-filled,
+[data-theme="dark"] .vyom-sequence-slot.is-filled {
+    background: rgba(20, 37, 56, 0.95);
+    border-color: rgba(6, 182, 212, 0.4);
+}
+
+.dark .slot-meta,
+[data-theme="dark"] .slot-meta {
+    background: rgba(20, 37, 56, 0.95);
+}
+
+.dark .slot-landmark-name,
+[data-theme="dark"] .slot-landmark-name {
+    color: #F7F4EC;
+}
+
+.dark .vyom-landmark-card,
+[data-theme="dark"] .vyom-landmark-card {
+    background: rgba(20, 37, 56, 0.9);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark .landmark-name,
+[data-theme="dark"] .landmark-name {
+    color: #F7F4EC;
+}
+
+.dark .vyom-drag-overlay-card,
+[data-theme="dark"] .vyom-drag-overlay-card {
+    background: #142538;
+    border-color: #06B6D4;
+}
+
+.dark .nav-summary-box,
+.dark .sub-index-item,
+[data-theme="dark"] .nav-summary-box,
+[data-theme="dark"] .sub-index-item {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #D2DDE2;
+}
+
+.dark .nav-score-num,
+.dark .sub-index-val,
+[data-theme="dark"] .nav-score-num,
+[data-theme="dark"] .sub-index-val {
+    color: #F7F4EC;
+}
+
+.dark .nav-icon-badge,
+[data-theme="dark"] .nav-icon-badge {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: #06b6d4;
+    color: #06b6d4;
+}
+
+.dark .nav-feedback-box,
+[data-theme="dark"] .nav-feedback-box {
+    background: rgba(6, 182, 212, 0.10);
+    border-color: rgba(6, 182, 212, 0.25);
 }

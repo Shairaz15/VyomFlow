@@ -36,11 +36,6 @@ export function JourneyNode({
             {/* Background Halo Pulse for Active Node */}
             {isActive && <div className="level-halo-pulse" aria-hidden="true" />}
 
-            {/* Step Number Badge */}
-            <div className="level-step-badge" aria-hidden="true">
-                {node.order}
-            </div>
-
             {/* Main Embedded Level Circle Marker */}
             <div className="level-circle-marker" style={{ borderColor: node.biome.accentColor }}>
                 <span className="level-emoji-icon" role="img" aria-hidden="true">

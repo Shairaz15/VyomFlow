@@ -1,108 +1,58 @@
 /**
- * VMRA Assessment Styles
- * Mobile-first, accessible design with high contrast for elderly users.
- * Minimum tap target: 60×60px. Minimum screen: 320px.
+ * ==========================================================================
+ * VYOMFLOW VISUAL MEMORY ASSESSMENT (VMRA) STYLING
+ * Comprehensive Light & Dark Mode Design System with Desktop 100vh Zero-Scroll
+ * ==========================================================================
  */
 
-/* ─── Container ────────────────────────────────────────────────── */
+/* ─── Container & Active Viewport Anchor ───────────────────────── */
 
 .vmra-assessment {
-    min-height: 80vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .vmra-assessment.story-assessment-container {
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        justify-content: center;
+        padding: 0.65rem 1.25rem;
+    }
+}
+
+.vmra-stage-viewport {
+    scroll-margin-top: 90px;
+    width: 100%;
 }
 
 .vmra-phase {
     max-width: 640px;
     width: 100%;
+    margin: 0 auto;
     text-align: center;
-    animation: vmraFadeIn 0.4s ease-out;
+    animation: vmraFadeIn 0.35s ease-out;
 }
 
 @keyframes vmraFadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-/* ─── Onboarding Phase ─────────────────────────────────────────── */
+/* ─── Common Phase Header & Labels ─────────────────────────────── */
 
-.vmra-onboarding .vmra-phase-icon {
-    font-size: 4rem;
-    margin-bottom: 1.5rem;
-}
-
-.vmra-onboarding h2 {
-    font-size: 2rem;
-    margin-bottom: 0.75rem;
-    color: var(--color-text, #f8fafc);
-}
-
-.vmra-description {
-    font-size: 1.1rem;
-    color: var(--color-text-secondary, #cbd5e1);
-    margin-bottom: 2rem;
-    line-height: 1.6;
-}
-
-.vmra-instructions {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin: 2rem 0;
-}
-
-.vmra-instruction-step {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    text-align: left;
+.vmra-phase-label {
     font-size: 1.05rem;
-    color: var(--color-text, #f8fafc);
-}
-
-.vmra-step-visual {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(59, 130, 246, 0.15);
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.vmra-step-emoji {
-    font-size: 1.4rem;
-}
-
-.vmra-reassurance {
-    font-size: 0.95rem;
-    color: var(--color-muted, #64748b);
-    font-style: italic;
-    margin: 1.5rem 0 2rem;
-    padding: 1rem;
-    background: rgba(52, 211, 153, 0.1);
-    border-radius: 8px;
-    border-left: 3px solid var(--color-success, #34d399);
-}
-
-.vmra-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
+    font-weight: 600;
+    color: #17324D;
+    margin-bottom: 1rem;
 }
 
 /* ─── Encoding Phase ───────────────────────────────────────────── */
@@ -112,27 +62,25 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 420px;
-}
-
-.vmra-phase-label {
-    font-size: 1.1rem;
-    color: var(--color-muted, #94a3b8);
-    margin-bottom: 1rem;
+    padding: 1.75rem 1.5rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 20px;
+    box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
 }
 
 .vmra-image-display {
-    width: 200px;
-    height: 200px;
+    width: 150px;
+    height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 2rem auto;
+    margin: 1rem auto;
     padding: 1rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 3px solid rgba(59, 130, 246, 0.3);
-    transition: opacity 0.8s ease, transform 0.8s ease;
+    background: rgba(79, 124, 120, 0.08);
+    border: 2px solid rgba(79, 124, 120, 0.3);
+    transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
 .vmra-image-display.visible {
@@ -142,125 +90,138 @@
 
 .vmra-image-display.fading {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.92);
 }
 
 .vmra-progress-dots {
     display: flex;
-    gap: 10px;
-    margin-top: 2rem;
+    gap: 8px;
     justify-content: center;
+    margin-top: 1.25rem;
 }
 
 .vmra-dot {
-    width: 12px;
-    height: 12px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(23, 50, 77, 0.15);
     transition: all 0.3s ease;
 }
 
 .vmra-dot.completed {
-    background: var(--color-success, #34d399);
+    background: #4F7C78;
+    transform: scale(1.1);
 }
 
 .vmra-dot.current {
-    background: var(--color-primary, #3b82f6);
-    transform: scale(1.4);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    background: #17324D;
+    transform: scale(1.25);
+    box-shadow: 0 0 0 3px rgba(79, 124, 120, 0.25);
 }
 
-/* ─── Retention Phase ──────────────────────────────────────────── */
+/* ─── Retention Phase (Distractor Task) ────────────────────────── */
 
 .vmra-retention {
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 1.75rem 1.5rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 20px;
+    box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
 }
 
 .vmra-shape-grid {
     display: flex;
-    gap: 16px;
-    margin: 2rem 0;
+    gap: 14px;
+    justify-content: center;
+    margin: 1.25rem 0;
 }
 
 .vmra-shape-btn {
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: none;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.08);
+    background: #F7F4EC;
+    border: 1.5px solid rgba(23, 50, 77, 0.10);
+    border-radius: 14px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
 }
 
 .vmra-shape-btn:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: #FFFFFF;
+    border-color: #4F7C78;
     transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(79, 124, 120, 0.15);
 }
 
 .vmra-shape-btn:active {
     transform: scale(0.95);
-    background: rgba(59, 130, 246, 0.3);
 }
 
-/* Shape visuals */
 .vmra-shape {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
 }
 
 .vmra-shape-circle {
     border-radius: 50%;
-    background: #3b82f6;
+    background: #0284c7;
 }
 
 .vmra-shape-triangle {
     width: 0;
     height: 0;
-    border-left: 22px solid transparent;
-    border-right: 22px solid transparent;
-    border-bottom: 40px solid #f59e0b;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-bottom: 30px solid #d97706;
     background: none;
 }
 
 .vmra-shape-square {
-    border-radius: 4px;
-    background: #10b981;
+    border-radius: 5px;
+    background: #059669;
 }
 
 .vmra-shape-diamond {
-    width: 30px;
-    height: 30px;
-    background: #ef4444;
+    width: 25px;
+    height: 25px;
+    background: #dc2626;
     transform: rotate(45deg);
 }
 
 .vmra-time-remaining {
-    font-size: 1.1rem;
-    color: var(--color-muted, #94a3b8);
-    margin-top: 1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #4F7C78;
+    margin-top: 0.85rem;
     font-variant-numeric: tabular-nums;
 }
 
-/* ─── Recall Phase ─────────────────────────────────────────────── */
+/* ─── Recall & Delayed Recall Phase ───────────────────────────── */
 
 .vmra-recall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: 460px;
+    padding: 1.5rem 1.5rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 20px;
+    box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
+    max-width: 500px;
     margin: 0 auto;
 }
 
 .vmra-recall-grid {
     display: grid;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
-    margin: 1.5rem 0;
+    margin: 0.85rem 0;
 }
 
 .vmra-grid-item {
@@ -268,57 +229,54 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
-    min-height: 60px;
-    padding: 10px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.04);
+    min-width: 52px;
+    min-height: 52px;
+    padding: 6px;
+    border: 1.5px solid rgba(23, 50, 77, 0.10);
+    border-radius: 12px;
+    background: #F7F4EC;
     cursor: pointer;
     transition: all 0.2s ease;
     aspect-ratio: 1;
 }
 
 .vmra-grid-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: #FFFFFF;
+    border-color: #4F7C78;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 124, 120, 0.12);
 }
 
 .vmra-grid-item:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }
 
 .vmra-grid-item.selected {
-    background: rgba(52, 211, 153, 0.15);
-    border-color: var(--color-success, #34d399);
-    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.2);
+    background: rgba(79, 124, 120, 0.15);
+    border-color: #4F7C78;
+    box-shadow: 0 0 0 2px rgba(79, 124, 120, 0.35);
 }
 
 .vmra-check-overlay {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 24px;
-    height: 24px;
+    top: 3px;
+    right: 3px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-success, #34d399);
+    background: #4F7C78;
     border-radius: 50%;
-    color: #fff;
-    font-size: 0.8rem;
+    color: #FFFFFF;
+    font-size: 0.7rem;
     font-weight: 700;
     animation: vmraCheckPop 0.2s ease;
 }
 
 @keyframes vmraCheckPop {
-    from {
-        transform: scale(0);
-    }
-
-    to {
-        transform: scale(1);
-    }
+    from { transform: scale(0); }
+    to { transform: scale(1); }
 }
 
 .vmra-recall-footer {
@@ -326,19 +284,23 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
 }
 
 .vmra-selection-count {
-    font-size: 0.95rem;
-    color: var(--color-muted, #94a3b8);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #63788A;
 }
 
 .vmra-done-btn {
     width: 100%;
-    min-height: 56px;
-    font-size: 1.15rem;
+    max-width: 260px;
+    min-height: 44px;
+    border-radius: 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
 }
 
 /* ─── Scoring Phase ────────────────────────────────────────────── */
@@ -347,348 +309,307 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 300px;
+    min-height: 240px;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
 }
 
 .vmra-scoring-anim {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
-    color: var(--color-muted, #94a3b8);
+    gap: 1rem;
+    color: #40566B;
 }
 
 .vmra-spinner {
-    width: 48px;
-    height: 48px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--color-primary, #3b82f6);
+    width: 38px;
+    height: 38px;
+    border: 3px solid rgba(79, 124, 120, 0.15);
+    border-left-color: #4F7C78;
     border-radius: 50%;
     animation: vmraSpin 1s linear infinite;
 }
 
 @keyframes vmraSpin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
 /* ─── Results Phase ────────────────────────────────────────────── */
 
+.vmra-results {
+    padding: 1.5rem 1.5rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    border-radius: 20px;
+    box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
+    max-width: 540px;
+    margin: 0 auto;
+}
+
 .vmra-results .vmra-phase-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
+    font-size: 2.25rem;
+    margin-bottom: 0.25rem;
 }
 
 .vmra-results .vmra-success {
-    color: var(--color-success, #34d399);
-    font-size: 5rem;
+    color: #4F7C78;
 }
 
 .vmra-results h2 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    color: var(--color-text, #f8fafc);
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: #17324D;
 }
 
-/* Stars */
 .vmra-stars {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.65rem;
 }
 
 .vmra-star {
-    font-size: 2rem;
-    color: rgba(255, 255, 255, 0.15);
+    font-size: 1.4rem;
+    color: rgba(23, 50, 77, 0.15);
     transition: color 0.3s ease;
 }
 
 .vmra-star.filled {
-    color: #fbbf24;
-    text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+    color: #f59e0b;
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
 }
 
-/* Results grid (color-coded feedback) */
 .vmra-results-grid {
     display: grid;
-    gap: 8px;
-    margin: 1.5rem auto;
-    max-width: 400px;
+    gap: 6px;
+    margin: 0.65rem auto;
+    max-width: 320px;
 }
 
 .vmra-result-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
-    border-radius: 12px;
-    border: 2px solid transparent;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
     aspect-ratio: 1;
     transition: all 0.3s ease;
 }
 
 .vmra-result-item.correct {
-    background: rgba(52, 211, 153, 0.15);
-    border-color: var(--color-success, #34d399);
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
 }
 
 .vmra-result-item.missed {
-    background: rgba(251, 191, 36, 0.1);
-    border-color: #fbbf24;
-    opacity: 0.7;
+    background: rgba(245, 158, 11, 0.12);
+    border-color: #f59e0b;
+    opacity: 0.75;
 }
 
 .vmra-result-item.false-pos {
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(239, 68, 68, 0.12);
     border-color: #ef4444;
     opacity: 0.8;
 }
 
 .vmra-result-item.neutral {
-    opacity: 0.3;
+    opacity: 0.35;
+    background: rgba(23, 50, 77, 0.04);
 }
 
-/* Summary card */
 .vmra-summary-card {
-    padding: 1.25rem;
-    margin: 1.5rem 0;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
+    padding: 0.65rem 0.85rem;
+    background: #F7F4EC;
+    border: 1px solid rgba(23, 50, 77, 0.08);
+    border-radius: 12px;
+    margin: 0.5rem 0;
 }
 
 .vmra-stat-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
-}
-
-.vmra-stat-row.secondary {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 0.5rem;
-    padding-top: 1rem;
+    font-size: 0.875rem;
 }
 
 .vmra-stat-label {
-    color: var(--color-muted, #94a3b8);
-    font-size: 1rem;
+    color: #40566B;
+    font-weight: 500;
 }
 
 .vmra-stat-value {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--color-text, #f8fafc);
+    color: #17324D;
+    font-weight: 700;
 }
 
-/* ─── Key Factors / Observations ───────────────────────────────── */
-
-.vmra-factors {
-    margin: 1.5rem 0;
-    text-align: left;
-    padding: 1rem;
-    background: rgba(251, 191, 36, 0.1);
-    border-radius: 12px;
-    border-left: 3px solid var(--color-warning, #fbbf24);
+.vmra-reassurance {
+    font-size: 0.8rem;
+    color: #63788A;
+    font-style: italic;
+    margin: 0.5rem 0 0.75rem;
+    padding: 0.35rem 0.65rem;
+    background: rgba(79, 124, 120, 0.06);
+    border-radius: 8px;
 }
 
-.vmra-factors-label {
-    font-size: 0.9rem;
-    color: var(--color-muted, #94a3b8);
-    margin-bottom: 0.5rem;
-}
-
-.vmra-factors-list {
-    margin: 0;
-    padding-left: 1.25rem;
-}
-
-.vmra-factors-list li {
-    color: var(--color-text-secondary, #cbd5e1);
-    margin-bottom: 0.25rem;
-    font-size: 0.95rem;
-    line-height: 1.5;
-}
-
-/* ─── Icon Placeholder Fallback ────────────────────────────────── */
-
-.vmra-icon-placeholder {
-    width: 64px;
-    height: 64px;
+.vmra-actions {
     display: flex;
-    align-items: center;
+    gap: 0.65rem;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    font-size: 2rem;
-    color: var(--color-muted, #94a3b8);
+    margin-top: 0.65rem;
+    flex-wrap: wrap;
 }
 
-/* ─── Responsive ───────────────────────────────────────────────── */
-
-@media (max-width: 480px) {
-    .vmra-assessment {
-        padding: 1rem;
-    }
-
-    .vmra-onboarding h2 {
-        font-size: 1.6rem;
-    }
-
-    .vmra-image-display {
-        width: 160px;
-        height: 160px;
-    }
-
-    .vmra-shape-btn {
-        width: 70px;
-        height: 70px;
-    }
-
-    .vmra-recall-grid {
-        gap: 8px;
-    }
-
-    .vmra-grid-item {
-        padding: 6px;
-    }
-
-    .vmra-actions {
-        flex-direction: column;
-    }
-
-    .vmra-results-grid {
-        gap: 6px;
-    }
-}
-
-@media (max-width: 360px) {
-    .vmra-shape-grid {
-        gap: 10px;
-    }
-
-    .vmra-shape-btn {
-        width: 64px;
-        height: 64px;
-    }
-
-    .vmra-grid-item {
-        min-width: 54px;
-        min-height: 54px;
-        padding: 4px;
-    }
+.vmra-actions .btn {
+    min-height: 40px;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.875rem;
 }
 
 /* ─── Guessing Warning ─────────────────────────────────────────── */
 
 .vmra-guessing-warning {
-    margin: 0.75rem 0;
-    padding: 0.75rem 1rem;
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 10px;
-    color: #fca5a5;
-    font-size: 0.9rem;
+    margin: 0.5rem 0;
+    padding: 0.5rem 0.75rem;
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    color: #dc2626;
+    font-size: 0.825rem;
     animation: vmraShake 0.4s ease;
 }
 
 @keyframes vmraShake {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    20% {
-        transform: translateX(-4px);
-    }
-
-    40% {
-        transform: translateX(4px);
-    }
-
-    60% {
-        transform: translateX(-2px);
-    }
-
-    80% {
-        transform: translateX(2px);
-    }
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
 }
 
-/* ─── Focus Visible (keyboard navigation) ──────────────────────── */
+/* ─── Keyboard Focus ───────────────────────────────────────────── */
 
 .vmra-grid-item:focus-visible,
 .vmra-shape-btn:focus-visible {
-    outline: 3px solid #60a5fa;
+    outline: 2px solid #4F7C78;
     outline-offset: 2px;
-    box-shadow: 0 0 0 5px rgba(96, 165, 250, 0.25);
 }
 
-/* ─── Reduced Motion ───────────────────────────────────────────── */
+/* ==========================================================================
+   DARK THEME SPECIFIC OVERRIDES
+   ========================================================================== */
 
-@media (prefers-reduced-motion: reduce) {
-
-    .vmra-phase,
-    .vmra-image-display,
-    .vmra-check-overlay,
-    .vmra-guessing-warning {
-        animation: none !important;
-        transition: none !important;
-    }
-
-    .vmra-spinner {
-        animation-duration: 3s;
-    }
-
-    .vmra-dot,
-    .vmra-grid-item,
-    .vmra-shape-btn {
-        transition: none !important;
-    }
+.dark .vmra-phase-label,
+[data-theme="dark"] .vmra-phase-label {
+    color: #F7F4EC;
 }
 
-/* ─── High Contrast ────────────────────────────────────────────── */
+.dark .vmra-encoding,
+.dark .vmra-retention,
+.dark .vmra-recall,
+.dark .vmra-scoring,
+.dark .vmra-results,
+[data-theme="dark"] .vmra-encoding,
+[data-theme="dark"] .vmra-retention,
+[data-theme="dark"] .vmra-recall,
+[data-theme="dark"] .vmra-scoring,
+[data-theme="dark"] .vmra-results {
+    background: rgba(20, 37, 56, 0.88) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
+}
 
-@media (prefers-contrast: more) {
-    .vmra-grid-item {
-        border-width: 3px;
-        border-color: rgba(255, 255, 255, 0.4);
-    }
+.dark .vmra-results h2,
+[data-theme="dark"] .vmra-results h2 {
+    color: #F7F4EC;
+}
 
-    .vmra-grid-item.selected {
-        border-color: #34d399;
-        background: rgba(52, 211, 153, 0.3);
-    }
+.dark .vmra-image-display,
+[data-theme="dark"] .vmra-image-display {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 201, 183, 0.3);
+}
 
-    .vmra-result-item.correct {
-        border-width: 3px;
-        background: rgba(52, 211, 153, 0.25);
-    }
+.dark .vmra-dot,
+[data-theme="dark"] .vmra-dot {
+    background: rgba(255, 255, 255, 0.15);
+}
 
-    .vmra-result-item.missed {
-        border-width: 3px;
-        opacity: 1;
-    }
+.dark .vmra-dot.completed,
+[data-theme="dark"] .vmra-dot.completed {
+    background: #00C9B7;
+}
 
-    .vmra-result-item.false-pos {
-        border-width: 3px;
-        opacity: 1;
-    }
+.dark .vmra-dot.current,
+[data-theme="dark"] .vmra-dot.current {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0, 201, 183, 0.35);
+}
 
-    .vmra-result-item.neutral {
-        opacity: 0.5;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-    }
+.dark .vmra-shape-btn,
+.dark .vmra-grid-item,
+[data-theme="dark"] .vmra-shape-btn,
+[data-theme="dark"] .vmra-grid-item {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.10);
+}
 
-    .vmra-phase-label,
-    .vmra-selection-count {
-        color: var(--color-text, #f8fafc);
-    }
+.dark .vmra-shape-btn:hover,
+.dark .vmra-grid-item:hover,
+[data-theme="dark"] .vmra-shape-btn:hover,
+[data-theme="dark"] .vmra-grid-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.20);
+}
 
-    .vmra-reassurance {
-        color: var(--color-text, #f8fafc);
-        font-style: normal;
-    }
+.dark .vmra-grid-item.selected,
+[data-theme="dark"] .vmra-grid-item.selected {
+    background: rgba(0, 201, 183, 0.15);
+    border-color: #00C9B7;
+    box-shadow: 0 0 0 2px rgba(0, 201, 183, 0.35);
+}
+
+.dark .vmra-check-overlay,
+[data-theme="dark"] .vmra-check-overlay {
+    background: #00C9B7;
+}
+
+.dark .vmra-summary-card,
+[data-theme="dark"] .vmra-summary-card {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .vmra-stat-label,
+[data-theme="dark"] .vmra-stat-label {
+    color: #D2DDE2;
+}
+
+.dark .vmra-stat-value,
+[data-theme="dark"] .vmra-stat-value {
+    color: #F7F4EC;
+}
+
+.dark .vmra-selection-count,
+[data-theme="dark"] .vmra-selection-count {
+    color: #D2DDE2;
+}
+
+.dark .vmra-star,
+[data-theme="dark"] .vmra-star {
+    color: rgba(255, 255, 255, 0.15);
+}
+
+.dark .vmra-results .vmra-success,
+[data-theme="dark"] .vmra-results .vmra-success {
+    color: #00C9B7;
 }

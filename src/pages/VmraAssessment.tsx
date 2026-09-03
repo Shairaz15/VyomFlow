@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/common';
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from '../components/common';
 import { PageWrapper } from '../components/layout';
 import { VMRA_ICON_MAP } from '../components/vmra/vmraIcons';
 import {
@@ -90,6 +90,55 @@ export function VmraAssessment() {
     const [rawMetrics, setRawMetrics] = useState<VmraRawMetrics | null>(null);
     const [sessionResult, setSessionResult] = useState<VmraAssessmentResult | null>(null);
     const [keyFactors, setKeyFactors] = useState<string[]>([]);
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+    // Ref for the active stage card to support smooth auto-centering
+    const activeStageRef = useRef<HTMLDivElement>(null);
+
+    // Smoothly scroll and center the active stage card within the viewport
+    const scrollToActiveStage = useCallback(() => {
+        if (!activeStageRef.current) return;
+
+        requestAnimationFrame(() => {
+            if (!activeStageRef.current) return;
+            const rect = activeStageRef.current.getBoundingClientRect();
+            const topClearance = 80;
+            const isComfortablyVisible = 
+                rect.top >= topClearance && 
+                rect.bottom <= window.innerHeight + 40;
+
+            if (!isComfortablyVisible) {
+                activeStageRef.current.scrollIntoView({
+                    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+                    block: "center",
+                    inline: "nearest"
+                });
+            }
+        });
+    }, []);
+
+    // Trigger auto-scroll on phase change
+    useEffect(() => {
+        scrollToActiveStage();
+    }, [phase, scrollToActiveStage]);
+
+    // Handle Exit / Back Navigation
+    const handleExitClick = () => {
+        if (phase === 'onboarding' || phase === 'results') {
+            navigate('/tests');
+            return;
+        }
+        setShowExitConfirm(true);
+    };
+
+    const handleConfirmExit = () => {
+        setShowExitConfirm(false);
+        navigate('/tests');
+    };
+
+    const handleCancelExit = () => {
+        setShowExitConfirm(false);
+    };
 
     // Delayed recall state
     const [delayedGridImages, setDelayedGridImages] = useState<ImageStimulus[]>([]);
@@ -397,46 +446,59 @@ export function VmraAssessment() {
             // ── ONBOARDING ──
             case 'onboarding':
                 return (
-                    <div className="vmra-phase vmra-onboarding">
-                        <div className="vmra-phase-icon">👁️</div>
-                        <h2>Visual Memory Assessment</h2>
-                        <p className="vmra-description">
-                            This brief activity helps track your visual recall patterns over time.
-                        </p>
-
-                        <div className="vmra-instructions">
-                            <div className="vmra-instruction-step">
-                                <div className="vmra-step-visual">
-                                    <span className="vmra-step-emoji">👀</span>
+                    <div className="instructions-with-tutorial-layout animate-fadeIn">
+                        <Card className="instructions-card">
+                            <div className="instructions-content">
+                                <div className="instructions-icon-wrapper" aria-hidden="true">
+                                    <Icon name="memory" size={28} />
                                 </div>
-                                <span>You'll see {config.targetCount} images, one at a time</span>
-                            </div>
-                            <div className="vmra-instruction-step">
-                                <div className="vmra-step-visual">
-                                    <span className="vmra-step-emoji">🧩</span>
-                                </div>
-                                <span>A short activity to keep you busy</span>
-                            </div>
-                            <div className="vmra-instruction-step">
-                                <div className="vmra-step-visual">
-                                    <span className="vmra-step-emoji">👆</span>
-                                </div>
-                                <span>Tap the images you remember from a grid</span>
-                            </div>
-                        </div>
+                                <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
 
-                        <p className="vmra-reassurance">
-                            Take your time — there's no pressure. Occasional variation is completely normal.
-                        </p>
+                                <ol className="instructions-step-list">
+                                    <li className="instruction-step-item">
+                                        <div className="step-num-bubble">1</div>
+                                        <div className="step-content">
+                                            <strong>Observe Target Items:</strong>
+                                            <span>Watch a sequence of {config.targetCount} visual objects shown one by one.</span>
+                                        </div>
+                                    </li>
+                                    <li className="instruction-step-item">
+                                        <div className="step-num-bubble">2</div>
+                                        <div className="step-content">
+                                            <strong>Brief Focus Gap:</strong>
+                                            <span>Complete a quick 15-second visual shape distractor activity.</span>
+                                        </div>
+                                    </li>
+                                    <li className="instruction-step-item">
+                                        <div className="step-num-bubble">3</div>
+                                        <div className="step-content">
+                                            <strong>Immediate Grid Recall:</strong>
+                                            <span>Tap the images you remember seeing from a mixed visual grid.</span>
+                                        </div>
+                                    </li>
+                                    <li className="instruction-step-item">
+                                        <div className="step-num-bubble">4</div>
+                                        <div className="step-content">
+                                            <strong>Delayed Recognition:</strong>
+                                            <span>Measure short-term visual retention fidelity after a brief delay.</span>
+                                        </div>
+                                    </li>
+                                </ol>
 
-                        <div className="vmra-actions">
-                            <Button variant="secondary" size="lg" onClick={() => navigate('/tests')}>
-                                Back
-                            </Button>
-                            <Button variant="primary" size="lg" onClick={startEncoding}>
-                                Begin Assessment
-                            </Button>
-                        </div>
+                                <div className="instructions-action-row">
+                                    <Button
+                                        variant="primary"
+                                        className="story-primary-start-btn"
+                                        onClick={startEncoding}
+                                    >
+                                        Start Test
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Tutorial Video Placeholder */}
+                        <TutorialVideoPlaceholder />
                     </div>
                 );
 
@@ -625,6 +687,11 @@ export function VmraAssessment() {
                             </div>
                         )}
 
+                        <MotivationalQuoteBlock
+                            starRating={stars}
+                            score={Math.round(sessionResult.profile.accuracy * 100)}
+                        />
+
                         <p className="vmra-reassurance">
                             Occasional variation is normal. Trends over time are more meaningful than a single session.
                         </p>
@@ -719,8 +786,68 @@ export function VmraAssessment() {
 
     return (
         <PageWrapper>
-            <div className="vmra-assessment container">
-                {renderPhase()}
+            <div className="vmra-assessment story-assessment-container container">
+                {/* Top Navigation Bar: Back / Exit Control */}
+                <div className="story-top-nav">
+                    <button
+                        type="button"
+                        onClick={handleExitClick}
+                        className="story-back-btn"
+                        aria-label="Back to Assessments"
+                    >
+                        <span className="back-arrow" aria-hidden="true">←</span>
+                        <span>Back to Assessments</span>
+                    </button>
+
+                    <div className="story-module-badge">
+                        <span className="badge-dot" aria-hidden="true" />
+                        <span>Cognitive Assessment</span>
+                    </div>
+                </div>
+
+                {/* Primary Test Header (shown on intro) */}
+                {phase === 'onboarding' && (
+                    <div className="story-header animate-fadeInUp">
+                        <h1 className="story-title vyom-serif">Visual Memory</h1>
+                        <p className="story-subtitle">
+                            Observe visual items and identify them from a grid to evaluate short-term recognition.
+                        </p>
+                    </div>
+                )}
+
+                {/* Active Assessment Stage Container */}
+                <div ref={activeStageRef} className="story-stage-viewport vmra-stage-viewport">
+                    {renderPhase()}
+                </div>
+
+                {/* Exit Confirmation Dialog */}
+                {showExitConfirm && (
+                    <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
+                        <div className="story-exit-modal animate-scaleUp">
+                            <div className="exit-modal-icon">⚠️</div>
+                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <p className="exit-modal-text">
+                                Your current assessment progress will be lost if you leave now.
+                            </p>
+                            <div className="exit-modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelExit}
+                                    className="modal-btn modal-btn-secondary"
+                                >
+                                    Continue Test
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmExit}
+                                    className="modal-btn modal-btn-danger"
+                                >
+                                    Leave Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </PageWrapper>
     );

@@ -1,0 +1,352 @@
+/* ===== Cognitive Orbit Journey (Prototype 3 - Apple Health & Linear Inspired) ===== */
+/* Calm-tech circular horizon layout with zero emojis */
+
+.orbit-journey-root {
+    position: relative;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+}
+
+/* Center Progress Hub */
+.orbit-center-hub {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.75rem 2rem;
+    border-radius: var(--radius-2xl, 24px);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 640px) {
+    .orbit-center-hub {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.25rem;
+        padding: 1.5rem;
+    }
+}
+
+/* SVG Circular Ring */
+.orbit-ring-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+}
+
+.orbit-svg-ring {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.orbit-ring-track {
+    fill: none;
+    stroke: var(--glass-border);
+    stroke-width: 8;
+}
+
+.orbit-ring-progress {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    filter: drop-shadow(0 0 6px var(--color-accent-soft));
+}
+
+.orbit-hub-center-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.hub-metric-num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+}
+
+.hub-metric-denom {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+.hub-metric-sub {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-accent);
+    margin-top: 4px;
+}
+
+/* Hub Text */
+.hub-status-kicker {
+    display: inline-block;
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+    margin-bottom: 0.3rem;
+}
+
+.hub-headline {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 0.4rem;
+    letter-spacing: var(--letter-spacing-tight);
+}
+
+.hub-subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* Orbital Domain Grid */
+.orbit-domains-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+@media (min-width: 768px) {
+    .orbit-domains-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+/* Domain Cell Card */
+.orbit-node-cell {
+    padding: 1.15rem 1.25rem;
+    border-radius: var(--radius-xl, 18px);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 125px;
+}
+
+.orbit-node-cell:hover {
+    border-color: var(--glass-border-hover);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.orbit-node-cell.orbit-focused {
+    border: 1.5px solid var(--color-accent);
+    background: var(--color-accent-soft);
+    box-shadow: 0 0 20px var(--color-accent-soft), var(--shadow-card);
+}
+
+/* Cell Top */
+.orbit-node-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+}
+
+.orbit-node-index {
+    font-size: 0.725rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+.orbit-icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+}
+
+.orbit-done .orbit-icon-circle {
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--color-status-stable);
+}
+
+.orbit-status-check {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--color-status-stable);
+}
+
+.orbit-pulse-halo {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent);
+    animation: orbitHalo 1.4s infinite ease-in-out;
+}
+
+@keyframes orbitHalo {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.3); opacity: 1; }
+}
+
+.orbit-status-idle {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--glass-border);
+}
+
+/* Cell Title & Meta */
+.orbit-node-title {
+    font-size: 0.975rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 0.35rem;
+    line-height: 1.25;
+}
+
+.orbit-node-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.725rem;
+    color: var(--color-text-muted);
+}
+
+.orbit-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.orbit-domain-lbl {
+    font-size: 0.675rem;
+    opacity: 0.8;
+}
+
+/* Launchpad Drawer */
+.orbit-launchpad-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 1.75rem;
+    border-radius: var(--radius-xl, 20px);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .orbit-launchpad-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.launchpad-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.launchpad-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.launchpad-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.25rem;
+}
+
+.launchpad-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-accent);
+}
+
+.launchpad-time {
+    font-size: 0.725rem;
+    color: var(--color-text-muted);
+}
+
+.launchpad-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 0.35rem;
+}
+
+.launchpad-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin: 0;
+    max-width: 480px;
+}
+
+.launchpad-btn {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.65rem 1.4rem;
+    border-radius: var(--radius-md, 10px);
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-normal);
+}
+
+.btn-active-launch {
+    background: var(--color-accent);
+    color: #ffffff;
+    box-shadow: 0 4px 16px var(--color-accent-soft);
+}
+
+.btn-active-launch:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.btn-normal-launch {
+    background: var(--color-accent-soft);
+    color: var(--color-text-primary);
+}
+
+.btn-normal-launch:hover {
+    background: var(--glass-border-hover);
+}

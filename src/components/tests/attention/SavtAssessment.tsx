@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Button } from '../../common';
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from '../../common';
 import { PageWrapper } from '../../layout';
 import type {
     SavtPhase,
@@ -37,11 +37,11 @@ import { getAttentionFeedback } from '../../../utils/normativeStats';
 import './SavtAssessment.css';
 
 /** Maps target color to a CSS tint for rule cards */
-const COLOR_TINTS: Record<string, { bg: string; border: string }> = {
-    green: { bg: 'rgba(34, 197, 94, 0.10)', border: 'rgba(34, 197, 94, 0.25)' },
-    red: { bg: 'rgba(239, 68, 68, 0.10)', border: 'rgba(239, 68, 68, 0.25)' },
-    blue: { bg: 'rgba(59, 130, 246, 0.10)', border: 'rgba(59, 130, 246, 0.25)' },
-    orange: { bg: 'rgba(249, 115, 22, 0.10)', border: 'rgba(249, 115, 22, 0.25)' },
+const COLOR_TINTS: Record<string, { bg: string; border: string; text: string }> = {
+    green: { bg: 'rgba(34, 197, 94, 0.12)', border: '#22c55e', text: '#15803d' },
+    red: { bg: 'rgba(239, 68, 68, 0.12)', border: '#ef4444', text: '#b91c1c' },
+    blue: { bg: 'rgba(59, 130, 246, 0.12)', border: '#3b82f6', text: '#1d4ed8' },
+    orange: { bg: 'rgba(249, 115, 22, 0.12)', border: '#f97316', text: '#c2410c' },
 };
 
 export function SavtAssessment() {
@@ -57,6 +57,7 @@ export function SavtAssessment() {
     const [trialIndex, setTrialIndex] = useState(0);
     const [result, setResult] = useState<SavtAssessmentResult | null>(null);
     const [sessionTarget, setSessionTarget] = useState<SessionTarget>(() => pickSessionTarget());
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Practice UI state
     const [practiceIndex, setPracticeIndex] = useState(0);
@@ -80,6 +81,7 @@ export function SavtAssessment() {
     const testStartTimeRef = useRef(0);
     const respondedRef = useRef(false);
     const currentStimulusRef = useRef<Stimulus | null>(null);
+    const activeStageRef = useRef<HTMLDivElement>(null);
 
     // Timers
     const isiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -210,11 +212,10 @@ export function SavtAssessment() {
         setPracticeComplete(false);
         setPhase('practice');
 
-        // Small delay to let state settle
         setTimeout(() => {
             runPracticeTrial(seq, 0, target);
-        }, 100);
-    }, [config, isAuthenticated, clearAllTimers, runPracticeTrial]);
+        }, 150);
+    }, [config, clearAllTimers, runPracticeTrial]);
 
     // ─── Test Logic ───────────────────────────────────────────────
 
@@ -238,7 +239,7 @@ export function SavtAssessment() {
             setResult(assessmentResult);
             saveResult(assessmentResult);
             setPhase('results');
-        }, 2000);
+        }, 1500);
     }, [config, user, clearAllTimers, saveResult]);
 
     const runTestTrial = useCallback((seq: StimulusType[], idx: number, target: SessionTarget) => {
@@ -329,334 +330,429 @@ export function SavtAssessment() {
 
         setTimeout(() => {
             runTestTrial(seq, 0, sessionTargetRef.current);
-        }, 100);
+        }, 150);
     }, [config, clearAllTimers, runTestTrial]);
 
-    // ─── Keyboard support (spacebar + enter) ──────────────────────
+    // ─── Global Keyboard Listener (Spacebar & Enter) ──────────────
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.code === 'Space' || e.code === 'Enter') {
-                e.preventDefault();
-                e.stopPropagation();
-
+            if (e.code === 'Space' || e.key === ' ' || e.code === 'Enter' || e.key === 'Enter') {
                 if (phaseRef.current === 'practice') {
+                    e.preventDefault();
                     handlePracticeResponse();
                 } else if (phaseRef.current === 'testing') {
+                    e.preventDefault();
                     handleTestResponse();
                 }
             }
         };
 
-        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keydown', handleKeyDown, { passive: false });
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handlePracticeResponse, handleTestResponse]);
 
-    // ─── Stimulus Rendering ───────────────────────────────────────
+    // ─── Exit Navigation ──────────────────────────────────────────
+    const handleExitClick = () => {
+        if (phase === 'instructions' || phase === 'results') {
+            navigate('/tests');
+            return;
+        }
+        setShowExitConfirm(true);
+    };
 
-    const renderStimulus = (stim: Stimulus, large = true) => {
-        const sizeClass = large ? 'savt-stimulus-large' : 'savt-stimulus-small';
-        const colorClass = `savt-color-${stim.color}`;
+    const handleConfirmExit = () => {
+        clearAllTimers();
+        setShowExitConfirm(false);
+        navigate('/tests');
+    };
+
+    const handleCancelExit = () => {
+        setShowExitConfirm(false);
+    };
+
+    const handleRetake = () => {
+        clearAllTimers();
+        setPhase('instructions');
+        setResult(null);
+        setSessionTarget(pickSessionTarget());
+        setTrialIndex(0);
+        setPracticeIndex(0);
+        setPracticeComplete(false);
+    };
+
+    // ─── Stimulus Renderer ────────────────────────────────────────
+    const renderStimulus = (stim: Stimulus, isSmall = false) => {
+        const colorMap: Record<string, string> = {
+            green: '#22c55e',
+            red: '#ef4444',
+            blue: '#3b82f6',
+            orange: '#f97316',
+        };
+        const fill = colorMap[stim.color] || '#22c55e';
 
         return (
-            <div className={`savt-stimulus ${sizeClass} ${colorClass}`}
-                aria-label={stim.label}
-                role="img">
+            <div className={`savt-stimulus ${isSmall ? 'savt-stimulus-small' : 'savt-stimulus-large'}`} aria-label={stim.label}>
                 {stim.shape === 'circle' && (
-                    <svg viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" />
+                    <svg viewBox="0 0 100 100" className="savt-svg">
+                        <circle cx="50" cy="50" r="42" fill={fill} />
                     </svg>
                 )}
                 {stim.shape === 'square' && (
-                    <svg viewBox="0 0 100 100">
-                        <rect x="10" y="10" width="80" height="80" rx="4" />
+                    <svg viewBox="0 0 100 100" className="savt-svg">
+                        <rect x="10" y="10" width="80" height="80" rx="8" fill={fill} />
                     </svg>
                 )}
                 {stim.shape === 'triangle' && (
-                    <svg viewBox="0 0 100 100">
-                        <polygon points="50,5 95,90 5,90" />
+                    <svg viewBox="0 0 100 100" className="savt-svg">
+                        <polygon points="50,10 90,85 10,85" fill={fill} />
                     </svg>
                 )}
                 {stim.shape === 'diamond' && (
-                    <svg viewBox="0 0 100 100">
-                        <polygon points="50,5 95,50 50,95 5,50" />
+                    <svg viewBox="0 0 100 100" className="savt-svg">
+                        <polygon points="50,5 95,50 50,95 5,50" fill={fill} />
                     </svg>
                 )}
             </div>
         );
     };
 
-    // ─── Progress ─────────────────────────────────────────────────
-
-    const progress = phase === 'testing'
-        ? Math.round((trialIndex / config.totalTrials) * 100)
+    const progressPct = phase === 'testing'
+        ? Math.round(((trialIndex + 1) / config.totalTrials) * 100)
         : phase === 'practice'
-            ? Math.round((practiceIndex / Math.max(1, practiceTotal)) * 100)
+            ? Math.round(((practiceIndex + 1) / Math.max(1, practiceTotal)) * 100)
             : 0;
 
-    // ─── Phase Rendering ──────────────────────────────────────────
-
-    const renderPhase = () => {
-        switch (phase) {
-            case 'instructions': {
-                const goTint = COLOR_TINTS[sessionTarget.color] || COLOR_TINTS.green;
-                return (
-                    <div className="savt-phase savt-instructions animate-fadeInUp">
-                        <div className="savt-title-section">
-                            <h1>Sustained Attention Test</h1>
-                            <p className="savt-subtitle">Go / No-Go Assessment</p>
-                        </div>
-
-                        <div className="savt-rules glass-card">
-                            <h3>How It Works</h3>
-                            <p className="savt-rules-desc">You must match <strong>BOTH the shape AND the color</strong> — not just one!</p>
-                            <div className="savt-rule-grid">
-                                <div className="savt-rule"
-                                    style={{ background: goTint.bg, border: `1px solid ${goTint.border}` }}>
-                                    <div className="savt-rule-stimulus">
-                                        {renderStimulus(createStimulus('go', sessionTarget), false)}
-                                    </div>
-                                    <div className="savt-rule-text">
-                                        <span className="savt-rule-action go" style={{ background: goTint.bg, color: goTint.border }}>
-                                            TAP
-                                        </span>
-                                        <p><strong>{sessionTarget.label}</strong></p>
-                                        <p className="savt-rule-hint">This exact shape + color</p>
-                                    </div>
-                                </div>
-                                <div className="savt-rule savt-rule-nogo">
-                                    <div className="savt-rule-stimulus">
-                                        {renderStimulus(createStimulus('nogo', sessionTarget), false)}
-                                    </div>
-                                    <div className="savt-rule-text">
-                                        <span className="savt-rule-action nogo">DON'T TAP</span>
-                                        <p>Everything else</p>
-                                        <p className="savt-rule-hint">Different shape OR color</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="savt-info glass-card">
-                            <ul>
-                                <li><strong>Both shape AND color</strong> must match the target</li>
-                                <li>The target changes each time you take the test</li>
-                                <li>You'll do 5 practice rounds, then {config.totalTrials} real trials</li>
-                                <li>Use tap, click, or <strong>spacebar</strong> to respond</li>
-                            </ul>
-                        </div>
-
-                        <Button
-                            variant="primary"
-                            className="savt-start-btn"
-                            onClick={startPractice}
-                        >
-                            Start Practice
-                        </Button>
-                    </div>
-                );
-            }
-
-            case 'practice':
-                return (
-                    <div className="savt-phase savt-test-area"
-                        onClick={handlePracticeResponse}
-                        role="button"
-                        tabIndex={0}
-                        aria-label="Tap area for practice — or press spacebar">
-                        <div className="savt-progress-bar">
-                            <div className="savt-progress-fill practice"
-                                style={{ width: `${progress}%` }} />
-                        </div>
-                        <p className="savt-phase-label">Practice — Only tap the <strong>{sessionTarget.label}</strong></p>
-
-                        <div className="savt-stimulus-area">
-                            {showStimulus && currentStimulus && renderStimulus(currentStimulus)}
-                            {!showStimulus && !practiceFeedback.show && !practiceComplete && (
-                                <div className="savt-fixation">+</div>
-                            )}
-                            {practiceFeedback.show && (
-                                <div className={`savt-feedback ${practiceFeedback.correct ? 'correct' : 'incorrect'}`}>
-                                    {practiceFeedback.message}
-                                </div>
-                            )}
-                        </div>
-
-                        {practiceComplete && !practiceFeedback.show && (
-                            <div className="savt-practice-done animate-fadeInUp">
-                                <h2>Practice Complete!</h2>
-                                <p>You're ready for the real test.</p>
-                                <Button
-                                    variant="primary"
-                                    className="savt-start-btn"
-                                    onClick={(e) => { e.stopPropagation(); startTest(); }}
-                                >
-                                    Start Assessment
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                );
-
-            case 'testing':
-                return (
-                    <div className="savt-phase savt-test-area"
-                        onClick={handleTestResponse}
-                        role="button"
-                        tabIndex={0}
-                        aria-label="Tap area for test — or press spacebar">
-                        <div className="savt-progress-bar">
-                            <div className="savt-progress-fill"
-                                style={{ width: `${progress}%` }} />
-                        </div>
-                        <p className="savt-phase-label">
-                            Trial {Math.min(trialIndex + 1, config.totalTrials)} of {config.totalTrials} — Only tap <strong>{sessionTarget.label}</strong>
-                        </p>
-
-                        <div className="savt-stimulus-area">
-                            {showStimulus && currentStimulus && renderStimulus(currentStimulus)}
-                            {!showStimulus && (
-                                <div className="savt-fixation">+</div>
-                            )}
-                        </div>
-                    </div>
-                );
-
-            case 'scoring':
-                return (
-                    <div className="savt-phase savt-scoring animate-fadeIn">
-                        <div className="savt-scoring-spinner" />
-                        <h2>Analyzing Performance...</h2>
-                        <p>Computing signal detection metrics</p>
-                    </div>
-                );
-
-            case 'results':
-                if (!result) return null;
-                const feedback = getAttentionFeedback(result.features.dPrime);
-                return (
-                    <div className="savt-phase savt-results animate-fadeInUp">
-                        <h1>Results</h1>
-
-                        <div className="savt-stars">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <span key={star}
-                                    className={`savt-star ${star <= result.profile.starRating ? 'filled' : ''}`}>
-                                    ★
-                                </span>
-                            ))}
-                        </div>
-
-                        <div className="savt-score-circle glass-card">
-                            <div className="savt-score-value">{result.profile.compositeScore}</div>
-                            <div className="savt-score-label">Composite Score</div>
-                            <div className={`savt-feedback-badge ${feedback.color}`}>
-                                {feedback.category}
-                            </div>
-                        </div>
-
-                        <div className="savt-subscores">
-                            <div className="savt-subscore glass-card">
-                                <div className="savt-subscore-value">{result.profile.attention}</div>
-                                <div className="savt-subscore-label">Attention</div>
-                            </div>
-                            <div className="savt-subscore glass-card">
-                                <div className="savt-subscore-value">{result.profile.inhibition}</div>
-                                <div className="savt-subscore-label">Inhibition</div>
-                            </div>
-                            <div className="savt-subscore glass-card">
-                                <div className="savt-subscore-value">{result.profile.vigilance}</div>
-                                <div className="savt-subscore-label">Vigilance</div>
-                            </div>
-                        </div>
-
-                        <div className="savt-metrics glass-card">
-                            <h3>Signal Detection</h3>
-                            <div className="savt-metric-grid">
-                                <div className="savt-metric">
-                                    <span className="savt-metric-val">{result.features.dPrime}</span>
-                                    <span className="savt-metric-key">d′ (Sensitivity)</span>
-                                </div>
-                                <div className="savt-metric">
-                                    <span className="savt-metric-val">{Math.round(result.features.hitRate * 100)}%</span>
-                                    <span className="savt-metric-key">Hit Rate</span>
-                                </div>
-                                <div className="savt-metric">
-                                    <span className="savt-metric-val">{Math.round(result.features.falseAlarmRate * 100)}%</span>
-                                    <span className="savt-metric-key">False Alarm Rate</span>
-                                </div>
-                                <div className="savt-metric">
-                                    <span className="savt-metric-val">{result.features.meanResponseTimeMs}ms</span>
-                                    <span className="savt-metric-key">Mean RT</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="savt-vigilance-chart glass-card">
-                            <h3>Vigilance Over Time</h3>
-                            <div className="savt-block-bars">
-                                {result.rawMetrics.blockHitRates.map((rate, i) => (
-                                    <div key={i} className="savt-block-bar-wrapper">
-                                        <div className="savt-block-bar"
-                                            style={{ height: `${Math.max(5, rate * 100)}%` }}>
-                                            <span className="savt-block-val">{Math.round(rate * 100)}%</span>
-                                        </div>
-                                        <span className="savt-block-label">Q{i + 1}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="savt-errors glass-card">
-                            <h3>Error Analysis</h3>
-                            <div className="savt-error-row">
-                                <span>Commission Errors (Impulsivity)</span>
-                                <span className={result.features.commissionErrorRate > 0.3 ? 'text-danger' : ''}>
-                                    {Math.round(result.features.commissionErrorRate * 100)}%
-                                </span>
-                            </div>
-                            <div className="savt-error-row">
-                                <span>Omission Errors (Inattention)</span>
-                                <span className={result.features.omissionErrorRate > 0.3 ? 'text-danger' : ''}>
-                                    {Math.round(result.features.omissionErrorRate * 100)}%
-                                </span>
-                            </div>
-                            <div className="savt-error-row">
-                                <span>Response Time Variability</span>
-                                <span>{result.features.rtVariability}ms SD</span>
-                            </div>
-                        </div>
-
-                        <div className="savt-factors glass-card">
-                            <h3>Key Insights</h3>
-                            <ul>
-                                {result.explainability.keyFactors.map((f, i) => (
-                                    <li key={i}>{f}</li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div className="savt-actions">
-                            <Button variant="secondary" onClick={() => navigate('/tests')}>
-                                Back to Tests
-                            </Button>
-                            <Button variant="primary" onClick={() => navigate('/dashboard')}>
-                                View Dashboard
-                            </Button>
-                        </div>
-                    </div>
-                );
-
-            default:
-                return null;
-        }
-    };
+    const goTint = COLOR_TINTS[sessionTarget.color] || COLOR_TINTS.green;
 
     // ─── Render ───────────────────────────────────────────────────
 
     return (
         <PageWrapper>
-            <div className="savt container">
-                {renderPhase()}
+            <div className="savt-test-page story-assessment-container container">
+                {/* Top Navigation Bar: Back / Exit Control */}
+                <div className="story-top-nav">
+                    <button
+                        type="button"
+                        onClick={handleExitClick}
+                        className="story-back-btn"
+                        aria-label="Back to Assessments"
+                    >
+                        <span className="back-arrow" aria-hidden="true">←</span>
+                        <span>Back to Assessments</span>
+                    </button>
+
+                    <div className="story-module-badge">
+                        <span className="badge-dot" aria-hidden="true" />
+                        <span>Cognitive Assessment</span>
+                    </div>
+                </div>
+
+                {/* Primary Test Header (shown only on instructions intro) */}
+                {phase === 'instructions' && (
+                    <div className="story-header animate-fadeInUp">
+                        <h1 className="story-title vyom-serif">Attention</h1>
+                        <p className="story-subtitle">
+                            Sustained visual vigilance and inhibitory control assessment.
+                        </p>
+                    </div>
+                )}
+
+                {/* Active Stage Viewport */}
+                <div ref={activeStageRef} className="story-stage-viewport savt-stage-viewport">
+                    {/* 1. Simplified Instructions Phase */}
+                    {phase === 'instructions' && (
+                        <div className="instructions-with-tutorial-layout animate-fadeIn">
+                            <Card className="instructions-card savt-intro-card">
+                                <div className="instructions-content">
+                                    <div className="instructions-icon-wrapper" aria-hidden="true">
+                                        <Icon name="attention" size={28} />
+                                    </div>
+                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+
+                                    {/* Clear Side-by-Side Target Rule Cards */}
+                                    <div className="savt-rules-comparison">
+                                        <div className="savt-rule-card savt-rule-target" style={{ background: goTint.bg, borderColor: goTint.border }}>
+                                            <div className="savt-rule-icon">
+                                                {renderStimulus(createStimulus('go', sessionTarget), true)}
+                                            </div>
+                                            <div className="savt-rule-detail">
+                                                <span className="savt-rule-pill go" style={{ background: goTint.border, color: '#FFFFFF' }}>TAP</span>
+                                                <div className="rule-title">{sessionTarget.label}</div>
+                                                <p className="rule-desc">Tap ONLY for this exact shape & color</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="savt-rule-card savt-rule-distractor">
+                                            <div className="savt-rule-icon">
+                                                {renderStimulus(createStimulus('nogo', sessionTarget), true)}
+                                            </div>
+                                            <div className="savt-rule-detail">
+                                                <span className="savt-rule-pill nogo">DON'T TAP</span>
+                                                <div className="rule-title">Any Other Item</div>
+                                                <p className="rule-desc">Ignore different shape OR color</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 3 Clear Simple Instructions */}
+                                    <ol className="instructions-step-list">
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">1</div>
+                                            <div className="step-content">
+                                                <strong>Target Match:</strong>
+                                                <span>Respond ONLY when you see the <strong>{sessionTarget.label}</strong>.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">2</div>
+                                            <div className="step-content">
+                                                <strong>Inhibit Distractors:</strong>
+                                                <span>Do NOT tap for any other shape or color.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">3</div>
+                                            <div className="step-content">
+                                                <strong>Controls:</strong>
+                                                <span>Tap the screen, click, or press <strong>Spacebar</strong>.</span>
+                                            </div>
+                                        </li>
+                                    </ol>
+
+                                    <div className="instructions-action-row">
+                                        <Button
+                                            variant="primary"
+                                            className="story-primary-start-btn"
+                                            onClick={startPractice}
+                                        >
+                                            Start Practice
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            {/* Tutorial Video Placeholder */}
+                            <TutorialVideoPlaceholder />
+                        </div>
+                    )}
+
+                    {/* 2. Practice Arena (Large, Perfectly Sized Canvas) */}
+                    {phase === 'practice' && (
+                        <div
+                            className="savt-gameplay-arena animate-fadeIn"
+                            onClick={handlePracticeResponse}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Tap area for practice — or press spacebar"
+                        >
+                            {/* Top Progress Bar */}
+                            <div className="savt-top-progress-bar">
+                                <div className="savt-progress-track">
+                                    <div className="savt-progress-fill practice" style={{ width: `${progressPct}%` }} />
+                                </div>
+                                <div className="savt-progress-info">
+                                    <span className="savt-round-lbl">Practice {practiceIndex + 1} of {practiceTotal}</span>
+                                    <span className="savt-target-pill" style={{ background: goTint.bg, color: goTint.text, borderColor: goTint.border }}>
+                                        Target: {sessionTarget.label}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Center Large Stimulus Stage */}
+                            <div className="savt-stimulus-stage">
+                                {showStimulus && currentStimulus && renderStimulus(currentStimulus, false)}
+                                {!showStimulus && !practiceFeedback.show && !practiceComplete && (
+                                    <div className="savt-fixation-cross">+</div>
+                                )}
+                                {practiceFeedback.show && (
+                                    <div className={`savt-feedback-pill ${practiceFeedback.correct ? 'correct' : 'incorrect'}`}>
+                                        {practiceFeedback.message}
+                                    </div>
+                                )}
+                            </div>
+
+                            {practiceComplete && !practiceFeedback.show ? (
+                                <div className="savt-practice-done-modal animate-fadeInUp">
+                                    <h3>Practice Complete!</h3>
+                                    <p>You are ready for the scored assessment.</p>
+                                    <Button
+                                        variant="primary"
+                                        size="lg"
+                                        onClick={(e) => { e.stopPropagation(); startTest(); }}
+                                    >
+                                        Start Scored Assessment
+                                    </Button>
+                                </div>
+                            ) : (
+                                <p className="savt-bottom-hint">Tap screen or press <strong>Spacebar</strong> when target appears</p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 3. Scored Test Arena (Large, Perfectly Sized Canvas) */}
+                    {phase === 'testing' && (
+                        <div
+                            className="savt-gameplay-arena animate-fadeIn"
+                            onClick={handleTestResponse}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Tap area for test — or press spacebar"
+                        >
+                            {/* Top Progress Bar */}
+                            <div className="savt-top-progress-bar">
+                                <div className="savt-progress-track">
+                                    <div className="savt-progress-fill" style={{ width: `${progressPct}%` }} />
+                                </div>
+                                <div className="savt-progress-info">
+                                    <span className="savt-round-lbl">Trial {Math.min(trialIndex + 1, config.totalTrials)} of {config.totalTrials}</span>
+                                    <span className="savt-target-pill" style={{ background: goTint.bg, color: goTint.text, borderColor: goTint.border }}>
+                                        Target: {sessionTarget.label}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Center Large Stimulus Stage */}
+                            <div className="savt-stimulus-stage">
+                                {showStimulus && currentStimulus && renderStimulus(currentStimulus, false)}
+                                {!showStimulus && (
+                                    <div className="savt-fixation-cross">+</div>
+                                )}
+                            </div>
+
+                            <p className="savt-bottom-hint">Tap screen or press <strong>Spacebar</strong> for target cue only</p>
+                        </div>
+                    )}
+
+                    {/* 4. Scoring Phase */}
+                    {phase === 'scoring' && (
+                        <div className="savt-scoring-arena animate-fadeIn">
+                            <div className="savt-scoring-spinner" />
+                            <h2>Analyzing Vigilance Profile...</h2>
+                            <p>Computing signal detection sensitivity and response latency</p>
+                        </div>
+                    )}
+
+                    {/* 5. Results Phase */}
+                    {phase === 'results' && result && (
+                        <div className="savt-results-container animate-fadeIn">
+                            <Card className="savt-results-card">
+                                <div className="results-overview-header">
+                                    <div>
+                                        <h2 className="vyom-serif">Attention Profile</h2>
+                                        <p className="results-sub">Sustained vigilance, signal sensitivity, and response inhibition.</p>
+                                    </div>
+                                    <div className="savt-icon-badge">🎯</div>
+                                </div>
+
+                                {(() => {
+                                    const feedback = getAttentionFeedback(result.features.dPrime);
+                                    const stars = result.profile.starRating;
+
+                                    return (
+                                        <>
+                                            <div className="savt-stars-row">
+                                                {[1, 2, 3, 4, 5].map((s) => (
+                                                    <span key={s} className={`savt-star ${s <= stars ? 'filled' : ''}`}>★</span>
+                                                ))}
+                                            </div>
+
+                                            <div className="savt-split-results-grid">
+                                                {/* Left Column: Core Performance Metrics */}
+                                                <div className="savt-metric-column">
+                                                    <div className="savt-summary-box">
+                                                        <div className="savt-score-num">{result.profile.compositeScore}</div>
+                                                        <div className="savt-score-tag">Composite Score</div>
+                                                    </div>
+                                                    <div className="savt-mini-metrics">
+                                                        <div className="mini-metric-item">
+                                                            <span className="mini-lbl">Sensitivity (d′)</span>
+                                                            <span className="mini-val">{result.features.dPrime}</span>
+                                                        </div>
+                                                        <div className="mini-metric-item">
+                                                            <span className="mini-lbl">Hit Rate</span>
+                                                            <span className="mini-val">{Math.round(result.features.hitRate * 100)}%</span>
+                                                        </div>
+                                                        <div className="mini-metric-item">
+                                                            <span className="mini-lbl">False Alarms</span>
+                                                            <span className="mini-val">{Math.round(result.features.falseAlarmRate * 100)}%</span>
+                                                        </div>
+                                                        <div className="mini-metric-item">
+                                                            <span className="mini-lbl">Mean Reaction</span>
+                                                            <span className="mini-val">{result.features.meanResponseTimeMs}ms</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Column: Error Breakdown & Feedback */}
+                                                <div className="savt-metric-column">
+                                                    <div className="savt-feedback-box">
+                                                        <div className="feedback-badge">{feedback.category}</div>
+                                                        <p className="feedback-text">{feedback.message}</p>
+                                                    </div>
+
+                                                    <div className="savt-errors-list">
+                                                        <div className="error-item">
+                                                            <span>Commission Errors (Impulsivity)</span>
+                                                            <span className="error-val">{Math.round(result.features.commissionErrorRate * 100)}%</span>
+                                                        </div>
+                                                        <div className="error-item">
+                                                            <span>Omission Errors (Inattention)</span>
+                                                            <span className="error-val">{Math.round(result.features.omissionErrorRate * 100)}%</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <MotivationalQuoteBlock
+                                                category={feedback.category}
+                                                starRating={stars}
+                                                score={result.profile.compositeScore}
+                                            />
+                                        </>
+                                    );
+                                })()}
+
+                                <div className="results-actions">
+                                    <Button variant="secondary" onClick={handleRetake}>
+                                        <Icon name="assess" size={16} /> Retake Test
+                                    </Button>
+                                    <Button variant="primary" onClick={() => navigate('/tests')}>
+                                        Back to Assessments
+                                    </Button>
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+                </div>
+
+                {/* Exit Confirmation Dialog */}
+                {showExitConfirm && (
+                    <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
+                        <div className="story-exit-modal animate-scaleUp">
+                            <div className="exit-modal-icon">⚠️</div>
+                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <p className="exit-modal-text">
+                                Your current assessment progress will be lost if you leave now.
+                            </p>
+                            <div className="exit-modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelExit}
+                                    className="modal-btn modal-btn-secondary"
+                                >
+                                    Continue Test
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmExit}
+                                    className="modal-btn modal-btn-danger"
+                                >
+                                    Leave Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </PageWrapper>
     );

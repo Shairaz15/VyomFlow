@@ -23,7 +23,7 @@ const MOBILE_NODE_LAYOUT: Record<ActivityId, {
         x: 95,
         y: 110,
         side: 'left',
-        zoneName: 'Story Grove',
+        zoneName: 'Story Narration Recall',
         zoneColor: 'rgba(79, 124, 120, 0.08)',
         decorIcon: '🍃',
         accentTone: '#4F7C78',
@@ -32,43 +32,43 @@ const MOBILE_NODE_LAYOUT: Record<ActivityId, {
         x: 285,
         y: 330,
         side: 'right',
-        zoneName: 'Memory Garden',
+        zoneName: 'Visual Memory',
         zoneColor: 'rgba(143, 175, 139, 0.08)',
-        decorIcon: '🌸',
+        decorIcon: '🧠',
         accentTone: '#8FAF8B',
     },
     reaction: {
         x: 90,
         y: 560,
         side: 'left',
-        zoneName: 'Firefly Trail',
+        zoneName: 'Reaction Time',
         zoneColor: 'rgba(216, 184, 120, 0.08)',
-        decorIcon: '✨',
+        decorIcon: '⚡',
         accentTone: '#D8B878',
     },
     pattern: {
         x: 290,
         y: 790,
         side: 'right',
-        zoneName: 'Pattern Pond',
+        zoneName: 'Pattern Recognition',
         zoneColor: 'rgba(74, 102, 128, 0.08)',
-        decorIcon: '🪷',
+        decorIcon: '🧩',
         accentTone: '#4A6680',
     },
     attention: {
         x: 95,
         y: 1020,
         side: 'left',
-        zoneName: 'Focus Meadow',
+        zoneName: 'Attention',
         zoneColor: 'rgba(79, 124, 120, 0.08)',
-        decorIcon: '🌾',
+        decorIcon: '🎯',
         accentTone: '#4F7C78',
     },
     navigation: {
         x: 285,
         y: 1250,
         side: 'right',
-        zoneName: 'Discovery Trail',
+        zoneName: 'Immersive Navigation',
         zoneColor: 'rgba(74, 102, 128, 0.08)',
         decorIcon: '🧭',
         accentTone: '#4A6680',
@@ -77,7 +77,7 @@ const MOBILE_NODE_LAYOUT: Record<ActivityId, {
         x: 190,
         y: 1460,
         side: 'center',
-        zoneName: 'Story Corner',
+        zoneName: 'Language Fluency',
         zoneColor: 'rgba(216, 184, 120, 0.08)',
         decorIcon: '📚',
         accentTone: '#D8B878',
@@ -289,11 +289,6 @@ export function MobileAdventureMap({
                                 >
                                     {/* Active Glowing Pulse Halo */}
                                     {isActive && <div className="adventure-node-halo" aria-hidden="true" />}
-
-                                    {/* Attached Level Number Badge */}
-                                    <div className="adventure-number-badge" aria-hidden="true">
-                                        {node.order < 10 ? `0${node.order}` : node.order}
-                                    </div>
 
                                     {/* Multi-Ring Tactile Disc */}
                                     <div 

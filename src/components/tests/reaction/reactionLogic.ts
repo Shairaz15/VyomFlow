@@ -112,12 +112,12 @@ export function getNextState(
 export const STATE_MESSAGES: Record<ReactionState, string> = {
     idle: "Ready to begin",
     instructions: "Get Ready",
-    calibration: "Practice Round",
-    wait: "Click on color change!",
-    stimulus: "Click Now!",
+    calibration: "Practice Round: Wait for Green...",
+    wait: "Wait for Green...",
+    stimulus: "⚡ TAP NOW!",
     response: "Response recorded",
-    false_start: "False start detected",
-    timeout: "No response recorded",
-    round_complete: "Preparing next round...",
+    false_start: "Too early! Wait for the Green light.",
+    timeout: "Time out! No response recorded",
+    round_complete: "Next round coming up...",
     test_complete: "Assessment complete",
 };

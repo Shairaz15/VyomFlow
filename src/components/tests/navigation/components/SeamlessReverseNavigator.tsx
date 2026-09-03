@@ -316,11 +316,11 @@ export function SeamlessReverseNavigator({
             {/* Top Route Progress Bar */}
             <div className="flex items-center justify-between px-2 text-xs">
                 <div className="flex items-center gap-2">
-                    <span className="font-semibold text-cyan-400">
+                    <span className="text-xs font-semibold text-cyan-700 dark:text-cyan-400">
                         Reverse Route (Point B → Point A)
                     </span>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-slate-300 font-mono">
+                    <span className="text-slate-400 dark:text-slate-600">•</span>
+                    <span className="text-slate-700 dark:text-slate-300 font-mono text-xs">
                         Intersection {Math.min(currentIntersectionNumber, 8)} of {route.segments.length}
                     </span>
                 </div>
@@ -559,18 +559,18 @@ export function SeamlessReverseNavigator({
                 </Card>
             ) : (
                 /* Continuous Navigation Status Bar (When Video is moving) */
-                <Card className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center justify-between gap-4 text-xs">
+                <Card className="p-4 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-between gap-4 text-xs shadow-md">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center flex-shrink-0 animate-pulse">
+                        <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0 animate-pulse">
                             <Icon name="navigation" size={16} />
                         </div>
-                        <div className="space-y-0.5">
-                            <div className="text-white font-semibold">
+                        <div className="space-y-0.5 text-left">
+                            <div className="text-slate-800 dark:text-white font-bold text-sm">
                                 {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
                                     ? `Approaching Intersection ${currentIntersectionNumber}`
                                     : "Arriving at Point A (Main Gate 1)"}
                             </div>
-                            <div className="text-slate-400 text-[11px]">
+                            <div className="text-slate-600 dark:text-slate-400 text-xs">
                                 {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
                                     ? `${route.segments[currentIntersection]?.intersectionLabel || "Observe upcoming pathways and landmark cues."}`
                                     : "Final stretch — completing reverse navigation."}

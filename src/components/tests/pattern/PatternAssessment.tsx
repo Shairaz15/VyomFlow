@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
-import { Button } from "../../common";
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
 import { PageWrapper } from "../../layout";
 import { usePatternResults } from "../../../hooks/useTestResults";
 import { extractPatternFeatures } from "../../../ai/patternFeatures";
@@ -20,6 +20,7 @@ export function PatternAssessment() {
     // Core State
     const [phase, setPhase] = useState<Phase>('instructions');
     const [gameState, setGameState] = useState<GameState>('idle');
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Game Logic State
     const [level, setLevel] = useState(1);
@@ -34,6 +35,8 @@ export function PatternAssessment() {
     const [rounds, setRounds] = useState<PatternRoundData[]>([]);
     const roundStartTimeRef = useRef<number>(0);
     const sequenceShowTimeRef = useRef<number>(0);
+    const activeStageRef = useRef<HTMLDivElement>(null);
+    const sequenceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Constants
     const BASE_SPEED = 800;
@@ -46,7 +49,6 @@ export function PatternAssessment() {
     };
 
     const getSequenceLength = (lvl: number) => {
-        // Start at 3, increase every 2 levels roughly
         return 3 + Math.floor((lvl - 1) / 2);
     };
 
@@ -73,19 +75,20 @@ export function PatternAssessment() {
         let i = 0;
         sequenceShowTimeRef.current = Date.now();
 
-        const interval = setInterval(() => {
+        if (sequenceIntervalRef.current) clearInterval(sequenceIntervalRef.current);
+
+        sequenceIntervalRef.current = setInterval(() => {
             if (i >= newSequence.length) {
-                clearInterval(interval);
+                if (sequenceIntervalRef.current) clearInterval(sequenceIntervalRef.current);
                 setActiveTile(null);
                 setGameState('waiting');
-                setMessage("Repeat the pattern");
+                setMessage("Your turn: Repeat the pattern");
                 roundStartTimeRef.current = Date.now();
                 return;
             }
 
             setActiveTile(newSequence[i]);
 
-            // Turn off tile quickly to show separation
             setTimeout(() => {
                 setActiveTile(null);
             }, speed * 0.7);
@@ -94,6 +97,13 @@ export function PatternAssessment() {
         }, speed);
 
     }, [level, isAuthenticated]);
+
+    // Cleanup interval on unmount
+    useEffect(() => {
+        return () => {
+            if (sequenceIntervalRef.current) clearInterval(sequenceIntervalRef.current);
+        };
+    }, []);
 
     // Handle Tile Click
     const handleTileClick = (index: number) => {
@@ -130,10 +140,10 @@ export function PatternAssessment() {
             gridSize,
             sequenceLength: sequence.length,
             targetSequence: sequence,
-            userInput: userSequence, // Note: might be partial if wrong
+            userInput: userSequence,
             isCorrect: success,
             displayTime: roundStartTimeRef.current - sequenceShowTimeRef.current,
-            responseLatency: now - roundStartTimeRef.current, // Simplified 
+            responseLatency: now - roundStartTimeRef.current,
             completionTime: now - roundStartTimeRef.current,
             timestamp: now
         };
@@ -147,26 +157,21 @@ export function PatternAssessment() {
                     setLevel(prev => prev + 1);
                 }, 1000);
             } else {
-                setMessage("Sequence not completed.");
-                // For assessment, we stop on error or maybe give 1 retry? 
-                // Plan said "neutral tone", "session complete".
-                // Let's implement strict stop for now to measure max capability, 
-                // or maybe 3-strikes rule. Implementation plan was slightly vague on "Game Over" trigger.
-                // "Session Complete" implies end. Let's end session.
+                setMessage("Sequence ended.");
                 setTimeout(() => {
                     setPhase('complete');
                 }, 1500);
                 return;
             }
         } else if (phase === 'demonstration') {
-            setMessage(success ? "Good! That was a practice." : "Let's try the real assessment.");
+            setMessage(success ? "Great! Practice completed." : "Let's begin the real assessment.");
             setTimeout(() => setPhase('calibration'), 1500);
-            return; // Don't inc level for demo
+            return;
         } else if (phase === 'calibration') {
             setMessage("Calibration complete. Starting Assessment.");
             setTimeout(() => {
                 setPhase('assessment');
-                setLevel(1); // Reset to L1 for real test
+                setLevel(1);
             }, 1500);
             return;
         }
@@ -180,13 +185,12 @@ export function PatternAssessment() {
     // Auto-start rounds when entering phases
     useEffect(() => {
         if (phase === 'demonstration' || phase === 'calibration' || (phase === 'assessment' && rounds.length > 0)) {
-            // Wait a bit before starting first round
             const timer = setTimeout(() => startRound(), 1000);
             return () => clearTimeout(timer);
         }
     }, [phase]);
 
-    // Handle first assessment round trigger separately to avoid loop issues
+    // Handle first assessment round trigger
     useEffect(() => {
         if (phase === 'assessment' && rounds.length === 0) {
             startRound();
@@ -205,10 +209,10 @@ export function PatternAssessment() {
                     maxLevelReached: Math.max(...rounds.filter(r => r.isCorrect).map(r => r.level), 0),
                     totalRounds: rounds.length,
                     correctRounds: rounds.filter(r => r.isCorrect).length,
-                    averageResponseLatency: rounds.reduce((a, b) => a + b.responseLatency, 0) / rounds.length || 0,
-                    averageCompletionTime: rounds.reduce((a, b) => a + b.completionTime, 0) / rounds.length || 0,
+                    averageResponseLatency: rounds.reduce((a, b) => a + b.responseLatency, 0) / (rounds.length || 1),
+                    averageCompletionTime: rounds.reduce((a, b) => a + b.completionTime, 0) / (rounds.length || 1),
                     inputErrors: rounds.filter(r => !r.isCorrect).length,
-                    falseInputs: 0, // Placeholder
+                    falseInputs: 0,
                     retries: 0
                 },
                 derivedFeatures: features,
@@ -218,6 +222,33 @@ export function PatternAssessment() {
         }
     }, [phase]);
 
+    // Exit Navigation
+    const handleExitClick = () => {
+        if (phase === 'instructions' || phase === 'complete') {
+            navigate('/tests');
+            return;
+        }
+        setShowExitConfirm(true);
+    };
+
+    const handleConfirmExit = () => {
+        if (sequenceIntervalRef.current) clearInterval(sequenceIntervalRef.current);
+        setShowExitConfirm(false);
+        navigate('/tests');
+    };
+
+    const handleCancelExit = () => {
+        setShowExitConfirm(false);
+    };
+
+    const handleRetake = () => {
+        setPhase('instructions');
+        setLevel(1);
+        setRounds([]);
+        setUserSequence([]);
+        setGameState('idle');
+        setMessage("");
+    };
 
     // Render Helpers
     const renderGrid = () => {
@@ -225,7 +256,7 @@ export function PatternAssessment() {
         const total = gridSize * gridSize;
 
         for (let i = 0; i < total; i++) {
-            let className = "grid-tile";
+            let className = "pattern-grid-tile";
             if (activeTile === i) className += " active";
             if (feedbackTile?.index === i) className += ` user-${feedbackTile.status}`;
 
@@ -243,7 +274,7 @@ export function PatternAssessment() {
             );
         }
         return (
-            <div className={`grid-container grid-${gridSize}`} role="grid" aria-label={`Pattern grid ${gridSize} by ${gridSize}`}>
+            <div className={`pattern-grid-box grid-${gridSize}`} role="grid" aria-label={`Pattern grid ${gridSize} by ${gridSize}`}>
                 {tiles}
             </div>
         );
@@ -251,101 +282,206 @@ export function PatternAssessment() {
 
     return (
         <PageWrapper>
-            <div className="pattern-container">
+            <div className="pattern-test-page story-assessment-container container">
+                {/* Top Navigation Bar: Back / Exit Control */}
+                <div className="story-top-nav">
+                    <button
+                        type="button"
+                        onClick={handleExitClick}
+                        className="story-back-btn"
+                        aria-label="Back to Assessments"
+                    >
+                        <span className="back-arrow" aria-hidden="true">←</span>
+                        <span>Back to Assessments</span>
+                    </button>
+
+                    <div className="story-module-badge">
+                        <span className="badge-dot" aria-hidden="true" />
+                        <span>Cognitive Assessment</span>
+                    </div>
+                </div>
+
+                {/* Primary Test Header (shown only on instructions intro) */}
                 {phase === 'instructions' && (
-                    <div className="assessment-phase instructions-phase">
-                        <div className="phase-icon">🧩</div>
-                        <h2>Visual Sequence Memory</h2>
-                        <p className="phase-description">
-                            Assessment of pattern learning and working memory.
+                    <div className="story-header animate-fadeInUp">
+                        <h1 className="story-title vyom-serif">Pattern Recognition</h1>
+                        <p className="story-subtitle">
+                            Analyze visual sequences and remember sequential patterns to assess visuospatial working memory and executive control.
                         </p>
-
-                        <div className="instructions-list">
-                            <div className="instruction-item">
-                                <span className="instruction-number">1</span>
-                                <span>Watch the tiles light up in a sequence</span>
-                            </div>
-                            <div className="instruction-item">
-                                <span className="instruction-number">2</span>
-                                <span>Repeat the sequence by clicking the tiles in the same order</span>
-                            </div>
-                            <div className="instruction-item">
-                                <span className="instruction-number">3</span>
-                                <span>The pattern will get longer and faster as you progress</span>
-                            </div>
-                        </div>
-
-                        <p className="reassurance-text">
-                            Stay calm and focus on accuracy. Occasional variation is completely normal.
-                        </p>
-
-                        <div className="button-group">
-                            <Button onClick={() => navigate('/tests')} variant="secondary">Back</Button>
-                            <Button onClick={() => setPhase('demonstration')} variant="primary">Start Practice</Button>
-                        </div>
                     </div>
                 )}
 
-                {(phase === 'demonstration' || phase === 'calibration' || phase === 'assessment') && (
-                    <div className="phase-container">
-                        <div className="status-bar">
-                            <span>Level {level}</span>
-                            <span>{phase === 'demonstration' ? 'Practice' : phase === 'calibration' ? 'Calibration' : 'Assessment'}</span>
+                {/* Active Stage Viewport */}
+                <div ref={activeStageRef} className="story-stage-viewport pattern-stage-viewport">
+                    {/* 1. Instructions / Idle Phase */}
+                    {phase === 'instructions' && (
+                        <div className="instructions-with-tutorial-layout animate-fadeIn">
+                            <Card className="instructions-card">
+                                <div className="instructions-content">
+                                    <div className="instructions-icon-wrapper" aria-hidden="true">
+                                        <Icon name="pattern" size={28} />
+                                    </div>
+                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+
+                                    <ol className="instructions-step-list">
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">1</div>
+                                            <div className="step-content">
+                                                <strong>Observe Sequence:</strong>
+                                                <span>Watch the grid tiles light up sequentially in a distinct spatial order.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">2</div>
+                                            <div className="step-content">
+                                                <strong>Recall & Replicate:</strong>
+                                                <span>Click or tap the tiles in the exact same sequence once prompted.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">3</div>
+                                            <div className="step-content">
+                                                <strong>Adaptive Complexity:</strong>
+                                                <span>Grid size expands and sequences grow longer as you advance.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">4</div>
+                                            <div className="step-content">
+                                                <strong>Visual Span:</strong>
+                                                <span>Assesses spatial span capacity and sequential working memory.</span>
+                                            </div>
+                                        </li>
+                                    </ol>
+
+                                    <div className="instructions-action-row">
+                                        <Button
+                                            variant="primary"
+                                            className="story-primary-start-btn"
+                                            onClick={() => setPhase('demonstration')}
+                                        >
+                                            Start Test
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            {/* Tutorial Video Placeholder */}
+                            <TutorialVideoPlaceholder />
                         </div>
+                    )}
 
-                        <p 
-                            className={`turn-indicator ${gameState === 'showing' ? 'watch' : 'repeat'}`}
-                            role="status"
-                            aria-live="polite"
-                            aria-atomic="true"
-                        >
-                            {message}
-                        </p>
+                    {/* 2. Active Game Arena (Demonstration, Calibration, Assessment) */}
+                    {(phase === 'demonstration' || phase === 'calibration' || phase === 'assessment') && (
+                        <div className="pattern-arena-card animate-fadeIn">
+                            <div className="pattern-status-header">
+                                <div className="pattern-level-pill">
+                                    <span>Level {level}</span>
+                                </div>
+                                <div className="pattern-mode-badge">
+                                    {phase === 'demonstration' ? 'Practice Mode' : phase === 'calibration' ? 'Calibration' : 'Scored Assessment'}
+                                </div>
+                            </div>
 
-                        {renderGrid()}
-                    </div>
-                )}
+                            <p 
+                                className={`pattern-turn-indicator ${gameState === 'showing' ? 'watch' : 'repeat'}`}
+                                role="status"
+                                aria-live="polite"
+                            >
+                                {message}
+                            </p>
 
-                {phase === 'complete' && (
-                    <div className="phase-container">
-                        <h1>Session Complete</h1>
-                        <div className="instruction-card">
-                            <p>Thank you for completing the assessment.</p>
+                            {renderGrid()}
+                        </div>
+                    )}
 
-                            <div className="stats-preview">
+                    {/* 3. Test Complete / Results Phase */}
+                    {phase === 'complete' && (
+                        <div className="pattern-results-container animate-fadeIn">
+                            <Card className="pattern-results-card">
+                                <div className="results-overview-header">
+                                    <div>
+                                        <h2 className="vyom-serif">Pattern Recognition Profile</h2>
+                                        <p className="results-sub">Visuospatial memory span and sequential processing capacity.</p>
+                                    </div>
+                                    <div className="pattern-icon-badge">🧩</div>
+                                </div>
+
                                 {(() => {
                                     const maxLevel = Math.max(...rounds.filter(r => r.isCorrect).map(r => r.level), 0);
-                                    const feedback = getPatternFeedback(maxLevel); // Approximate span
+                                    const correctRounds = rounds.filter(r => r.isCorrect).length;
+                                    const totalRounds = rounds.length;
+                                    const accuracy = totalRounds > 0 ? Math.round((correctRounds / totalRounds) * 100) : 0;
+                                    const feedback = getPatternFeedback(maxLevel);
 
                                     return (
                                         <>
-                                            <h2>Level Reached: {maxLevel}</h2>
-                                            <div className="feedback-section mt-2 mb-4">
-                                                <span style={{
-                                                    display: 'inline-block',
-                                                    padding: '4px 12px',
-                                                    borderRadius: '16px',
-                                                    backgroundColor: feedback.color === 'success' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(148, 163, 184, 0.2)',
-                                                    color: feedback.color === 'success' ? '#4ade80' : '#cbd5e1',
-                                                    fontWeight: 'bold',
-                                                    fontSize: '0.9rem'
-                                                }}>
-                                                    {feedback.category}
-                                                </span>
-                                                <p className="text-sm mt-1 opacity-75">{feedback.message}</p>
+                                            <div className="pattern-metrics-grid">
+                                                <div className="pattern-metric-box">
+                                                    <span className="metric-tag">Max Level</span>
+                                                    <div className="metric-num">{maxLevel}</div>
+                                                </div>
+                                                <div className="pattern-metric-box">
+                                                    <span className="metric-tag">Accuracy</span>
+                                                    <div className="metric-num">{accuracy}<span className="unit">%</span></div>
+                                                </div>
+                                                <div className="pattern-metric-box">
+                                                    <span className="metric-tag">Sequences Completed</span>
+                                                    <div className="metric-num">{correctRounds} <span className="unit">/ {totalRounds}</span></div>
+                                                </div>
                                             </div>
-                                            <p>Data saved for analysis.</p>
+
+                                            <div className="pattern-feedback-pill">
+                                                <span className="feedback-cat">{feedback.category}</span>
+                                                <span className="feedback-dot">•</span>
+                                                <span className="feedback-desc">{feedback.message}</span>
+                                            </div>
+
+                                            <MotivationalQuoteBlock
+                                                category={feedback.category}
+                                                score={maxLevel <= 2 ? 40 : 80}
+                                            />
                                         </>
                                     );
                                 })()}
-                            </div>
-                            <div className="button-group">
-                                <Button onClick={() => navigate('/dashboard')} variant="primary">
-                                    View Dashboard
-                                </Button>
-                                <Button onClick={() => navigate('/tests')} variant="secondary">
-                                    Back to Assessments
-                                </Button>
+
+                                <div className="results-actions">
+                                    <Button variant="secondary" onClick={handleRetake}>
+                                        <Icon name="assess" size={16} /> Retake Test
+                                    </Button>
+                                    <Button variant="primary" onClick={() => navigate('/tests')}>
+                                        Back to Assessments
+                                    </Button>
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+                </div>
+
+                {/* Exit Confirmation Dialog */}
+                {showExitConfirm && (
+                    <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
+                        <div className="story-exit-modal animate-scaleUp">
+                            <div className="exit-modal-icon">⚠️</div>
+                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <p className="exit-modal-text">
+                                Your current assessment progress will be lost if you leave now.
+                            </p>
+                            <div className="exit-modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelExit}
+                                    className="modal-btn modal-btn-secondary"
+                                >
+                                    Continue Test
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmExit}
+                                    className="modal-btn modal-btn-danger"
+                                >
+                                    Leave Test
+                                </button>
                             </div>
                         </div>
                     </div>

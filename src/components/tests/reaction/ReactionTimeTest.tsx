@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
-import { Button } from "../../common";
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
 import type { ReactionState, RoundResult } from "./reactionLogic";
 import {
     DEFAULT_CONFIG,
@@ -13,9 +13,8 @@ import {
 import { createReactionTestResult } from "./reactionFeatures";
 import { useReactionResults } from "../../../hooks/useTestResults";
 import { getReactionFeedback } from "../../../utils/normativeStats";
-import "./ReactionTimeTest.css";
-
 import { PageWrapper } from "../../layout";
+import "./ReactionTimeTest.css";
 
 export function ReactionTimeTest() {
     const navigate = useNavigate();
@@ -26,10 +25,12 @@ export function ReactionTimeTest() {
     const [rounds, setRounds] = useState<RoundResult[]>([]);
     const [currentReactionTime, setCurrentReactionTime] = useState<number | null>(null);
     const [message, setMessage] = useState(STATE_MESSAGES.idle);
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     const stimulusStartTime = useRef<number>(0);
     const waitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const responseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const activeStageRef = useRef<HTMLDivElement>(null);
 
     const config = DEFAULT_CONFIG;
 
@@ -40,13 +41,6 @@ export function ReactionTimeTest() {
             if (responseTimeoutRef.current) clearTimeout(responseTimeoutRef.current);
         };
     }, []);
-
-    // Start the test
-    const handleStart = useCallback(() => {
-        if (!isAuthenticated) return;
-        setState("instructions");
-        setMessage(STATE_MESSAGES.instructions);
-    }, [isAuthenticated]);
 
     // Begin a round (wait phase)
     const startRound = useCallback(() => {
@@ -67,6 +61,27 @@ export function ReactionTimeTest() {
                 handleTimeout();
             }, config.timeoutMs);
         }, waitTime);
+    }, [roundIndex, config]);
+
+    // Start the test from idle
+    const handleStart = useCallback(() => {
+        if (!isAuthenticated) return;
+        setRoundIndex(0);
+        setRounds([]);
+        startRound();
+    }, [isAuthenticated, startRound]);
+
+    // Advance to next round or complete test
+    const advanceRound = useCallback(() => {
+        const nextRound = roundIndex + 1;
+        if (isTestComplete(nextRound, config)) {
+            setState("test_complete");
+            setMessage(STATE_MESSAGES.test_complete);
+        } else {
+            setRoundIndex(nextRound);
+            setState("round_complete");
+            setMessage(STATE_MESSAGES.round_complete);
+        }
     }, [roundIndex, config]);
 
     // Handle user click during different states
@@ -112,23 +127,9 @@ export function ReactionTimeTest() {
                 advanceRound();
             }, config.roundDelayMs);
         }
-    }, [state, roundIndex, config]);
+    }, [state, roundIndex, config, advanceRound]);
 
-    // Spacebar support for desktop/laptop
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.code === "Space" || e.key === " ") {
-                e.preventDefault();
-                if (["wait", "calibration", "stimulus"].includes(state)) {
-                    handleClick();
-                }
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [state, handleClick]);
-
-    // Handle timeout (no response)
+    // Handle timeout when user doesn't respond in time
     const handleTimeout = useCallback(() => {
         const isCalibration = isCalibrationRound(roundIndex, config);
         setState("timeout");
@@ -146,20 +147,22 @@ export function ReactionTimeTest() {
         setTimeout(() => {
             advanceRound();
         }, config.roundDelayMs);
-    }, [roundIndex, config]);
+    }, [roundIndex, config, advanceRound]);
 
-    // Advance to next round or complete test
-    const advanceRound = useCallback(() => {
-        const nextRound = roundIndex + 1;
-        if (isTestComplete(nextRound, config)) {
-            setState("test_complete");
-            setMessage(STATE_MESSAGES.test_complete);
-        } else {
-            setRoundIndex(nextRound);
-            setState("round_complete");
-            setMessage(STATE_MESSAGES.round_complete);
-        }
-    }, [roundIndex, config]);
+    // Global keyboard listener for spacebar and enter (captures anywhere on the page)
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.key === " " || e.code === "Space" || e.key === "Enter") {
+                if (["wait", "calibration", "stimulus"].includes(state)) {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleGlobalKeyDown, { passive: false });
+        return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    }, [state, handleClick]);
 
     // Continue to next round after round_complete
     useEffect(() => {
@@ -171,24 +174,43 @@ export function ReactionTimeTest() {
         }
     }, [state, startRound]);
 
-    // Handle instructions continue
-    const handleContinueFromInstructions = () => {
-        startRound();
-    };
-
     // Complete test and navigate to results
     const handleFinish = () => {
         const result = createReactionTestResult(rounds);
-        // Store in sessionStorage for immediate access
         sessionStorage.setItem("lastReactionResult", JSON.stringify(result));
-
-        // Persist via hook
         saveResult(result);
-
-        navigate("/dashboard");
+        navigate("/tests");
     };
 
-    // Get background color class based on state
+    const handleRetake = () => {
+        setState("idle");
+        setRoundIndex(0);
+        setRounds([]);
+        setCurrentReactionTime(null);
+        setMessage(STATE_MESSAGES.idle);
+    };
+
+    // Exit / Back Navigation
+    const handleExitClick = () => {
+        if (state === "idle" || state === "test_complete") {
+            navigate("/tests");
+            return;
+        }
+        setShowExitConfirm(true);
+    };
+
+    const handleConfirmExit = () => {
+        if (waitTimeoutRef.current) clearTimeout(waitTimeoutRef.current);
+        if (responseTimeoutRef.current) clearTimeout(responseTimeoutRef.current);
+        setShowExitConfirm(false);
+        navigate("/tests");
+    };
+
+    const handleCancelExit = () => {
+        setShowExitConfirm(false);
+    };
+
+    // Get background state class
     const getBackgroundClass = () => {
         switch (state) {
             case "wait":
@@ -200,214 +222,260 @@ export function ReactionTimeTest() {
                 return "bg-error";
             case "response":
                 return "bg-success";
+            case "timeout":
+                return "bg-error";
             default:
-                return ""; // Default to page background for idle/instructions
+                return "";
         }
     };
 
     return (
         <PageWrapper>
-            <div className="reaction-test-container container">
-                <div
-                    className={`reaction-test ${getBackgroundClass()}`}
-                    onClick={["wait", "calibration", "stimulus"].includes(state) ? handleClick : undefined}
-                    role="button"
-                    tabIndex={["wait", "calibration", "stimulus"].includes(state) ? 0 : -1}
-                    aria-label={
-                        state === "wait" || state === "calibration"
-                            ? "Wait for green light, then click as quickly as possible"
-                            : state === "stimulus"
-                                ? "Green light - click now!"
-                                : undefined
-                    }
-                    aria-live="polite"
-                    onKeyDown={(e) => {
-                        if (["wait", "calibration", "stimulus"].includes(state) && (e.key === "Enter" || e.key === " ")) {
-                            e.preventDefault();
-                            handleClick();
-                        }
-                    }}
-                >
-                    <div className="reaction-content">
-                        {/* Progress indicator */}
-                        {state !== "idle" && state !== "test_complete" && (
-                            <div className="reaction-progress">
-                                <span className="round-indicator">
-                                    Round {Math.min(roundIndex + 1, config.totalRounds)} of {config.totalRounds}
-                                </span>
-                                {roundIndex < config.calibrationRounds && state !== "instructions" && (
-                                    <span className="calibration-badge">Calibration</span>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Main message - Hidden during instructions to prevent double header */}
-                        {!["idle", "instructions"].includes(state) && (
-                            <h1 className="reaction-message" aria-live="assertive">{message}</h1>
-                        )}
-
-                        {/* Reaction time display */}
-                        {currentReactionTime !== null && state !== "test_complete" && (
-                            <div className="reaction-time-display">
-                                <span className="time-value">{currentReactionTime}</span>
-                                <span className="time-unit">ms</span>
-                            </div>
-                        )}
-
-                        {/* Idle state */}
-                        {state === "idle" && (
-                            <div className="assessment-phase instructions-phase">
-                                <div className="phase-icon">⚡</div>
-                                <h2>Reaction Time Assessment</h2>
-                                <p className="phase-description">
-                                    This task measures your response latency to visual stimuli.
-                                </p>
-
-                                <div className="instructions-list">
-                                    <div className="instruction-item">
-                                        <span className="instruction-number">1</span>
-                                        <span className="instruction-text">Wait for the screen to change color</span>
-                                    </div>
-                                    <div className="instruction-item">
-                                        <span className="instruction-number">2</span>
-                                        <span className="instruction-text">Click, tap, or press spacebar as quickly as possible when it does</span>
-                                    </div>
-                                    <div className="instruction-item">
-                                        <span className="instruction-number">3</span>
-                                        <span className="instruction-text">Complete 6 rounds (first round is calibration)</span>
-                                    </div>
-                                </div>
-
-                                <p className="reassurance-text">
-                                    Respond as quickly as possible. Occasional variation is completely normal.
-                                </p>
-
-                                <div className="button-group" style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                                    <Button variant="secondary" size="lg" onClick={() => navigate('/tests')}>
-                                        Back
-                                    </Button>
-                                    <Button variant="primary" size="lg" onClick={handleStart}>
-                                        Begin Assessment
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Instructions state - quick reminder before starting */}
-                        {state === "instructions" && (
-                            <div className="assessment-phase">
-                                <p className="phase-description">
-                                    Click immediately when the screen changes color.
-                                </p>
-                                <Button variant="primary" size="lg" onClick={handleContinueFromInstructions}>
-                                    Start
-                                </Button>
-                            </div>
-                        )}
-
-                        {/* Test complete state */}
-                        {state === "test_complete" && (
-                            <div className="reaction-complete">
-                                <div className="result-card">
-                                    {/* Inner header removed here */}
-
-                                    {(() => {
-                                        const testRounds = rounds.filter((r) => !r.isCalibration);
-                                        const validRounds = testRounds.filter((r) => !r.isFalseStart && !r.isTimeout);
-                                        const falseStarts = testRounds.filter((r) => r.isFalseStart).length;
-                                        const timeouts = testRounds.filter((r) => r.isTimeout).length;
-                                        const invalidCount = falseStarts + timeouts;
-                                        const tooManyInvalid = validRounds.length === 0 || invalidCount > testRounds.length / 2;
-
-                                        if (tooManyInvalid && validRounds.length === 0) {
-                                            // No valid rounds at all
-                                            return (
-                                                <>
-                                                    <div className="result-metrics-grid">
-                                                        <div className="result-metric">
-                                                            <span className="metric-label">False Starts</span>
-                                                            <span className="metric-value">{falseStarts}</span>
-                                                        </div>
-                                                        <div className="result-metric">
-                                                            <span className="metric-label">Timeouts</span>
-                                                            <span className="metric-value">{timeouts}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="feedback-section">
-                                                        <h3 className="feedback-title text-danger">Too Many Invalid Responses</h3>
-                                                        <p className="feedback-message">No valid responses were recorded. Please retry the assessment and wait for the color change before clicking.</p>
-                                                    </div>
-                                                </>
-                                            );
-                                        }
-
-                                        const avgTime = Math.round(validRounds.reduce((a, b) => a + (b.reactionTime || 0), 0) / validRounds.length);
-                                        const fastestTime = Math.min(...validRounds.map(r => r.reactionTime || 9999));
-
-                                        if (tooManyInvalid) {
-                                            // Some valid rounds but majority invalid
-                                            return (
-                                                <>
-                                                    <div className="result-metrics-grid">
-                                                        <div className="result-metric primary-metric">
-                                                            <span className="metric-label">Fastest Response</span>
-                                                            <span className="metric-value">{fastestTime} <span className="unit">ms</span></span>
-                                                        </div>
-                                                        <div className="result-metric">
-                                                            <span className="metric-label">False Starts</span>
-                                                            <span className="metric-value">{falseStarts}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="feedback-section">
-                                                        <h3 className="feedback-title text-warning">Too Many False Responses</h3>
-                                                        <p className="feedback-message">Most rounds had false starts or timeouts. Results may not be reliable — consider retrying.</p>
-                                                    </div>
-                                                </>
-                                            );
-                                        }
-
-                                        const feedback = getReactionFeedback(avgTime);
-                                        const colorClass = `text-${feedback.color}`;
-
-                                        return (
-                                            <>
-                                                <div className="result-metrics-grid">
-                                                    <div className="result-metric primary-metric">
-                                                        <span className="metric-label">Fastest Response</span>
-                                                        <span className="metric-value">{fastestTime} <span className="unit">ms</span></span>
-                                                    </div>
-                                                    <div className="result-metric secondary-metric">
-                                                        <span className="metric-label">Average Response</span>
-                                                        <span className="metric-value">{avgTime} <span className="unit">ms</span></span>
-                                                    </div>
-                                                </div>
-
-                                                <div className={`feedback-section ${colorClass}Border`}>
-                                                    <h3 className={`feedback-title ${colorClass}`}>{feedback.category}</h3>
-                                                    <p className="feedback-message">{feedback.message}</p>
-                                                </div>
-                                            </>
-                                        );
-                                    })()}
-
-                                    <div className="result-actions">
-                                        <Button variant="primary" size="lg" onClick={handleFinish}>
-                                            View Dashboard
-                                        </Button>
-                                        <Button variant="secondary" size="lg" onClick={() => navigate("/tests")}>
-                                            Back to Assessments
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Tap area hint */}
-                        {["wait", "calibration", "stimulus"].includes(state) && (
-                            <p className="tap-hint">Click, tap, or press spacebar to respond</p>
-                        )}
+            <div className="reaction-test-page story-assessment-container container">
+                {/* Top Navigation Bar: Back / Exit Control */}
+                <div className="story-top-nav">
+                    <button
+                        type="button"
+                        onClick={handleExitClick}
+                        className="story-back-btn"
+                        aria-label="Back to Assessments"
+                    >
+                        <span className="back-arrow" aria-hidden="true">←</span>
+                        <span>Back to Assessments</span>
+                    </button>
+                    <div className="story-module-badge">
+                        <span className="badge-dot" aria-hidden="true" />
+                        <span>Cognitive Assessment</span>
                     </div>
                 </div>
+
+                {/* Primary Test Header (shown only on instructions intro) */}
+                {state === "idle" && (
+                    <div className="story-header animate-fadeInUp">
+                        <h1 className="story-title vyom-serif">Reaction Time</h1>
+                        <p className="story-subtitle">
+                            Respond rapidly to visual cues to measure motor processing speed and attentional vigilance.
+                        </p>
+                    </div>
+                )}
+
+                {/* Active Stage Viewport */}
+                <div ref={activeStageRef} className="story-stage-viewport reaction-stage-viewport">
+                    {/* 1. Instructions / Idle Phase */}
+                    {state === "idle" && (
+                        <div className="instructions-with-tutorial-layout animate-fadeIn">
+                            <Card className="instructions-card">
+                                <div className="instructions-content">
+                                    <div className="instructions-icon-wrapper" aria-hidden="true">
+                                        <Icon name="reaction" size={28} />
+                                    </div>
+                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+
+                                    <ol className="instructions-step-list">
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">1</div>
+                                            <div className="step-content">
+                                                <strong>Wait for Color Shift:</strong>
+                                                <span>Keep your finger or mouse poised while the screen is waiting.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">2</div>
+                                            <div className="step-content">
+                                                <strong>Instant Response:</strong>
+                                                <span>Tap, click, or press spacebar as soon as the glowing stimulus appears.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">3</div>
+                                            <div className="step-content">
+                                                <strong>Avoid False Starts:</strong>
+                                                <span>Tapping too early registers a false start penalty for that trial.</span>
+                                            </div>
+                                        </li>
+                                        <li className="instruction-step-item">
+                                            <div className="step-num-bubble">4</div>
+                                            <div className="step-content">
+                                                <strong>Complete 6 Rounds:</strong>
+                                                <span>Round 1 calibrates latency followed by 5 scored precision trials.</span>
+                                            </div>
+                                        </li>
+                                    </ol>
+
+                                    <div className="instructions-action-row">
+                                        <Button
+                                            variant="primary"
+                                            className="story-primary-start-btn"
+                                            onClick={handleStart}
+                                        >
+                                            Start Test
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            {/* Tutorial Video Placeholder */}
+                            <TutorialVideoPlaceholder />
+                        </div>
+                    )}
+
+                    {/* 2. Active Game Arena */}
+                    {state !== "idle" && state !== "test_complete" && (
+                        <div
+                            className={`reaction-interactive-card animate-fadeIn ${getBackgroundClass()}`}
+                            onClick={["wait", "calibration", "stimulus"].includes(state) ? handleClick : undefined}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={
+                                state === "wait" || state === "calibration"
+                                    ? "Wait for green light, then click or press spacebar as quickly as possible"
+                                    : state === "stimulus"
+                                        ? "Green light - click or press spacebar now!"
+                                        : undefined
+                            }
+                        >
+                            {/* Round Progress Pill */}
+                            <div className="reaction-progress-pill">
+                                <span>Round {Math.min(roundIndex + 1, config.totalRounds)} of {config.totalRounds}</span>
+                                {roundIndex < config.calibrationRounds && (
+                                    <span className="calib-tag">Calibration</span>
+                                )}
+                            </div>
+
+                            {/* State Visual Indicator Icon */}
+                            <div className="reaction-state-icon-bubble" aria-hidden="true">
+                                {state === "stimulus" && <span className="icon-pulse">⚡</span>}
+                                {(state === "wait" || state === "calibration") && <span className="icon-wait">🔴</span>}
+                                {state === "false_start" && <span>⚠️</span>}
+                                {state === "timeout" && <span>⏱️</span>}
+                                {state === "response" && <span>✓</span>}
+                            </div>
+
+                            {/* Main Message */}
+                            <h2 className="reaction-prompt-message">{message}</h2>
+
+                            {/* Reaction time display */}
+                            {currentReactionTime !== null && (
+                                <div className="reaction-time-stat">
+                                    <span className="stat-val">{currentReactionTime}</span>
+                                    <span className="stat-unit">ms</span>
+                                </div>
+                            )}
+
+                            {/* Tap Hint */}
+                            {["wait", "calibration", "stimulus"].includes(state) && (
+                                <p className="reaction-tap-hint">
+                                    {state === "stimulus" ? "⚡ PRESS SPACEBAR OR TAP NOW ⚡" : "Tap screen or press spacebar"}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 3. Test Complete / Results Phase */}
+                    {state === "test_complete" && (
+                        <div className="reaction-results-container animate-fadeIn">
+                            <Card className="reaction-results-card">
+                                <div className="results-overview-header">
+                                    <div>
+                                        <h2 className="vyom-serif">Reaction Time Profile</h2>
+                                        <p className="results-sub">Attentional vigilance and motor processing latency.</p>
+                                    </div>
+                                    <div className="reaction-icon-badge">⚡</div>
+                                </div>
+
+                                {(() => {
+                                    const testRounds = rounds.filter((r) => !r.isCalibration);
+                                    const validRounds = testRounds.filter((r) => !r.isFalseStart && !r.isTimeout);
+                                    const falseStarts = testRounds.filter((r) => r.isFalseStart).length;
+                                    const timeouts = testRounds.filter((r) => r.isTimeout).length;
+                                    const avgTime = validRounds.length > 0 
+                                        ? Math.round(validRounds.reduce((a, b) => a + (b.reactionTime || 0), 0) / validRounds.length)
+                                        : 0;
+                                    const fastestTime = validRounds.length > 0
+                                        ? Math.min(...validRounds.map(r => r.reactionTime || 9999))
+                                        : 0;
+                                    const feedback = getReactionFeedback(avgTime || 300);
+
+                                    return (
+                                        <>
+                                            <div className="reaction-metrics-grid">
+                                                <div className="reaction-metric-box">
+                                                    <span className="metric-tag">Fastest Response</span>
+                                                    <div className="metric-num">
+                                                        {fastestTime > 0 ? fastestTime : "—"} <span className="unit">ms</span>
+                                                    </div>
+                                                </div>
+                                                <div className="reaction-metric-box">
+                                                    <span className="metric-tag">Average Response</span>
+                                                    <div className="metric-num">
+                                                        {avgTime > 0 ? avgTime : "—"} <span className="unit">ms</span>
+                                                    </div>
+                                                </div>
+                                                <div className="reaction-metric-box">
+                                                    <span className="metric-tag">False Starts</span>
+                                                    <div className="metric-num">{falseStarts}</div>
+                                                </div>
+                                                <div className="reaction-metric-box">
+                                                    <span className="metric-tag">Timeouts</span>
+                                                    <div className="metric-num">{timeouts}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="reaction-feedback-pill">
+                                                <span className="feedback-cat">{feedback.category}</span>
+                                                <span className="feedback-dot">•</span>
+                                                <span className="feedback-desc">{feedback.message}</span>
+                                            </div>
+
+                                            <MotivationalQuoteBlock
+                                                category={feedback.category}
+                                                score={avgTime > 350 ? 45 : 80}
+                                            />
+                                        </>
+                                    );
+                                })()}
+
+                                <div className="results-actions">
+                                    <Button variant="secondary" onClick={handleRetake}>
+                                        <Icon name="assess" size={16} /> Retake Test
+                                    </Button>
+                                    <Button variant="primary" onClick={handleFinish}>
+                                        Back to Assessments
+                                    </Button>
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+                </div>
+
+                {/* Exit Confirmation Dialog */}
+                {showExitConfirm && (
+                    <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
+                        <div className="story-exit-modal animate-scaleUp">
+                            <div className="exit-modal-icon">⚠️</div>
+                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <p className="exit-modal-text">
+                                Your current assessment progress will be lost if you leave now.
+                            </p>
+                            <div className="exit-modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelExit}
+                                    className="modal-btn modal-btn-secondary"
+                                >
+                                    Continue Test
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmExit}
+                                    className="modal-btn modal-btn-danger"
+                                >
+                                    Leave Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </PageWrapper>
     );

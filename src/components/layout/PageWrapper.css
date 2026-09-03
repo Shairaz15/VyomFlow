@@ -196,13 +196,26 @@
         min-height: 100dvh;
     }
 
-    .page-footer {
-        padding: var(--spacing-sm) 0;
-        margin-bottom: calc(60px + env(safe-area-inset-bottom));
-    }
-
     .footer-disclaimer {
         font-size: 10px;
         padding: 0 var(--spacing-sm);
+    }
+}
+
+/* ===== Desktop Test Mode Zero-Scroll Anchor (>= 768px) ===== */
+@media (min-width: 768px) {
+    .page-wrapper.is-test-mode {
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+    }
+
+    .is-test-mode .page-main {
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 }

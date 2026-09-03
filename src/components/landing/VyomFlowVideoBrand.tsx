@@ -147,7 +147,7 @@ export function VyomFlowVideoBrand() {
         <div className="w-full flex flex-col items-center justify-center select-none py-6 overflow-hidden">
             {/* Tagline */}
             <div className="text-xs sm:text-sm font-semibold tracking-[0.28em] text-[#8FAF8B] uppercase mb-1 opacity-90 text-center">
-                — EVERY MIND HAS A STORY —
+                — MEASURING MINDS, BEYOND MEMORY —
             </div>
 
             {/* Offscreen Autoplaying Looping Video */}

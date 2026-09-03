@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Icon, UserMenu, GoogleSignInButton } from "../common";
+import { Icon, UserMenu, GoogleSignInButton, VyomFlowLogo } from "../common";
 import { ThemeToggle } from "../common/ThemeToggle";
 import { useAuth } from "../../contexts/AuthContext";
-import { useLanguage } from "../../i18n/LanguageContext";
 import { FOOTER_DISCLAIMER } from "../../ethics/disclaimer";
 import "./PageWrapper.css";
 
@@ -26,7 +25,6 @@ export function PageWrapper({
         window.scrollTo(0, 0);
     }, [currentPath]);
     const { isAuthenticated, loading } = useAuth();
-    const { t } = useLanguage();
 
     const isActive = (path: string) => currentPath === path;
 
@@ -44,15 +42,8 @@ export function PageWrapper({
             {shouldShowHeader && (
                 <header className="page-header">
                     <div className="container">
-                        <a href="/" className="logo">
-                            <img
-                                src="/logo.png"
-                                alt="VyomFlow Logo"
-                                className="logo-img"
-                            />
-                            <span className="logo-text">
-                                {t('landing.brandName')}
-                            </span>
+                        <a href="/" className="logo" aria-label="VyomFlow Home">
+                            <VyomFlowLogo size="md" theme="auto" />
                         </a>
                         <nav className="nav desktop-nav">
                             <a

@@ -115,8 +115,8 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                         body: JSON.stringify({
                             inputs: translatedChunks,
                             target_language_code: languageCode,
-                            speaker: 'anushka',
-                            model: 'bulbul:v2',
+                            speaker: 'priya',
+                            model: 'bulbul:v3',
                             pace: 0.85,
                             speech_sample_rate: 22050
                         })
@@ -132,8 +132,8 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                         body: JSON.stringify({
                             inputs: translatedChunks,
                             target_language_code: languageCode,
-                            speaker: 'anushka',
-                            model: 'bulbul:v2',
+                            speaker: 'priya',
+                            model: 'bulbul:v3',
                             pace: 0.85,
                             speech_sample_rate: 22050
                         })
@@ -154,8 +154,8 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                             body: JSON.stringify({
                                 inputs: translatedChunks,
                                 target_language_code: languageCode,
-                                speaker: 'anushka',
-                                model: 'bulbul:v2',
+                                speaker: 'priya',
+                                model: 'bulbul:v3',
                                 pace: 0.85,
                                 speech_sample_rate: 22050
                             })

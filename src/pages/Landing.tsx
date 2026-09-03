@@ -4,6 +4,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { ThemeToggle } from "../components/common/ThemeToggle";
 import { ScientificBrainCanvas } from "../components/landing/ScientificBrainCanvas";
 import { VyomFlowVideoBrand } from "../components/landing/VyomFlowVideoBrand";
+import { VyomFlowLogo } from "../components/common/VyomFlowLogo";
 import "./VyomFlowLanding.css";
 
 export function Landing() {
@@ -371,8 +372,8 @@ export function Landing() {
                    6. JOURNEY SECTION — YOUR COGNITIVE JOURNEY
                    ========================================================================= */}
                 <section id="platform" className="vyom-section scroll-mt-20 relative overflow-hidden py-10">
-                    <div className="text-center mb-10 relative z-20 px-4">
-                        <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-12 tracking-tight">
+                    <div className="flex flex-col items-center justify-center text-center mb-10 relative z-20 px-4 w-full">
+                        <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-4 tracking-tight text-center">
                             Your Cognitive Journey
                         </h2>
                         <p className="text-base sm:text-lg vyom-sub-dark max-w-xl mx-auto text-center leading-relaxed">
@@ -409,9 +410,9 @@ export function Landing() {
                             className="vyom-orbital-card absolute top-[2%] left-1/2 -translate-x-1/2"
                         >
                             <div className="vyom-orbital-icon">🌳</div>
-                            <div>
-                                <h4 className="font-semibold text-sm text-[#17324D]">STORY GROVE</h4>
-                                <p className="text-xs text-[#66757A]">Story Narration Recall</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">STORY GROVE</h4>
+                                <p className="text-xs text-[#66757A] text-center">Story Narration Recall</p>
                             </div>
                         </div>
 
@@ -421,9 +422,9 @@ export function Landing() {
                             className="vyom-orbital-card absolute top-[16%] left-[4%]"
                         >
                             <div className="vyom-orbital-icon">🌷</div>
-                            <div>
-                                <h4 className="font-semibold text-sm text-[#17324D]">MEMORY GARDEN</h4>
-                                <p className="text-xs text-[#66757A]">Visual Memory</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">MEMORY GARDEN</h4>
+                                <p className="text-xs text-[#66757A] text-center">Visual Memory</p>
                             </div>
                         </div>
 
@@ -433,9 +434,9 @@ export function Landing() {
                             className="vyom-orbital-card absolute top-[16%] right-[4%]"
                         >
                             <div className="vyom-orbital-icon">✨</div>
-                            <div>
-                                <h4 className="font-semibold text-sm text-[#17324D]">FIREFLY TRAIL</h4>
-                                <p className="text-xs text-[#66757A]">Reaction Time</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">FIREFLY TRAIL</h4>
+                                <p className="text-xs text-[#66757A] text-center">Reaction Time</p>
                             </div>
                         </div>
 
@@ -445,9 +446,9 @@ export function Landing() {
                             className="vyom-orbital-card absolute top-[50%] left-[1%]"
                         >
                             <div className="vyom-orbital-icon">🌊</div>
-                            <div>
-                                <h4 className="font-semibold text-sm text-[#17324D]">PATTERN POND</h4>
-                                <p className="text-xs text-[#66757A]">Pattern Recognition</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">PATTERN POND</h4>
+                                <p className="text-xs text-[#66757A] text-center">Pattern Recognition</p>
                             </div>
                         </div>
 
@@ -457,9 +458,9 @@ export function Landing() {
                             className="vyom-orbital-card absolute top-[50%] right-[1%]"
                         >
                             <div className="vyom-orbital-icon">🎯</div>
-                            <div>
-                                <h4 className="font-semibold text-sm text-[#17324D]">FOCUS MEADOW</h4>
-                                <p className="text-xs text-[#66757A]">Sustained Attention</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">FOCUS MEADOW</h4>
+                                <p className="text-xs text-[#66757A] text-center">Sustained Attention</p>
                             </div>
                         </div>
 
@@ -469,9 +470,9 @@ export function Landing() {
                             className="vyom-orbital-card absolute bottom-[4%] left-[12%]"
                         >
                             <div className="vyom-orbital-icon">🧭</div>
-                            <div>
-                                <h4 className="font-semibold text-sm text-[#17324D]">DISCOVERY TRAIL</h4>
-                                <p className="text-xs text-[#66757A]">Immersive Navigation</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">DISCOVERY TRAIL</h4>
+                                <p className="text-xs text-[#66757A] text-center">Immersive Navigation</p>
                             </div>
                         </div>
 
@@ -481,9 +482,9 @@ export function Landing() {
                             className="vyom-orbital-card absolute bottom-[4%] right-[12%]"
                         >
                             <div className="vyom-orbital-icon">📖</div>
-                            <div>
-                                <h4 className="font-semibold text-sm text-[#17324D]">STORY CORNER</h4>
-                                <p className="text-xs text-[#66757A]">Language Assessment</p>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">STORY CORNER</h4>
+                                <p className="text-xs text-[#66757A] text-center">Language Assessment</p>
                             </div>
                         </div>
                     </div>
@@ -752,63 +753,33 @@ export function Landing() {
                ========================================================================= */}
             <footer id="about" className="vyom-footer w-full">
                 <div className="vyom-footer-container">
-                    {/* Grid: Left Brand Block | Right Navigation Columns */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-10 border-b border-[#F7F4EC]/12">
+                    {/* Centered Brand Block & Explore Navigation */}
+                    <div className="flex flex-col items-center justify-center text-center gap-8 pb-10 border-b border-[#F7F4EC]/12 max-w-2xl mx-auto">
                         {/* Brand Block */}
-                        <div className="lg:col-span-5 flex flex-col items-start text-left">
-                            <div className="flex items-center gap-3 cursor-pointer mb-3" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-                                <div className="w-9 h-9 rounded-full bg-[#4F7C78]/20 flex items-center justify-center text-[#8FAF8B]">
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V10m0 0C10.5 7.5 7 6 4 7c0 4 2.5 7.5 8 9m0-6c1.5-2.5 5-4 8-3 0 4-2.5 7.5-8 9" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <span className="vyom-serif text-2xl font-semibold tracking-tight text-[#F7F4EC] block">
-                                        VyomFlow
-                                    </span>
-                                </div>
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <div className="cursor-pointer mb-3 select-none" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                                <VyomFlowLogo size="lg" theme="dark" />
                             </div>
 
-                            <p className="text-xs sm:text-sm text-[#F7F4EC]/75 leading-relaxed max-w-sm">
+                            <p className="text-sm sm:text-base text-[#FFFFFF] leading-relaxed max-w-md mx-auto text-center font-medium opacity-95">
                                 Cognitive performance tracking designed for awareness and longitudinal self-observation.
                             </p>
                         </div>
 
-                        {/* Navigation Columns */}
-                        <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8 pt-2 lg:pt-0">
-                            {/* Column 1: EXPLORE */}
-                            <div className="flex flex-col gap-2.5">
-                                <div className="vyom-footer-group-title">EXPLORE</div>
-                                <button onClick={() => handleScrollTo("how-it-works")} className="vyom-footer-link">
+                        {/* Navigation: EXPLORE */}
+                        <div className="flex flex-col items-center justify-center text-center gap-3 mt-1">
+                            <div className="text-xs sm:text-sm font-bold tracking-[0.22em] text-[#D8B878] dark:text-[#8FAF8B] uppercase text-center">
+                                EXPLORE
+                            </div>
+                            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+                                <button onClick={() => handleScrollTo("how-it-works")} className="vyom-footer-link text-center">
                                     How It Works
                                 </button>
-                                <button onClick={() => handleScrollTo("platform")} className="vyom-footer-link">
+                                <button onClick={() => handleScrollTo("platform")} className="vyom-footer-link text-center">
                                     Platform
                                 </button>
-                                <button onClick={() => handleScrollTo("about")} className="vyom-footer-link">
+                                <button onClick={() => handleScrollTo("about")} className="vyom-footer-link text-center">
                                     About
-                                </button>
-                            </div>
-
-                            {/* Column 2: SUPPORT */}
-                            <div className="flex flex-col gap-2.5">
-                                <div className="vyom-footer-group-title">SUPPORT</div>
-                                <button onClick={handleBeginJourney} className="vyom-footer-link">
-                                    Help & FAQ
-                                </button>
-                                <button onClick={() => navigate("/login")} className="vyom-footer-link">
-                                    Sign In
-                                </button>
-                            </div>
-
-                            {/* Column 3: TRUST & LEGAL */}
-                            <div className="flex flex-col gap-2.5 col-span-2 sm:col-span-1">
-                                <div className="vyom-footer-group-title">TRUST</div>
-                                <button onClick={() => handleScrollTo("privacy")} className="vyom-footer-link">
-                                    Privacy Policy
-                                </button>
-                                <button onClick={() => handleScrollTo("privacy")} className="vyom-footer-link">
-                                    Disclaimer
                                 </button>
                             </div>
                         </div>

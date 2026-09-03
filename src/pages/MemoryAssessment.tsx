@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Card, Button } from '../components/common';
+import { Card, Button, MotivationalQuoteBlock } from '../components/common';
 import { PageWrapper } from '../components/layout';
 import { selectRandomWords } from '../data/wordPools';
 import { extractMemoryFeatures, identifyKeyFactors } from '../ai/memoryFeatures';
@@ -346,12 +346,18 @@ export function MemoryAssessment() {
                             {metrics && (() => {
                                 const feedback = getMemoryFeedback(metrics.correctCount);
                                 return (
-                                    <div className="feedback-section mt-4 mb-4 p-3 rounded bg-white/5 border border-white/10 text-center">
-                                        <div style={{ fontWeight: 'bold', color: feedback.color === 'success' ? '#4ade80' : feedback.color === 'primary' ? '#38bdf8' : feedback.color === 'warning' ? '#fbbf24' : '#94a3b8' }}>
-                                            {feedback.category}
+                                    <>
+                                        <div className="feedback-section mt-4 mb-4 p-3 rounded bg-[var(--color-accent-soft)] border border-[var(--glass-border)] text-center text-[var(--color-text-primary)]">
+                                            <div style={{ fontWeight: 'bold', color: feedback.color === 'success' ? 'var(--color-status-stable)' : feedback.color === 'primary' ? 'var(--color-accent)' : feedback.color === 'warning' ? 'var(--color-status-change)' : 'var(--color-text-muted)' }}>
+                                                {feedback.category}
+                                            </div>
+                                            <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{feedback.message}</div>
                                         </div>
-                                        <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>{feedback.message}</div>
-                                    </div>
+                                        <MotivationalQuoteBlock
+                                            category={feedback.category}
+                                            score={Math.round((metrics.correctCount / WORD_COUNT) * 100)}
+                                        />
+                                    </>
                                 );
                             })()}
 

@@ -10,4 +10,8 @@ export { AdminRoute } from "./AdminRoute";
 export { AuthOverlay } from "./AuthOverlay";
 export { UserMenu } from "./UserMenu";
 export { ErrorBoundary } from "./ErrorBoundary";
+export { VyomFlowLogo } from "./VyomFlowLogo";
+export { TutorialVideoPlaceholder } from "./TutorialVideoPlaceholder";
+export { MotivationalQuoteBlock } from "./MotivationalQuoteBlock";
+export type { MotivationalQuoteBlockProps } from "./MotivationalQuoteBlock";
 

@@ -504,8 +504,9 @@ html.dark .vyom-sarvam-landing {
   height: 100%;
   border-radius: 50%;
   z-index: 15;
-  animation: vyomOrbitRevolution 22s linear infinite;
+  animation: vyomOrbitRevolution 24s linear infinite;
   pointer-events: none;
+  transform-origin: center center;
 }
 
 /* Counter-Rotation Wrapper to keep step text 100% upright at all times */
@@ -517,8 +518,15 @@ html.dark .vyom-sarvam-landing {
   align-items: center;
   justify-content: center;
   text-align: center;
-  animation: vyomOrbitCounterRevolution 22s linear infinite;
+  animation: vyomOrbitCounterRevolution 24s linear infinite;
   pointer-events: auto;
+  transform-origin: center center;
+}
+
+/* Pause rotation smoothly when hovered so users can easily read cards */
+.vyom-orbit-stage:hover .vyom-orbit-ring,
+.vyom-orbit-stage:hover .vyom-orbit-counter-rotate {
+  animation-play-state: paused;
 }
 
 @keyframes vyomOrbitRevolution {
@@ -702,12 +710,23 @@ html.dark .vyom-sarvam-landing {
   padding: 0.9rem 1.25rem;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.85rem;
   box-shadow: 0 8px 24px -6px rgba(23, 50, 77, 0.10), 0 2px 8px rgba(79, 124, 120, 0.06);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   width: 230px;
   z-index: 30;
+  text-align: center;
+}
+
+.vyom-orbital-card > div:not(.vyom-orbital-icon) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
 }
 
 .vyom-orbital-card:hover {
@@ -724,6 +743,8 @@ html.dark .vyom-sarvam-landing {
   font-size: 0.9rem !important;
   letter-spacing: -0.01em;
   opacity: 1 !important;
+  text-align: center !important;
+  width: 100%;
 }
 
 .vyom-orbital-card p,
@@ -732,6 +753,8 @@ html.dark .vyom-sarvam-landing {
   font-weight: 500 !important;
   font-size: 0.75rem !important;
   opacity: 1 !important;
+  text-align: center !important;
+  width: 100%;
 }
 
 .vyom-orbital-icon {
@@ -972,11 +995,16 @@ html.dark .vyom-sarvam-landing {
    ========================================================================== */
 .vyom-footer {
   background: transparent;
-  color: #F7F4EC;
-  border-top: 1px solid rgba(247, 244, 236, 0.12);
+  color: #FFFFFF;
+  border-top: 1px solid rgba(247, 244, 236, 0.15);
   padding: 4.5rem 1.5rem 2.25rem 1.5rem;
   position: relative;
   overflow: hidden;
+}
+
+.vyom-footer p {
+  color: #F7F4EC !important;
+  opacity: 0.95 !important;
 }
 
 .vyom-footer-container {
@@ -986,31 +1014,36 @@ html.dark .vyom-sarvam-landing {
 }
 
 .vyom-footer-group-title {
-  font-size: 0.725rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--vyom-sage);
-  margin-bottom: 1.25rem;
+  color: #8FAF8B;
+  text-align: center;
+  margin-bottom: 0.5rem;
 }
 
 .vyom-footer-link {
-  color: rgba(247, 244, 236, 0.85);
-  font-size: 0.875rem;
-  font-weight: 400;
+  color: #FFFFFF;
+  font-size: 0.975rem;
+  font-weight: 600;
   transition: all 0.2s ease;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
-  text-align: left;
+  padding: 0.35rem 0.65rem;
+  text-align: center;
   text-decoration: none;
-  display: block;
+  display: inline-block;
+  opacity: 0.95;
+  letter-spacing: -0.01em;
 }
 
 .vyom-footer-link:hover {
-  color: #FFFFFF;
-  transform: translateX(2px);
+  color: #D8B878;
+  opacity: 1;
+  transform: translateY(-2px);
+  text-shadow: 0 0 12px rgba(216, 184, 120, 0.4);
 }
 
 .vyom-trust-badge {
@@ -1582,7 +1615,9 @@ html.dark .vyom-mobile-drawer,
 /* Center section headings & descriptions */
 .vyom-heading-dark,
 .vyom-sub-dark {
-  text-align: center;
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* Center privacy cards & text */

@@ -64,6 +64,7 @@ export const CognitiveRadarChart: React.FC<CognitiveRadarChartProps> = ({
     showBaseline = true,
     showNormative = true,
     showVolumetricDiff = true,
+    activeSessionLabel,
 }) => {
     const center = size / 2;
     const radius = size * 0.33;

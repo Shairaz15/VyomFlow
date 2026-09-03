@@ -444,3 +444,4 @@ The AI Engine aggregates the digital biomarkers from all individual assessments 
 3. **Reaction Trend Slope ($m_{\text{reaction}}$)**: Linear regression slope of psychomotor latency over time (slope $< -0.001\text{ / session}$ indicates progressive psychomotor slowing).
 4. **Multivariate Anomaly Score ($z_{\text{anomaly}}$)**: Statistical Mahalanobis/Z-deviation distance measuring sudden acute deviations from the patient's rolling personal baseline.
 5. **Risk Confidence Score**: Bayesian sample-size and variance-weighted confidence metric ($0.0\text{ to }1.0$).
+

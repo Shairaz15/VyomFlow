@@ -35,6 +35,7 @@ export function NavigationAssessment() {
     const { saveResult } = useNavigationResults();
 
     const [phase, setPhase] = useState<Phase>("instructions");
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Collected session responses
     const [destinationAnswer, setDestinationAnswer] = useState<DestinationAnswer | null>(null);
@@ -98,80 +99,150 @@ export function NavigationAssessment() {
         setPhase("instructions");
     };
 
+    // Exit Safeguard Handlers
+    const handleExitClick = () => {
+        if (phase === "instructions" || phase === "results") {
+            navigate("/tests");
+            return;
+        }
+        setShowExitConfirm(true);
+    };
+
+    const handleConfirmExit = () => {
+        setShowExitConfirm(false);
+        navigate("/tests");
+    };
+
+    const handleCancelExit = () => {
+        setShowExitConfirm(false);
+    };
+
     return (
         <PageWrapper>
-            <div className="navigation-assessment min-h-[85vh] py-6 px-4">
-                {/* Phase 1: Instructions */}
-                {phase === "instructions" && (
-                    <InstructionsPhase onStart={handleStartAssessment} />
-                )}
+            <div className="navigation-assessment-page story-assessment-container container">
+                {/* Top Navigation Bar: Back / Exit Control */}
+                <div className="story-top-nav">
+                    <button
+                        type="button"
+                        onClick={handleExitClick}
+                        className="story-back-btn"
+                        aria-label="Back to Assessments"
+                    >
+                        <span className="back-arrow" aria-hidden="true">←</span>
+                        <span>Back to Assessments</span>
+                    </button>
 
-                {/* Phase 2: Route Encoding Video (Point A → Point B) */}
-                {phase === "encoding" && (
-                    <div className="max-w-4xl mx-auto space-y-4 animate-fadeIn">
-                        <div className="flex items-center justify-between px-2">
-                            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                                Phase 1 of 4: Route Encoding (A → B)
-                            </span>
-                            <span className="text-xs text-slate-400">
-                                Watch carefully • Observe paths & key landmarks
-                            </span>
-                        </div>
-                        <VideoPlayer
-                            src={DEMO_ROUTE.encodingVideoUrl}
-                            onEnded={handleEncodingEnded}
-                            label="Full Forward Route Encoding (Main Gate 1 → Sports Plaza)"
-                            subLabel="Observe the entire path from Point A to Point B including buildings, turns, and sculptures."
-                        />
+                    <div className="story-module-badge">
+                        <span className="badge-dot" aria-hidden="true" />
+                        <span>Cognitive Assessment</span>
                     </div>
-                )}
+                </div>
 
-                {/* Phase 3: Destination Recall MCQ */}
-                {phase === "destination_mcq" && (
-                    <DestinationQuestion
-                        question={DEMO_ROUTE.destination.question}
-                        options={DEMO_ROUTE.destination.options}
-                        correctIndex={DEMO_ROUTE.destination.correctIndex}
-                        onAnswer={handleDestinationAnswer}
-                    />
-                )}
-
-                {/* Phase 4: Seamless Reverse Navigation (Point B → Point A, 8 Intersections) */}
-                {phase === "navigation" && (
-                    <SeamlessReverseNavigator
-                        route={DEMO_ROUTE}
-                        onComplete={handleReverseNavigationComplete}
-                    />
-                )}
-
-                {/* Phase 5: Landmark Chronology Ordering */}
-                {phase === "landmark_ordering" && (
-                    <LandmarkOrdering
-                        landmarks={DEMO_ROUTE.landmarks}
-                        onComplete={handleLandmarkComplete}
-                    />
-                )}
-
-                {/* Phase 6: Processing */}
-                {phase === "processing" && (
-                    <div className="max-w-md mx-auto py-20 text-center space-y-4 animate-fadeIn">
-                        <div className="w-16 h-16 mx-auto rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center animate-spin">
-                            <span className="text-2xl">⏳</span>
-                        </div>
-                        <h2 className="text-xl font-bold text-white">Computing Biomarkers...</h2>
-                        <p className="text-xs text-slate-400">
-                            Analyzing decision latencies across 8 intersections, trajectory accuracy, and spatial landmark sequence fidelity across 6 recall targets.
+                {/* Primary Test Header (shown only on instructions intro) */}
+                {phase === "instructions" && (
+                    <div className="story-header animate-fadeInUp">
+                        <h1 className="story-title vyom-serif">Immersive Navigation</h1>
+                        <p className="story-subtitle">
+                            Observe a real-world route video and navigate back by making directional choices at key intersections.
                         </p>
                     </div>
                 )}
 
-                {/* Phase 7: Results & Score Display */}
-                {phase === "results" && assessmentResult && (
-                    <NavigationResults
-                        result={assessmentResult}
-                        onRetake={handleRetake}
-                        onBackToTests={() => navigate("/tests")}
-                    />
+                {/* Active Stage Viewport */}
+                <div className="story-stage-viewport nav-stage-viewport">
+                    {/* Phase 1: Simplified Instructions */}
+                    {phase === "instructions" && (
+                        <InstructionsPhase onStart={handleStartAssessment} />
+                    )}
+
+                    {/* Phase 2: Route Encoding Video (Point A → Point B) */}
+                    {phase === "encoding" && (
+                        <div className="nav-encoding-card animate-fadeIn">
+                            <div className="nav-phase-indicator">
+                                <span className="nav-phase-badge">Phase 1 of 4: Route Encoding</span>
+                                <span className="nav-phase-hint">Watch carefully • Observe pathways & landmarks</span>
+                            </div>
+                            <VideoPlayer
+                                src={DEMO_ROUTE.encodingVideoUrl}
+                                onEnded={handleEncodingEnded}
+                                label="Forward Route Observation (Main Gate 1 → Sports Plaza)"
+                                subLabel="Observe the entire path from Point A to Point B including buildings, turns, and sculptures."
+                            />
+                        </div>
+                    )}
+
+                    {/* Phase 3: Destination Recall MCQ */}
+                    {phase === "destination_mcq" && (
+                        <DestinationQuestion
+                            question={DEMO_ROUTE.destination.question}
+                            options={DEMO_ROUTE.destination.options}
+                            correctIndex={DEMO_ROUTE.destination.correctIndex}
+                            onAnswer={handleDestinationAnswer}
+                        />
+                    )}
+
+                    {/* Phase 4: Seamless Reverse Navigation (Point B → Point A, 8 Intersections) */}
+                    {phase === "navigation" && (
+                        <SeamlessReverseNavigator
+                            route={DEMO_ROUTE}
+                            onComplete={handleReverseNavigationComplete}
+                        />
+                    )}
+
+                    {/* Phase 5: Landmark Chronology Ordering */}
+                    {phase === "landmark_ordering" && (
+                        <LandmarkOrdering
+                            landmarks={DEMO_ROUTE.landmarks}
+                            onComplete={handleLandmarkComplete}
+                        />
+                    )}
+
+                    {/* Phase 6: Processing */}
+                    {phase === "processing" && (
+                        <div className="nav-processing-arena animate-fadeIn">
+                            <div className="nav-scoring-spinner" />
+                            <h2>Computing Navigation Biomarkers...</h2>
+                            <p>Analyzing decision latencies across intersections, trajectory accuracy, and landmark sequence fidelity.</p>
+                        </div>
+                    )}
+
+                    {/* Phase 7: Simplified Results & Score Display */}
+                    {phase === "results" && assessmentResult && (
+                        <NavigationResults
+                            result={assessmentResult}
+                            onRetake={handleRetake}
+                            onBackToTests={() => navigate("/tests")}
+                        />
+                    )}
+                </div>
+
+                {/* Exit Confirmation Dialog */}
+                {showExitConfirm && (
+                    <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
+                        <div className="story-exit-modal animate-scaleUp">
+                            <div className="exit-modal-icon">⚠️</div>
+                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <p className="exit-modal-text">
+                                Your current assessment progress will be lost if you leave now.
+                            </p>
+                            <div className="exit-modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelExit}
+                                    className="modal-btn modal-btn-secondary"
+                                >
+                                    Continue Test
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmExit}
+                                    className="modal-btn modal-btn-danger"
+                                >
+                                    Leave Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </PageWrapper>
