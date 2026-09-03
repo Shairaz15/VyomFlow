@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from '../components/common';
 import { PageWrapper } from '../components/layout';
@@ -62,6 +63,7 @@ export function VmraAssessment() {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
     const { isAuthenticated } = useAuth(); // Ensures user is in auth context
+    const { t } = useLanguage();
     const { saveResult, getSessionCount, getPreviousAccuracies } = useVmraResults();
 
     // Custom tick renderer for Radar Chart
@@ -272,7 +274,7 @@ export function VmraAssessment() {
     }, [targetImages, config]);
 
     // ─── Handle image tap in recall grid ──────────────────────────
-    const MAX_SELECTABLE_IMAGES = 10;
+    const maxSelectable = config.targetCount || 10;
 
     const handleImageTap = useCallback((imageId: string, gridPosition: number) => {
         const now = Date.now();
@@ -284,8 +286,8 @@ export function VmraAssessment() {
 
         const isCurrentlySelected = selectedIds.has(imageId);
 
-        // If trying to select a new image but already reached 10, prevent selection
-        if (!isCurrentlySelected && selectedIds.size >= MAX_SELECTABLE_IMAGES) {
+        // If trying to select a new image but already reached limit, prevent selection
+        if (!isCurrentlySelected && selectedIds.size >= maxSelectable) {
             return;
         }
 
@@ -305,12 +307,12 @@ export function VmraAssessment() {
             const updated = new Set(prev);
             if (isCurrentlySelected) {
                 updated.delete(imageId);
-            } else if (updated.size < MAX_SELECTABLE_IMAGES) {
+            } else if (updated.size < maxSelectable) {
                 updated.add(imageId);
             }
             return updated;
         });
-    }, [selectedIds]);
+    }, [selectedIds, maxSelectable]);
 
     // ─── Submit Recall ────────────────────────────────────────────
 
@@ -460,10 +462,22 @@ export function VmraAssessment() {
     void handleDelayedTap;
     void submitDelayedRecall;
 
-    // ─── Render SVG icon for an image ─────────────────────────────
+    // ─── Render image / SVG icon for a stimulus item ─────────────────
 
     const renderIcon = (image: ImageStimulus, size: number = 80) => {
-        const IconComponent = VMRA_ICON_MAP[image.svgComponent];
+        if (image.imageSrc) {
+            return (
+                <img
+                    src={image.imageSrc}
+                    alt={image.name}
+                    className="vmra-stimulus-img"
+                    style={{ maxWidth: `${size}px`, maxHeight: `${size}px` }}
+                    loading="eager"
+                    draggable={false}
+                />
+            );
+        }
+        const IconComponent = image.svgComponent ? VMRA_ICON_MAP[image.svgComponent] : undefined;
         if (!IconComponent) return <div className="vmra-icon-placeholder">?</div>;
         return <IconComponent size={size} />;
     };    // ─── Render Phase ─────────────────────────────────────────────
@@ -480,35 +494,35 @@ export function VmraAssessment() {
                                 <div className="instructions-icon-wrapper" aria-hidden="true">
                                     <Icon name="memory" size={28} />
                                 </div>
-                                <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+                                <h2 className="instructions-card-title vyom-serif">{t('vmra.howItWorks')}</h2>
 
                                 <ol className="instructions-step-list">
                                     <li className="instruction-step-item">
                                         <div className="step-num-bubble">1</div>
                                         <div className="step-content">
-                                            <strong>Observe Target Items:</strong>
-                                            <span>Watch a sequence of {config.targetCount} visual objects shown one by one.</span>
+                                            <strong>{t('vmra.step1Title')}</strong>
+                                            <span>{t('vmra.step1Desc', { count: config.targetCount })}</span>
                                         </div>
                                     </li>
                                     <li className="instruction-step-item">
                                         <div className="step-num-bubble">2</div>
                                         <div className="step-content">
-                                            <strong>Brief Focus Gap:</strong>
-                                            <span>Complete a quick 15-second visual shape distractor activity.</span>
+                                            <strong>{t('vmra.step2Title')}</strong>
+                                            <span>{t('vmra.step2Desc')}</span>
                                         </div>
                                     </li>
                                     <li className="instruction-step-item">
                                         <div className="step-num-bubble">3</div>
                                         <div className="step-content">
-                                            <strong>Immediate Grid Recall:</strong>
-                                            <span>Tap the images you remember seeing from a mixed visual grid.</span>
+                                            <strong>{t('vmra.step3Title')}</strong>
+                                            <span>{t('vmra.step3Desc')}</span>
                                         </div>
                                     </li>
                                     <li className="instruction-step-item">
                                         <div className="step-num-bubble">4</div>
                                         <div className="step-content">
-                                            <strong>Delayed Recognition:</strong>
-                                            <span>Measure short-term visual retention fidelity after a brief delay.</span>
+                                            <strong>{t('vmra.step4Title')}</strong>
+                                            <span>{t('vmra.step4Desc')}</span>
                                         </div>
                                     </li>
                                 </ol>
@@ -519,7 +533,7 @@ export function VmraAssessment() {
                                         className="story-primary-start-btn"
                                         onClick={startEncoding}
                                     >
-                                        Start Test
+                                        {t('vmra.startTest')}
                                     </Button>
                                 </div>
                             </div>
@@ -534,7 +548,7 @@ export function VmraAssessment() {
             case 'encoding':
                 return (
                     <div className="vmra-phase vmra-encoding">
-                        <p className="vmra-phase-label">Remember this image</p>
+                        <p className="vmra-phase-label">{t('vmra.rememberImage')}</p>
                         <div className={`vmra-image-display ${imageVisible ? 'visible' : 'fading'}`}>
                             {targetImages[currentImageIndex] && renderIcon(targetImages[currentImageIndex], 160)}
                         </div>
@@ -553,7 +567,7 @@ export function VmraAssessment() {
             case 'retention':
                 return (
                     <div className="vmra-phase vmra-retention">
-                        <p className="vmra-phase-label">Tap the different shape</p>
+                        <p className="vmra-phase-label">{t('vmra.tapDifferentShape')}</p>
                         <div className="vmra-shape-grid">
                             {retentionRound.shapes.map((shape, i) => (
                                 <button
@@ -578,7 +592,7 @@ export function VmraAssessment() {
 
                 return (
                     <div className="vmra-phase vmra-recall" role="region" aria-label="Recall Phase">
-                        <p className="vmra-phase-label">Tap the images you remember</p>
+                        <p className="vmra-phase-label">{t('vmra.tapImagesRemember')}</p>
 
                         <div
                             className="vmra-recall-grid"
@@ -611,16 +625,16 @@ export function VmraAssessment() {
 
                         {showGuessingWarning && (
                             <p className="vmra-guessing-warning" role="alert">
-                                ⚠️ You've selected most of the grid. Only tap images you truly remember.
+                                {t('vmra.guessingWarning')}
                             </p>
                         )}
 
                         <div className="vmra-recall-footer">
                             <p className="vmra-selection-count" aria-live="polite">
-                                Selected: <span style={{ fontWeight: 700 }}>{selectedIds.size} / 10</span> images
+                                {t('vmra.selectedCount', { count: selectedIds.size })}
                                 {selectedIds.size >= 10 && (
                                     <span style={{ marginLeft: '0.5rem', color: '#f59e0b', fontSize: '0.8rem', fontWeight: 600 }}>
-                                        (Maximum 10 reached)
+                                        {t('vmra.maxReached')}
                                     </span>
                                 )}
                             </p>
@@ -629,13 +643,13 @@ export function VmraAssessment() {
                                 size="lg"
                                 onClick={() => {
                                     if (selectedIds.size === 0) {
-                                        if (!window.confirm('You haven\'t selected any images. Submit anyway?')) return;
+                                        if (!window.confirm(t('vmra.confirmSubmitEmpty'))) return;
                                     }
                                     submitRecall();
                                 }}
                                 className="vmra-done-btn"
                             >
-                                Done ✓
+                                {t('vmra.done')}
                             </Button>
                         </div>
                     </div>
@@ -690,10 +704,10 @@ export function VmraAssessment() {
                         <Card className="results-overview-card">
                             <div className="overview-header">
                                 <div className="overview-title-group">
-                                    <h2 className="vyom-serif">Visual Memory Profile</h2>
+                                    <h2 className="vyom-serif">{t('vmra.profileTitle')}</h2>
                                     <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
                                         <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
-                                        <span>{trend === 'up' ? 'Improving' : 'Declining'}</span>
+                                        <span>{trend === 'up' ? t('vmra.improving') : t('vmra.declining')}</span>
                                     </span>
                                 </div>
                                 <div className="score-badge-circle">
@@ -712,32 +726,32 @@ export function VmraAssessment() {
                         <div className="biomarkers-grid-row">
                             <Card className="metric-card">
                                 <div className="metric-info-col">
-                                    <h4>Visual Recall</h4>
-                                    <p className="metric-desc">{rawMetrics.correctHits} / {targetImages.length} targets recalled</p>
+                                    <h4>{t('vmra.visualRecall')}</h4>
+                                    <p className="metric-desc">{t('vmra.targetsRecalled', { count: rawMetrics.correctHits, total: targetImages.length })}</p>
                                 </div>
                                 <div className="metric-val">{Math.round(features.recallAccuracy * 100)}%</div>
                             </Card>
 
                             <Card className="metric-card">
                                 <div className="metric-info-col">
-                                    <h4>Discrimination</h4>
-                                    <p className="metric-desc">{rawMetrics.falsePositives === 0 ? 'Zero false alarms' : `${rawMetrics.falsePositives} false selections`}</p>
+                                    <h4>{t('vmra.discrimination')}</h4>
+                                    <p className="metric-desc">{rawMetrics.falsePositives === 0 ? t('vmra.zeroFalseAlarms') : t('vmra.falseSelections', { count: rawMetrics.falsePositives })}</p>
                                 </div>
                                 <div className="metric-val">{Math.round(features.precision * 100)}%</div>
                             </Card>
 
                             <Card className="metric-card">
                                 <div className="metric-info-col">
-                                    <h4>Selection Latency</h4>
-                                    <p className="metric-desc">Visual search & motor speed</p>
+                                    <h4>{t('vmra.selectionLatency')}</h4>
+                                    <p className="metric-desc">{t('vmra.visualSearchSpeed')}</p>
                                 </div>
                                 <div className="metric-val">{(features.meanSelectionLatencyMs / 1000).toFixed(2)} <span className="metric-unit">s</span></div>
                             </Card>
 
                             <Card className="metric-card">
                                 <div className="metric-info-col">
-                                    <h4>Grid Precision</h4>
-                                    <p className="metric-desc">{Math.round(features.gridCoverage * 100)}% spatial exploration</p>
+                                    <h4>{t('vmra.gridPrecision')}</h4>
+                                    <p className="metric-desc">{t('vmra.spatialExploration', { percent: Math.round(features.gridCoverage * 100) })}</p>
                                 </div>
                                 <div className="metric-val">{Math.round(features.f1Score * 100)}%</div>
                             </Card>
@@ -745,7 +759,7 @@ export function VmraAssessment() {
 
                         {/* Full-Length Biomarker Radar & Item Verification Card */}
                         <Card className="radar-chart-card full-width-radar">
-                            <h3 className="radar-title">Biomarker Radar</h3>
+                            <h3 className="radar-title">{t('vmra.biomarkerRadar')}</h3>
                             <div className="chart-wrapper">
                                 <ResponsiveContainer width="100%" height={155}>
                                     <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
@@ -770,9 +784,9 @@ export function VmraAssessment() {
                             {/* Stimuli Verification Grid */}
                             <div className="vmra-results-grid-section">
                                 <div className="vmra-grid-header-row">
-                                    <span className="vmra-grid-section-title">Item Verification Breakdown</span>
+                                    <span className="vmra-grid-section-title">{t('vmra.itemVerification')}</span>
                                     <span className="vmra-grid-count-badge">
-                                        {rawMetrics.correctHits} / {targetImages.length} Recalled
+                                        {t('vmra.recalledCount', { count: rawMetrics.correctHits, total: targetImages.length })}
                                     </span>
                                 </div>
 
@@ -796,9 +810,9 @@ export function VmraAssessment() {
                                 </div>
 
                                 <div className="vmra-grid-legend">
-                                    <span className="legend-item"><span className="legend-dot correct" /> Recalled</span>
-                                    <span className="legend-item"><span className="legend-dot missed" /> Missed Target</span>
-                                    <span className="legend-item"><span className="legend-dot false-pos" /> Distractor Selected</span>
+                                    <span className="legend-item"><span className="legend-dot correct" /> {t('vmra.recalled')}</span>
+                                    <span className="legend-item"><span className="legend-dot missed" /> {t('vmra.missedTarget')}</span>
+                                    <span className="legend-item"><span className="legend-dot false-pos" /> {t('vmra.distractorSelected')}</span>
                                 </div>
                             </div>
                         </Card>
@@ -807,15 +821,15 @@ export function VmraAssessment() {
                         {sessionResult.delayedRecall && (
                             <div className="vmra-summary-card" style={{ marginTop: '0.75rem' }}>
                                 <div className="vmra-stat-row">
-                                    <span className="vmra-stat-label">Delayed Recall Retention</span>
+                                    <span className="vmra-stat-label">{t('vmra.delayedRecallRetention')}</span>
                                     <span className="vmra-stat-value">
-                                        {Math.round(sessionResult.delayedRecall.delayedRecallRatio * 100)}% retained
+                                        {t('vmra.delayedRetained', { percent: Math.round(sessionResult.delayedRecall.delayedRecallRatio * 100) })}
                                     </span>
                                 </div>
                                 <div className="vmra-stat-row secondary">
-                                    <span className="vmra-stat-label">Delay Interval</span>
+                                    <span className="vmra-stat-label">{t('vmra.delayInterval')}</span>
                                     <span className="vmra-stat-value">
-                                        {sessionResult.delayedRecall.delayMinutes.toFixed(1)} min
+                                        {t('vmra.delayMinutes', { minutes: sessionResult.delayedRecall.delayMinutes.toFixed(1) })}
                                     </span>
                                 </div>
                             </div>
@@ -824,14 +838,14 @@ export function VmraAssessment() {
                         {/* Centered Actions */}
                         <div className="results-actions">
                             <button type="button" onClick={startEncoding} className="story-retake-btn">
-                                <Icon name="reaction" size={15} /> Retake Test
+                                <Icon name="reaction" size={15} /> {t('vmra.retakeTest')}
                             </button>
                             <button 
                                 type="button" 
                                 className="story-primary-start-btn story-back-assessments-btn" 
                                 onClick={() => navigate('/tests')}
                             >
-                                Back to Assessments
+                                {t('vmra.backToAssessments')}
                             </button>
                         </div>
                     </div>
@@ -842,7 +856,7 @@ export function VmraAssessment() {
             case 'delayed-recall':
                 return (
                     <div className="vmra-phase vmra-recall">
-                        <p className="vmra-phase-label">Can you still recall the images from earlier?</p>
+                        <p className="vmra-phase-label">{t('vmra.recallEarlierPrompt')}</p>
 
                         <div
                             className="vmra-recall-grid"
@@ -873,7 +887,7 @@ export function VmraAssessment() {
 
                         <div className="vmra-recall-footer">
                             <p className="vmra-selection-count">
-                                Selected: {delayedSelectedIds.size} image{delayedSelectedIds.size !== 1 ? 's' : ''}
+                                {t('vmra.selectedImages', { count: delayedSelectedIds.size })}
                             </p>
                             <Button
                                 variant="primary"
@@ -881,7 +895,7 @@ export function VmraAssessment() {
                                 onClick={submitDelayedRecall}
                                 className="vmra-done-btn"
                             >
-                                Done ✓
+                                {t('vmra.done')}
                             </Button>
                         </div>
                     </div>
@@ -901,19 +915,19 @@ export function VmraAssessment() {
                         type="button"
                         onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to Assessments"
+                        aria-label={t('vmra.backToAssessments')}
                     >
                         <span className="back-arrow" aria-hidden="true">←</span>
-                        <span>Back to Assessments</span>
+                        <span>{t('vmra.backToAssessments')}</span>
                     </button>
                 </div>
 
                 {/* Primary Test Header (shown on intro) */}
                 {phase === 'onboarding' && (
                     <div className="story-header animate-fadeInUp">
-                        <h1 className="story-title vyom-serif">Visual Memory</h1>
+                        <h1 className="story-title vyom-serif">{t('vmra.title')}</h1>
                         <p className="story-subtitle">
-                            Observe visual items and identify them from a grid to evaluate short-term recognition.
+                            {t('vmra.subtitle')}
                         </p>
                     </div>
                 )}
@@ -928,9 +942,9 @@ export function VmraAssessment() {
                     <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
                         <div className="story-exit-modal animate-scaleUp">
                             <div className="exit-modal-icon">⚠️</div>
-                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <h3 className="exit-modal-title vyom-serif">{t('vmra.leaveAssessment')}</h3>
                             <p className="exit-modal-text">
-                                Your current assessment progress will be lost if you leave now.
+                                {t('vmra.leaveWarning')}
                             </p>
                             <div className="exit-modal-actions">
                                 <button
@@ -938,14 +952,14 @@ export function VmraAssessment() {
                                     onClick={handleCancelExit}
                                     className="modal-btn modal-btn-secondary"
                                 >
-                                    Continue Test
+                                    {t('vmra.continueTest')}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleConfirmExit}
                                     className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Test
+                                    {t('vmra.leaveTest')}
                                 </button>
                             </div>
                         </div>

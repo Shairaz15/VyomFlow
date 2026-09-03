@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Button, Card, Icon } from "../../common";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import type { SupportedLanguage } from "../../../types/storyTypes";
 
-const SARVAM_API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 interface StoryPlayerProps {
     storyText: string;
@@ -28,6 +29,7 @@ function splitIntoSentenceChunks(text: string, maxLen = 350): string[] {
 }
 
 export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayerProps) {
+    const { t } = useLanguage();
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -250,18 +252,18 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
             <div className="story-player-content">
                 <div className="narration-badge">
                     <Icon name="story" size={18} />
-                    <span>Pure Listening Recall (Audio-Only)</span>
+                    <span>{t("story.pureListening")}</span>
                 </div>
 
-                <h3>Listening Phase</h3>
+                <h3>{t("story.listeningPhase")}</h3>
                 <p className="narration-instruction">
-                    Listen carefully to the story being narrated. You will only hear this narration <strong>ONCE</strong>.
+                    {t("story.listenInstruction")}
                 </p>
 
                 {isLoading && (
                     <div className="player-status loading-spinner-container">
                         <div className="spinner" />
-                        <p>Generating story audio narration in Sarvam AI...</p>
+                        <p>{t("story.generatingAudio")}</p>
                     </div>
                 )}
 
@@ -269,7 +271,7 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                     <div className="player-status error-alert">
                         <p>{error}</p>
                         <Button variant="primary" onClick={() => onComplete()}>
-                            Proceed to Distractor Task
+                            {t("story.proceedToQuiz")}
                         </Button>
                     </div>
                 )}
@@ -284,11 +286,11 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
                             <span className="bar bar5"></span>
                         </div>
                         <p className="player-state-label">
-                            {isPlaying ? "Narrating story..." : hasFinished ? "Narration complete" : "Ready"}
+                            {isPlaying ? t("story.narratingStory") : hasFinished ? t("story.narrationComplete") : t("story.ready")}
                         </p>
                         {!isPlaying && !hasFinished && (
                             <Button variant="primary" onClick={handleManualPlay}>
-                                <Icon name="play" size={16} /> Tap to Play Narration
+                                <Icon name="play" size={16} /> {t("story.tapToPlayNarration")}
                             </Button>
                         )}
                     </div>

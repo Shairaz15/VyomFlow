@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { JourneyNodeInfo } from '../../hooks/useJourneyState';
 import { Button, Icon } from '../common';
+import { useLanguage } from '../../i18n/LanguageContext';
 import './ActivityIntroModal.css';
 
 interface ActivityIntroModalProps {
@@ -12,6 +13,7 @@ interface ActivityIntroModalProps {
 
 export function ActivityIntroModal({ node, isCompleted, onClose }: ActivityIntroModalProps) {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [isPracticeMode, setIsPracticeMode] = useState(false);
 
     if (!node) return null;
@@ -59,7 +61,7 @@ export function ActivityIntroModal({ node, isCompleted, onClose }: ActivityIntro
                     {/* Duration Badge */}
                     <div className="modal-duration-tag">
                         <Icon name="clock" size={16} />
-                        <span>Estimated duration: <strong>{node.duration}</strong></span>
+                        <span>{t("journey.estimatedDuration", { duration: node.duration })}</span>
                     </div>
 
                     {/* User-facing prompt */}
@@ -74,7 +76,7 @@ export function ActivityIntroModal({ node, isCompleted, onClose }: ActivityIntro
                     {isCompleted && (
                         <div className="modal-completed-notice">
                             <span className="notice-icon">✓</span>
-                            <span>Completed today. You can retake it anytime to update your session records.</span>
+                            <span>{t("journey.completedToday")}</span>
                         </div>
                     )}
 
@@ -83,7 +85,7 @@ export function ActivityIntroModal({ node, isCompleted, onClose }: ActivityIntro
                         <div className="modal-practice-box animate-fadeIn">
                             <div className="practice-box-header">
                                 <Icon name="info" size={18} />
-                                <h4>Practice Round Active</h4>
+                                <h4>{t("journey.practiceActive")}</h4>
                             </div>
                             <p>
                                 Practice — not part of today's assessment. Practice trials let you get comfortable with the task controls. Results will not be recorded in your cognitive history.
@@ -93,13 +95,13 @@ export function ActivityIntroModal({ node, isCompleted, onClose }: ActivityIntro
                                     variant="secondary"
                                     onClick={() => setIsPracticeMode(false)}
                                 >
-                                    Cancel Practice
+                                    {t("journey.cancelPractice")}
                                 </Button>
                                 <Button
                                     variant="primary"
                                     onClick={handleStartAssessment}
                                 >
-                                    Start Practice Now
+                                    {t("journey.startPractice")}
                                 </Button>
                             </div>
                         </div>
@@ -113,7 +115,7 @@ export function ActivityIntroModal({ node, isCompleted, onClose }: ActivityIntro
                                     className="practice-btn"
                                 >
                                     <Icon name="play" size={16} />
-                                    Try practice
+                                    {t("journey.startPractice")}
                                 </Button>
                             )}
                             <Button
@@ -121,7 +123,7 @@ export function ActivityIntroModal({ node, isCompleted, onClose }: ActivityIntro
                                 onClick={handleStartAssessment}
                                 className="start-btn"
                             >
-                                {isCompleted ? 'Retake Activity' : 'Start Activity'}
+                                {isCompleted ? t("navigation.retakeTest") : t("journey.startActivity")}
                             </Button>
                         </div>
                     )}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, Icon } from "../../../common";
+import { useLanguage } from "../../../../i18n/LanguageContext";
 import type { DestinationAnswer } from "../../../../types/navigationTypes";
 
 interface DestinationQuestionProps {
@@ -15,6 +16,7 @@ export function DestinationQuestion({
     correctIndex,
     onAnswer,
 }: DestinationQuestionProps) {
+    const { t } = useLanguage();
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const startTimeRef = useRef<number>(performance.now());
@@ -46,13 +48,13 @@ export function DestinationQuestion({
             <div className="text-center space-y-2">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                     <Icon name="shield-check" size={14} />
-                    <span>Phase 2: Destination Recall</span>
+                    <span>{t("navigation.destinationPhase")}</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                     {question}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400">
-                    Select the final destination of the walking route you just observed.
+                    {t("navigation.selectFinalDest")}
                 </p>
             </div>
 

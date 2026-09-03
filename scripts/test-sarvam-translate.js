@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 
-const API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const API_KEY = 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 console.log('Testing Sarvam STT WebSocket with mode=translate...');
 

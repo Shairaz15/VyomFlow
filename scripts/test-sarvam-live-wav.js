@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 
-const API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 const URL = 'wss://api.sarvam.ai/speech-to-text/ws?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000';
 
 console.log('Connecting to Sarvam WebSocket...');

@@ -26,7 +26,8 @@ export interface ImageStimulus {
     id: string;
     name: string;                // Internal name (not shown to user)
     category: ImageCategory;
-    svgComponent: string;        // Key to inline SVG component
+    imageSrc?: string;           // Direct image path (e.g. '/images/vmra/samosa.jpg')
+    svgComponent?: string;       // Key to inline SVG component (fallback)
     region: Region;              // Cultural region familiarity
     similarTo: string[];         // IDs of visually similar images (for distractor pairing)
     similarityTier: SimilarityTier;

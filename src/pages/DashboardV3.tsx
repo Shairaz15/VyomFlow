@@ -11,23 +11,28 @@ import { PageWrapper } from '../components/layout';
 import { VyomFlowLogo } from '../components/common';
 import { useDashboardV3ViewModel } from '../hooks/useDashboardV3ViewModel';
 import { useWeeklyReminder } from '../hooks/useWeeklyReminder';
+import { useLanguage } from '../i18n/LanguageContext';
 import {
     HeroSummary,
     AIPredictionCard,
+    DomainScoreCards,
     CognitiveRadarSection,
     ModuleTrendCharts,
     AssessmentModuleCards,
-    LongitudinalSummary,
-    RecommendationCard,
     BiomarkerDrawer,
     SimulationControls,
     ClinicianReportModal,
 } from '../components/dashboard-v3';
+import { LayoutDashboard, TrendingUp, FileText, SlidersHorizontal } from 'lucide-react';
 import './DashboardV3.css';
 
 export function DashboardV3() {
     const vm = useDashboardV3ViewModel();
+    const { t } = useLanguage();
     useWeeklyReminder();
+
+    // Active executive tab view ('summary' | 'trends')
+    const [activeView, setActiveView] = useState<'summary' | 'trends'>('summary');
 
     // Drawer state for chart drill-down
     const [drawerData, setDrawerData] = useState<{
@@ -61,7 +66,7 @@ export function DashboardV3() {
                 <div className="dv2-container">
                     <div className="dv2-loading">
                         <div className="dv2-loading-spinner" />
-                        <span>Loading live cognitive data from Supabase…</span>
+                        <span>{t("dashboard.loadingData")}</span>
                     </div>
                 </div>
             </PageWrapper>
@@ -77,7 +82,7 @@ export function DashboardV3() {
                 <header className="dv2-header">
                     <div className="dv2-header-left">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
-                            <h1 className="dv2-serif" style={{ margin: 0 }}>Cognitive Health Dashboard</h1>
+                            <h1 className="dv2-serif" style={{ margin: 0 }}>{t("dashboard.title")}</h1>
                             <span style={{
                                 fontSize: '0.75rem',
                                 fontWeight: 700,
@@ -91,38 +96,28 @@ export function DashboardV3() {
                                 gap: '0.35rem',
                             }}>
                                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isLive ? '#10b981' : '#38bdf8' }} />
-                                {isLive ? 'Supabase Live' : `Demo: ${vm.dataMode.replace('mock_', '').toUpperCase()}`}
+                                {isLive ? t("dashboard.supabaseLive") : `Demo: ${vm.dataMode.replace('mock_', '').toUpperCase()}`}
                             </span>
                         </div>
-                        <p>Your personalized multi-modal digital biomarker profile</p>
+                        <p>{t("dashboard.subtitle")}</p>
                     </div>
                     <div className="dv2-header-actions">
                         <button
+                            className="dv2-btn-report"
                             onClick={() => setIsReportOpen(true)}
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.4rem',
-                                padding: '0.5rem 1rem',
-                                borderRadius: '8px',
-                                fontWeight: 600,
-                                fontSize: '0.8125rem',
-                                background: 'transparent',
-                                border: '1px solid var(--dv2-card-border)',
-                                color: 'var(--dv2-text)',
-                                cursor: 'pointer',
-                            }}
                         >
-                            Export Clinical Report
+                            <FileText size={15} />
+                            <span>{t("dashboard.exportReport")}</span>
                         </button>
                         <button onClick={() => setShowSimControls(!showSimControls)}>
-                            {showSimControls ? 'Hide Controls' : 'Data Controls'}
+                            <SlidersHorizontal size={14} />
+                            <span>{showSimControls ? t("dashboard.hideControls") : t("dashboard.dataControls")}</span>
                         </button>
                         <button
                             className="dv2-btn-primary"
                             onClick={() => window.location.href = '/tests'}
                         >
-                            Take Assessment
+                            {t("dashboard.takeAssessment")}
                         </button>
                     </div>
                 </header>
@@ -149,11 +144,11 @@ export function DashboardV3() {
                         <div className="dv2-empty-icon">
                             <VyomFlowLogo variant="icon" height={56} className="dv2-welcome-brand-logo" />
                         </div>
-                        <h3>Welcome to VyomFlow</h3>
-                        <p>Complete your first cognitive assessment to establish your baseline and generate your digital biomarker profile in Supabase.</p>
+                        <h3>{t("dashboard.welcomeTitle")}</h3>
+                        <p>{t("dashboard.welcomeSubtitle")}</p>
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.25rem' }}>
                             <button className="dv2-btn-primary" onClick={() => window.location.href = '/tests'}>
-                                Take Your First Assessment
+                                {t("dashboard.takeFirstAssessment")}
                             </button>
                             <button
                                 onClick={() => vm.seedMockPreset('stable')}
@@ -168,58 +163,79 @@ export function DashboardV3() {
                                     cursor: 'pointer',
                                 }}
                             >
-                                🌟 Preview with Demo Dataset
+                                {t("dashboard.previewDemo")}
                             </button>
                         </div>
                     </div>
                 ) : (
                     <>
-                        {/* Section 1: Hero Summary */}
-                        <div className="dv2-section">
-                            <HeroSummary overview={vm.overview} />
+                        {/* Executive Segmented View Switcher */}
+                        <div className="dv2-view-switcher-bar">
+                            <div className="dv2-view-switcher">
+                                <button
+                                    type="button"
+                                    className={`dv2-view-tab ${activeView === 'summary' ? 'active' : ''}`}
+                                    onClick={() => setActiveView('summary')}
+                                >
+                                    <LayoutDashboard size={15} />
+                                    <span>Executive Summary</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`dv2-view-tab ${activeView === 'trends' ? 'active' : ''}`}
+                                    onClick={() => setActiveView('trends')}
+                                >
+                                    <TrendingUp size={15} />
+                                    <span>Longitudinal Trends</span>
+                                </button>
+                            </div>
+
+                            <div className="dv2-view-meta-tag">
+                                <span>Active Session {vm.sessionCount}</span>
+                                <span>•</span>
+                                <span>Multi-Task Deep Learning Active</span>
+                            </div>
                         </div>
 
-                        {/* Section 2: AI Prediction */}
-                        <div className="dv2-section">
-                            <AIPredictionCard prediction={vm.aiPrediction} />
-                        </div>
+                        {/* View Content based on activeView */}
+                        {activeView === 'summary' && (
+                            <div className="dv2-view-content">
+                                {/* Bento Grid: Status + Radar + Trends on Left; AI MoCA + Domains + Tests on Right */}
+                                <div className="dv2-bento-grid">
+                                    {/* Left Bento Column: Overall Status + 6-Domain Cognitive Envelope + Longitudinal Trends */}
+                                    <div className="dv2-bento-col">
+                                        <HeroSummary overview={vm.overview} sessionCount={vm.sessionCount} />
+                                        <CognitiveRadarSection
+                                            scores={vm.radarScores}
+                                            baselineScores={vm.baselineRadarScores}
+                                            timeline={vm.radarTimeline}
+                                        />
+                                        <ModuleTrendCharts
+                                            trends={vm.moduleTrends}
+                                            onPointClick={handleChartPointClick}
+                                        />
+                                    </div>
 
-                        {/* Section 3: Radar Chart & Multi-Layer Trajectory Scrubber */}
-                        <div className="dv2-section">
-                            <CognitiveRadarSection
-                                scores={vm.radarScores}
-                                baselineScores={vm.baselineRadarScores}
-                                timeline={vm.radarTimeline}
-                            />
-                        </div>
+                                    {/* Right Bento Column: AI MoCA Assessment + 6 Cognitive Domains + 7 Modules Battery */}
+                                    <div className="dv2-bento-col">
+                                        <AIPredictionCard prediction={vm.aiPrediction} />
+                                        <DomainScoreCards domains={vm.domainScores} />
+                                        <AssessmentModuleCards modules={vm.assessmentModules} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                        {/* Section 4: Trend Analysis */}
-                        <div className="dv2-section">
-                            <LongitudinalSummary
-                                longitudinal={vm.longitudinal}
-                            />
-                        </div>
-
-                        {/* Section 5: Module Trend Charts (All 7 Modules) */}
-                        <div className="dv2-section">
-                            <ModuleTrendCharts
-                                trends={vm.moduleTrends}
-                                onPointClick={handleChartPointClick}
-                            />
-                        </div>
-
-                        {/* Section 6: Assessment Modules Grid */}
-                        <div className="dv2-section">
-                            <AssessmentModuleCards modules={vm.assessmentModules} />
-                        </div>
-
-                        {/* Section 9: Recommendation Card */}
-                        <div className="dv2-section">
-                            <RecommendationCard
-                                recommendation={vm.recommendation}
-                                onOpenReport={() => setIsReportOpen(true)}
-                            />
-                        </div>
+                        {activeView === 'trends' && (
+                            <div className="dv2-view-content">
+                                <div className="dv2-section">
+                                    <ModuleTrendCharts
+                                        trends={vm.moduleTrends}
+                                        onPointClick={handleChartPointClick}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
 

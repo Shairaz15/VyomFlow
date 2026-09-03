@@ -1,4 +1,4 @@
-const SARVAM_API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 async function testSarvam() {
     console.log('Testing Sarvam AI API with key:', SARVAM_API_KEY.slice(0, 10) + '...\n');

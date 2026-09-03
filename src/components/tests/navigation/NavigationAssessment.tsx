@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageWrapper } from "../../layout/PageWrapper";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import { useNavigationResults } from "../../../hooks/useTestResults";
 import { DEMO_ROUTE } from "../../../data/navigation/routeConfig";
 import { computeNavigationBiomarkers } from "./services/BiomarkerEngine";
@@ -32,6 +33,7 @@ type Phase =
 export function NavigationAssessment() {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const { t } = useLanguage();
     const { saveResult } = useNavigationResults();
 
     const [phase, setPhase] = useState<Phase>("instructions");
@@ -48,7 +50,7 @@ export function NavigationAssessment() {
         setPhase("encoding");
     };
 
-    // 2. Encoding Video Finished (Full A → B Route)
+    // 2. Encoding Video Completed
     const handleEncodingEnded = () => {
         setPhase("destination_mcq");
     };
@@ -59,39 +61,44 @@ export function NavigationAssessment() {
         setPhase("navigation");
     };
 
-    // 4. Reverse Navigation Completed (All 8 Intersections finished seamlessly)
+    // 4. Reverse Navigation Completed
     const handleReverseNavigationComplete = (responses: IntersectionResponse[]) => {
         setIntersectionResponses(responses);
         setPhase("landmark_ordering");
     };
 
-    // 5. Landmark Chronology Task Completed
-    const handleLandmarkComplete = (result: LandmarkOrderingResult) => {
+    // 5. Landmark Ordering Completed -> Compute Biomarkers
+    const handleLandmarkComplete = (landmarkResult: LandmarkOrderingResult) => {
         setPhase("processing");
 
-        if (!destinationAnswer) return;
+        setTimeout(() => {
+            if (!destinationAnswer) return;
 
-        const allResponses = [...intersectionResponses];
-        const biomarkers = computeNavigationBiomarkers(destinationAnswer, allResponses, result);
+            const biomarkers = computeNavigationBiomarkers(
+                destinationAnswer,
+                intersectionResponses,
+                landmarkResult
+            );
 
-        const finalResult: ImmersiveNavigationResult = {
-            id: `nav_res_${Date.now()}`,
-            sessionId: `sess_nav_${Date.now()}`,
-            routeId: DEMO_ROUTE.routeId,
-            timestamp: new Date(),
-            destinationAnswer,
-            intersectionResponses: allResponses,
-            landmarkOrdering: result,
-            biomarkers,
-            navigationScore: biomarkers.navigationScore,
-        };
+            const finalResult: ImmersiveNavigationResult = {
+                id: `nav_${Date.now()}`,
+                sessionId: `session_${Date.now()}`,
+                routeId: DEMO_ROUTE.routeId,
+                timestamp: new Date(),
+                destinationAnswer,
+                intersectionResponses,
+                landmarkOrdering: landmarkResult,
+                biomarkers,
+                navigationScore: biomarkers.navigationScore,
+            };
 
-        setAssessmentResult(finalResult);
-        saveResult(finalResult);
-        setPhase("results");
+            saveResult(finalResult);
+            setAssessmentResult(finalResult);
+            setPhase("results");
+        }, 1500);
     };
 
-    // Retake Handler
+    // Retake Test
     const handleRetake = () => {
         setDestinationAnswer(null);
         setIntersectionResponses([]);
@@ -99,7 +106,7 @@ export function NavigationAssessment() {
         setPhase("instructions");
     };
 
-    // Exit Safeguard Handlers
+    // Exit Handling
     const handleExitClick = () => {
         if (phase === "instructions" || phase === "results") {
             navigate("/tests");
@@ -119,26 +126,26 @@ export function NavigationAssessment() {
 
     return (
         <PageWrapper>
-            <div className="navigation-assessment-page story-assessment-container container">
+            <div className="nav-assessment-container container">
                 {/* Top Navigation Bar: Back / Exit Control */}
                 <div className="story-top-nav">
                     <button
                         type="button"
                         onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to Assessments"
+                        aria-label={t("navigation.backToAssessments")}
                     >
                         <span className="back-arrow" aria-hidden="true">←</span>
-                        <span>Back to Assessments</span>
+                        <span>{t("navigation.backToAssessments")}</span>
                     </button>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
                 {phase === "instructions" && (
                     <div className="story-header animate-fadeInUp">
-                        <h1 className="story-title vyom-serif">Immersive Navigation</h1>
+                        <h1 className="story-title vyom-serif">{t("navigation.title")}</h1>
                         <p className="story-subtitle">
-                            Observe a real-world route video and navigate back by making directional choices at key intersections.
+                            {t("navigation.subtitle")}
                         </p>
                     </div>
                 )}
@@ -154,14 +161,14 @@ export function NavigationAssessment() {
                     {phase === "encoding" && (
                         <div className="nav-encoding-card animate-fadeIn">
                             <div className="nav-phase-indicator">
-                                <span className="nav-phase-badge">Phase 1 of 4: Route Encoding</span>
-                                <span className="nav-phase-hint">Watch carefully • Observe pathways & landmarks</span>
+                                <span className="nav-phase-badge">{t("navigation.phase1")}</span>
+                                <span className="nav-phase-hint">{t("navigation.phase1Hint")}</span>
                             </div>
                             <VideoPlayer
                                 src={DEMO_ROUTE.encodingVideoUrl}
                                 onEnded={handleEncodingEnded}
-                                label="Forward Route Observation (Main Gate 1 → Sports Plaza)"
-                                subLabel="Observe the entire path from Point A to Point B including buildings, turns, and sculptures."
+                                label={t("navigation.forwardRouteObs")}
+                                subLabel={t("navigation.forwardRouteSub")}
                             />
                         </div>
                     )}
@@ -196,8 +203,8 @@ export function NavigationAssessment() {
                     {phase === "processing" && (
                         <div className="nav-processing-arena animate-fadeIn">
                             <div className="nav-scoring-spinner" />
-                            <h2>Computing Navigation Biomarkers...</h2>
-                            <p>Analyzing decision latencies across intersections, trajectory accuracy, and landmark sequence fidelity.</p>
+                            <h2>{t("navigation.computingBiomarkers")}</h2>
+                            <p>{t("navigation.analyzingTrajectory")}</p>
                         </div>
                     )}
 
@@ -216,9 +223,9 @@ export function NavigationAssessment() {
                     <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
                         <div className="story-exit-modal animate-scaleUp">
                             <div className="exit-modal-icon">⚠️</div>
-                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <h3 className="exit-modal-title vyom-serif">{t("navigation.leaveAssessment")}</h3>
                             <p className="exit-modal-text">
-                                Your current assessment progress will be lost if you leave now.
+                                {t("navigation.leaveWarning")}
                             </p>
                             <div className="exit-modal-actions">
                                 <button
@@ -226,14 +233,14 @@ export function NavigationAssessment() {
                                     onClick={handleCancelExit}
                                     className="modal-btn modal-btn-secondary"
                                 >
-                                    Continue Test
+                                    {t("navigation.continueTest")}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleConfirmExit}
                                     className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Test
+                                    {t("navigation.leaveTest")}
                                 </button>
                             </div>
                         </div>

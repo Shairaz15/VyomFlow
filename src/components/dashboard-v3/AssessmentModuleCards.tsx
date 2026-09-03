@@ -1,7 +1,30 @@
 import type { AssessmentModuleViewModel } from '../../services/dashboardViewModel';
+import { Zap, Target, Brain, BookOpen, MessageSquareQuote, Layers, Compass, Activity } from 'lucide-react';
 
 interface Props {
     modules: AssessmentModuleViewModel[];
+}
+
+function getModuleIcon(key: string, size = 18) {
+    switch (key) {
+        case 'reaction':
+            return <Zap size={size} />;
+        case 'attention':
+            return <Target size={size} />;
+        case 'vmra':
+        case 'memory':
+            return <Brain size={size} />;
+        case 'story':
+            return <BookOpen size={size} />;
+        case 'language':
+            return <MessageSquareQuote size={size} />;
+        case 'pattern':
+            return <Layers size={size} />;
+        case 'navigation':
+            return <Compass size={size} />;
+        default:
+            return <Activity size={size} />;
+    }
 }
 
 export function AssessmentModuleCards({ modules }: Props) {
@@ -19,11 +42,12 @@ export function AssessmentModuleCards({ modules }: Props) {
                 alignItems: 'center',
                 marginBottom: '0.75rem',
             }}>
-                <h3 className="dv2-section-title" style={{ margin: 0, fontSize: '1.05rem' }}>
+                <h3 className="dv2-section-title" style={{ margin: 0, fontSize: '1.15rem' }}>
                     Assessment Modules
                 </h3>
                 <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
                     color: 'var(--dv2-muted)',
                     fontFamily: 'monospace',
                 }}>
@@ -35,6 +59,7 @@ export function AssessmentModuleCards({ modules }: Props) {
             <div className="dv2-card dv2-animate-in" style={{ padding: '0.25rem 0', overflow: 'hidden' }}>
                 {modules.map((mod, idx) => {
                     const isLast = idx === modules.length - 1;
+                    const accentColor = mod.accentColor || 'var(--dv2-teal, #0ea5e9)';
 
                     return (
                         <div
@@ -44,7 +69,7 @@ export function AssessmentModuleCards({ modules }: Props) {
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
                                 flexWrap: 'wrap',
-                                padding: '0.85rem 1rem',
+                                padding: '0.9rem 1.15rem',
                                 borderBottom: isLast ? 'none' : '1px solid var(--dv2-card-border)',
                                 transition: 'background 0.15s ease',
                                 gap: '0.75rem',
@@ -56,27 +81,34 @@ export function AssessmentModuleCards({ modules }: Props) {
                                 e.currentTarget.style.background = 'transparent';
                             }}
                         >
-                            {/* Left: Icon, Name, and Domain Tag */}
+                            {/* Left: Icon Badge, Name, and Domain Tag */}
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.75rem',
+                                gap: '0.85rem',
                                 minWidth: '180px',
                                 flex: '1 1 180px',
                             }}>
-                                <span style={{
-                                    fontSize: '1.25rem',
-                                    lineHeight: 1,
-                                    opacity: mod.isCompleted ? 1 : 0.5,
+                                <div style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '10px',
+                                    background: mod.isCompleted ? `${accentColor}18` : 'rgba(255, 255, 255, 0.05)',
+                                    border: `1.5px solid ${mod.isCompleted ? `${accentColor}40` : 'rgba(255, 255, 255, 0.1)'}`,
+                                    color: mod.isCompleted ? accentColor : 'var(--dv2-muted)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
                                     flexShrink: 0,
+                                    transition: 'all 0.15s ease',
                                 }}>
-                                    {mod.icon}
-                                </span>
+                                    {getModuleIcon(mod.key, 18)}
+                                </div>
 
                                 <div style={{ minWidth: 0 }}>
                                     <div style={{
-                                        fontSize: '0.875rem',
-                                        fontWeight: 600,
+                                        fontSize: '0.95rem',
+                                        fontWeight: 650,
                                         color: 'var(--dv2-text)',
                                         whiteSpace: 'nowrap',
                                         overflow: 'hidden',
@@ -85,9 +117,10 @@ export function AssessmentModuleCards({ modules }: Props) {
                                         {mod.name}
                                     </div>
                                     <div style={{
-                                        fontSize: '0.6875rem',
+                                        fontSize: '0.8125rem',
+                                        fontWeight: 500,
                                         color: 'var(--dv2-muted)',
-                                        marginTop: '0.1rem',
+                                        marginTop: '0.12rem',
                                     }}>
                                         {mod.domainName} • {mod.estimatedDuration}
                                     </div>
@@ -110,15 +143,15 @@ export function AssessmentModuleCards({ modules }: Props) {
                                     {mod.isCompleted ? (
                                         <>
                                             <div style={{
-                                                fontSize: '0.9375rem',
-                                                fontWeight: 700,
+                                                fontSize: '1.0625rem',
+                                                fontWeight: 800,
                                                 fontFamily: 'monospace',
                                                 color: 'var(--dv2-text)',
                                             }}>
                                                 {mod.score}
                                                 <span style={{
-                                                    fontSize: '0.6875rem',
-                                                    fontWeight: 400,
+                                                    fontSize: '0.8125rem',
+                                                    fontWeight: 600,
                                                     color: 'var(--dv2-muted)',
                                                     marginLeft: '0.25rem',
                                                 }}>
@@ -126,16 +159,18 @@ export function AssessmentModuleCards({ modules }: Props) {
                                                 </span>
                                             </div>
                                             <div style={{
-                                                fontSize: '0.6875rem',
+                                                fontSize: '0.78rem',
+                                                fontWeight: 500,
                                                 color: 'var(--dv2-muted)',
-                                                marginTop: '0.05rem',
+                                                marginTop: '0.08rem',
                                             }}>
                                                 {mod.sessionCount} sess • {mod.lastCompletedDate}
                                             </div>
                                         </>
                                     ) : (
                                         <div style={{
-                                            fontSize: '0.75rem',
+                                            fontSize: '0.8125rem',
+                                            fontWeight: 600,
                                             color: 'var(--dv2-muted)',
                                         }}>
                                             Not taken
@@ -143,45 +178,45 @@ export function AssessmentModuleCards({ modules }: Props) {
                                     )}
                                 </div>
 
-                            {/* Right: Action Button matched with dashboard theme */}
-                            <div style={{ flexShrink: 0 }}>
-                                <a
-                                    href={mod.route}
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '0.25rem',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 600,
-                                        textDecoration: 'none',
-                                        padding: '0.35rem 0.75rem',
-                                        borderRadius: '8px',
-                                        transition: 'all 0.15s ease',
-                                        background: mod.isCompleted ? 'transparent' : 'rgba(79, 124, 120, 0.15)',
-                                        color: mod.isCompleted ? 'var(--dv2-muted)' : 'var(--dv2-teal)',
-                                        border: `1px solid ${mod.isCompleted ? 'var(--dv2-card-border)' : 'var(--dv2-teal)'}`,
-                                    }}
-                                    onMouseEnter={e => {
-                                        e.currentTarget.style.background = 'var(--dv2-teal)';
-                                        e.currentTarget.style.color = '#ffffff';
-                                        e.currentTarget.style.borderColor = 'var(--dv2-teal)';
-                                    }}
-                                    onMouseLeave={e => {
-                                        e.currentTarget.style.background = mod.isCompleted ? 'transparent' : 'rgba(79, 124, 120, 0.15)';
-                                        e.currentTarget.style.color = mod.isCompleted ? 'var(--dv2-muted)' : 'var(--dv2-teal)';
-                                        e.currentTarget.style.borderColor = mod.isCompleted ? 'var(--dv2-card-border)' : 'var(--dv2-teal)';
-                                    }}
-                                >
-                                    {mod.isCompleted ? 'Retake' : 'Start'}
-                                </a>
+                                {/* Right: Action Button matched with dashboard theme */}
+                                <div style={{ flexShrink: 0 }}>
+                                    <a
+                                        href={mod.route}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.25rem',
+                                            fontSize: '0.8125rem',
+                                            fontWeight: 700,
+                                            textDecoration: 'none',
+                                            padding: '0.4rem 0.85rem',
+                                            borderRadius: '8px',
+                                            transition: 'all 0.15s ease',
+                                            background: mod.isCompleted ? 'transparent' : 'rgba(79, 124, 120, 0.15)',
+                                            color: mod.isCompleted ? 'var(--dv2-muted)' : 'var(--dv2-teal)',
+                                            border: `1px solid ${mod.isCompleted ? 'var(--dv2-card-border)' : 'var(--dv2-teal)'}`,
+                                        }}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.background = 'var(--dv2-teal)';
+                                            e.currentTarget.style.color = '#ffffff';
+                                            e.currentTarget.style.borderColor = 'var(--dv2-teal)';
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.background = mod.isCompleted ? 'transparent' : 'rgba(79, 124, 120, 0.15)';
+                                            e.currentTarget.style.color = mod.isCompleted ? 'var(--dv2-muted)' : 'var(--dv2-teal)';
+                                            e.currentTarget.style.borderColor = mod.isCompleted ? 'var(--dv2-card-border)' : 'var(--dv2-teal)';
+                                        }}
+                                    >
+                                        {mod.isCompleted ? 'Retake' : 'Start'}
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
+            </div>
         </div>
-    </div>
-);
+    );
 }
 
 export default AssessmentModuleCards;

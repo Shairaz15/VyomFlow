@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { Card, Icon, MotivationalQuoteBlock } from "../../../common";
 import { useTheme } from "../../../../contexts/ThemeContext";
+import { useLanguage } from "../../../../i18n/LanguageContext";
 import type { ImmersiveNavigationResult } from "../../../../types/navigationTypes";
 import "../../story/StoryAssessment.css";
 
@@ -19,6 +20,7 @@ export function NavigationResults({
 }: NavigationResultsProps) {
     const navigate = useNavigate();
     const { theme } = useTheme();
+    const { t } = useLanguage();
     const isDark = theme === "dark";
     const { biomarkers, navigationScore } = result;
 
@@ -101,10 +103,10 @@ export function NavigationResults({
             <Card className="results-overview-card">
                 <div className="overview-header">
                     <div className="overview-title-group">
-                        <h2 className="vyom-serif">Navigation Profile</h2>
+                        <h2 className="vyom-serif">{t("navigation.profileTitle")}</h2>
                         <span className={`story-trend-pill ${trend === "up" ? "trend-up" : "trend-down"}`}>
                             <Icon name={trend === "up" ? "trend-up" : "trend-down"} size={13} />
-                            <span>{trend === "up" ? "Improving" : "Declining"}</span>
+                            <span>{trend === "up" ? t("vmra.improving") : t("vmra.declining")}</span>
                         </span>
                     </div>
                     <div className="score-badge-circle">
@@ -123,32 +125,32 @@ export function NavigationResults({
             <div className="biomarkers-grid-row">
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>Direction Accuracy</h4>
-                        <p className="metric-desc">{correctTurns} / {totalTurns} turns correct</p>
+                        <h4>{t("navigation.directionFidelity")}</h4>
+                        <p className="metric-desc">{t("navigation.turnsCorrect", { correct: correctTurns, total: totalTurns })}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.navigationAccuracy * 100)}%</div>
                 </Card>
 
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>Landmark Sequence</h4>
-                        <p className="metric-desc">Chronological route alignment</p>
+                        <h4>{t("navigation.landmarkSequence")}</h4>
+                        <p className="metric-desc">{t("navigation.routeAlignment")}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.landmarkSequenceAccuracy * 100)}%</div>
                 </Card>
 
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>Route Memory</h4>
-                        <p className="metric-desc">{biomarkers.destinationRecallAccuracy === 1 ? "Destination identified ✓" : "Destination missed"}</p>
+                        <h4>{t("navigation.routeMemory")}</h4>
+                        <p className="metric-desc">{biomarkers.destinationRecallAccuracy === 1 ? t("navigation.destIdentified") : t("navigation.destMissed")}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.routeMemoryScore * 100)}%</div>
                 </Card>
 
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>Decision Latency</h4>
-                        <p className="metric-desc">Intersection reaction time</p>
+                        <h4>{t("navigation.decisionSpeed")}</h4>
+                        <p className="metric-desc">{t("navigation.intersectionReactionTime")}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.averageDecisionLatencyMs)} <span className="metric-unit">ms</span></div>
                 </Card>
@@ -156,7 +158,7 @@ export function NavigationResults({
 
             {/* Full-Length Biomarker Radar Card */}
             <Card className="radar-chart-card full-width-radar">
-                <h3 className="radar-title">Biomarker Radar</h3>
+                <h3 className="radar-title">{t("vmra.biomarkerRadar")}</h3>
                 <div className="chart-wrapper">
                     <ResponsiveContainer width="100%" height={155}>
                         <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
@@ -182,14 +184,14 @@ export function NavigationResults({
             {/* Centered Actions */}
             <div className="results-actions">
                 <button type="button" onClick={onRetake} className="story-retake-btn">
-                    <Icon name="assess" size={16} /> Retake Test
+                    <Icon name="assess" size={16} /> {t("navigation.retakeTest")}
                 </button>
                 <button
                     type="button"
                     className="story-primary-start-btn story-back-assessments-btn"
                     onClick={onBackToTests || (() => navigate("/tests"))}
                 >
-                    Back to Assessments
+                    {t("navigation.backToAssessments")}
                 </button>
             </div>
         </div>

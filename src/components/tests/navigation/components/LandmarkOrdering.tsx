@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Button, Icon } from "../../../common";
+import { useLanguage } from "../../../../i18n/LanguageContext";
 import type { LandmarkItem, LandmarkOrderingResult } from "../../../../types/navigationTypes";
 
 interface LandmarkOrderingProps {
@@ -96,6 +97,7 @@ function SequenceSlotItem({
     onRemove: () => void;
 }) {
     const [imgError, setImgError] = useState(false);
+    const { t } = useLanguage();
     const formattedNum = String(slotIndex + 1).padStart(2, "0");
 
     return (
@@ -165,12 +167,12 @@ function SequenceSlotItem({
                     </div>
                     <span className="slot-empty-label">
                         {slotIndex === 0
-                            ? "1st Stop"
+                            ? t("navigation.firstStop")
                             : slotIndex === TARGET_COUNT - 1
-                            ? "Final Stop"
-                            : `Stop ${slotIndex + 1}`}
+                            ? t("navigation.finalStop")
+                            : t("navigation.stopN", { n: slotIndex + 1 })}
                     </span>
-                    <span className="slot-empty-sub">Tap photo to place</span>
+                    <span className="slot-empty-sub">{t("navigation.tapPhotoToPlace")}</span>
                 </div>
             )}
         </div>
@@ -181,6 +183,8 @@ function SequenceSlotItem({
  * Main LandmarkOrdering Component
  * ═════════════════════════════════════════════════════ */
 export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProps) {
+    const { t } = useLanguage();
+
     // Ground truth: real landmarks sorted by chronological order
     const realLandmarksInOrder = useMemo(() => {
         return landmarks
@@ -218,34 +222,33 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
         const existingIdx = slots.findIndex((item) => item?.id === landmark.id);
 
         if (existingIdx !== -1) {
-            // Remove from sequence and shift remaining items left
+            // Already placed: remove it and shift remaining left
             setSlots((prev) => {
-                const remaining = prev.filter((item) => item !== null && item.id !== landmark.id);
-                while (remaining.length < TARGET_COUNT) {
-                    remaining.push(null);
-                }
-                return remaining;
+                const next = [...prev];
+                next.splice(existingIdx, 1);
+                next.push(null);
+                return next;
             });
-        } else {
-            // Find first empty slot
-            const firstEmpty = slots.findIndex((item) => item === null);
-            if (firstEmpty !== -1) {
-                setSlots((prev) => {
-                    const next = [...prev];
-                    next[firstEmpty] = landmark;
-                    return next;
-                });
-            }
+            return;
         }
+
+        // Not placed yet: place into first available slot
+        setSlots((prev) => {
+            const firstEmpty = prev.findIndex((s) => s === null);
+            if (firstEmpty === -1) return prev; // All 6 full
+
+            const next = [...prev];
+            next[firstEmpty] = landmark;
+            return next;
+        });
     }, [slots]);
 
     // Remove an item by slot index and shift left
     const handleRemoveSlot = useCallback((slotIndex: number) => {
         setSlots((prev) => {
-            const next = prev.filter((_, idx) => idx !== slotIndex);
-            while (next.length < TARGET_COUNT) {
-                next.push(null);
-            }
+            const next = [...prev];
+            next.splice(slotIndex, 1);
+            next.push(null);
             return next;
         });
     }, []);
@@ -290,14 +293,14 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
             <header className="chronology-top-header">
                 <div className="header-left-info">
                     <div className="header-meta-row">
-                        <span className="phase-pill">PHASE 4 OF 4</span>
+                        <span className="phase-pill">{t("navigation.phase4Of4")}</span>
                         <span className="progress-counter">
-                            {filledCount} of {TARGET_COUNT} placed
+                            {t("navigation.landmarksPlaced", { count: filledCount, total: TARGET_COUNT })}
                         </span>
                     </div>
-                    <h1 className="chronology-title vyom-serif">Landmark Chronology Sequence</h1>
+                    <h1 className="chronology-title vyom-serif">{t("navigation.landmarkChronologyTitle")}</h1>
                     <p className="chronology-instruction">
-                        Select all 6 landmarks in order from <strong>Gate 1 (A)</strong> to <strong>Sports Plaza (B)</strong>.
+                        {t("navigation.landmarkInstruction")}
                     </p>
                 </div>
 
@@ -310,7 +313,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                         onClick={handleSubmit}
                         className={`chronology-top-submit-btn ${isComplete ? "is-ready" : "is-incomplete"}`}
                     >
-                        {isComplete ? "Submit Sequence →" : `Select all 6 to submit (${filledCount}/${TARGET_COUNT})`}
+                        {isComplete ? t("navigation.submitSequence") : t("navigation.selectAll6ToSubmit", { count: filledCount, total: TARGET_COUNT })}
                     </Button>
                 </div>
             </header>
@@ -320,8 +323,8 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                 <div className="section-title-bar">
                     <div className="section-title-wrap">
                         <span className="section-icon">🧭</span>
-                        <h2 className="section-heading">Your Route Sequence</h2>
-                        <span className="scroll-hint-pill">↔ Scroll to view all stops</span>
+                        <h2 className="section-heading">{t("navigation.yourRouteSequence")}</h2>
+                        <span className="scroll-hint-pill">{t("navigation.scrollHint")}</span>
                     </div>
                     {filledCount > 0 && (
                         <button
@@ -329,7 +332,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                             onClick={handleClearAll}
                             className="clear-all-btn"
                         >
-                            Clear all
+                            {t("navigation.clearAll")}
                         </button>
                     )}
                 </div>
@@ -340,7 +343,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                         {/* Start Point A */}
                         <div className="journey-node start-node">
                             <div className="node-marker">A</div>
-                            <span className="node-label">Gate 1</span>
+                            <span className="node-label">{t("navigation.gate1")}</span>
                         </div>
 
                         <div className="journey-connector">
@@ -370,7 +373,7 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                         {/* End Point B */}
                         <div className="journey-node end-node">
                             <div className="node-marker">B</div>
-                            <span className="node-label">Sports Plaza</span>
+                            <span className="node-label">{t("navigation.sportsPlaza")}</span>
                         </div>
                     </div>
                 </div>
@@ -381,8 +384,8 @@ export function LandmarkOrdering({ landmarks, onComplete }: LandmarkOrderingProp
                 <div className="section-title-bar">
                     <div className="section-title-wrap">
                         <span className="section-icon">🏛️</span>
-                        <h2 className="section-heading">Available Landmarks</h2>
-                        <span className="pool-count-tag">10 Photos • Tap to select in order</span>
+                        <h2 className="section-heading">{t("navigation.availableLandmarks")}</h2>
+                        <span className="pool-count-tag">{t("navigation.photosTapSelect")}</span>
                     </div>
                 </div>
 

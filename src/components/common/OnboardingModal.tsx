@@ -10,7 +10,7 @@ import { useLanguage } from '../../i18n/LanguageContext';
 import { VyomFlowLogo } from './VyomFlowLogo';
 import './OnboardingModal.css';
 
-/** 22 Scheduled Languages of India (8th Schedule) + English */
+/** 11 Core Supported Languages (English + 10 Major Indian Languages supported by Sarvam AI) */
 export const INDIAN_LANGUAGES = [
     { code: 'en', label: 'English', native: 'English' },
     { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
@@ -20,21 +20,9 @@ export const INDIAN_LANGUAGES = [
     { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
     { code: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
     { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
-    { code: 'or', label: 'Odia', native: 'ଓଡ଼ିଆ' },
+    { code: 'od', label: 'Odia', native: 'ଓଡ଼ିଆ' },
     { code: 'pa', label: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
     { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
-    { code: 'as', label: 'Assamese', native: 'অসমীয়া' },
-    { code: 'mai', label: 'Maithili', native: 'मैथिली' },
-    { code: 'sd', label: 'Sindhi', native: 'سنڌي' },
-    { code: 'sa', label: 'Sanskrit', native: 'संस्कृतम्' },
-    { code: 'ne', label: 'Nepali', native: 'नेपाली' },
-    { code: 'kok', label: 'Konkani', native: 'कोंकणी' },
-    { code: 'mni', label: 'Manipuri', native: 'মৈতৈলোন্' },
-    { code: 'brx', label: 'Bodo', native: 'बड़ो' },
-    { code: 'doi', label: 'Dogri', native: 'डोगरी' },
-    { code: 'ks', label: 'Kashmiri', native: 'कॉशुर' },
-    { code: 'sat', label: 'Santali', native: 'ᱥᱟᱱᱛᱟᱲᱤ' },
-    { code: 'ur', label: 'Urdu', native: 'اردو' },
 ] as const;
 
 export const GENDER_OPTIONS = [
@@ -45,7 +33,8 @@ export const GENDER_OPTIONS = [
 ] as const;
 
 export type Gender = (typeof GENDER_OPTIONS)[number]['value'];
-export type LanguageCode = (typeof INDIAN_LANGUAGES)[number]['code'];
+export type LanguageCode = (typeof INDIAN_LANGUAGES)[number]['code'] | 'or';
+
 
 export interface OnboardingData {
     age: number;

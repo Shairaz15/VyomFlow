@@ -12,7 +12,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../lib/firebase';
 import type { LanguageCode } from '../components/common/OnboardingModal';
 
-type TranslationMap = Record<string, string | Record<string, string>>;
+type TranslationValue = string | { [key: string]: TranslationValue };
+type TranslationMap = Record<string, TranslationValue>;
 
 interface LanguageContextType {
     locale: LanguageCode;
@@ -42,7 +43,7 @@ function flattenTranslations(obj: TranslationMap, prefix = ''): Record<string, s
     return result;
 }
 
-// Dynamic import map for locale files
+// Dynamic import map for locale files (11 Core Sarvam AI Languages)
 const localeImporters: Record<string, () => Promise<{ default: TranslationMap }>> = {
     en: () => import('./locales/en.json'),
     hi: () => import('./locales/hi.json'),
@@ -52,21 +53,10 @@ const localeImporters: Record<string, () => Promise<{ default: TranslationMap }>
     ta: () => import('./locales/ta.json'),
     gu: () => import('./locales/gu.json'),
     kn: () => import('./locales/kn.json'),
-    or: () => import('./locales/or.json'),
+    od: () => import('./locales/od.json'),
+    or: () => import('./locales/od.json'), // backwards-compatibility alias for Odia
     pa: () => import('./locales/pa.json'),
     ml: () => import('./locales/ml.json'),
-    as: () => import('./locales/as.json'),
-    mai: () => import('./locales/mai.json'),
-    sd: () => import('./locales/sd.json'),
-    sa: () => import('./locales/sa.json'),
-    ne: () => import('./locales/ne.json'),
-    kok: () => import('./locales/kok.json'),
-    mni: () => import('./locales/mni.json'),
-    brx: () => import('./locales/brx.json'),
-    doi: () => import('./locales/doi.json'),
-    ks: () => import('./locales/ks.json'),
-    sat: () => import('./locales/sat.json'),
-    ur: () => import('./locales/ur.json'),
 };
 
 // Hoisted regex for interpolation (Vercel js-hoist-regexp rule)

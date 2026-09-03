@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const SARVAM_API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 async function testBase64HandlerLogic() {
   console.log('Testing Base64 JSON Vercel Serverless Function logic...');

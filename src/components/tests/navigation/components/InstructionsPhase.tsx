@@ -1,30 +1,33 @@
 import { Button, Card, Icon, TutorialVideoPlaceholder } from "../../../common";
+import { useLanguage } from "../../../../i18n/LanguageContext";
 
 interface InstructionsPhaseProps {
     onStart: () => void;
 }
 
 export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
+    const { t } = useLanguage();
+
     const steps = [
         {
             num: "1",
-            title: "Route Observation",
-            description: "Watch a first-person route video from Point A to Point B. Note turns, pathways, and visual landmarks.",
+            title: t("navigation.step1Title"),
+            description: t("navigation.step1Desc"),
         },
         {
             num: "2",
-            title: "Destination Recall",
-            description: "Confirm your final destination with a quick multiple-choice recall question.",
+            title: t("navigation.step2Title"),
+            description: t("navigation.step2Desc"),
         },
         {
             num: "3",
-            title: "Reverse Navigation",
-            description: "Navigate back from Point B to Point A. At each intersection, use arrow keys (↑, ←, →, ↓) or tap to turn.",
+            title: t("navigation.step3Title"),
+            description: t("navigation.step3Desc"),
         },
         {
             num: "4",
-            title: "Landmark Chronology",
-            description: "Identify the landmarks seen along the route and arrange them in the sequence they appeared.",
+            title: t("navigation.step4Title"),
+            description: t("navigation.step4Desc"),
         },
     ];
 
@@ -35,15 +38,15 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
                     <div className="instructions-icon-wrapper" aria-hidden="true">
                         <Icon name="navigation" size={28} />
                     </div>
-                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+                    <h2 className="instructions-card-title vyom-serif">{t("navigation.howItWorks")}</h2>
 
                     <ol className="instructions-step-list">
                         {steps.map((step) => (
                             <li key={step.num} className="instruction-step-item">
                                 <div className="step-num-bubble">{step.num}</div>
                                 <div className="step-content">
-                                    <strong>{step.title}:</strong>
-                                    <span>{step.description}</span>
+                                    <strong>{step.title}</strong>
+                                    <span> {step.description}</span>
                                 </div>
                             </li>
                         ))}
@@ -55,7 +58,7 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
                             className="story-primary-start-btn"
                             onClick={onStart}
                         >
-                            Start Assessment
+                            {t("navigation.startAssessment")}
                         </Button>
                     </div>
                 </div>

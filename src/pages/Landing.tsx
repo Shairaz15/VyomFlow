@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
     Play, 
     TrendingUp, 
@@ -67,10 +67,10 @@ export function Landing() {
                             {t("landing.howItWorks") || "HOW IT WORKS"}
                         </button>
                         <button onClick={() => handleScrollTo("platform")} className="vyom-nav-link">
-                            TEST MODULES
+                            {t("landing.navTestModules")}
                         </button>
                         <button onClick={() => handleScrollTo("privacy")} className="vyom-nav-link">
-                            PRIVACY
+                            {t("landing.navPrivacy")}
                         </button>
                     </nav>
 
@@ -84,7 +84,7 @@ export function Landing() {
                                     onClick={handleBeginJourney}
                                     className="vyom-pill-btn-dark !py-2.5 !px-5 text-xs font-semibold cursor-pointer"
                                 >
-                                    Continue Journey
+                                    {t("journey.continueJourney")}
                                 </button>
                                 <UserMenu />
                             </>
@@ -95,14 +95,14 @@ export function Landing() {
                                     onClick={handleSignIn}
                                     className="vyom-nav-link text-xs font-semibold !px-3 !py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
                                 >
-                                    Sign In
+                                    {t("nav.signIn")}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleBeginJourney}
                                     className="vyom-pill-btn-dark !py-2.5 !px-5 text-xs font-semibold cursor-pointer"
                                 >
-                                    Get Started
+                                    {t("landing.getStarted")}
                                 </button>
                             </>
                         )}
@@ -179,20 +179,20 @@ export function Landing() {
 
                     <nav className="flex flex-col gap-2.5">
                         <button onClick={() => { setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="vyom-mobile-nav-item">
-                            <span>Home</span>
+                            <span>{t("nav.home")}</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
                         <button onClick={() => handleScrollTo("how-it-works")} className="vyom-mobile-nav-item">
-                            <span>How It Works</span>
+                            <span>{t("nav.howItWorks")}</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
 
                         <button onClick={() => handleScrollTo("platform")} className="vyom-mobile-nav-item">
-                            <span>Test Modules</span>
+                            <span>{t("nav.testModules")}</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
                         <button onClick={() => handleScrollTo("privacy")} className="vyom-mobile-nav-item">
-                            <span>Privacy</span>
+                            <span>{t("nav.privacy")}</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
                     </nav>
@@ -203,7 +203,7 @@ export function Landing() {
                                 onClick={async () => { setMobileMenuOpen(false); await signOut(); }}
                                 className="w-full py-2.5 rounded-2xl bg-black/5 dark:bg-white/5 text-xs font-medium text-red-500/80 hover:text-red-500 transition-colors"
                             >
-                                Sign Out
+                                {t("nav.signOut")}
                             </button>
                         ) : (
                             <button
@@ -211,7 +211,7 @@ export function Landing() {
                                 onClick={async () => { setMobileMenuOpen(false); await handleSignIn(); }}
                                 className="w-full h-[48px] rounded-[24px] bg-[#4F7C78] hover:bg-[#3D6360] text-[#F7F4EC] text-sm font-semibold shadow-md justify-center flex items-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
                             >
-                                <span>Sign In</span>
+                                <span>{t("nav.signIn")}</span>
                                 <span className="text-base">→</span>
                             </button>
                         )}
@@ -232,10 +232,10 @@ export function Landing() {
                                 VyomFlow
                             </h1>
                             <h3 className="vyom-hero-sub-title">
-                                Measuring the Mind, Beyond Memory
+                                {t("landing.heroSubTitle")}
                             </h3>
                             <h5 className="vyom-hero-desc">
-                                Observe, track, and understand your cognitive performance through engaging activities and intelligent analysis.
+                                {t("landing.heroDesc")}
                             </h5>
                         </div>
 
@@ -245,14 +245,14 @@ export function Landing() {
                                 onClick={handleBeginJourney}
                                 className="vyom-pill-btn-dark w-full sm:w-auto"
                             >
-                                <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
+                                <span>{isAuthenticated ? t("journey.continueJourney") : t("landing.beginJourney")}</span>
                                 <span className="text-lg leading-none">→</span>
                             </button>
                             <button
                                 onClick={() => handleScrollTo("how-it-works")}
                                 className="vyom-pill-btn-light w-full sm:w-auto"
                             >
-                                Know How It Works
+                                {t("landing.howItWorks")}
                             </button>
                         </div>
                     </div>
@@ -267,10 +267,10 @@ export function Landing() {
                             VyomFlow
                         </h1>
                         <h3 className="vyom-hero-sub-title px-2">
-                            Measuring the Mind, Beyond Memory
+                            {t("landing.heroSubTitle")}
                         </h3>
                         <h5 className="vyom-hero-desc px-4">
-                            Observe, track, and understand your cognitive performance through engaging activities and intelligent analysis.
+                            {t("landing.heroDesc")}
                         </h5>
 
                         {/* Primary & Secondary Action Buttons (Stacked, 54px height, 28px radius) */}
@@ -279,14 +279,14 @@ export function Landing() {
                                 onClick={handleBeginJourney}
                                 className="w-full h-[54px] rounded-[28px] bg-[#17324D] hover:bg-[#102031] text-[#F7F4EC] text-[16px] font-semibold shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                             >
-                                <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
+                                <span>{isAuthenticated ? t("journey.continueJourney") : t("landing.beginJourney")}</span>
                                 <span className="text-lg leading-none">→</span>
                             </button>
                             <button
                                 onClick={() => handleScrollTo("how-it-works")}
                                 className="w-full h-[54px] rounded-[28px] vyom-mobile-btn-secondary text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
                             >
-                                Know How It Works
+                                {t("landing.howItWorks")}
                             </button>
                         </div>
 
@@ -308,10 +308,10 @@ export function Landing() {
                     {/* Section Header */}
                     <div className="text-center mb-6 md:mb-16 px-4">
                         <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-3 md:mb-4 tracking-tight">
-                            How VyomFlow Works
+                            {t("landing.howItWorksTitle")}
                         </h2>
                         <p className="text-base sm:text-lg vyom-sub-dark max-w-xl mx-auto text-center leading-relaxed">
-                            Three simple steps for meaningful cognitive tracking over time.
+                            {t("landing.howItWorksSubtitle")}
                         </p>
                     </div>
 
@@ -343,9 +343,9 @@ export function Landing() {
                                             <Play className="w-20 h-20 text-[#8FAF8B] opacity-15" strokeWidth={1.5} />
                                         </div>
                                         <div className="vyom-loop-number text-[#8FAF8B]">01</div>
-                                        <div className="vyom-loop-title">PLAY</div>
+                                        <div className="vyom-loop-title">{t("landing.stepPlay")}</div>
                                         <p className="vyom-loop-desc">
-                                             Complete short cognitive activities designed to engage performance.
+                                             {t("landing.stepPlayDesc")}
                                         </p>
                                     </div>
                                 </div>
@@ -357,9 +357,9 @@ export function Landing() {
                                             <TrendingUp className="w-20 h-20 text-[#4F7C78] opacity-15" strokeWidth={1.5} />
                                         </div>
                                         <div className="vyom-loop-number text-[#4F7C78]">02</div>
-                                        <div className="vyom-loop-title">TRACK</div>
+                                        <div className="vyom-loop-title">{t("landing.stepTrack")}</div>
                                         <p className="vyom-loop-desc">
-                                            Build a picture of your cognitive performance over time.
+                                            {t("landing.stepTrackDesc")}
                                         </p>
                                     </div>
                                 </div>
@@ -371,9 +371,9 @@ export function Landing() {
                                             <Brain className="w-20 h-20 text-[#D8B878] opacity-15" strokeWidth={1.5} />
                                         </div>
                                         <div className="vyom-loop-number text-[#D8B878]">03</div>
-                                        <div className="vyom-loop-title">UNDERSTAND</div>
+                                        <div className="vyom-loop-title">{t("landing.stepUnderstand")}</div>
                                         <p className="vyom-loop-desc">
-                                            See meaningful patterns and build awareness of your journey.
+                                            {t("landing.stepUnderstandDesc")}
                                         </p>
                                     </div>
                                 </div>
@@ -394,10 +394,10 @@ export function Landing() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <div className="text-[12px] font-bold tracking-widest text-[#4F7C78] uppercase mb-1">01 • PLAY</div>
-                            <h3 className="vyom-serif font-bold text-xl text-[#17324D] dark:text-[#F7F4EC] mb-1.5">Engage Naturally</h3>
+                            <div className="text-[12px] font-bold tracking-widest text-[#4F7C78] uppercase mb-1">01 • {t("landing.stepPlay")}</div>
+                            <h3 className="vyom-serif font-bold text-xl text-[#17324D] dark:text-[#F7F4EC] mb-1.5">{t("landing.engageNaturally")}</h3>
                             <p className="text-[14px] text-[#486581] dark:text-[#B0C4DE] leading-relaxed text-center">
-                                Complete short cognitive activities designed to observe performance without stress.
+                                {t("landing.engageNaturallyDesc")}
                             </p>
                         </div>
 
@@ -408,10 +408,10 @@ export function Landing() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
                                 </svg>
                             </div>
-                            <div className="text-[12px] font-bold tracking-widest text-[#4F7C78] uppercase mb-1">02 • TRACK</div>
-                            <h3 className="vyom-serif font-bold text-xl text-[#17324D] dark:text-[#F7F4EC] mb-1.5">Observe Trends</h3>
+                            <div className="text-[12px] font-bold tracking-widest text-[#4F7C78] uppercase mb-1">02 • {t("landing.stepTrack")}</div>
+                            <h3 className="vyom-serif font-bold text-xl text-[#17324D] dark:text-[#F7F4EC] mb-1.5">{t("landing.observeTrends")}</h3>
                             <p className="text-[14px] text-[#486581] dark:text-[#B0C4DE] leading-relaxed text-center">
-                                Build a picture of your cognitive performance patterns over time.
+                                {t("landing.observeTrendsDesc")}
                             </p>
                         </div>
 
@@ -422,10 +422,10 @@ export function Landing() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-4a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                 </svg>
                             </div>
-                            <div className="text-[12px] font-bold tracking-widest text-[#A88752] uppercase mb-1">03 • UNDERSTAND</div>
-                            <h3 className="vyom-serif font-bold text-xl text-[#17324D] dark:text-[#F7F4EC] mb-1.5">Gain Clarity</h3>
+                            <div className="text-[12px] font-bold tracking-widest text-[#A88752] uppercase mb-1">03 • {t("landing.stepUnderstand")}</div>
+                            <h3 className="vyom-serif font-bold text-xl text-[#17324D] dark:text-[#F7F4EC] mb-1.5">{t("landing.gainClarity")}</h3>
                             <p className="text-[14px] text-[#486581] dark:text-[#B0C4DE] leading-relaxed text-center">
-                                See meaningful patterns and build awareness of your brain health journey.
+                                {t("landing.gainClarityDesc")}
                             </p>
                         </div>
                     </div>
@@ -437,10 +437,10 @@ export function Landing() {
                 <section id="platform" className="vyom-section scroll-mt-20 relative overflow-hidden py-6 md:py-10">
                     <div className="flex flex-col items-center justify-center text-center mb-6 md:mb-10 relative z-20 px-4 w-full">
                         <h2 className="vyom-serif vyom-heading-dark text-4xl sm:text-5xl font-bold mb-3 md:mb-4 tracking-tight text-center">
-                            Your Cognitive Journey
+                            {t("landing.yourCognitiveJourney")}
                         </h2>
                         <p className="text-base sm:text-lg vyom-sub-dark max-w-xl mx-auto text-center leading-relaxed">
-                            Explore guided activities designed to observe key cognitive domains over time.
+                            {t("landing.cognitiveJourneyDesc")}
                         </p>
                     </div>
 
@@ -673,6 +673,10 @@ export function Landing() {
                                 <p className="text-xs sm:text-sm text-[#465A65] leading-relaxed">
                                     Cognitive metrics and ML feature extraction run locally in your browser session whenever possible, reducing unnecessary data exposure.
                                 </p>
+                                <Link to="/privacy" className="vyom-privacy-card-link" aria-label="Read more about Private by Design">
+                                    <span>Read more</span>
+                                    <span className="readmore-arrow" aria-hidden="true">→</span>
+                                </Link>
                             </div>
 
                             {/* Principle 02: You Own Your Data (Soft Muted Blue Tint: #EEF3F8, Accent: #4A6680) */}
@@ -686,6 +690,10 @@ export function Landing() {
                                 <p className="text-xs sm:text-sm text-[#465A65] leading-relaxed">
                                     Your assessment history and performance trends remain confidential and strictly under your control.
                                 </p>
+                                <Link to="/privacy" className="vyom-privacy-card-link" aria-label="Read more about You Own Your Data">
+                                    <span>Read more</span>
+                                    <span className="readmore-arrow" aria-hidden="true">→</span>
+                                </Link>
                             </div>
 
                             {/* Principle 03: Awareness, Not Diagnosis (Soft Warm Gold Tint: #F7F0E3, Accent: #A88752) */}
@@ -699,7 +707,23 @@ export function Landing() {
                                 <p className="text-xs sm:text-sm text-[#465A65] leading-relaxed">
                                     Designed for self-observation and long-term awareness, maintaining clear boundaries with medical diagnosis.
                                 </p>
+                                <Link to="/privacy" className="vyom-privacy-card-link" aria-label="Read more about Awareness, Not Diagnosis">
+                                    <span>Read more</span>
+                                    <span className="readmore-arrow" aria-hidden="true">→</span>
+                                </Link>
                             </div>
+                        </div>
+
+                        {/* Read More Link with Arrow (Diverts to /privacy) */}
+                        <div className="vyom-privacy-readmore-wrapper">
+                            <Link
+                                to="/privacy"
+                                className="vyom-privacy-readmore-btn"
+                                aria-label="Read more about our Privacy & Data Safeguards"
+                            >
+                                <span>Read more</span>
+                                <span className="readmore-arrow" aria-hidden="true">→</span>
+                            </Link>
                         </div>
                     </div>
                 </section>

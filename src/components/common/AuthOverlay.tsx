@@ -84,10 +84,10 @@ export function AuthOverlay({ children }: AuthOverlayProps) {
                             <VyomFlowLogo size="lg" variant="icon" />
                         </div>
                         <h2 id="test-auth-modal-title" className="vyom-auth-title">
-                            Sign In Required
+                            {t('auth.signInRequired')}
                         </h2>
                         <p className="vyom-auth-subtitle">
-                            Please sign in with Google to access cognitive assessments and save your progress.
+                            {t('auth.signInDesc')}
                         </p>
                     </div>
 
@@ -130,11 +130,11 @@ export function AuthOverlay({ children }: AuthOverlayProps) {
                                 />
                             </svg>
                         )}
-                        <span>{loading ? 'Connecting with Google...' : 'Continue with Google'}</span>
+                        <span>{loading ? t('auth.connecting') : t('auth.continueWithGoogle')}</span>
                     </button>
 
                     {/* Divider */}
-                    <p className="p vyom-auth-divider">or</p>
+                    <p className="p vyom-auth-divider">{t('common.or') || 'or'}</p>
 
                     {/* Return Action */}
                     <button 
@@ -142,12 +142,12 @@ export function AuthOverlay({ children }: AuthOverlayProps) {
                         onClick={handleGoBack}
                         className="button-submit vyom-guest-btn"
                     >
-                        Return to Cognitive Journey
+                        {t('auth.returnToJourney')}
                     </button>
 
                     {/* Footer terms */}
                     <p className="p vyom-auth-footer">
-                        By continuing, you agree to VyomFlow's <span className="span" onClick={handleGoBack}>Privacy Terms</span> & Data Confidentiality.
+                        {t('auth.termsNotice')}
                     </p>
                 </div>
             </div>

@@ -1,21 +1,46 @@
 import { Link } from 'react-router-dom';
 import type { AIPredictionViewModel } from '../../services/dashboardViewModel';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { Check, Zap, Target, Brain, BookOpen, MessageSquareQuote, Layers, Compass, Activity } from 'lucide-react';
 
 interface Props {
     prediction: AIPredictionViewModel;
 }
 
+function getModuleIcon(key: string, size = 13) {
+    switch (key) {
+        case 'reaction':
+            return <Zap size={size} />;
+        case 'attention':
+            return <Target size={size} />;
+        case 'vmra':
+        case 'memory':
+            return <Brain size={size} />;
+        case 'story':
+            return <BookOpen size={size} />;
+        case 'language':
+            return <MessageSquareQuote size={size} />;
+        case 'pattern':
+            return <Layers size={size} />;
+        case 'navigation':
+            return <Compass size={size} />;
+        default:
+            return <Activity size={size} />;
+    }
+}
+
 const ALL_7_MODULES = [
-    { key: 'vmra', name: 'Visual Memory', icon: '🧠', match: ['Visual Memory (VMRA)', 'Visual Memory'] },
-    { key: 'story', name: 'Story Recall', icon: '📖', match: ['Story Recall'] },
-    { key: 'language', name: 'Language & Speech', icon: '🗣️', match: ['Language & Speech'] },
-    { key: 'pattern', name: 'Pattern Memory', icon: '🧩', match: ['Pattern Working Memory', 'Pattern Memory'] },
-    { key: 'reaction', name: 'Reaction Time', icon: '⚡', match: ['Reaction Time', 'Reaction Time & SAVT'] },
-    { key: 'attention', name: 'Sustained Attention', icon: '🎯', match: ['Sustained Attention', 'Attention'] },
-    { key: 'navigation', name: 'Video Navigation', icon: '🗺️', match: ['Video Navigation'] },
+    { key: 'vmra', name: 'Visual Memory', match: ['Visual Memory (VMRA)', 'Visual Memory'] },
+    { key: 'story', name: 'Story Recall', match: ['Story Recall'] },
+    { key: 'language', name: 'Language & Speech', match: ['Language & Speech'] },
+    { key: 'pattern', name: 'Pattern Memory', match: ['Pattern Working Memory', 'Pattern Memory'] },
+    { key: 'reaction', name: 'Reaction Time', match: ['Reaction Time', 'Reaction Time & SAVT'] },
+    { key: 'attention', name: 'Sustained Attention', match: ['Sustained Attention', 'Attention'] },
+    { key: 'navigation', name: 'Video Navigation', match: ['Video Navigation'] },
 ];
 
 export function AIPredictionCard({ prediction }: Props) {
+    const { t } = useLanguage();
     const completedList = prediction.completedModules || [];
     const completedCount = completedList.length;
     const isFullBatteryCompleted = completedCount >= 7;
@@ -29,22 +54,22 @@ export function AIPredictionCard({ prediction }: Props) {
             <div className="dv2-card dv2-animate-in">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <h3 className="dv2-section-title" style={{ margin: 0 }}>AI Cognitive Assessment</h3>
-                    <span className="dv2-ai-badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+                    <span className="dv2-ai-badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)', fontSize: '0.8125rem', fontWeight: 700 }}>
                         ✦ 7-Module Battery Required ({completedCount}/7)
                     </span>
                 </div>
 
-                <p style={{ fontSize: '0.8125rem', color: 'var(--dv2-muted)', margin: '0 0 1.25rem', lineHeight: '1.5' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--dv2-muted)', margin: '0 0 1.25rem', lineHeight: '1.55' }}>
                     To provide a clinically validated diagnostic evaluation and Estimated MoCA score, the Multi-Task AI model requires all <strong>7 digital biomarker assessments</strong> to be completed in a full session.
                 </p>
 
                 {/* Battery Progress Bar */}
                 <div style={{ marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.4rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--dv2-text)', marginBottom: '0.45rem' }}>
                         <span>Session Battery Progress</span>
                         <span>{completedCount} of 7 Completed ({progressPercent}%)</span>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: 'rgba(51, 65, 85, 0.5)', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '9px', background: 'rgba(51, 65, 85, 0.25)', borderRadius: '999px', overflow: 'hidden' }}>
                         <div
                             style={{
                                 width: `${progressPercent}%`,
@@ -60,7 +85,7 @@ export function AIPredictionCard({ prediction }: Props) {
                 {/* 7 Modules Status Checklist */}
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))',
                     gap: '0.5rem',
                     marginBottom: '1.25rem',
                 }}>
@@ -72,17 +97,19 @@ export function AIPredictionCard({ prediction }: Props) {
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '0.4rem',
-                                    padding: '0.45rem 0.6rem',
+                                    gap: '0.45rem',
+                                    padding: '0.5rem 0.65rem',
                                     borderRadius: '8px',
-                                    background: isDone ? 'rgba(16, 185, 129, 0.12)' : 'rgba(30, 41, 59, 0.5)',
-                                    border: isDone ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(51, 65, 85, 0.4)',
-                                    fontSize: '0.75rem',
-                                    color: isDone ? '#34d399' : '#94a3b8',
-                                    fontWeight: isDone ? 600 : 400,
+                                    background: isDone ? 'rgba(16, 185, 129, 0.12)' : 'rgba(30, 41, 59, 0.15)',
+                                    border: isDone ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid var(--dv2-card-border)',
+                                    fontSize: '0.8125rem',
+                                    color: isDone ? '#10b981' : 'var(--dv2-muted)',
+                                    fontWeight: isDone ? 650 : 500,
                                 }}
                             >
-                                <span>{isDone ? '✓' : mod.icon}</span>
+                                <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    {isDone ? <Check size={13} style={{ color: '#10b981' }} /> : getModuleIcon(mod.key, 13)}
+                                </span>
                                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {mod.name}
                                 </span>
@@ -100,8 +127,9 @@ export function AIPredictionCard({ prediction }: Props) {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.5rem',
-                            padding: '0.5rem 1rem',
-                            fontSize: '0.8125rem',
+                            padding: '0.6rem 1.15rem',
+                            fontSize: '0.875rem',
+                            fontWeight: 650,
                             textDecoration: 'none',
                         }}
                     >
@@ -165,28 +193,31 @@ export function AIPredictionCard({ prediction }: Props) {
                 borderTop: '1px solid var(--dv2-card-border)'
             }}>
                 <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)' }}>Estimated MoCA</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                        {prediction.estimatedMoCA.toFixed(1)} <span style={{ fontSize: '0.875rem', fontWeight: 400 }}>/ 30</span>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--dv2-muted)' }}>Estimated MoCA Score</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--dv2-text)', marginTop: '0.15rem' }}>
+                        {prediction.estimatedMoCA.toFixed(1)} <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--dv2-muted)' }}>/ 30</span>
                     </div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--dv2-muted)' }}>95% CI: ±{prediction.mocaCI.toFixed(1)}</div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--dv2-muted)', marginTop: '0.15rem' }}>95% CI: ±{prediction.mocaCI.toFixed(1)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)', marginTop: '2px' }}>
+                        ({t("mixed.mocaExplanation")})
+                    </div>
                 </div>
                 <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)' }}>Risk Score</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                        <span className={`dv2-status-badge ${prediction.riskLevel === 'Low' ? 'green' : prediction.riskLevel === 'Moderate' ? 'yellow' : 'red'}`} style={{ fontSize: '0.75rem' }}>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--dv2-muted)' }}>{t("mixed.riskLevel")}</div>
+                    <div style={{ marginTop: '0.35rem' }}>
+                        <span className={`dv2-status-badge ${prediction.riskLevel === 'Low' ? 'green' : prediction.riskLevel === 'Moderate' ? 'yellow' : 'red'}`} style={{ fontSize: '0.8125rem', fontWeight: 700 }}>
                             {prediction.riskLevel} ({Math.round(prediction.riskScore * 100)}%)
                         </span>
                     </div>
                 </div>
                 <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)' }}>Model Confidence</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{Math.round(prediction.modelConfidence)}%</div>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--dv2-muted)' }}>Model Confidence</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--dv2-text)', marginTop: '0.15rem' }}>{Math.round(prediction.modelConfidence)}%</div>
                 </div>
                 <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)' }}>Battery Coverage</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                        {prediction.completedModules.length}/7 <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>modules</span>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--dv2-muted)' }}>Battery Coverage</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--dv2-text)', marginTop: '0.15rem' }}>
+                        {prediction.completedModules.length}/7 <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--dv2-muted)' }}>modules</span>
                     </div>
                 </div>
             </div>

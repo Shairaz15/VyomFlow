@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const SARVAM_API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 async function testSTTDirect() {
     console.log('Testing Sarvam AI direct Speech-to-Text...');

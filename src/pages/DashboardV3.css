@@ -14,8 +14,8 @@
     --dv2-peach: #FFF3E6;
     --dv2-mint: #E8F1EC;
     --dv2-sand: #D8CBB8;
-    --dv2-text: #20313A;
-    --dv2-muted: #66757A;
+    --dv2-text: #0f172a;
+    --dv2-muted: #475569;
 
     /* Card system */
     --dv2-card-bg: #FFFFFF;
@@ -53,12 +53,12 @@ html.dark .dv2-container {
     --dv2-card-bg: #14283C;
     --dv2-card-border: rgba(255, 255, 255, 0.08);
     --dv2-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --dv2-text: #F7F4EC;
-    --dv2-muted: #B0C4DE;
+    --dv2-text: #f8fafc;
+    --dv2-muted: #cbd5e1;
     --dv2-ivory: #0B1929;
-    --dv2-navy: #F7F4EC;
+    --dv2-navy: #f8fafc;
     background: transparent;
-    color: #F7F4EC;
+    color: #f8fafc;
 }
 
 /* ─── Typography ─────────────────────────────────────────────── */
@@ -119,6 +119,34 @@ html.dark .dv2-container {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.dv2-btn-report {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    padding: 0.52rem 1.15rem !important;
+    border-radius: 10px !important;
+    font-size: 0.8125rem !important;
+    font-weight: 650 !important;
+    cursor: pointer !important;
+    background: rgba(14, 165, 233, 0.08) !important;
+    border: 1px solid rgba(14, 165, 233, 0.28) !important;
+    color: #0284c7 !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.dark .dv2-btn-report,
+[data-theme="dark"] .dv2-btn-report {
+    background: rgba(56, 189, 248, 0.12) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    color: #38bdf8 !important;
+}
+
+.dv2-btn-report:hover {
+    background: rgba(14, 165, 233, 0.18) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.22) !important;
+}
+
 .dv2-header-actions .dv2-btn-primary {
     background: var(--dv2-teal);
     color: white;
@@ -129,34 +157,150 @@ html.dark .dv2-container {
     background: #3d665f;
 }
 
-/* ─── Card Base ──────────────────────────────────────────────── */
+/* ─── Executive Segmented View Switcher ──────────────────────── */
+.dv2-view-switcher-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--dv2-card-border);
+}
+
+.dv2-view-switcher {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.04);
+    border: 1px solid var(--dv2-card-border);
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+}
+
+.dark .dv2-view-switcher,
+[data-theme="dark"] .dv2-view-switcher {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dv2-view-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 1rem;
+    border-radius: 9px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--dv2-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.dv2-view-tab:hover {
+    color: var(--dv2-text);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dv2-view-tab.active {
+    background: var(--dv2-card-bg);
+    color: var(--dv2-text);
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.dark .dv2-view-tab.active,
+[data-theme="dark"] .dv2-view-tab.active {
+    color: #38bdf8;
+    background: #1e293b;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.dv2-view-meta-tag {
+    font-size: 0.78rem;
+    color: var(--dv2-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* ─── Animated View Transition ───────────────────────────────── */
+.dv2-view-content {
+    animation: dv2FadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+@keyframes dv2FadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─── Bento-Grid System ──────────────────────────────────────── */
+.dv2-bento-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.dv2-bento-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+@media (max-width: 960px) {
+    .dv2-bento-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* ─── Card Base (Elevated Specular Highlight) ─────────────────── */
 .dv2-card {
     background: var(--dv2-card-bg);
     border: 1px solid var(--dv2-card-border);
-    border-radius: var(--dv2-card-radius);
-    box-shadow: var(--dv2-card-shadow);
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 8px rgba(0, 0, 0, 0.04);
     padding: 1.5rem;
-    margin-bottom: 1.25rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 0;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.dark .dv2-card,
+[data-theme="dark"] .dv2-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .dv2-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: rgba(56, 189, 248, 0.25);
 }
 
 .dv2-card-flat {
     background: var(--dv2-card-bg);
     border: 1px solid var(--dv2-card-border);
-    border-radius: var(--dv2-card-radius);
+    border-radius: 20px;
     padding: 1.5rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0;
 }
 
 /* ─── Section Titles ─────────────────────────────────────────── */
 .dv2-section-title {
     font-family: 'Playfair Display', Georgia, serif;
     font-size: 1.25rem;
+    font-weight: 700;
     color: var(--dv2-navy);
     margin-bottom: 1rem;
     letter-spacing: -0.01em;
@@ -171,14 +315,14 @@ html.dark .dv2-container {
 /* ─── Grid Layouts ───────────────────────────────────────────── */
 .dv2-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .dv2-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-.dv2-grid-6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.dv2-grid-6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
 
 /* ─── Responsive Breakpoints ─────────────────────────────────── */
 @media (max-width: 768px) {
     .dv2-container { padding: 1rem 0.75rem; }
     .dv2-grid-2,
-    .dv2-grid-3,
-    .dv2-grid-6 { grid-template-columns: 1fr; }
+    .dv2-grid-3 { grid-template-columns: 1fr; }
+    .dv2-grid-6 { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
     .dv2-header { flex-direction: column; gap: 1rem; align-items: stretch; }
     .dv2-header-actions {
         width: 100%;
@@ -191,8 +335,29 @@ html.dark .dv2-container {
         justify-content: center;
         padding: 0.625rem 1rem;
     }
-    .dv2-header h1 { font-size: 1.35rem; }
-    .dv2-card { padding: 1.125rem 0.875rem; }
+    .dv2-header h1 { font-size: 1.45rem; }
+    .dv2-card { padding: 1.25rem 1rem; }
+
+    /* View Switcher Responsive */
+    .dv2-view-switcher-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    .dv2-view-switcher {
+        width: 100%;
+        display: flex;
+    }
+    .dv2-view-tab {
+        flex: 1;
+        justify-content: center;
+        padding: 0.45rem 0.5rem;
+        font-size: 0.75rem;
+        gap: 0.35rem;
+    }
+    .dv2-view-meta-tag {
+        display: none;
+    }
 }
 
 @media (min-width: 480px) and (max-width: 768px) {
@@ -254,81 +419,106 @@ html.dark .dv2-container {
 }
 
 .dv2-prob-label {
-    width: 75px;
-    font-size: 0.8125rem;
-    color: var(--dv2-muted);
+    width: 80px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dv2-text);
     flex-shrink: 0;
 }
 
 .dv2-prob-bar-track {
     flex: 1;
-    height: 8px;
-    background: rgba(0, 0, 0, 0.06);
-    border-radius: 4px;
+    height: 9px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
     overflow: hidden;
 }
 
 .dark .dv2-prob-bar-track {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .dv2-prob-bar-fill {
     height: 100%;
-    border-radius: 4px;
+    border-radius: 6px;
     transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .dv2-prob-value {
-    width: 40px;
+    width: 44px;
     text-align: right;
-    font-size: 0.8125rem;
-    font-weight: 600;
+    font-size: 0.875rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--dv2-text);
     flex-shrink: 0;
 }
 
-/* ─── Domain Card ────────────────────────────────────────────── */
+/* ─── Domain Card (Compact, Larger Icon, Refined Micro-Typography) ─── */
 .dv2-domain-card {
     text-align: center;
     position: relative;
-    padding: 1.25rem 1rem;
+    padding: 0.75rem 0.55rem;
+    border-radius: 14px;
     border-left: 3px solid transparent;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.dv2-domain-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 .dv2-domain-card .dv2-domain-icon {
-    font-size: 1.5rem;
-    margin-bottom: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.3rem;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dv2-domain-card:hover .dv2-domain-icon {
+    transform: scale(1.1);
 }
 
 .dv2-domain-card .dv2-domain-name {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 650;
     color: var(--dv2-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dv2-domain-card .dv2-domain-score {
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1;
-    margin-bottom: 0.375rem;
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.15rem;
+    color: var(--dv2-text);
+    font-family: monospace;
 }
 
 .dv2-domain-card .dv2-domain-delta {
-    font-size: 0.8125rem;
+    font-size: 0.72rem;
     font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 0.15rem;
+    line-height: 1;
 }
 
 .dv2-domain-card .dv2-domain-label {
-    font-size: 0.6875rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 650;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-top: 0.25rem;
+    letter-spacing: 0.03em;
+    margin-top: 0.1rem;
+    line-height: 1;
 }
 
 .dv2-domain-card.trend-up { border-left-color: #4ade80; }
@@ -864,28 +1054,11 @@ html.dark .dv2-container {
     display: none;
 }
 
-.dv2-trends-desktop-view {
-    display: block;
-}
-
-@media (max-width: 768px) {
-    .dv2-trends-mobile-view {
-        display: flex;
-        flex-direction: column;
-        gap: 0.65rem;
-    }
-
-    .dv2-trends-desktop-view {
-        display: none;
-    }
-}
-
-.dv2-trends-mobile-header {
+/* ─── Unified Longitudinal Trends ────────────────────────────── */
+.dv2-trends-unified-view {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0 0.15rem;
+    flex-direction: column;
+    gap: 0.65rem;
 }
 
 .dv2-trends-active-indicator {
@@ -1013,4 +1186,349 @@ html.dark .dv2-container {
         display: block !important;
     }
 }
+
+/* ─── Hero Summary Redesign & Sessions Done Mark ─────────────────── */
+.dv2-hero-card {
+    position: relative;
+    padding: 1.5rem 1.75rem;
+}
+
+.dv2-hero-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.dv2-hero-status-left {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+}
+
+.dv2-hero-icon-wrapper {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.dv2-hero-icon-wrapper.green {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1.5px solid rgba(16, 185, 129, 0.35);
+    color: #10b981;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15);
+}
+
+.dv2-hero-icon-wrapper.yellow,
+.dv2-hero-icon-wrapper.orange {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1.5px solid rgba(245, 158, 11, 0.35);
+    color: #f59e0b;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);
+}
+
+.dv2-hero-icon-wrapper.red {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1.5px solid rgba(239, 68, 68, 0.35);
+    color: #ef4444;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15);
+}
+
+.dv2-hero-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.dv2-hero-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.dv2-hero-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.dv2-hero-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.84rem;
+    color: var(--dv2-muted);
+}
+
+/* Sessions Mark Badge on Top Right */
+.dv2-sessions-mark-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    padding: 0.65rem 1rem;
+    background: rgba(14, 165, 233, 0.08);
+    border: 1.5px solid rgba(14, 165, 233, 0.28);
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.dv2-sessions-mark-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.dv2-sessions-mark-icon {
+    color: #0284c7;
+}
+
+.dv2-sessions-mark-num {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0284c7;
+    line-height: 1;
+}
+
+.dv2-sessions-mark-text {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--dv2-text);
+    letter-spacing: -0.01em;
+}
+
+.dv2-sessions-mark-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--dv2-muted);
+    font-weight: 500;
+}
+
+.dv2-sessions-check-icon {
+    color: #10b981;
+}
+
+/* Simplified Body */
+.dv2-hero-body {
+    border-top: 1px solid var(--dv2-card-border);
+    margin-top: 1.15rem;
+    padding-top: 1rem;
+}
+
+.dv2-hero-info-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.dv2-hero-info-line {
+    font-size: 0.94rem;
+    line-height: 1.5;
+    color: var(--dv2-text);
+}
+
+.dv2-hero-info-label {
+    font-weight: 700;
+    margin-right: 0.5rem;
+    color: var(--dv2-text);
+}
+
+.dv2-hero-info-val {
+    color: var(--dv2-text);
+    font-weight: 450;
+}
+
+.dv2-hero-tip-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--dv2-muted);
+}
+
+.dv2-hero-tip-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    background: rgba(14, 165, 233, 0.12);
+    color: #0284c7;
+    border-radius: 6px;
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.dv2-hero-tip-text {
+    color: var(--dv2-muted);
+}
+
+/* ─── Responsive Mobile Optimizations for Hero Summary ─── */
+@media (max-width: 640px) {
+    .dv2-hero-card {
+        padding: 1.15rem 1rem;
+        border-radius: 14px;
+    }
+
+    .dv2-hero-top-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.95rem;
+    }
+
+    .dv2-hero-status-left {
+        gap: 0.85rem;
+        align-items: flex-start;
+    }
+
+    .dv2-hero-icon-wrapper {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        margin-top: 2px;
+    }
+
+    .dv2-hero-icon-wrapper svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .dv2-hero-title-wrap {
+        gap: 0.5rem;
+    }
+
+    .dv2-hero-title {
+        font-size: 1.22rem;
+        line-height: 1.25;
+    }
+
+    .dv2-hero-meta-row {
+        gap: 0.4rem 1rem;
+        margin-top: 0.35rem;
+    }
+
+    .dv2-confidence-ring {
+        font-size: 0.8rem;
+    }
+
+    .dv2-hero-date {
+        font-size: 0.78rem;
+    }
+
+    /* Sessions Done Mark: Sleek full-width pill bar on mobile */
+    .dv2-sessions-mark-card {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0.6rem 0.85rem;
+        box-sizing: border-box;
+        border-radius: 12px;
+        background: rgba(14, 165, 233, 0.08);
+    }
+
+    .dv2-sessions-mark-badge {
+        gap: 0.4rem;
+    }
+
+    .dv2-sessions-mark-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .dv2-sessions-mark-num {
+        font-size: 1.2rem;
+    }
+
+    .dv2-sessions-mark-text {
+        font-size: 0.82rem;
+    }
+
+    .dv2-sessions-mark-sub {
+        font-size: 0.72rem;
+    }
+
+    /* Simplified Body */
+    .dv2-hero-body {
+        margin-top: 0.95rem;
+        padding-top: 0.85rem;
+    }
+
+    .dv2-hero-info-box {
+        gap: 0.75rem;
+    }
+
+    .dv2-hero-info-line {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        font-size: 0.88rem;
+    }
+
+    .dv2-hero-info-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--dv2-muted);
+        margin-right: 0;
+    }
+
+    .dv2-hero-info-val {
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .dv2-hero-tip-line {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+
+    .dv2-hero-tip-tag {
+        font-size: 0.68rem;
+        padding: 2px 6px;
+        margin-top: 2px;
+    }
+
+    .dv2-hero-tip-text {
+        font-size: 0.84rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .dv2-hero-card {
+        padding: 1rem 0.8rem;
+    }
+
+    .dv2-sessions-mark-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+
+    .dv2-hero-title {
+        font-size: 1.15rem;
+    }
+}
+
 

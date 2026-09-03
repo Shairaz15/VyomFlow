@@ -22,7 +22,7 @@ interface UserPreferences {
 
 export function Settings() {
     const { user, isAdmin } = useAuth();
-    const { t } = useLanguage();
+    const { t, setLocale } = useLanguage();
     const [preferences, setPreferences] = useState<UserPreferences>({
         emailNotifications: true,
     });
@@ -105,6 +105,8 @@ export function Settings() {
                 preferredLanguage,
                 'preferences.updatedAt': serverTimestamp(),
             });
+            setLocale(preferredLanguage);
+            localStorage.setItem('preferredLanguage', preferredLanguage);
             setMessage({ type: 'success', text: t('settings.profileUpdated') });
         } catch (error) {
             console.error('Error saving profile:', error);
@@ -297,12 +299,12 @@ export function Settings() {
                 </section>
 
                 <section className="settings-section">
-                    <h2>Data & Session Storage</h2>
+                    <h2>{t('settings.dataSessionStorage')}</h2>
                     <div className="setting-item">
                         <div className="setting-info">
-                            <span className="setting-label">Reset Local Session Cache</span>
+                            <span className="setting-label">{t('settings.resetLocalCache')}</span>
                             <span className="setting-description">
-                                Clear temporary browser test cache and start with a fresh slate.
+                                {t('settings.resetCacheDesc')}
                             </span>
                         </div>
                         <button
@@ -310,7 +312,7 @@ export function Settings() {
                             onClick={handleCleanSlate}
                             style={{ borderColor: 'rgba(239, 68, 68, 0.4)', color: '#ef4444' }}
                         >
-                            🧹 Clear Local Data
+                            {t('settings.clearLocalData')}
                         </button>
                     </div>
                 </section>

@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Card, Button, MotivationalQuoteBlock } from '../components/common';
 import { PageWrapper } from '../components/layout';
 import { selectRandomWords } from '../data/wordPools';
@@ -26,6 +27,7 @@ const RECALL_DURATION = 45000; // 45 seconds max
 export function MemoryAssessment() {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const { t } = useLanguage();
 
     // Phase management
     const [phase, setPhase] = useState<AssessmentPhase>('instructions');
@@ -177,12 +179,7 @@ export function MemoryAssessment() {
         setPhase('scoring');
 
         // Extract features and compute profile
-        // Extract features and compute profile
         const extractedFeatures = extractMemoryFeatures(rawMetrics);
-        // setFeatures(extractedFeatures);
-
-        // const computedProfile = computeMemoryProfile(extractedFeatures);
-        // setProfile(computedProfile);
 
         const factors = identifyKeyFactors(rawMetrics, extractedFeatures);
         setKeyFactors(factors);
@@ -209,36 +206,36 @@ export function MemoryAssessment() {
                 return (
                     <div className="assessment-phase instructions-phase">
                         <div className="phase-icon">🧠</div>
-                        <h2>Verbal Memory Assessment</h2>
+                        <h2>{t('memory.title')}</h2>
                         <p className="phase-description">
-                            This brief activity helps track your short-term recall patterns over time.
+                            {t('memory.subtitle')}
                         </p>
 
                         <div className="instructions-list">
                             <div className="instruction-item">
                                 <span className="instruction-number">1</span>
-                                <span>You'll see {WORD_COUNT} words, one at a time</span>
+                                <span>{t('memory.step1', { count: WORD_COUNT })}</span>
                             </div>
                             <div className="instruction-item">
                                 <span className="instruction-number">2</span>
-                                <span>Try to remember as many as you can</span>
+                                <span>{t('memory.step2')}</span>
                             </div>
                             <div className="instruction-item">
                                 <span className="instruction-number">3</span>
-                                <span>After a short activity, type the words you recall</span>
+                                <span>{t('memory.step3')}</span>
                             </div>
                         </div>
 
                         <p className="reassurance-text">
-                            Take your time — there's no pressure. Occasional variation is completely normal.
+                            {t('memory.reassurance')}
                         </p>
 
                         <div className="button-group" style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                             <Button variant="secondary" size="lg" onClick={() => navigate('/tests')}>
-                                Back
+                                {t('memory.back')}
                             </Button>
                             <Button variant="primary" size="lg" onClick={startEncoding}>
-                                Begin Assessment
+                                {t('memory.beginAssessment')}
                             </Button>
                         </div>
                     </div>
@@ -247,7 +244,7 @@ export function MemoryAssessment() {
             case 'encoding':
                 return (
                     <div className="assessment-phase encoding-phase">
-                        <p className="phase-label">Remember this word</p>
+                        <p className="phase-label">{t('memory.rememberWord')}</p>
                         <div className="word-display">
                             {presentedWords[currentWordIndex]}
                         </div>
@@ -265,7 +262,7 @@ export function MemoryAssessment() {
             case 'interference':
                 return (
                     <div className="assessment-phase interference-phase">
-                        <p className="phase-label">Tap the number: <strong>{interferenceTarget}</strong></p>
+                        <p className="phase-label">{t('memory.tapNumber')} <strong>{interferenceTarget}</strong></p>
                         <div className="number-grid">
                             {interferenceNumbers.map((num) => (
                                 <button
@@ -277,25 +274,25 @@ export function MemoryAssessment() {
                                 </button>
                             ))}
                         </div>
-                        <p className="time-remaining">{interferenceTimeLeft}s remaining</p>
+                        <p className="time-remaining">{t('memory.timeRemaining', { seconds: interferenceTimeLeft })}</p>
                     </div>
                 );
 
             case 'recall':
                 return (
                     <div className="assessment-phase recall-phase">
-                        <p className="phase-label">Type the words you remember</p>
+                        <p className="phase-label">{t('memory.typeWords')}</p>
 
                         <form onSubmit={handleRecallSubmit} className="recall-form">
                             <input
                                 type="text"
                                 value={recallInput}
                                 onChange={(e) => setRecallInput(e.target.value)}
-                                placeholder="Type a word and press Enter"
+                                placeholder={t('memory.placeholder')}
                                 autoFocus
                                 className="recall-input"
                             />
-                            <Button type="submit" variant="secondary">Add</Button>
+                            <Button type="submit" variant="secondary">{t('memory.add')}</Button>
                         </form>
 
                         {recalledWords.length > 0 && (
@@ -306,14 +303,14 @@ export function MemoryAssessment() {
                             </div>
                         )}
 
-                        <p className="time-remaining">{recallTimeLeft}s remaining</p>
+                        <p className="time-remaining">{t('memory.timeRemaining', { seconds: recallTimeLeft })}</p>
 
                         <Button
                             variant="primary"
                             onClick={finishRecall}
                             className="finish-button"
                         >
-                            I'm Done
+                            {t('memory.imDone')}
                         </Button>
                     </div>
                 );
@@ -323,7 +320,7 @@ export function MemoryAssessment() {
                     <div className="assessment-phase scoring-phase">
                         <div className="scoring-animation">
                             <div className="spinner"></div>
-                            <p>Processing your responses...</p>
+                            <p>{t('memory.processing')}</p>
                         </div>
                     </div>
                 );
@@ -332,13 +329,13 @@ export function MemoryAssessment() {
                 return (
                     <div className="assessment-phase completion-phase">
                         <div className="phase-icon success">✓</div>
-                        <h2>Assessment Complete</h2>
+                        <h2>{t('memory.assessmentComplete')}</h2>
 
                         <Card className="results-card">
                             <div className="result-item">
-                                <span className="result-label">Words recalled</span>
+                                <span className="result-label">{t('memory.wordsRecalled')}</span>
                                 <span className="result-value">
-                                    {metrics?.correctCount} out of {WORD_COUNT}
+                                    {t('memory.outOf', { count: metrics?.correctCount ?? 0, total: WORD_COUNT })}
                                 </span>
                             </div>
 
@@ -363,7 +360,7 @@ export function MemoryAssessment() {
 
                             {metrics && metrics.falseRecallCount > 0 && (
                                 <div className="result-item secondary">
-                                    <span className="result-label">Additional words entered</span>
+                                    <span className="result-label">{t('memory.additionalWords')}</span>
                                     <span className="result-value">{metrics.falseRecallCount}</span>
                                 </div>
                             )}
@@ -371,7 +368,7 @@ export function MemoryAssessment() {
 
                         {keyFactors.length > 0 && (
                             <div className="factors-section">
-                                <p className="factors-label">Observations:</p>
+                                <p className="factors-label">{t('memory.observations')}</p>
                                 <ul className="factors-list">
                                     {keyFactors.map((factor, i) => (
                                         <li key={i}>{factor}</li>
@@ -381,15 +378,15 @@ export function MemoryAssessment() {
                         )}
 
                         <p className="reassurance-text">
-                            Occasional variation is normal. Trends over time are more meaningful than a single session.
+                            {t('memory.reassuranceFooter')}
                         </p>
 
                         <div className="completion-actions">
                             <Button variant="primary" onClick={() => navigate('/dashboard')}>
-                                View Dashboard
+                                {t('memory.viewDashboard')}
                             </Button>
                             <Button variant="secondary" onClick={() => navigate('/tests')}>
-                                Back to Assessments
+                                {t('memory.backToAssessments')}
                             </Button>
                         </div>
                     </div>

@@ -28,6 +28,8 @@ export interface OverviewViewModel {
     lastAssessmentDate: string;   // Human-readable date string
     comparisonSummary: string;    // "No significant decline detected"
     recommendation: string;       // "Continue annual monitoring"
+    fullSessionsCompleted?: number; // Number of times all 7 assessments were completed
+    totalTestsCompleted?: number;
 }
 
 // ─── Section 2: AI Prediction ──────────────────────────────────
@@ -461,28 +463,38 @@ function alertLevelToOverview(alertOutput: AlertOutput | null, confidence: numbe
     let cognitiveStatus: OverviewViewModel['cognitiveStatus'] = 'Stable';
     let statusEmoji: OverviewViewModel['statusEmoji'] = '🟢';
     let statusColor: OverviewViewModel['statusColor'] = 'green';
+    let comparisonSummary = 'Performance is stable and aligned with your personal baseline.';
+    let recommendation = 'Continue regular cognitive checkups and maintain healthy lifestyle habits.';
 
     switch (alertOutput.alertLevel) {
         case 'EVALUATE':
             cognitiveStatus = 'Needs Attention';
             statusEmoji = '🔴';
             statusColor = 'red';
+            comparisonSummary = 'A noticeable shift was observed across specific cognitive tests compared to prior checkups.';
+            recommendation = 'We recommend downloading your clinician report and discussing these findings with your physician.';
             break;
         case 'RE_ASSESS':
             cognitiveStatus = 'Possible Risk';
             statusEmoji = '🟠';
             statusColor = 'orange';
+            comparisonSummary = 'Mild variation detected in specific cognitive domains compared to previous checkups.';
+            recommendation = 'Re-assess in 3–4 weeks to monitor whether this reflects daily tiredness or a continuing pattern.';
             break;
         case 'MONITOR':
             cognitiveStatus = 'Possible Risk';
             statusEmoji = '🟡';
             statusColor = 'yellow';
+            comparisonSummary = 'Slight variation noted in some tests; overall cognitive function remains solid.';
+            recommendation = 'Maintain regular weekly assessments and review sleep and stress factors.';
             break;
         case 'STABLE':
         default:
             cognitiveStatus = 'Stable';
             statusEmoji = '🟢';
             statusColor = 'green';
+            comparisonSummary = 'Your cognitive scores are steady with no significant changes from your baseline.';
+            recommendation = 'Keep up regular cognitive monitoring, physical activity, and good rest.';
             break;
     }
 
@@ -492,8 +504,8 @@ function alertLevelToOverview(alertOutput: AlertOutput | null, confidence: numbe
         statusColor,
         confidence: Math.round(confidence),
         lastAssessmentDate: '', // Will be set by caller
-        comparisonSummary: alertOutput.recommendationText.split('.')[0] + '.',
-        recommendation: alertOutput.recommendationText,
+        comparisonSummary,
+        recommendation,
     };
 }
 
@@ -1076,6 +1088,23 @@ export function buildDashboardViewModel(
         alertOutput?.confidenceScore ?? 0
     );
     overview.lastAssessmentDate = findLatestTimestamp(rawData);
+
+    // Compute exact number of completed full sessions (all 7 assessments once = 1 session)
+    const moduleCounts = [
+        deduplicateRawResults(rawData.reaction || []).length,
+        deduplicateRawResults(rawData.pattern || []).length,
+        deduplicateRawResults(rawData.vmra || []).length,
+        deduplicateRawResults(rawData.story || []).length,
+        deduplicateRawResults(rawData.language || []).length,
+        deduplicateRawResults(rawData.navigation || []).length,
+        Math.max(
+            deduplicateRawResults(rawData.attention || []).length,
+            deduplicateRawResults(rawData.memory || []).length
+        ),
+    ];
+    const fullBatterySessions = Math.min(...moduleCounts);
+    overview.fullSessionsCompleted = Math.max(fullBatterySessions, sessionCount > 0 ? sessionCount : 0);
+    overview.totalTestsCompleted = moduleCounts.reduce((a, b) => a + b, 0);
 
     // AI Prediction (Section 2)
     const aiPrediction: AIPredictionViewModel = prediction

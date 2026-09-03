@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const API_KEY = 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 // Create a minimal 1-second 16kHz mono WAV file
 function createWavHeader(sampleRate = 16000, numChannels = 1, bitsPerSample = 16, numSamples = 16000) {

@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 
-const API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const API_KEY = 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 const modelsToTest = ['saaras:v4', 'saaras:v3', 'saaras:v2.5', 'saaras:v2', 'saaras:flash'];
 const endpoints = [

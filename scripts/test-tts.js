@@ -1,4 +1,4 @@
-const SARVAM_API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = process.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 async function testTTS() {
     const ttsRes = await fetch('https://api.sarvam.ai/text-to-speech', {

@@ -1,8 +1,3 @@
-/**
- * Demo Page
- * Displays synthetic cognitive decline data for judges without requiring login.
- */
-
 import { useState } from 'react';
 import { DEMO_SESSIONS, getDemoSessionDataPoints } from '../demo/demoSessions';
 import { DEMO_USER } from '../demo/demoProfile';
@@ -10,10 +5,12 @@ import { PageWrapper } from '../components/layout/PageWrapper';
 import { Button, Card, CardContent, RiskBadge } from '../components/common';
 import { analyzeTrend } from '../ai/trendAnalyzer';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { useLanguage } from '../i18n/LanguageContext';
 import type { RiskLevel } from '../ethics/messagingRules';
 import './Demo.css';
 
 export function Demo() {
+    const { t } = useLanguage();
     const [selectedMetric, setSelectedMetric] = useState<'memory' | 'reaction' | 'pattern'>('memory');
 
     const dataPoints = getDemoSessionDataPoints();
@@ -32,46 +29,45 @@ export function Demo() {
     }));
 
     const metricConfig = {
-        memory: { label: 'Memory Accuracy', color: '#8b5cf6', unit: '%' },
-        reaction: { label: 'Reaction Time', color: '#f59e0b', unit: 'ms' },
-        pattern: { label: 'Pattern Score', color: '#10b981', unit: '' },
+        memory: { label: t('demo.memoryAccuracy'), color: '#8b5cf6', unit: '%' },
+        reaction: { label: t('demo.reactionTime'), color: '#f59e0b', unit: 'ms' },
+        pattern: { label: t('demo.patternScore'), color: '#10b981', unit: '' },
     };
 
     return (
         <PageWrapper>
             <div className="demo-page">
                 <header className="demo-header">
-                    <div className="demo-badge">Demo Mode</div>
-                    <h1>Cognitive Trend Analysis</h1>
+                    <div className="demo-badge">{t('demo.badge')}</div>
+                    <h1>{t('demo.title')}</h1>
                     <p>
-                        Viewing synthetic data for <strong>{DEMO_USER.name}</strong> showing a
-                        gradual cognitive decline pattern over 6 sessions.
+                        {t('demo.viewingData', { name: DEMO_USER.name })}
                     </p>
                 </header>
 
                 <div className="demo-grid">
                     <Card className="trend-card">
                         <div className="card-header">
-                            <h3 className="card-title">Trend Analysis</h3>
+                            <h3 className="card-title">{t('demo.trendAnalysis')}</h3>
                             <RiskBadge level={riskLevel} />
                         </div>
                         <CardContent>
                             <div className="trend-summary">
                                 <div className="trend-item">
-                                    <span className="trend-label">Direction</span>
+                                    <span className="trend-label">{t('demo.direction')}</span>
                                     <span className={`trend-value ${trendResult.trend}`}>
-                                        {trendResult.trend === 'declining' ? '↓ Declining' :
-                                            trendResult.trend === 'improving' ? '↑ Improving' : '→ Stable'}
+                                        {trendResult.trend === 'declining' ? t('demo.declining') :
+                                            trendResult.trend === 'improving' ? t('demo.improving') : t('demo.stable')}
                                     </span>
                                 </div>
                                 <div className="trend-item">
-                                    <span className="trend-label">Confidence</span>
+                                    <span className="trend-label">{t('demo.confidence')}</span>
                                     <span className="trend-value">
                                         {Math.round(trendResult.confidence * 100)}%
                                     </span>
                                 </div>
                                 <div className="trend-item">
-                                    <span className="trend-label">Sessions</span>
+                                    <span className="trend-label">{t('demo.sessionsLabel')}</span>
                                     <span className="trend-value">{DEMO_SESSIONS.length}</span>
                                 </div>
                             </div>
@@ -80,7 +76,7 @@ export function Demo() {
 
                     <Card className="chart-card">
                         <div className="card-header">
-                            <h3 className="card-title">Performance Over Time</h3>
+                            <h3 className="card-title">{t('demo.performanceOverTime')}</h3>
                             <div className="metric-selector">
                                 {Object.entries(metricConfig).map(([key, config]) => (
                                     <button
@@ -124,20 +120,16 @@ export function Demo() {
                 </div>
 
                 <section className="demo-info">
-                    <h3>About This Demo</h3>
+                    <h3>{t('demo.aboutTitle')}</h3>
                     <p>
-                        This demo shows a simulated cognitive decline pattern. The data represents
-                        a user whose memory accuracy drops from 86% to 58% over 5 weeks, with
-                        corresponding increases in reaction time variance and decreases in pattern
-                        recognition scores.
+                        {t('demo.aboutDesc1')}
                     </p>
                     <p>
-                        In a real scenario, this pattern would trigger our ML-based anomaly detection
-                        and generate a "Possible Cognitive Risk" alert.
+                        {t('demo.aboutDesc2')}
                     </p>
                     <div className="demo-actions">
                         <Button variant="primary" onClick={() => window.location.href = '/'}>
-                            Try VyomFlow
+                            {t('demo.tryVyomflow')}
                         </Button>
                     </div>
                 </section>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
 import { PageWrapper } from "../../layout";
@@ -19,6 +20,7 @@ export function PatternAssessment() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
     const { isAuthenticated } = useAuth();
+    const { t } = useLanguage();
     const { results, saveResult } = usePatternResults();
 
     // Custom tick renderer for Radar Chart
@@ -101,7 +103,7 @@ export function PatternAssessment() {
         setUserSequence([]);
         setGameState('showing');
         setFeedbackTile(null);
-        setMessage("Watch the pattern...");
+        setMessage(t("pattern.watchPattern"));
 
         // Determine speed (gets faster)
         const speed = Math.max(300, BASE_SPEED - (level * 30));
@@ -117,7 +119,7 @@ export function PatternAssessment() {
                 if (sequenceIntervalRef.current) clearInterval(sequenceIntervalRef.current);
                 setActiveTile(null);
                 setGameState('waiting');
-                setMessage("Your turn: Repeat the pattern");
+                setMessage(t("pattern.yourTurn"));
                 roundStartTimeRef.current = Date.now();
                 return;
             }
@@ -131,7 +133,7 @@ export function PatternAssessment() {
             i++;
         }, speed);
 
-    }, [level, isAuthenticated]);
+    }, [level, isAuthenticated, t]);
 
     // Cleanup interval on unmount
     useEffect(() => {
@@ -187,23 +189,23 @@ export function PatternAssessment() {
             setRounds(prev => [...prev, roundData]);
 
             if (success) {
-                setMessage("Correct!");
+                setMessage(t("pattern.correctNext"));
                 setTimeout(() => {
                     setLevel(prev => prev + 1);
                 }, 1000);
             } else {
-                setMessage("Sequence ended.");
+                setMessage(t("pattern.sequenceEnded"));
                 setTimeout(() => {
                     setPhase('complete');
                 }, 1500);
                 return;
             }
         } else if (phase === 'demonstration') {
-            setMessage(success ? "Great! Practice completed." : "Let's begin the real assessment.");
+            setMessage(success ? t("pattern.practiceCompleted") : t("pattern.beginRealAssessment"));
             setTimeout(() => setPhase('calibration'), 1500);
             return;
         } else if (phase === 'calibration') {
-            setMessage("Calibration complete. Starting Assessment.");
+            setMessage(t("pattern.calibrationComplete"));
             setTimeout(() => {
                 setPhase('assessment');
                 setLevel(1);
@@ -330,19 +332,19 @@ export function PatternAssessment() {
                         type="button"
                         onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to Assessments"
+                        aria-label={t("pattern.backToAssessments")}
                     >
                         <span className="back-arrow" aria-hidden="true">←</span>
-                        <span>Back to Assessments</span>
+                        <span>{t("pattern.backToAssessments")}</span>
                     </button>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
                 {phase === 'instructions' && (
                     <div className="story-header animate-fadeInUp">
-                        <h1 className="story-title vyom-serif">Pattern Recognition</h1>
+                        <h1 className="story-title vyom-serif">{t("pattern.title")}</h1>
                         <p className="story-subtitle">
-                            Analyze visual sequences and remember sequential patterns to assess visuospatial working memory and executive control.
+                            {t("pattern.subtitle")}
                         </p>
                     </div>
                 )}
@@ -357,35 +359,35 @@ export function PatternAssessment() {
                                     <div className="instructions-icon-wrapper" aria-hidden="true">
                                         <Icon name="pattern" size={28} />
                                     </div>
-                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+                                    <h2 className="instructions-card-title vyom-serif">{t("pattern.howItWorks")}</h2>
 
                                     <ol className="instructions-step-list">
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">1</div>
                                             <div className="step-content">
-                                                <strong>Observe Sequence:</strong>
-                                                <span>Watch the grid tiles light up sequentially in a distinct spatial order.</span>
+                                                <strong>{t("pattern.step1Title")}</strong>
+                                                <span>{t("pattern.step1Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">2</div>
                                             <div className="step-content">
-                                                <strong>Recall & Replicate:</strong>
-                                                <span>Click or tap the tiles in the exact same sequence once prompted.</span>
+                                                <strong>{t("pattern.step2Title")}</strong>
+                                                <span>{t("pattern.step2Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">3</div>
                                             <div className="step-content">
-                                                <strong>Adaptive Complexity:</strong>
-                                                <span>Grid size expands and sequences grow longer as you advance.</span>
+                                                <strong>{t("pattern.step3Title")}</strong>
+                                                <span>{t("pattern.step3Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">4</div>
                                             <div className="step-content">
-                                                <strong>Visual Span:</strong>
-                                                <span>Assesses spatial span capacity and sequential working memory.</span>
+                                                <strong>{t("pattern.step4Title")}</strong>
+                                                <span>{t("pattern.step4Desc")}</span>
                                             </div>
                                         </li>
                                     </ol>
@@ -396,7 +398,7 @@ export function PatternAssessment() {
                                             className="story-primary-start-btn"
                                             onClick={() => setPhase('demonstration')}
                                         >
-                                            Start Test
+                                            {t("pattern.startTest")}
                                         </Button>
                                     </div>
                                 </div>
@@ -412,10 +414,10 @@ export function PatternAssessment() {
                         <div className="pattern-arena-card animate-fadeIn">
                             <div className="pattern-status-header">
                                 <div className="pattern-level-pill">
-                                    <span>Level {level}</span>
+                                    <span>{t("pattern.levelDisplay", { level })}</span>
                                 </div>
                                 <div className="pattern-mode-badge">
-                                    {phase === 'demonstration' ? 'Practice Mode' : phase === 'calibration' ? 'Calibration' : 'Scored Assessment'}
+                                    {phase === 'demonstration' ? t("pattern.practiceMode") : phase === 'calibration' ? t("pattern.calibration") : t("pattern.scoredAssessment")}
                                 </div>
                             </div>
 
@@ -477,10 +479,10 @@ export function PatternAssessment() {
                                 <Card className="results-overview-card">
                                     <div className="overview-header">
                                         <div className="overview-title-group">
-                                            <h2 className="vyom-serif">Pattern Recognition Profile</h2>
+                                            <h2 className="vyom-serif">{t("pattern.profileTitle")}</h2>
                                             <span className={`story-trend-pill ${trend === "up" ? "trend-up" : "trend-down"}`}>
                                                 <Icon name={trend === "up" ? "trend-up" : "trend-down"} size={13} />
-                                                <span>{trend === "up" ? "Improving" : "Declining"}</span>
+                                                <span>{trend === "up" ? t("vmra.improving") : t("vmra.declining")}</span>
                                             </span>
                                         </div>
                                         <div className="score-badge-circle">
@@ -499,32 +501,32 @@ export function PatternAssessment() {
                                 <div className="biomarkers-grid-row">
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Memory Span</h4>
-                                            <p className="metric-desc">Max sequence level reached</p>
+                                            <h4>{t("pattern.memorySpan")}</h4>
+                                            <p className="metric-desc">{t("pattern.maxLevelReached")}</p>
                                         </div>
-                                        <div className="metric-val">Level {maxLevel}</div>
+                                        <div className="metric-val">{t("pattern.levelDisplay", { level: maxLevel })}</div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Sequence Accuracy</h4>
-                                            <p className="metric-desc">{correctRounds} / {totalRounds} trials completed</p>
+                                            <h4>{t("pattern.sequenceAccuracy")}</h4>
+                                            <p className="metric-desc">{t("pattern.trialsCompleted", { correct: correctRounds, total: totalRounds })}</p>
                                         </div>
                                         <div className="metric-val">{accuracy}%</div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Decision Latency</h4>
-                                            <p className="metric-desc">Avg sequence response speed</p>
+                                            <h4>{t("pattern.decisionLatency")}</h4>
+                                            <p className="metric-desc">{t("pattern.responseSpeed")}</p>
                                         </div>
                                         <div className="metric-val">{(avgLatency / 1000).toFixed(2)} <span className="metric-unit">s</span></div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Visuospatial Capacity</h4>
-                                            <p className="metric-desc">Grid complexity retention</p>
+                                            <h4>{t("pattern.visuospatialCapacity")}</h4>
+                                            <p className="metric-desc">{t("pattern.gridRetention")}</p>
                                         </div>
                                         <div className="metric-val">{spanScore}%</div>
                                     </Card>
@@ -532,7 +534,7 @@ export function PatternAssessment() {
 
                                 {/* Full-Length Biomarker Radar & Progression Card */}
                                 <Card className="radar-chart-card full-width-radar">
-                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <h3 className="radar-title">{t("vmra.biomarkerRadar")}</h3>
                                     <div className="chart-wrapper">
                                         <ResponsiveContainer width="100%" height={155}>
                                             <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
@@ -557,14 +559,14 @@ export function PatternAssessment() {
                                     {/* Level-by-Level Sequence Progression */}
                                     <div className="pattern-trials-section">
                                         <div className="pattern-trials-header">
-                                            <span className="pattern-trials-title">Sequence Progression</span>
-                                            <span className="pattern-trials-badge">{correctRounds} / {totalRounds} Successful</span>
+                                            <span className="pattern-trials-title">{t("pattern.sequenceProgression")}</span>
+                                            <span className="pattern-trials-badge">{t("pattern.successfulCount", { correct: correctRounds, total: totalRounds })}</span>
                                         </div>
                                         <div className="pattern-trials-grid">
                                             {rounds.map((r, i) => (
                                                 <div key={i} className={`pattern-trial-chip ${r.isCorrect ? "valid" : "wrong"}`}>
                                                     <span className="trial-chip-tag">Lvl {r.level}</span>
-                                                    <span className="trial-chip-val">{r.isCorrect ? "✓ Passed" : "✗ Failed"}</span>
+                                                    <span className="trial-chip-val">{r.isCorrect ? t("pattern.passed") : t("pattern.failed")}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -574,14 +576,14 @@ export function PatternAssessment() {
                                 {/* Centered Actions */}
                                 <div className="results-actions">
                                     <button type="button" onClick={handleRetake} className="story-retake-btn">
-                                        <Icon name="reaction" size={15} /> Retake Test
+                                        <Icon name="reaction" size={15} /> {t("pattern.retakeTest")}
                                     </button>
                                     <button
                                         type="button"
                                         className="story-primary-start-btn story-back-assessments-btn"
                                         onClick={() => navigate("/tests")}
                                     >
-                                        Back to Assessments
+                                        {t("pattern.backToAssessments")}
                                     </button>
                                 </div>
                             </div>
@@ -594,9 +596,9 @@ export function PatternAssessment() {
                     <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
                         <div className="story-exit-modal animate-scaleUp">
                             <div className="exit-modal-icon">⚠️</div>
-                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <h3 className="exit-modal-title vyom-serif">{t("pattern.leaveAssessment")}</h3>
                             <p className="exit-modal-text">
-                                Your current assessment progress will be lost if you leave now.
+                                {t("pattern.leaveWarning")}
                             </p>
                             <div className="exit-modal-actions">
                                 <button
@@ -604,14 +606,14 @@ export function PatternAssessment() {
                                     onClick={handleCancelExit}
                                     className="modal-btn modal-btn-secondary"
                                 >
-                                    Continue Test
+                                    {t("pattern.continueTest")}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleConfirmExit}
                                     className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Test
+                                    {t("pattern.leaveTest")}
                                 </button>
                             </div>
                         </div>

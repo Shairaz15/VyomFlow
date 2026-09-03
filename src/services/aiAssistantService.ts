@@ -12,18 +12,16 @@
 import { logger } from '../utils/logger';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-let cachedAiBaseUrl: string = '';
 let currentPlayingAudio: HTMLAudioElement | null = null;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || '';
+const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
 
 const GEMINI_MODELS = [
-    'gemini-3.5-flash-lite',
     'gemini-3.6-flash',
-    'gemini-3.1-flash-lite',
     'gemini-flash-lite-latest',
-    'gemini-3.5-flash',
+    'gemini-flash-latest',
+    'gemini-pro-latest',
 ];
 
 export const SARVAM_LANG_MAP: Record<string, string> = {
@@ -52,6 +50,52 @@ const LANGUAGE_NAMES: Record<string, string> = {
     pa: 'Punjabi (ਪੰਜਾਬੀ)',
 };
 
+/**
+ * Accurately detects whether a message is in Hindi or another Indic language.
+ * Checks Devanagari script, regional Indic unicode blocks, Hinglish phonetics, and explicit user language intent.
+ */
+export function detectMessageLanguage(message: string, fallbackLang: string = 'en'): string {
+    if (!message || typeof message !== 'string') return fallbackLang || 'en';
+    const trimmed = message.trim();
+
+    // 1. Unicode Script Checks (Definitive)
+    if (/[\u0900-\u097F]/.test(trimmed)) return 'hi'; // Devanagari script: Hindi
+    if (/[\u0C80-\u0CFF]/.test(trimmed)) return 'kn'; // Kannada
+    if (/[\u0B80-\u0BFF]/.test(trimmed)) return 'ta'; // Tamil
+    if (/[\u0C00-\u0C7F]/.test(trimmed)) return 'te'; // Telugu
+    if (/[\u0980-\u09FF]/.test(trimmed)) return 'bn'; // Bengali
+    if (/[\u0A80-\u0AFF]/.test(trimmed)) return 'gu'; // Gujarati
+    if (/[\u0D00-\u0D7F]/.test(trimmed)) return 'ml'; // Malayalam
+    if (/[\u0A00-\u0A7F]/.test(trimmed)) return 'pa'; // Punjabi
+
+    const lower = trimmed.toLowerCase();
+
+    // 2. Explicit User Language Requests
+    if (/\b(in hindi|hindi me|hindi mein|hindi mai|hindi please|reply in hindi|hindi bhasha|talk in hindi|speak in hindi)\b/i.test(lower)) {
+        return 'hi';
+    }
+    if (/\b(in english|english please|reply in english|talk in english|speak in english)\b/i.test(lower)) {
+        return 'en';
+    }
+    if (/\b(in kannada|kannada dalli|in tamil|tamilil|in telugu|telugulo|in bengali|in marathi|in gujarati)\b/i.test(lower)) {
+        if (/kannada/i.test(lower)) return 'kn';
+        if (/tamil/i.test(lower)) return 'ta';
+        if (/telugu/i.test(lower)) return 'te';
+        if (/bengali/i.test(lower)) return 'bn';
+        if (/marathi/i.test(lower)) return 'mr';
+        if (/gujarati/i.test(lower)) return 'gu';
+    }
+
+    // 3. Hinglish / Romanized Hindi Vocabulary & Grammar Particles
+    const hinglishPattern = /\b(namaste|namaskar|kya|kyun|kyu|hai|hain|ho|hu|hoon|mera|meri|mere|mujhe|tum|aap|aapka|aapki|aapke|kaise|kaisa|kaisi|karna|kare|karen|karo|batao|bataiye|chahiye|nahin|nahi|shukriya|dhanyawad|theek|accha|achha|dawa|davai|bimari|dimag|dimaag|yaadash|yaadashth|yaaddasht|yaad|bhool|bhul|bhulta|bhulti|bhulte|soch|neend|sir|dard|doctor|bimar|swasth|tabiyat|pareshani|upay|ilaaj|ilaj)\b/i;
+    if (hinglishPattern.test(lower)) {
+        return 'hi';
+    }
+
+    // Default to English for all standard English/Latin text
+    return 'en';
+}
+
 const CLINICAL_GUARDRAILS = `
 CLINICAL & ETHICAL BOUNDARIES (FDA SaMD ALIGNMENT):
 - VyomFlow is a proactive cognitive health screening and digital biomarker tool.
@@ -59,51 +103,6 @@ CLINICAL & ETHICAL BOUNDARIES (FDA SaMD ALIGNMENT):
 - For patients and families: Warm, encouraging, strength-focused, easy-to-understand language.
 - For clinicians: Statistical metrics, domain z-scores, RCI drift, and SHAP biomarker drivers.
 `;
-
-/**
- * Resolves active Kaggle AI server URL from Supabase or .env
- */
-export async function getActiveAiBaseUrl(): Promise<string> {
-    if (cachedAiBaseUrl && !cachedAiBaseUrl.includes('localhost')) {
-        return cachedAiBaseUrl;
-    }
-
-    if (isSupabaseConfigured()) {
-        try {
-            const { data } = await supabase
-                .from('users')
-                .select('full_name')
-                .eq('firebase_uid', 'system_ai_config')
-                .maybeSingle();
-
-            if (data?.full_name && data.full_name.startsWith('http')) {
-                const liveUrl = data.full_name.replace(/\/$/, '');
-                try {
-                    const ctrl = new AbortController();
-                    const timeoutId = setTimeout(() => ctrl.abort(), 2500);
-                    const probe = await fetch(`${liveUrl}/health`, { signal: ctrl.signal });
-                    clearTimeout(timeoutId);
-                    if (probe.ok) {
-                        cachedAiBaseUrl = liveUrl;
-                        logger.info(`Resolved active Kaggle AI Assistant URL: ${cachedAiBaseUrl}`);
-                        return cachedAiBaseUrl;
-                    }
-                } catch {
-                    // Stale URL
-                }
-            }
-        } catch {
-            // Silently proceed
-        }
-    }
-
-    const envUrl = (import.meta.env.VITE_AI_ASSISTANT_URL || '').replace(/\/$/, '');
-    if (envUrl && envUrl.startsWith('http')) {
-        return envUrl;
-    }
-
-    return 'http://localhost:8000';
-}
 
 export interface DashboardInsightPayload {
     firebase_uid?: string;
@@ -137,9 +136,8 @@ export interface ChatPayload {
 
 export interface AiServerStatus {
     online: boolean;
-    provider: 'gemini' | 'kaggle_gpu' | 'local_fallback';
+    provider: 'gemini' | 'local_fallback';
     model?: string;
-    gpu?: string;
 }
 
 /**
@@ -222,33 +220,14 @@ export async function checkAiServerStatus(): Promise<AiServerStatus> {
         return {
             online: true,
             provider: 'gemini',
-            model: 'Gemini 3.5 Flash Lite (Google AI)',
+            model: 'Google Gemini 3.6 Flash',
         };
-    }
-
-    try {
-        const baseUrl = await getActiveAiBaseUrl();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const res = await fetch(`${baseUrl}/health`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-            const data = await res.json();
-            return {
-                online: true,
-                provider: 'kaggle_gpu',
-                model: data.model || 'Qwen 2.5 7B',
-                gpu: data.gpu,
-            };
-        }
-    } catch {
-        // GPU offline
     }
 
     return {
         online: true,
         provider: 'local_fallback',
-        model: 'Vyom Clinical Heuristic Copilot',
+        model: 'Vyom Clinical Knowledge Copilot',
     };
 }
 
@@ -256,16 +235,37 @@ export async function checkAiServerStatus(): Promise<AiServerStatus> {
  * 1. CASCADING GOOGLE GEMINI SERVERLESS ENGINE
  * ============================================================================ */
 
-async function callGeminiApi(systemPrompt: string, userPrompt: string): Promise<string | null> {
+async function callGeminiApi(
+    systemPrompt: string, 
+    userPrompt: string,
+    chatHistory?: Array<{ user: string; assistant: string }>
+): Promise<string | null> {
     if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('YOUR_')) {
         return null;
     }
+
+    // Build structured conversation contents with multi-turn history
+    const contents: Array<{ role: 'user' | 'model'; parts: [{ text: string }] }> = [];
+
+    if (chatHistory && chatHistory.length > 0) {
+        for (const turn of chatHistory.slice(-6)) {
+            if (turn.user) {
+                contents.push({ role: 'user', parts: [{ text: turn.user }] });
+            }
+            if (turn.assistant) {
+                contents.push({ role: 'model', parts: [{ text: turn.assistant }] });
+            }
+        }
+    }
+
+    // Add current user prompt
+    contents.push({ role: 'user', parts: [{ text: userPrompt }] });
 
     for (const model of GEMINI_MODELS) {
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
             const res = await fetch(url, {
                 method: 'POST',
@@ -274,14 +274,9 @@ async function callGeminiApi(systemPrompt: string, userPrompt: string): Promise<
                     system_instruction: {
                         parts: [{ text: systemPrompt }],
                     },
-                    contents: [
-                        {
-                            role: 'user',
-                            parts: [{ text: userPrompt }],
-                        },
-                    ],
+                    contents,
                     generationConfig: {
-                        temperature: 0.4,
+                        temperature: 0.5,
                         maxOutputTokens: 1200,
                         topP: 0.95,
                     },
@@ -336,7 +331,7 @@ Provide a structured clinical evaluation:
 3. Longitudinal Stability & Drift (RCI, Theil-Sen slope).
 4. Recommended Follow-up Protocol.
 Cite the user's actual scores and name when available. Keep it bulleted and actionable.`
-        : `You are Maya, the supportive AI Cognitive Health Guide for VyomFlow.
+        : `You are Neena, the supportive AI Cognitive Health Guide for VyomFlow.
 You have real-time access to the user's authentic cognitive assessment records from Supabase and what is currently rendered on screen.
 USER TELEMETRY FROM SUPABASE:
 ${JSON.stringify(sessionData, null, 2)}
@@ -356,33 +351,7 @@ Address the user by name (${sessionData?.user_name || 'User'}) and cite their ac
     const geminiRes = await callGeminiApi(systemPrompt, userPrompt);
     if (geminiRes) return geminiRes;
 
-    // 2. Try Kaggle GPU
-    try {
-        const baseUrl = await getActiveAiBaseUrl();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-        const res = await fetch(`${baseUrl}/api/insights/dashboard`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                firebase_uid: payload.firebase_uid || 'demo_user',
-                session_data: sessionData,
-                language: lang,
-                mode: payload.mode || 'patient',
-            }),
-            signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-            const data = await res.json();
-            if (data.insights) return data.insights;
-        }
-    } catch {
-        // Fall through
-    }
-
-    // 3. Fallback
+    // 2. Local Fallback
     return generateLocalDashboardFallback(sessionData, lang, payload.mode);
 }
 
@@ -422,36 +391,7 @@ Keep it under 200 words.`;
     const geminiRes = await callGeminiApi(systemPrompt, userPrompt);
     if (geminiRes) return geminiRes;
 
-    // 2. Try Kaggle GPU
-    try {
-        const baseUrl = await getActiveAiBaseUrl();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-        const res = await fetch(`${baseUrl}/api/insights/module`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                module_type: payload.module_type,
-                score: payload.score,
-                raw_metrics: payload.raw_metrics || {},
-                derived_features: payload.derived_features || {},
-                biomarkers: payload.biomarkers || {},
-                language: lang,
-                user_demographics: payload.user_demographics,
-            }),
-            signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-            const data = await res.json();
-            if (data.insights) return data.insights;
-        }
-    } catch {
-        // Fall through
-    }
-
-    // 3. Fallback
+    // 2. Local Fallback
     return generateLocalModuleFallback(payload.module_type, payload.score, lang);
 }
 
@@ -460,65 +400,61 @@ Keep it under 200 words.`;
  * ============================================================================ */
 
 export async function sendChatMessage(payload: ChatPayload): Promise<string> {
-    const lang = payload.language || 'en';
+    // Detect language directly from the user's current message
+    const lang = detectMessageLanguage(payload.message);
     const langName = LANGUAGE_NAMES[lang] || 'English';
-    const langDir = lang !== 'en'
-        ? `CRITICAL LANGUAGE DIRECTIVE: The user is speaking in ${langName}. You MUST respond EXCLUSIVELY in natural, fluent ${langName} native script. DO NOT translate their message to English and DO NOT provide an English translation in your response. Keep the entire response purely in ${langName}.`
-        : `Respond in clear, direct English.`;
+    const isHindi = lang === 'hi';
+
+    const langDir = isHindi
+        ? `CRITICAL MULTILINGUAL & SCRIPT DIRECTIVE (ABSOLUTE HIGHEST PRIORITY):
+The user asked this question in Hindi: "${payload.message}".
+You MUST respond 100% EXCLUSIVELY in natural, empathetic, and fluent Hindi in native script (हिंदी - देवनागरी लिपि).
+DO NOT translate their message to English, DO NOT answer in English, and DO NOT include an English translation in your reply.
+Even if earlier turns in the conversation history were in English, you MUST respond completely in Hindi.`
+        : (lang !== 'en'
+            ? `CRITICAL MULTILINGUAL DIRECTIVE: The user asked in ${langName}. Respond 100% in fluent ${langName} in its native script.`
+            : `CRITICAL LANGUAGE DIRECTIVE (ABSOLUTE HIGHEST PRIORITY):
+The user asked this question in English: "${payload.message}".
+Even if earlier turns in the conversation history were in Hindi or another language, you MUST respond 100% in clear, natural, compassionate English.
+DO NOT respond in Hindi. Write your entire response in English.`);
 
     const userTelemetry = await fetchUserSupabaseTelemetry(payload.firebase_uid);
     const sessionData = payload.session_data || userTelemetry;
     const pageText = payload.page_content ? `\nWHAT THE USER IS CURRENTLY SEEING ON SCREEN:\n"""\n${payload.page_content}\n"""\n` : '';
 
-    const systemPrompt = `You are Maya, the real-time AI Cognitive Health Copilot for VyomFlow.
-You have direct, real-time access to the user's authentic cognitive assessment records from the VyomFlow Supabase database AND you can see what is currently rendered on the user's screen.
+    const systemPrompt = `You are Neena, the expert AI Cognitive Health & Neuroscience Guide for VyomFlow.
+You are a warm, highly knowledgeable clinical guide specializing in brain health, digital cognitive biomarkers, neurology, memory systems, and evidence-based lifestyle medicine.
 
-USER SUPABASE CONTEXT:
-${JSON.stringify(sessionData, null, 2)}
-${pageText}
-${CLINICAL_GUARDRAILS}
-${langDir}
-Current Page Context: ${payload.context_page || 'dashboard'}
+MEDICAL SCOPE & KNOWLEDGE BASE:
+- You are fully authorized to answer ANY health, medical, neurological, or cognitive inquiry (even if the topic is not stored in the user's database).
+- Topics you excel in:
+  * Neurodegenerative conditions: Alzheimer's Disease, Mild Cognitive Impairment (MCI), Vascular Dementia, Lewy Body Dementia, Frontotemporal Dementia, and early clinical warning signs.
+  * Neurobiology & Mechanisms: Hippocampal memory encoding, prefrontal cortex executive control, amyloid-beta, tau protein tangles, neurotransmitters (acetylcholine, dopamine, GABA), neuroinflammation, and neuroplasticity.
+  * Everyday Symptoms: Brain fog, age-related forgetfulness vs pathological memory loss, attention lapses, word-finding difficulty, mental exhaustion, and stress-induced cognitive fatigue.
+  * Lifestyle Interventions: Sleep architecture (glymphatic clearance during slow-wave sleep), aerobic physical exercise (inducing BDNF in the hippocampus), the MIND/Mediterranean diet, cognitive reserve building, and mindfulness.
+  * Systemic Health Connections: Cardiovascular-brain axis, blood pressure management, diabetes/glycemic control, sleep apnea, and vitamin B12 deficiencies.
+- User Context Integration:
+  When the user asks about *their* personal performance, scores, age, name, or what is currently on their screen, seamlessly cite their real data below:
+  USER SUPABASE PROFILE & TELEMETRY:
+  ${JSON.stringify(sessionData, null, 2)}
+  ${pageText}
+- Clinical Guardrails & Boundaries:
+  * Provide compassionate, scientifically validated explanations.
+  * Do NOT provide a definitive medical diagnosis (e.g. do not say "You have dementia"). Frame observations around digital biomarker indicators, risk factors, and longitudinal patterns.
+  * DO NOT include "Questions for your physician" or "Questions for your doctor" sections in your responses unless the user explicitly requests questions to ask their doctor. Answer the user's question directly and concisely without repetitive doctor disclaimer questions.
+  * Scope Guardrail: If asked a question completely outside health, biology, or psychology (e.g., coding, automobile repairs, politics), answer briefly and courteously, then guide the user back toward their cognitive wellness.
+- Language & Tone:
+  * ${langDir}
+  * Address the user by name (${sessionData?.user_name || (isHindi ? 'उपयोगकर्ता' : 'User')}) when natural.
+  * Use clear headings, bullet points, and concise language (under 180 words unless a detailed medical breakdown is specifically requested).
+  * Answer directly without tacking on questions for doctors at the end of messages.
+  * MANDATORY: Always match the language of the user's latest query ("${payload.message}"). If English, respond strictly in English. If Hindi, respond strictly in Hindi (Devanagari).`;
 
-CRITICAL INSTRUCTIONS:
-- Address the user by their actual name (${sessionData?.user_name || 'User'}) when appropriate.
-- When they ask about their age, scores ("whats my scores", "whats my age", "how did I do in reaction test", "what is my name", "what am I looking at on this page"), cite their EXACT real information from the Supabase context (e.g. Age: ${sessionData?.age || 20}) and screen context above.
-- If the user asks about what is on their screen, directly read and reference the visible numbers, charts, and text from the screen content provided.
-- Answer any topic (whether general knowledge, greetings, brain health, calculation, translation, or daily advice) with precision and warmth.
-- Keep responses concise, supportive, and under 150 words.`;
-
-    // 1. Try Cascading Gemini
-    const geminiRes = await callGeminiApi(systemPrompt, payload.message);
+    // 1. Try Cascading Gemini with full multi-turn conversation memory
+    const geminiRes = await callGeminiApi(systemPrompt, payload.message, payload.chat_history);
     if (geminiRes) return geminiRes;
 
-    // 2. Try Kaggle GPU
-    try {
-        const baseUrl = await getActiveAiBaseUrl();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-        const res = await fetch(`${baseUrl}/api/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: payload.message,
-                context_page: payload.context_page || 'dashboard',
-                session_data: sessionData,
-                language: lang,
-                chat_history: payload.chat_history || [],
-            }),
-            signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-            const data = await res.json();
-            if (data.reply) return data.reply;
-        }
-    } catch {
-        // Fall through
-    }
-
-    // 3. Fallback
+    // 2. Intelligent Medical Fallback
     return generateLocalChatFallback(payload.message, lang, payload.context_page, sessionData);
 }
 
@@ -548,7 +484,18 @@ export async function speakWithSarvamAI(
         return;
     }
 
-    const sarvamLang = SARVAM_LANG_MAP[langCode] || 'hi-IN';
+    // Auto-detect Indic script directly from text content to guarantee correct TTS model
+    let effectiveLang = langCode;
+    if (/[\u0900-\u097F]/.test(cleanText)) effectiveLang = 'hi';
+    else if (/[\u0C80-\u0CFF]/.test(cleanText)) effectiveLang = 'kn';
+    else if (/[\u0B80-\u0BFF]/.test(cleanText)) effectiveLang = 'ta';
+    else if (/[\u0C00-\u0C7F]/.test(cleanText)) effectiveLang = 'te';
+    else if (/[\u0980-\u09FF]/.test(cleanText)) effectiveLang = 'bn';
+    else if (/[\u0A80-\u0AFF]/.test(cleanText)) effectiveLang = 'gu';
+    else if (/[\u0D00-\u0D7F]/.test(cleanText)) effectiveLang = 'ml';
+    else if (/[\u0A00-\u0A7F]/.test(cleanText)) effectiveLang = 'pa';
+
+    const sarvamLang = SARVAM_LANG_MAP[effectiveLang] || 'hi-IN';
 
     try {
         // Sarvam TTS API (chunks under 450 chars for rapid speech generation)
@@ -875,45 +822,212 @@ function generateLocalModuleFallback(moduleType: string, score: number, lang: st
 * **Recommended Drill:** Practice daily cognitive cross-training exercises for 15 minutes.`;
 }
 
-function generateLocalChatFallback(message: string, lang: string, contextPage: string = 'dashboard', sessionData?: any): string {
-    const isHindi = lang === 'hi';
-    const isKannada = lang === 'kn';
-    const isTamil = lang === 'ta';
-    const isTelugu = lang === 'te';
+function generateLocalChatFallback(message: string, lang: string, _contextPage: string = 'dashboard', sessionData?: any): string {
+    const detected = detectMessageLanguage(message, lang);
+    const effectiveLang = (detected && detected !== 'en') ? detected : lang;
+    const isHindi = effectiveLang === 'hi';
+    const isKannada = effectiveLang === 'kn';
+    const isTamil = effectiveLang === 'ta';
+    const isTelugu = effectiveLang === 'te';
     const msg = message.toLowerCase().trim();
-    const userName = sessionData?.user_name || 'User';
+    const userName = sessionData?.user_name || (isHindi ? 'उपयोगकर्ता' : 'User');
     const userAge = sessionData?.age || 20;
 
-    // Age
-    if (msg.includes('age') || msg.includes('how old')) {
+    // 1. Age
+    if (msg.includes('age') || msg.includes('how old') || /उम्र|आयु|kitni umar/i.test(msg)) {
+        if (isHindi) return `आपकी VyomFlow प्रोफ़ाइल के अनुसार, आपकी आयु **${userAge} वर्ष** है, **${userName}**!`;
         return `According to your VyomFlow profile, you are **${userAge} years old**, **${userName}**!`;
     }
 
-    // Greetings
-    if (/^(hi|hello|hey|namaste|vanakkam|namaskara|greetings|good morning|good afternoon|good evening)\b/i.test(msg)) {
-        if (isHindi) return `नमस्ते ${userName}! 🙏 मैं माया हूँ, आपकी व्योमफ्लो कॉग्निटिव असिस्टेंट। मैं आपके टेस्ट स्कोर, ब्रेन एक्सरसाइज या स्वास्थ्य से जुड़े किसी भी सवाल में मदद कर सकती हूँ। आप क्या जानना चाहते हैं?`;
-        if (isKannada) return `ನಮಸ್ಕಾರ ${userName}! 🙏 ನಾನು ಮಾಯಾ, ನಿಮ್ಮ ವ್ಯೋಮ್‌ಫ್ಲೋ ಕಾಗ್ನಿಟಿವ್ ಅಸಿಸ್ಟೆಂಟ್. ನಿಮ್ಮ ಮೆದುಳಿನ ಆರೋಗ್ಯ, ಪರೀಕ್ಷೆಯ ಅಂಕಗಳು ಅಥವಾ ವ್ಯಾಯಾಮಗಳ ಬಗ್ಗೆ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಬಹುದು.`;
-        if (isTamil) return `வணக்கம் ${userName}! 🙏 நான் மாயா, உங்கள் வ்யோம்ஃப்ளோ அறிவாற்றல் உதவியாளர். உங்கள் மூளை ஆரோக்கியம் மற்றும் சோதனைகள் குறித்து நீங்கள் என்ன தெரிந்து கொள்ள விரும்புகிறீர்கள்?`;
-        if (isTelugu) return `నమస్కారం ${userName}! 🙏 నేను మాయ, మీ వ్యోమ్‌ఫ్లో కాగ్నిటివ్ అసిస్టెంట్. మీ పరీక్షల స్కోర్లు మరియు మెదడు ఆరోగ్య వ్యాయామాల గురించి మీరు ఏమి తెలుసుకోవాలనుకుంటున్నారు?`;
-        return `Hello ${userName}! 👋 I am Maya, your personal VyomFlow Cognitive Copilot. I'm here to guide you through your test results, explain digital biomarker telemetry, recommend daily brain exercises, or prepare questions for your doctor. How can I help you today?`;
+    // 2. Greetings
+    if (/^(hi|hello|hey|namaste|vanakkam|namaskara|greetings|good morning|good afternoon|good evening)\b/i.test(msg) || /नमस्ते|नमस्कार|प्रणाम/i.test(msg)) {
+        if (isHindi) return `नमस्ते ${userName}! 🙏 मैं नीना हूँ, आपकी कॉग्निटिव न्यूरोसाइंस गाइड। मैं आपके टेस्ट स्कोर, डिमेंशिया या अल्जाइमर से जुड़े सवाल, नींद, तनाव, और ब्रेन हेल्थ पर किसी भी सवाल का जवाब दे सकती हूँ। आप क्या जानना चाहते हैं?`;
+        if (isKannada) return `ನಮಸ್ಕಾರ ${userName}! 🙏 ನಾನು ನೀನಾ, ನಿಮ್ಮ ಕಾಗ್ನಿಟಿವ್ ನ್ಯೂರೋಸೈನ್ಸ್ ಅಸಿಸ್ಟೆಂಟ್. ನಿಮ್ಮ ಪರೀಕ್ಷೆಯ ಅಂಕಗಳು, ಮೆದುಳಿನ ಕಾರ್ಯಕ್ಷಮತೆ, ಮರೆಗುಳಿತನ ಅಥವಾ ನಿದ್ರೆಯ ಬಗ್ಗೆ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸಲು ಸಿದ್ಧಳಾಗಿದ್ದೇನೆ.`;
+        if (isTamil) return `வணக்கம் ${userName}! 🙏 நான் நீனா, உங்கள் அறிவாற்றல் நரம்பியல் உதவியாளர். உங்கள் மூளை ஆரோக்கியம், ஞாபக மறதி, தூக்கம் அல்லது மருத்துவ சந்தேகங்கள் குறித்து என்னிடம் கேட்கலாம்.`;
+        if (isTelugu) return `నమస్కారం ${userName}! 🙏 నేను నీనా, మీ కాగ్నిటివ్ న్యూరోసైన్స్ అసిస్టెంట్. మీ మెదడు ఆరోగ్యం, జ్ఞాపకశక్తి, నిద్ర లేదా ఏదైనా ప్రశ్నలకు సహాయం చేయడానికి నేను సిద్ధంగా ఉన్నాను.`;
+        return `Hello ${userName}! 👋 I am **Neena**, your AI Cognitive Health & Neuroscience Guide. I can guide you through your test results, explain neurodegenerative symptoms (such as Alzheimer's and MCI), discuss sleep architecture, diet, and brain fog, or help formulate questions for your physician. What would you like to explore today?`;
     }
 
-    // Identity
-    if (msg.includes('what is my name') || msg.includes('who am i') || msg.includes('my name')) {
-        return `Your name is **${userName}**! You are logged in with real-time access to your VyomFlow cognitive profile and assessment history.`;
+    // 3. Identity
+    if (msg.includes('what is my name') || msg.includes('who am i') || msg.includes('my name') || /मेरा नाम|मैं कौन हूँ|mera naam/i.test(msg)) {
+        if (isHindi) return `आपका नाम **${userName}** है! आप अपने VyomFlow संज्ञानात्मक प्रोफ़ाइल और नैदानिक मूल्यांकन इतिहास से जुड़े हुए हैं।`;
+        return `Your name is **${userName}**! You are authenticated with live access to your VyomFlow cognitive profile and clinical assessment history.`;
     }
 
-    if (msg.includes('who are you') || msg.includes('what is your name') || msg.includes('what can you do')) {
-        return `I am **Maya**, the VyomFlow Multilingual Cognitive Health Copilot powered by Google Gemini and Supabase telemetry. I analyze your digital biomarkers across 6 cognitive domains, explain your scores, and guide you with personalized clinical recommendations.`;
+    if (msg.includes('who are you') || msg.includes('what is your name') || msg.includes('what can you do') || /तुम कौन हो|आप कौन हैं|tum kaun ho|aap kaun ho/i.test(msg)) {
+        if (isHindi) return `मैं **नीना** हूँ, VyomFlow की क्लिनिकल AI कॉग्निटिव हेल्थ गाइड। मेरी मुख्य विशेषताएँ:
+* **डिजिटल बायोमार्कर टेलीमेट्री:** प्रतिक्रिया समय, दृश्य स्मृति और भाषा प्रवाह का सटीक विश्लेषण।
+* **न्यूरोलॉजिकल और चिकित्सा मार्गदर्शन:** स्मृति तंत्र, ब्रेन फॉग, अल्जाइमर बनाम उम्र-संबंधी भूलना, और नींद का स्वास्थ्य।
+* **डॉक्टर से परामर्श सहायता:** आपके अगले न्यूरोलॉजिकल चेकअप के लिए व्यावहारिक प्रश्न तैयार करना।`;
+        return `I am **Neena**, the clinical AI Cognitive Health Assistant for VyomFlow. I specialize in:
+* **Digital Biomarker Telemetry:** Interpreting reaction times, visual memory curves, and language fluency.
+* **Neurological & Medical Guidance:** Explaining memory systems, brain fog, Alzheimer's vs age-related decline, sleep mechanics, and neuroplasticity.
+* **Physician Collaboration:** Generating actionable clinical questions for your next neurological consultation.`;
     }
 
-    // Scores
-    if (msg.includes('score') || msg.includes('result') || msg.includes('moca') || msg.includes('mark')) {
+    // 4. Scores & Assessment Results
+    if (msg.includes('score') || msg.includes('result') || msg.includes('moca') || msg.includes('mark') || msg.includes('how did i do') || /स्कोर|रिजल्ट|अंक|parinaam|mera score/i.test(msg)) {
+        if (isHindi) {
+            const scoresList = sessionData?.recent_module_scores?.map((m: any) => `* **${m.module.toUpperCase()}:** ${m.score}/100`).join('\n') || '* **रिफ्लेक्स गति:** 97/100\n* **भाषा प्रवाह:** 70/100\n* **कहानी स्मरण:** 43/100\n* **स्थानिक नेविगेशन:** 100/100';
+            return `यहाँ आपके हालिया संज्ञानात्मक टेस्ट स्कोर हैं, **${userName}**:\n${scoresList}\n\nआपका अनुमानित MoCA स्कोर **${sessionData?.latest_assessment_summary?.estimated_moca || 29}/30** है और आपकी प्रतिक्रिया गति **${sessionData?.latest_assessment_summary?.reaction_mean_latency_ms || 220}ms** है!`;
+        }
         const scoresList = sessionData?.recent_module_scores?.map((m: any) => `* **${m.module.toUpperCase()}:** ${m.score}/100 (${new Date(m.date).toLocaleDateString()})`).join('\n') || '* **Reaction Time:** 97/100\n* **Language Fluency:** 70/100\n* **Story Recall:** 43/100\n* **Navigation:** 100/100';
-        return `Here are your recent cognitive test scores from Supabase, **${userName}**:\n${scoresList}\n\nOverall your estimated MoCA is **${sessionData?.latest_assessment_summary?.estimated_moca || 29}/30** and your processing speed is strong (**${sessionData?.latest_assessment_summary?.reaction_mean_latency_ms || 220}ms**)!`;
+        return `Here are your recent cognitive test scores from Supabase, **${userName}**:\n${scoresList}\n\nOverall your estimated MoCA is **${sessionData?.latest_assessment_summary?.estimated_moca || 29}/30** and your reflex latency is **${sessionData?.latest_assessment_summary?.reaction_mean_latency_ms || 220}ms**!`;
     }
 
-    // Context guidance
+    // 5. Memory Loss, Dementia & Alzheimer's
+    if (msg.includes('memory') || msg.includes('forget') || msg.includes('alzheimer') || msg.includes('dementia') || msg.includes('mci') || msg.includes('amnesia') || /भूलने|याददाश्त|स्मृति|अल्जाइमर|डिमेंशिया|bhoolne|yaadash/i.test(msg)) {
+        if (isHindi) {
+            return `### 🧠 भूलने की बीमारी (मेमोरी लॉस) और डिमेंशिया: नैदानिक जानकारी
+1. **सामान्य उम्र-संबंधी भूलना बनाम डिमेंशिया:**
+   - *सामान्य उम्र बढ़ना:* कभी-कभार चाबी भूल जाना या किसी का नाम याद आने में थोड़ा समय लगना। बाद में वह बात याद आ जाती है।
+   - *संज्ञानात्मक विकार (MCI/डिमेंशिया):* हाल ही में सीखी गई बातों को पूरी तरह भूल जाना, एक ही सवाल बार-बार पूछना, या जानी-पहचानी जगहों पर रास्ता भटक जाना।
+2. **जैविक कारण:**
+   - मस्तिष्क के हिप्पोकैम्पस में अमाइलॉइड-बीटा और टाऊ प्रोटीन का जमाव होना।
+3. **सुरक्षात्मक कदम:**
+   - नियमित एरोबिक व्यायाम (प्रतिदिन 20-30 मिनट टहलना), अच्छी नींद, और मस्तिष्क को सक्रिय रखने वाली गतिविधियाँ।`;
+        }
+        return `### 🧠 Memory & Cognitive Decline: Clinical Context
+1. **Age-Related Forgetfulness vs. Pathological Decline:**
+   - *Normal Aging:* Misplacing keys occasionally or experiencing momentary word-finding delays (tip-of-the-tongue). Retrieval is slow, but the memory trace is intact.
+   - *Cognitive Impairment (MCI/Dementia):* Forgetting recently learned episodic information, repeating questions within minutes, or disorientation in familiar environments.
+2. **Key Biological Drivers:**
+   - Accumulation of extracellular amyloid-beta plaques and hyperphosphorylated tau neurofibrillary tangles in the hippocampus.
+3. **Proactive Measures:**
+   - High cognitive reserve through lifelong learning, cardiovascular fitness, and strict vascular control (blood pressure < 120/80).`;
+    }
+
+    // 6. Brain Fog, Focus, Concentration & ADHD
+    if (msg.includes('fog') || msg.includes('focus') || msg.includes('concentrat') || msg.includes('adhd') || msg.includes('distract') || msg.includes('attention') || /ब्रेन फॉग|ध्यान|एकाग्रता|focus|dhyan/i.test(msg)) {
+        if (isHindi) {
+            return `### 🌫️ ब्रेन फॉग और एकाग्रता की कमी
+1. **मूल कारण:**
+   - ब्रेन फॉग कोई बीमारी नहीं है; यह मानसिक थकान, अपर्याप्त नींद, तनाव या सूजन का लक्षण है।
+2. **सुधार के त्वरित उपाय:**
+   - **सिंगल-टास्किंग:** एक समय में केवल एक काम पर 25 मिनट का ध्यान केंद्रित करें।
+   - **पर्याप्त पानी:** दिनभर में पर्याप्त पानी पिएं; निर्जलीकरण ध्यान क्षमता को कम कर देता है।
+   - **सुबह की धूप:** जागने के 30 मिनट के भीतर प्राकृतिक धूप लें।`;
+        }
+        return `### 🌫️ Brain Fog & Executive Attention Fatigue
+1. **Underlying Mechanisms:**
+   - Brain fog is not a disease itself; it is a symptom of **prefrontal cortex metabolic fatigue**, often triggered by systemic neuroinflammation, elevated cortisol, post-viral recovery, or fragmented sleep.
+2. **Neurotransmitter Imbalances:**
+   - Dopamine and norepinephrine deficits reduce the signal-to-noise ratio in working memory circuits, making sustained attention difficult.
+3. **Immediate Clinical Action Steps:**
+   - **Single-Tasking:** Avoid split-screen multitasking; work in 25-minute focused blocks.
+   - **Hydration & Electrolytes:** The brain is 73% water; even 2% dehydration impairs executive function.
+   - **Morning Light:** View natural sunlight within 30 minutes of waking to anchor circadian cortisol rhythms.`;
+    }
+
+    // 7. Sleep, Glymphatic System & Brain Health
+    if (msg.includes('sleep') || msg.includes('insomnia') || msg.includes('tired') || msg.includes('wake') || msg.includes('night') || msg.includes('rem') || /नींद|अनिद्रा|थकान|neend|thakan/i.test(msg)) {
+        if (isHindi) {
+            return `### 🌙 नींद और मस्तिष्क की सफ़ाई (ग्लाइम्फैटिक सिस्टम)
+1. **मस्तिष्क की सफ़ाई प्रणाली:**
+   - गहरी नींद के दौरान मस्तिष्क का ग्लाइम्फैटिक सिस्टम सक्रिय होता है और हानिकारक टॉक्सिन्स (जैसे अमाइलॉइड-बीटा) को साफ़ करता है।
+2. **नींद की कमी का प्रभाव:**
+   - एक रात की अधूरी नींद भी अगले दिन ध्यान और स्मरण शक्ति को काफी कम कर सकती है।
+3. **उत्तम नींद के नियम:**
+   - रोज़ाना 7-8 घंटे की निर्बाध नींद लें।
+   - सोने से 1 घंटा पहले मोबाइल/स्क्रीन से दूर रहें।`;
+        }
+        return `### 🌙 Sleep Architecture & Glymphatic Brain Clearance
+1. **The Glymphatic Waste-Clearance System:**
+   - During deep **slow-wave sleep (N3 Non-REM)**, interstitial space in the brain expands by 60%, allowing cerebrospinal fluid to wash away neurotoxic metabolites, including **amyloid-beta** and **tau**.
+2. **Impact of Sleep Deprivation:**
+   - Losing even one night of quality sleep significantly elevates CSF amyloid levels and causes transient working memory impairment.
+3. **Optimal Sleep Protocol:**
+   - Aim for 7–8.5 hours of uninterrupted sleep.
+   - Maintain a cool room (65°F / 18°C) and avoid digital screens 60 minutes before bed.
+   - Evaluate for **obstructive sleep apnea (OSA)** if experiencing daytime fatigue or loud snoring.`;
+    }
+
+    // 8. Diet, Brain Nutrition & Supplements
+    if (msg.includes('diet') || msg.includes('food') || msg.includes('eat') || msg.includes('nutrition') || msg.includes('supplement') || msg.includes('vitamin') || msg.includes('omega') || /आहार|भोजन|पोषण|विटामिन|diet|khana/i.test(msg)) {
+        if (isHindi) {
+            return `### 🥗 मस्तिष्क पोषण और MIND डाइट
+1. **मस्तिष्क के लिए सर्वश्रेष्ठ आहार:**
+   - हरी पत्तेदार सब्जियाँ (पालक, मेथी), अखरोट, बादाम, और साबुत अनाज।
+2. **ओमेगा-3 और एंटीऑक्सीडेंट्स:**
+   - अखरोट और अलसी के बीज मस्तिष्क कोशिकाओं को स्वस्थ रखने में मदद करते हैं।
+3. **महत्वपूर्ण विटामिन:**
+   - विटामिन B12 और विटामिन D3 की नियमित जांच करवाएं।`;
+        }
+        return `### 🥗 Neuro-Nutrition & The MIND Diet
+1. **The Gold-Standard Diet:**
+   - Clinical trials show the **MIND Diet** (Mediterranean-DASH Intervention for Neurodegenerative Delay) can reduce cognitive decline risk by up to 53%.
+2. **Key Neuro-Protective Superfoods:**
+   - **Berries (Blueberries, Strawberries):** High in anthocyanins that cross the blood-brain barrier.
+   - **Dark Leafy Greens (Spinach, Kale):** Packed with lutein, folate, and phylloquinone.
+   - **Omega-3 Fatty Acids (DHA/EPA):** From walnuts, flaxseeds, and fatty fish (salmon), essential for neuronal membrane fluidity.
+3. **Vital Micronutrients:**
+   - Ensure Vitamin B12 (>400 pg/mL) and Vitamin D3 (>30 ng/mL) levels are verified via annual bloodwork.`;
+    }
+
+    // 9. Physical Exercise & Neuroplasticity
+    if (msg.includes('exercise') || msg.includes('workout') || msg.includes('walk') || msg.includes('physical') || msg.includes('cardio') || msg.includes('gym') || /व्यायाम|कसरत|सैर|walking|exercise/i.test(msg)) {
+        if (isHindi) {
+            return `### 🏃 शारीरिक व्यायाम और न्यूरोप्लास्टिसिटी
+1. **मस्तिष्क का विकास (BDNF):**
+   - एरोबिक व्यायाम (जैसे तेज चलना) मस्तिष्क में नए न्यूरॉन्स के निर्माण को बढ़ावा देता है।
+2. **सुझाव:**
+   - सप्ताह में कम से कम 150 मिनट मध्यम एरोबिक व्यायाम (प्रतिदिन 20-30 मिनट तेज सैर) करें।`;
+        }
+        return `### 🏃 Exercise & Hippocampal Neuroplasticity
+1. **The Miracle Molecule (BDNF):**
+   - Aerobic exercise triggers the release of **Brain-Derived Neurotrophic Factor (BDNF)** in the dentate gyrus of the hippocampus, driving adult neurogenesis (the birth of new brain cells).
+2. **Recommended Prescription:**
+   - **150 minutes/week** of moderate aerobic exercise (brisk walking, cycling, swimming) + 2 sessions of resistance training.
+3. **Dual-Tasking:**
+   - Combine movement with mental stimulation (e.g. practicing backwards counting or language drills while walking) for synergistic neuroprotection.`;
+    }
+
+    // 10. Stress, Anxiety & Cortisol
+    if (msg.includes('stress') || msg.includes('anxious') || msg.includes('anxiety') || msg.includes('panic') || msg.includes('cortisol') || msg.includes('burnout') || /तनाव|चिंता|घबराहट|stress|chinta/i.test(msg)) {
+        if (isHindi) {
+            return `### ⚡ तनाव और मस्तिष्क स्वास्थ्य
+1. **कोर्टिसोल का प्रभाव:**
+   - लंबे समय तक अधिक तनाव रहने से कोर्टिसोल हार्मोन हिप्पोकैम्पस की कोशिकाओं को कमजोर कर सकता है।
+2. **शांत होने की तकनीक (डीप ब्रीदिंग):**
+   - नाक से 2 बार गहरी सांस लें और मुँह से धीरे-धीरे पूरी सांस छोड़ें। इसे 3-4 बार दोहराने से नर्वस सिस्टम तुरंत शांत होता है।`;
+        }
+        return `### ⚡ Chronic Stress & Cognitive Function
+1. **Cortisol Neurotoxicity:**
+   - Prolonged high cortisol levels cause atrophy of dendritic spines in the hippocampus and hypertrophy of the amygdala, shifting the brain from logical reasoning into threat-detection mode.
+2. **De-escalation Technique (Physiological Sigh):**
+   - Take two quick inhales through your nose followed by one long, slow exhale through your mouth. Doing this 3 times rapidly activates the parasympathetic vagus nerve.`;
+    }
+
+    // 11. Headaches & Neurological Warning Signs
+    if (msg.includes('headache') || msg.includes('migraine') || msg.includes('dizzy') || msg.includes('dizziness') || /सिरदर्द|माइग्रेन|चक्कर|sirdard|sir dard/i.test(msg)) {
+        if (isHindi) {
+            return `### 🩺 सिरदर्द और न्यूरोलॉजिकल संकेत
+* **सामान्य प्रकार:** तनाव सिरदर्द (टेंशन हेडेक) और माइग्रेन।
+* **🚨 तुरंत डॉक्टर को दिखाने योग्य लक्षण:**
+  - अचानक अत्यंत तीव्र सिरदर्द होना।
+  - सिरदर्द के साथ बोलने में लड़खड़ाहट, भ्रम या शरीर के एक तरफ कमजोरी होना।
+  - गर्दन में अकड़न या दृष्टि में धुंधलापन।`;
+        }
+        return `### 🩺 Headaches & Neurological Triage
+* **Common Types:** Tension headaches (musculoskeletal stress) and migraines (neurovascular trigeminal activation).
+* **🚨 Red Flag Symptoms Requiring Immediate Emergency Care:**
+  - Sudden severe "thunderclap" headache.
+  - Accompanied by confusion, slurred speech, facial droop, or weakness on one side (**FAST** stroke protocol).
+  - Accompanied by stiff neck, high fever, or vision loss.`;
+    }
+
+    // 12. Default Clinical Guidance
     const topic = message.length > 35 ? `"${message.slice(0, 35)}..."` : `"${message}"`;
-    return `💡 Regarding **${topic}**:\nYour assessment records for **${userName}** show strong domain stability across all 6 cognitive metrics. You can ask me to break down any specific test (${contextPage.toUpperCase()}), explain biomarker curves, or suggest customized daily drills!`;
+    if (isHindi) {
+        return `### 💡 ${topic} पर संज्ञानात्मक स्वास्थ्य परामर्श
+आपके प्रश्न के संदर्भ में, **${userName}**:
+1. **संज्ञानात्मक स्वास्थ्य:** मस्तिष्क का स्वास्थ्य नियमित शारीरिक गतिविधि, गुणवत्तापूर्ण नींद और संतुलित पोषण पर निर्भर करता है।
+2. **दैनिक सुझाव:** प्रतिदिन 15 मिनट मस्तिष्क को चुनौती देने वाली गतिविधियाँ (पहेलियां, पढ़ना) और हल्की सैर करें।
+3. **दीर्घकालिक लाभ:** लगातार मानसिक चुनौतियों और स्वस्थ जीवनशैली से न्यूरोप्लास्टिसिटी बनी रहती है।`;
+    }
+    return `### 💡 Clinical Cognitive Perspective on ${topic}
+Regarding your question, **${userName}**:
+1. **Neurobiological Mechanism:** Cognitive performance is deeply intertwined with vascular health, sleep homeostasis, and metabolic balance.
+2. **Evidence-Based Strategy:** Maintaining consistent cognitive cross-training, aerobic movement, and restorative sleep provides the foundation for brain longevity.
+3. **Actionable Takeaway:** Incorporating daily physical activity alongside mental stimulation produces compounding neurological benefits.`;
 }

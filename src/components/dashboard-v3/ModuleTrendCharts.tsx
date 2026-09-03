@@ -31,15 +31,29 @@ const MODULE_ROUTES: Record<string, string> = {
     navigation: '/test/navigation',
 };
 
-const MODULE_ICONS: Record<string, string> = {
-    reaction: '⚡',
-    attention: '🎯',
-    vmra: '🧠',
-    story: '📖',
-    language: '🗣️',
-    pattern: '🧩',
-    navigation: '🗺️',
-};
+import { Zap, Target, Brain, BookOpen, MessageSquareQuote, Layers, Compass, Activity } from 'lucide-react';
+
+function getTrendIcon(key: string, size = 15) {
+    switch (key) {
+        case 'reaction':
+            return <Zap size={size} />;
+        case 'attention':
+            return <Target size={size} />;
+        case 'vmra':
+        case 'memory':
+            return <Brain size={size} />;
+        case 'story':
+            return <BookOpen size={size} />;
+        case 'language':
+            return <MessageSquareQuote size={size} />;
+        case 'pattern':
+            return <Layers size={size} />;
+        case 'navigation':
+            return <Compass size={size} />;
+        default:
+            return <Activity size={size} />;
+    }
+}
 
 /**
  * Custom Rich Tooltip:
@@ -227,24 +241,28 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
     const renderTrendCard = (trend: ModuleTrendViewModel) => {
         const hasData = trend.sessions.length > 0;
         const route = MODULE_ROUTES[trend.moduleKey] || '/tests';
-        const icon = MODULE_ICONS[trend.moduleKey] || '📊';
 
         return (
             <div key={trend.moduleKey} className="dv2-card dv2-chart-card">
                 <div className="dv2-chart-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <span
                             className="dv2-chart-dot"
                             style={{ background: trend.chartColor }}
                         />
-                        <span>{icon} {trend.moduleName}</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.95rem', fontWeight: 700, color: 'var(--dv2-text)' }}>
+                            <span style={{ color: trend.chartColor, display: 'inline-flex', alignItems: 'center' }}>
+                                {getTrendIcon(trend.moduleKey, 16)}
+                            </span>
+                            {trend.moduleName}
+                        </span>
                     </div>
                     {!hasData ? (
-                        <span style={{ fontSize: '0.6875rem', padding: '0.2rem 0.5rem', borderRadius: '6px', background: 'rgba(148, 163, 184, 0.1)', color: 'var(--dv2-muted)' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 600, padding: '0.25rem 0.55rem', borderRadius: '6px', background: 'rgba(148, 163, 184, 0.15)', color: 'var(--dv2-muted)' }}>
                             No Data Yet
                         </span>
                     ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--dv2-muted)', fontWeight: 650 }}>
                             {trend.sessions.length} {trend.sessions.length === 1 ? 'session' : 'sessions'}
                         </span>
                     )}
@@ -260,15 +278,15 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
                             <XAxis
                                 dataKey="sessionLabel"
                                 stroke="var(--dv2-muted)"
-                                fontSize={11}
+                                fontSize={12}
                                 tickLine={false}
                             />
                             <YAxis
                                 domain={trend.domain}
                                 stroke="var(--dv2-muted)"
-                                fontSize={11}
+                                fontSize={12}
                                 tickLine={false}
-                                width={40}
+                                width={42}
                             />
                             <Tooltip
                                 content={
@@ -319,7 +337,9 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
                         textAlign: 'center',
                         gap: '0.75rem'
                     }}>
-                        <div style={{ fontSize: '1.75rem', opacity: 0.6 }}>{icon}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: trend.chartColor, opacity: 0.85 }}>
+                            {getTrendIcon(trend.moduleKey, 28)}
+                        </div>
                         <div>
                             <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--dv2-text)' }}>
                                 No sessions recorded yet
@@ -363,91 +383,73 @@ export function ModuleTrendCharts({ trends, onPointClick }: Props) {
     };
 
     return (
-        <div>
-            {/* Mobile View: Single Trend Chart with Clean Sliding Pill Switcher */}
-            <div className="dv2-trends-mobile-view">
-                <div className="dv2-trends-mobile-header">
-                    <div>
-                        <h3 className="dv2-section-title" style={{ margin: 0, fontSize: '1.15rem' }}>
-                            Assessment Trends
-                        </h3>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)' }}>
-                            Swipe to view trends across all 7 cognitive domains
-                        </span>
-                    </div>
-                    <span className="dv2-trends-active-indicator">
-                        {trends.filter(t => t.sessions.length > 0).length}/7 Active
+        <div className="dv2-trends-unified-view">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                    <h3 className="dv2-section-title" style={{ margin: 0, fontSize: '1.15rem' }}>
+                        Longitudinal Assessment Trends
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--dv2-muted)' }}>
+                        Select any of the 7 cognitive biomarker modules to view multi-session trajectory curves
                     </span>
                 </div>
+                <span className="dv2-trends-active-indicator">
+                    {trends.filter(t => t.sessions.length > 0).length}/7 Active
+                </span>
+            </div>
 
-                {/* Horizontal Sliding Pill Switcher */}
-                <div className="dv2-trends-slider-container">
-                    <div className="dv2-trends-chips-scroll">
-                        {trends.map(t => {
-                            const isSelected = t.moduleKey === activeTrend.moduleKey;
-                            const icon = MODULE_ICONS[t.moduleKey] || '📊';
-                            const hasData = t.sessions.length > 0;
-                            return (
-                                <button
-                                    key={t.moduleKey}
-                                    type="button"
-                                    onClick={() => setSelectedModuleKey(t.moduleKey)}
-                                    className={`dv2-trends-pill ${isSelected ? 'active' : ''}`}
+            {/* Horizontal Module Switcher Pills for All Screens */}
+            <div className="dv2-trends-slider-container" style={{ marginBottom: '0.85rem' }}>
+                <div className="dv2-trends-chips-scroll">
+                    {trends.map(t => {
+                        const isSelected = t.moduleKey === activeTrend.moduleKey;
+                        const hasData = t.sessions.length > 0;
+                        return (
+                            <button
+                                key={t.moduleKey}
+                                type="button"
+                                onClick={() => setSelectedModuleKey(t.moduleKey)}
+                                className={`dv2-trends-pill ${isSelected ? 'active' : ''}`}
+                                style={{
+                                    borderColor: isSelected ? t.chartColor : 'transparent',
+                                    background: isSelected
+                                        ? `linear-gradient(135deg, ${t.chartColor}22, ${t.chartColor}10)`
+                                        : 'transparent',
+                                    color: isSelected ? 'var(--dv2-text)' : 'var(--dv2-muted)',
+                                    boxShadow: isSelected ? `0 2px 8px ${t.chartColor}25` : 'none',
+                                }}
+                            >
+                                <span
+                                    className="dv2-trends-pill-dot"
                                     style={{
-                                        borderColor: isSelected ? t.chartColor : 'transparent',
-                                        background: isSelected
-                                            ? `linear-gradient(135deg, ${t.chartColor}22, ${t.chartColor}10)`
-                                            : 'transparent',
-                                        color: isSelected ? 'var(--dv2-text)' : 'var(--dv2-muted)',
-                                        boxShadow: isSelected ? `0 2px 8px ${t.chartColor}25` : 'none',
+                                        background: t.chartColor,
+                                        boxShadow: isSelected ? `0 0 6px ${t.chartColor}` : 'none'
                                     }}
-                                >
+                                />
+                                <span className="dv2-trends-pill-icon" style={{ display: 'inline-flex', alignItems: 'center', color: t.chartColor }}>
+                                    {getTrendIcon(t.moduleKey, 14)}
+                                </span>
+                                <span className="dv2-trends-pill-name" style={{ fontSize: '0.8125rem', fontWeight: 650 }}>{t.moduleName}</span>
+                                {hasData && (
                                     <span
-                                        className="dv2-trends-pill-dot"
+                                        className="dv2-trends-pill-count"
                                         style={{
-                                            background: t.chartColor,
-                                            boxShadow: isSelected ? `0 0 6px ${t.chartColor}` : 'none'
+                                            background: isSelected ? `${t.chartColor}35` : 'rgba(148, 163, 184, 0.15)',
+                                            color: isSelected ? 'var(--dv2-text)' : 'var(--dv2-muted)',
                                         }}
-                                    />
-                                    <span className="dv2-trends-pill-icon">{icon}</span>
-                                    <span className="dv2-trends-pill-name">{t.moduleName}</span>
-                                    {hasData && (
-                                        <span
-                                            className="dv2-trends-pill-count"
-                                            style={{
-                                                background: isSelected ? `${t.chartColor}35` : 'rgba(148, 163, 184, 0.15)',
-                                                color: isSelected ? 'var(--dv2-text)' : 'var(--dv2-muted)',
-                                            }}
-                                        >
-                                            {t.sessions.length}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Render Single Active Chart for Mobile with subtle fade */}
-                <div key={activeTrend.moduleKey} className="dv2-animate-fade" style={{ marginTop: '0.25rem' }}>
-                    {renderTrendCard(activeTrend)}
+                                    >
+                                        {t.sessions.length}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Desktop View: Full 2-Column Grid of 7 Modules */}
-            <div className="dv2-trends-desktop-view">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 className="dv2-section-title" style={{ margin: 0 }}>
-                        Assessment Module Trends (7/7 Modules)
-                    </h3>
-                    <span style={{ fontSize: '0.8125rem', color: 'var(--dv2-muted)' }}>
-                        {trends.filter(t => t.sessions.length > 0).length} of 7 modules active
-                    </span>
-                </div>
-
-                <div className="dv2-grid-2">
-                    {trends.map(trend => renderTrendCard(trend))}
-                </div>
+            {/* Render Single Active Chart with smooth fade transition */}
+            <div key={activeTrend.moduleKey} className="dv2-animate-fade">
+                {renderTrendCard(activeTrend)}
             </div>
         </div>
     );

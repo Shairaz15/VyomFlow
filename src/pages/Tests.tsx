@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { LayoutDashboard, ShieldCheck, ArrowRight } from "lucide-react";
 import { Button, Icon } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../i18n/LanguageContext";
 import { PageWrapper } from "../components/layout";
 import { useJourneyState, JOURNEY_NODES, type ActivityId } from "../hooks/useJourneyState";
 import { JourneyMap } from "../components/journey/JourneyMap";
@@ -14,6 +15,7 @@ export function Tests() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [filterMode, setFilterMode] = useState<'all' | 'remaining' | 'completed'>('all');
 
     const {
@@ -64,10 +66,10 @@ export function Tests() {
     // Handle greeting based on time of day
     const getGreeting = () => {
         const hour = new Date().getHours();
-        const userName = user?.displayName?.split(" ")[0] || "Participant";
-        if (hour < 12) return `Good morning, ${userName}`;
-        if (hour < 18) return `Good afternoon, ${userName}`;
-        return `Good evening, ${userName}`;
+        const userName = user?.displayName?.split(" ")[0] || t("journey.participant");
+        if (hour < 12) return t("journey.goodMorning", { name: userName });
+        if (hour < 18) return t("journey.goodAfternoon", { name: userName });
+        return t("journey.goodEvening", { name: userName });
     };
 
     const activeNode = JOURNEY_NODES.find((n) => n.id === activeNodeId) || JOURNEY_NODES[0];
@@ -112,25 +114,25 @@ export function Tests() {
                             <h1 className="hero-greeting-title">{getGreeting()}</h1>
                             <div className="hero-sub-row">
                                 <span className={`journey-badge-pill ${isJourneyComplete ? "badge-pill-success" : ""}`}>
-                                    {isJourneyComplete ? "✓ Protocol Complete" : "Cognitive Protocol"}
+                                    {isJourneyComplete ? `✓ ${t("journey.protocolComplete")}` : t("journey.cognitiveProtocol")}
                                 </span>
                                 <span className="journey-subtitle-dot">•</span>
                                 <span className="journey-subtitle">
                                     {isJourneyComplete ? (
-                                        "All 7 clinical biomarkers assessed today • Ready for clinical review"
+                                        t("journey.allActivitiesAssessed")
                                     ) : completedCount > 0 ? (
-                                        `${totalCount - completedCount} activities remaining • ~${remainingMinutes} min left • Track performance & biomarkers`
+                                        `${t("journey.activitiesRemaining", { count: totalCount - completedCount })} • ${t("journey.minLeft", { min: remainingMinutes })} • ${t("journey.trackPerformance")}`
                                     ) : (
-                                        "7 clinical activities • ~18 min total • Track performance & biomarkers"
+                                        t("journey.sevenActivities")
                                     )}
                                 </span>
                             </div>
                         </div>
                         <div className="hero-progress-pill">
                             <div className="progress-info-row">
-                                <span className="progress-label">Protocol Progress</span>
+                                <span className="progress-label">{t("journey.protocolProgress")}</span>
                                 <span className="progress-pill-count">
-                                    <strong>{completedCount}</strong> of {totalCount} complete
+                                    <strong>{completedCount}</strong> of {totalCount} {t("journey.complete")}
                                 </span>
                             </div>
 
@@ -156,12 +158,12 @@ export function Tests() {
                             >
                                 {isJourneyComplete ? (
                                     <>
-                                        <Icon name="chart-line-up" size={14} /> View Full Clinical Report →
+                                        <Icon name="chart-line-up" size={14} /> {t("journey.viewClinicalReport")} →
                                     </>
                                 ) : completedCount > 0 ? (
-                                    <>Continue ({activeNode.title}) →</>
+                                    <>{t("journey.continue")} ({activeNode.title}) →</>
                                 ) : (
-                                    <>Start Protocol →</>
+                                    <>{t("journey.startProtocol")} →</>
                                 )}
                             </Button>
                         </div>
@@ -177,7 +179,7 @@ export function Tests() {
                         className={`filter-pill-btn ${filterMode === 'all' ? 'active' : ''}`}
                         onClick={() => setFilterMode('all')}
                     >
-                        All Activities <span className="filter-pill-badge">{totalCount}</span>
+                        {t("journey.allActivities")} <span className="filter-pill-badge">{totalCount}</span>
                     </button>
                     <button
                         type="button"
@@ -186,7 +188,7 @@ export function Tests() {
                         className={`filter-pill-btn ${filterMode === 'remaining' ? 'active' : ''}`}
                         onClick={() => setFilterMode('remaining')}
                     >
-                        Remaining <span className="filter-pill-badge">{totalCount - completedCount}</span>
+                        {t("journey.remaining")} <span className="filter-pill-badge">{totalCount - completedCount}</span>
                     </button>
                     <button
                         type="button"
@@ -195,7 +197,7 @@ export function Tests() {
                         className={`filter-pill-btn ${filterMode === 'completed' ? 'active' : ''}`}
                         onClick={() => setFilterMode('completed')}
                     >
-                        Completed <span className="filter-pill-badge">{completedCount}</span>
+                        {t("journey.completed")} <span className="filter-pill-badge">{completedCount}</span>
                     </button>
                 </div>
 
@@ -214,12 +216,12 @@ export function Tests() {
                 <div className="journey-bottom-links">
                     <button className="link-chip group" onClick={() => navigate("/dashboard")}>
                         <LayoutDashboard className="w-4 h-4 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
-                        <span>View Clinical Dashboard</span>
+                        <span>{t("journey.viewClinicalDashboard")}</span>
                         <ArrowRight className="w-3.5 h-3.5 opacity-50 ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
                     </button>
                     <button className="link-chip group" onClick={() => navigate("/privacy")}>
                         <ShieldCheck className="w-4 h-4 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
-                        <span>Privacy & Data Safeguards</span>
+                        <span>{t("journey.privacySafeguards")}</span>
                         <ArrowRight className="w-3.5 h-3.5 opacity-50 ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
                     </button>
                 </div>

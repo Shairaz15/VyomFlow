@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import type { LongitudinalViewModel } from '../../services/dashboardViewModel';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface Props {
     longitudinal: LongitudinalViewModel;
 }
 
 export function LongitudinalSummary({ longitudinal }: Props) {
+    const { t } = useLanguage();
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     return (
         <div className="dv2-card dv2-animate-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 className="dv2-section-title" style={{ margin: 0 }}>Trend Analysis</h3>
+                <h3 className="dv2-section-title" style={{ margin: 0 }}>{t("dashboard.trendAnalysis")}</h3>
                 <span
                     className="dv2-status-badge"
                     style={{
@@ -28,8 +30,8 @@ export function LongitudinalSummary({ longitudinal }: Props) {
             </p>
 
             <div style={{ fontSize: '0.8125rem', color: 'var(--dv2-muted)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                <span>Compared against: {longitudinal.sessionCount} session{longitudinal.sessionCount !== 1 ? 's' : ''}</span>
-                <span>Last updated: {longitudinal.lastUpdated}</span>
+                <span>{t("dashboard.comparedSessions", { count: longitudinal.sessionCount })}</span>
+                <span>{t("dashboard.lastUpdated", { date: longitudinal.lastUpdated })}</span>
             </div>
 
             {longitudinal.advancedMetrics && (
@@ -38,7 +40,7 @@ export function LongitudinalSummary({ longitudinal }: Props) {
                         className="dv2-advanced-toggle"
                         onClick={() => setShowAdvanced(!showAdvanced)}
                     >
-                        {showAdvanced ? 'Hide' : 'Show'} Clinical Metrics {showAdvanced ? '▲' : '▼'}
+                        {showAdvanced ? t("dashboard.hideClinicalMetrics") : t("dashboard.showClinicalMetrics")}
                     </button>
 
                     {showAdvanced && (

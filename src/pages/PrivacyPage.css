@@ -61,9 +61,81 @@
     transform: translateY(-2px);
 }
 
-.card-icon {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+.card-icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    margin-bottom: 1.25rem;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.privacy-card:hover .card-icon-box {
+    transform: scale(1.1) translateY(-2px);
+}
+
+.custom-privacy-icon {
+    width: 1.625rem;
+    height: 1.625rem;
+}
+
+/* Card 1: Sage (Local Audio) */
+.card-icon-sage {
+    background: #EAF3EF;
+    color: #4F7C78;
+    border: 1px solid rgba(79, 124, 120, 0.22);
+}
+
+/* Card 2: Blue (Encrypted Storage) */
+.card-icon-blue {
+    background: #EEF3F8;
+    color: #4A6680;
+    border: 1px solid rgba(74, 102, 128, 0.22);
+}
+
+/* Card 3: Indigo (Health Control) */
+.card-icon-indigo {
+    background: #EEF2FF;
+    color: #6366F1;
+    border: 1px solid rgba(99, 102, 241, 0.22);
+}
+
+/* Card 4: Gold (Non-Diagnostic) */
+.card-icon-gold {
+    background: #F7F0E3;
+    color: #A88752;
+    border: 1px solid rgba(168, 135, 82, 0.22);
+}
+
+/* Dark mode adjustments */
+.dark .card-icon-sage,
+[data-theme="dark"] .card-icon-sage {
+    background: rgba(79, 124, 120, 0.2);
+    color: #6ee7b7;
+    border-color: rgba(110, 231, 183, 0.3);
+}
+
+.dark .card-icon-blue,
+[data-theme="dark"] .card-icon-blue {
+    background: rgba(74, 102, 128, 0.25);
+    color: #7dd3fc;
+    border-color: rgba(125, 211, 252, 0.3);
+}
+
+.dark .card-icon-indigo,
+[data-theme="dark"] .card-icon-indigo {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border-color: rgba(165, 180, 252, 0.3);
+}
+
+.dark .card-icon-gold,
+[data-theme="dark"] .card-icon-gold {
+    background: rgba(168, 135, 82, 0.2);
+    color: #fcd34d;
+    border-color: rgba(252, 211, 77, 0.3);
 }
 
 .privacy-card h3 {

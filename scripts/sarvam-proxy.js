@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import url from 'url';
 
-const API_KEY = process.env.SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const API_KEY = process.env.SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 const PORT = process.env.PORT || 5001;
 
 const server = createServer(async (req, res) => {

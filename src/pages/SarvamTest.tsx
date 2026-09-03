@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 export const SarvamTest: React.FC = () => {
-  const [apiKey, setApiKey] = useState('sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad');
+  const [apiKey, setApiKey] = useState(import.meta.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl');
   const [showKey, setShowKey] = useState(false);
   const [activeTab, setActiveTab] = useState<'mic' | 'upload' | 'code'>('mic');
   

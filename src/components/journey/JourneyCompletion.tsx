@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { JOURNEY_NODES } from '../../hooks/useJourneyState';
 import { Button } from '../common';
+import { useLanguage } from '../../i18n/LanguageContext';
 import './JourneyCompletion.css';
 
 interface JourneyCompletionProps {
@@ -9,6 +10,7 @@ interface JourneyCompletionProps {
 
 export function JourneyCompletion({ onClose }: JourneyCompletionProps) {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     return (
         <div className="journey-complete-overlay animate-fadeIn">
@@ -21,9 +23,9 @@ export function JourneyCompletion({ onClose }: JourneyCompletionProps) {
                         <span className="bloom-arrow">→</span>
                         <span className="bloom-step bloom-active">🌸</span>
                     </div>
-                    <h2 className="journey-complete-title">🌳 Journey complete</h2>
+                    <h2 className="journey-complete-title">{t("journey.journeyCompleteTitle")}</h2>
                     <p className="journey-complete-subtitle">
-                        You've completed today's journey sequence.
+                        {t("journey.journeyCompleteSubtitle")}
                     </p>
                 </div>
 
@@ -38,22 +40,22 @@ export function JourneyCompletion({ onClose }: JourneyCompletionProps) {
                 </div>
 
                 <div className="growing-notice">
-                    <p className="growing-text">Your journey is growing. 🌿</p>
+                    <p className="growing-text">{t("journey.journeyGrowing")}</p>
                     <p className="growing-subtext">
-                        Thank you for keeping up your cognitive tracking consistency.
+                        {t("journey.growingSubtext")}
                     </p>
                 </div>
 
                 <div className="journey-complete-actions">
                     <Button variant="primary" onClick={onClose} className="action-btn">
-                        Return to Journey Map
+                        {t("journey.returnToMap")}
                     </Button>
                     <Button
                         variant="secondary"
                         onClick={() => navigate('/dashboard')}
                         className="action-btn"
                     >
-                        View History & Insights
+                        {t("journey.viewHistoryInsights")}
                     </Button>
                 </div>
             </div>

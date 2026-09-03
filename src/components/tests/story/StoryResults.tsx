@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { Card, Icon, MotivationalQuoteBlock } from "../../common";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import type { StoryAssessmentResult } from "../../../types/storyTypes";
 
 interface StoryResultsProps {
@@ -13,6 +14,7 @@ interface StoryResultsProps {
 export function StoryResults({ result, onRetake }: StoryResultsProps) {
     const navigate = useNavigate();
     const { theme } = useTheme();
+    const { t } = useLanguage();
     const isDark = theme === 'dark';
     const { storyRecallScore, biomarkers } = result;
 
@@ -39,21 +41,18 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
             const raw = localStorage.getItem("vyomflow_story_results");
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 1) {
-                    const prev = parsed[parsed.length - 2];
-                    const prevScore = prev?.storyRecallScore ?? prev?.score;
-                    if (typeof prevScore === 'number') {
-                        return storyRecallScore >= prevScore ? 'up' : 'down';
-                    }
+                if (Array.isArray(parsed) && parsed.length >= 2) {
+                    const prev = parsed[parsed.length - 2]?.storyRecallScore || 60;
+                    return storyRecallScore >= prev ? 'up' : 'down';
                 }
             }
-        } catch {
-            // fallback
+        } catch (e) {
+            // fallback gracefully
         }
-        return storyRecallScore >= 60 ? 'up' : 'down';
+        return storyRecallScore >= 70 ? 'up' : 'down';
     }, [storyRecallScore]);
 
-    // Custom tick renderer with generous horizontal spacing for full-width legibility
+    // Custom tick renderer for Radar Chart
     const renderCustomAxisTick = ({ payload, x, y, cx, cy }: any) => {
         const dx = x - cx;
         const dy = y - cy;
@@ -61,11 +60,11 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
         const offsetX = dist > 0 ? x + (dx / dist) * 8 : x;
         const offsetY = dist > 0 ? y + (dy / dist) * 8 : y;
 
-        let textAnchor: 'start' | 'middle' | 'end' = 'middle';
+        let textAnchor: "start" | "middle" | "end" = "middle";
         if (dx > 12) {
-            textAnchor = 'start';
+            textAnchor = "start";
         } else if (dx < -12) {
-            textAnchor = 'end';
+            textAnchor = "end";
         }
 
         return (
@@ -74,7 +73,7 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
                 y={offsetY}
                 textAnchor={textAnchor}
                 dominantBaseline="central"
-                fill={isDark ? '#E2ECF2' : '#17324D'}
+                fill={isDark ? "#E2ECF2" : "#17324D"}
                 fontSize={10}
                 fontWeight={600}
                 className="radar-axis-tick select-none"
@@ -90,10 +89,10 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
             <Card className="results-overview-card">
                 <div className="overview-header">
                     <div className="overview-title-group">
-                        <h2 className="vyom-serif">Story Recall Profile</h2>
+                        <h2 className="vyom-serif">{t("story.profileTitle")}</h2>
                         <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
                             <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
-                            <span>{trend === 'up' ? 'Improving' : 'Declining'}</span>
+                            <span>{trend === 'up' ? t('vmra.improving') : t('vmra.declining')}</span>
                         </span>
                     </div>
                     <div className="score-badge-circle">
@@ -112,32 +111,32 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
             <div className="biomarkers-grid-row">
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>Memory Recall</h4>
-                        <p className="metric-desc">{biomarkers.memory.infoUnitsRecalled} / {biomarkers.memory.totalInfoUnits} units</p>
+                        <h4>{t("story.memoryRecall")}</h4>
+                        <p className="metric-desc">{t("story.unitsRecalled", { count: biomarkers.memory.infoUnitsRecalled, total: biomarkers.memory.totalInfoUnits })}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.memory.recallAccuracy * 100)}%</div>
                 </Card>
 
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>MCQ Accuracy</h4>
-                        <p className="metric-desc">{biomarkers.comprehension.correctCount} / {biomarkers.comprehension.totalQuestions} correct</p>
+                        <h4>{t("story.mcqAccuracy")}</h4>
+                        <p className="metric-desc">{t("story.mcqCorrect", { count: biomarkers.comprehension.correctCount, total: biomarkers.comprehension.totalQuestions })}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.comprehension.mcqAccuracy * 100)}%</div>
                 </Card>
 
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>Sequence & Flow</h4>
-                        <p className="metric-desc">Timeline preservation</p>
+                        <h4>{t("story.sequenceFlow")}</h4>
+                        <p className="metric-desc">{t("story.timelinePreservation")}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.narrative.storySequenceScore * 100)}%</div>
                 </Card>
 
                 <Card className="metric-card">
                     <div className="metric-info-col">
-                        <h4>Speech Rate</h4>
-                        <p className="metric-desc">{(biomarkers.speech.lexicalDiversity * 100).toFixed(0)}% diversity</p>
+                        <h4>{t("story.speechRate")}</h4>
+                        <p className="metric-desc">{t("story.lexicalDiversity", { percent: (biomarkers.speech.lexicalDiversity * 100).toFixed(0) })}</p>
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.speech.speechRateWPM)} <span className="metric-unit">WPM</span></div>
                 </Card>
@@ -145,7 +144,7 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
 
             {/* Full-Length Biomarker Radar Card (Stretches across whole length) */}
             <Card className="radar-chart-card full-width-radar">
-                <h3 className="radar-title">Biomarker Radar</h3>
+                <h3 className="radar-title">{t("vmra.biomarkerRadar")}</h3>
                 <div className="chart-wrapper">
                     <ResponsiveContainer width="100%" height={155}>
                         <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
@@ -171,14 +170,14 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
             {/* Centered Actions */}
             <div className="results-actions">
                 <button type="button" onClick={onRetake} className="story-retake-btn">
-                    <Icon name="assess" size={16} /> Retake Test
+                    <Icon name="assess" size={16} /> {t("story.retakeTest")}
                 </button>
                 <button 
                     type="button" 
                     className="story-primary-start-btn story-back-assessments-btn" 
                     onClick={() => navigate('/tests')}
                 >
-                    Back to Assessments
+                    {t("story.backToAssessments")}
                 </button>
             </div>
         </div>

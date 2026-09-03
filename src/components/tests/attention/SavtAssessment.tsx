@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useLanguage } from '../../../i18n/LanguageContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from '../../common';
 import { PageWrapper } from '../../layout';
@@ -51,6 +52,7 @@ export function SavtAssessment() {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
     const { user, isAuthenticated } = useAuth();
+    const { t } = useLanguage();
     const { results, saveResult } = useAttentionResults();
     const config = DEFAULT_SAVT_CONFIG;
 
@@ -189,8 +191,8 @@ export function SavtAssessment() {
                         show: true,
                         correct,
                         message: correct
-                            ? '✓ Correct! You held back.'
-                            : `✗ Missed! Tap the ${target.label}.`,
+                            ? t('attention.heldBackCorrect')
+                            : t('attention.missedTargetWithName', { target: target.label }),
                     });
 
                     setTimeout(() => {
@@ -199,7 +201,7 @@ export function SavtAssessment() {
                 }, config.responseWindowMs);
             }, config.stimulusDurationMs);
         }, getRandomIsi(config));
-    }, [config, showStimulusOnScreen, hideStimulusFromScreen]);
+    }, [config, showStimulusOnScreen, hideStimulusFromScreen, t]);
 
     const handlePracticeResponse = useCallback(() => {
         if (respondedRef.current || !currentStimulusRef.current) return;
@@ -217,8 +219,8 @@ export function SavtAssessment() {
             show: true,
             correct,
             message: correct
-                ? '✓ Correct! Quick response.'
-                : `✗ Only tap the ${target.label}!`,
+                ? t('attention.quickResponseCorrect')
+                : t('attention.onlyTapTarget', { target: target.label }),
         });
 
         const seq = practiceSeqRef.current;
@@ -235,7 +237,7 @@ export function SavtAssessment() {
                 runPracticeTrial(seq, nextIdx, target);
             }
         }, 1200);
-    }, [clearAllTimers, hideStimulusFromScreen, runPracticeTrial]);
+    }, [clearAllTimers, hideStimulusFromScreen, runPracticeTrial, t]);
 
     const startPractice = useCallback(() => {
         if (!isAuthenticated) return;
@@ -501,19 +503,19 @@ export function SavtAssessment() {
                         type="button"
                         onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to Assessments"
+                        aria-label={t("attention.backToAssessments")}
                     >
                         <span className="back-arrow" aria-hidden="true">←</span>
-                        <span>Back to Assessments</span>
+                        <span>{t("attention.backToAssessments")}</span>
                     </button>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
                 {phase === 'instructions' && (
                     <div className="story-header animate-fadeInUp">
-                        <h1 className="story-title vyom-serif">Attention</h1>
+                        <h1 className="story-title vyom-serif">{t("attention.title")}</h1>
                         <p className="story-subtitle">
-                            Sustained visual vigilance and inhibitory control assessment.
+                            {t("attention.subtitle")}
                         </p>
                     </div>
                 )}
@@ -528,7 +530,7 @@ export function SavtAssessment() {
                                     <div className="instructions-icon-wrapper" aria-hidden="true">
                                         <Icon name="attention" size={28} />
                                     </div>
-                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+                                    <h2 className="instructions-card-title vyom-serif">{t("attention.howItWorks")}</h2>
 
                                     {/* Clear Side-by-Side Target Rule Cards */}
                                     <div className="savt-rules-comparison">
@@ -537,9 +539,9 @@ export function SavtAssessment() {
                                                 {renderStimulus(createStimulus('go', sessionTarget), true)}
                                             </div>
                                             <div className="savt-rule-detail">
-                                                <span className="savt-rule-pill go" style={{ background: goTint.border, color: '#FFFFFF' }}>TAP</span>
+                                                <span className="savt-rule-pill go" style={{ background: goTint.border, color: '#FFFFFF' }}>{t("attention.tap")}</span>
                                                 <div className="rule-title">{sessionTarget.label}</div>
-                                                <p className="rule-desc">Tap ONLY for this exact shape & color</p>
+                                                <p className="rule-desc">{t("attention.tapOnlyExact")}</p>
                                             </div>
                                         </div>
 
@@ -548,9 +550,9 @@ export function SavtAssessment() {
                                                 {renderStimulus(createStimulus('nogo', sessionTarget), true)}
                                             </div>
                                             <div className="savt-rule-detail">
-                                                <span className="savt-rule-pill nogo">DON'T TAP</span>
-                                                <div className="rule-title">Any Other Item</div>
-                                                <p className="rule-desc">Ignore different shape OR color</p>
+                                                <span className="savt-rule-pill nogo">{t("attention.dontTap")}</span>
+                                                <div className="rule-title">{t("attention.anyOtherItem")}</div>
+                                                <p className="rule-desc">{t("attention.ignoreDifferent")}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -560,22 +562,22 @@ export function SavtAssessment() {
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">1</div>
                                             <div className="step-content">
-                                                <strong>Target Match:</strong>
-                                                <span>Respond ONLY when you see the <strong>{sessionTarget.label}</strong>.</span>
+                                                <strong>{t("attention.step1Title")}</strong>
+                                                <span>{t("attention.step1Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">2</div>
                                             <div className="step-content">
-                                                <strong>Inhibit Distractors:</strong>
-                                                <span>Do NOT tap for any other shape or color.</span>
+                                                <strong>{t("attention.step2Title")}</strong>
+                                                <span>{t("attention.step2Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">3</div>
                                             <div className="step-content">
-                                                <strong>Controls:</strong>
-                                                <span>Tap the screen, click, or press <strong>Spacebar</strong>.</span>
+                                                <strong>{t("attention.step3Title")}</strong>
+                                                <span>{t("attention.step3Desc")}</span>
                                             </div>
                                         </li>
                                     </ol>
@@ -586,7 +588,7 @@ export function SavtAssessment() {
                                             className="story-primary-start-btn"
                                             onClick={startPractice}
                                         >
-                                            Start Practice
+                                            {t("attention.startPractice")}
                                         </Button>
                                     </div>
                                 </div>
@@ -612,9 +614,9 @@ export function SavtAssessment() {
                                     <div className="savt-progress-fill practice" style={{ width: `${progressPct}%` }} />
                                 </div>
                                 <div className="savt-progress-info">
-                                    <span className="savt-round-lbl">Practice {practiceIndex + 1} of {practiceTotal}</span>
+                                    <span className="savt-round-lbl">{t("attention.practiceProgress", { current: practiceIndex + 1, total: practiceTotal })}</span>
                                     <span className="savt-target-pill" style={{ background: goTint.bg, color: goTint.text, borderColor: goTint.border }}>
-                                        Target: {sessionTarget.label}
+                                        {t("attention.targetLabel", { label: sessionTarget.label })}
                                     </span>
                                 </div>
                             </div>
@@ -634,18 +636,18 @@ export function SavtAssessment() {
 
                             {practiceComplete && !practiceFeedback.show ? (
                                 <div className="savt-practice-done-modal animate-fadeInUp">
-                                    <h3>Practice Complete!</h3>
-                                    <p>You are ready for the scored assessment.</p>
+                                    <h3>{t("attention.practiceComplete")}</h3>
+                                    <p>{t("attention.practiceReady")}</p>
                                     <Button
                                         variant="primary"
                                         size="lg"
                                         onClick={(e) => { e.stopPropagation(); startTest(); }}
                                     >
-                                        Start Scored Assessment
+                                        {t("attention.startScoredTest")}
                                     </Button>
                                 </div>
                             ) : (
-                                <p className="savt-bottom-hint">Tap screen or press <strong>Spacebar</strong> when target appears</p>
+                                <p className="savt-bottom-hint">{t("attention.tapScreenSpacebar")}</p>
                             )}
                         </div>
                     )}
@@ -665,9 +667,9 @@ export function SavtAssessment() {
                                     <div className="savt-progress-fill" style={{ width: `${progressPct}%` }} />
                                 </div>
                                 <div className="savt-progress-info">
-                                    <span className="savt-round-lbl">Trial {Math.min(trialIndex + 1, config.totalTrials)} of {config.totalTrials}</span>
+                                    <span className="savt-round-lbl">{t("attention.trialProgress", { current: Math.min(trialIndex + 1, config.totalTrials), total: config.totalTrials })}</span>
                                     <span className="savt-target-pill" style={{ background: goTint.bg, color: goTint.text, borderColor: goTint.border }}>
-                                        Target: {sessionTarget.label}
+                                        {t("attention.targetLabel", { label: sessionTarget.label })}
                                     </span>
                                 </div>
                             </div>
@@ -685,7 +687,7 @@ export function SavtAssessment() {
                                 )}
                             </div>
 
-                            <p className="savt-bottom-hint">Tap screen or press <strong>Spacebar</strong> for target cue only</p>
+                            <p className="savt-bottom-hint">{t("attention.tapScreenTargetOnly")}</p>
                         </div>
                     )}
 
@@ -693,8 +695,8 @@ export function SavtAssessment() {
                     {phase === 'scoring' && (
                         <div className="savt-scoring-arena animate-fadeIn">
                             <div className="savt-scoring-spinner" />
-                            <h2>Analyzing Vigilance Profile...</h2>
-                            <p>Computing signal detection sensitivity and response latency</p>
+                            <h2>{t("attention.analyzingProfile")}</h2>
+                            <p>{t("attention.computingSensitivity")}</p>
                         </div>
                     )}
 
@@ -748,10 +750,10 @@ export function SavtAssessment() {
                                 <Card className="results-overview-card">
                                     <div className="overview-header">
                                         <div className="overview-title-group">
-                                            <h2 className="vyom-serif">Attention Profile</h2>
+                                            <h2 className="vyom-serif">{t("attention.profileTitle")}</h2>
                                             <span className={`story-trend-pill ${trend === "up" ? "trend-up" : "trend-down"}`}>
                                                 <Icon name={trend === "up" ? "trend-up" : "trend-down"} size={13} />
-                                                <span>{trend === "up" ? "Improving" : "Declining"}</span>
+                                                <span>{trend === "up" ? t("vmra.improving") : t("vmra.declining")}</span>
                                             </span>
                                         </div>
                                         <div className="score-badge-circle">
@@ -770,32 +772,32 @@ export function SavtAssessment() {
                                 <div className="biomarkers-grid-row">
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Target Sensitivity</h4>
-                                            <p className="metric-desc">Signal discrimination (d′: {dPrime})</p>
+                                            <h4>{t("attention.targetSensitivity")}</h4>
+                                            <p className="metric-desc">{t("attention.signalDiscrimination", { dPrime })}</p>
                                         </div>
                                         <div className="metric-val">{hitRatePercent}%</div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Inhibitory Control</h4>
-                                            <p className="metric-desc">Distractor suppression rate</p>
+                                            <h4>{t("attention.inhibitoryControl")}</h4>
+                                            <p className="metric-desc">{t("attention.distractorSuppression")}</p>
                                         </div>
                                         <div className="metric-val">{inhibitionPercent}%</div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Response Latency</h4>
-                                            <p className="metric-desc">Average target reaction speed</p>
+                                            <h4>{t("attention.responseLatency")}</h4>
+                                            <p className="metric-desc">{t("attention.avgTargetSpeed")}</p>
                                         </div>
                                         <div className="metric-val">{meanRt > 0 ? meanRt : "—"} <span className="metric-unit">ms</span></div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Vigilance Stability</h4>
-                                            <p className="metric-desc">Sustained attention over blocks</p>
+                                            <h4>{t("attention.vigilanceStability")}</h4>
+                                            <p className="metric-desc">{t("attention.sustainedAttentionOverBlocks")}</p>
                                         </div>
                                         <div className="metric-val">{stabilityPercent}%</div>
                                     </Card>
@@ -803,7 +805,7 @@ export function SavtAssessment() {
 
                                 {/* Full-Length Biomarker Radar & Block Performance Card */}
                                 <Card className="radar-chart-card full-width-radar">
-                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <h3 className="radar-title">{t("vmra.biomarkerRadar")}</h3>
                                     <div className="chart-wrapper">
                                         <ResponsiveContainer width="100%" height={155}>
                                             <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
@@ -828,14 +830,14 @@ export function SavtAssessment() {
                                     {/* Block-by-Block Vigilance Performance */}
                                     <div className="savt-blocks-section">
                                         <div className="savt-blocks-header">
-                                            <span className="savt-blocks-title">Vigilance Over Time</span>
-                                            <span className="savt-blocks-badge">{hits} / {totalGo} Targets Hit</span>
+                                            <span className="savt-blocks-title">{t("attention.vigilanceOverTime")}</span>
+                                            <span className="savt-blocks-badge">{t("attention.targetsHitCount", { hits, total: totalGo })}</span>
                                         </div>
                                         <div className="savt-blocks-grid">
                                             {blockRates.map((rate, i) => (
                                                 <div key={i} className="savt-block-chip">
-                                                    <span className="block-chip-tag">Quarter {i + 1}</span>
-                                                    <span className="block-chip-val">{Math.round(rate * 100)}% Hit</span>
+                                                    <span className="block-chip-tag">{t("attention.quarter", { quarter: i + 1 })}</span>
+                                                    <span className="block-chip-val">{t("attention.percentHit", { percent: Math.round(rate * 100) })}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -845,14 +847,14 @@ export function SavtAssessment() {
                                 {/* Centered Actions */}
                                 <div className="results-actions">
                                     <button type="button" onClick={handleRetake} className="story-retake-btn">
-                                        <Icon name="reaction" size={15} /> Retake Test
+                                        <Icon name="reaction" size={15} /> {t("attention.retakeTest")}
                                     </button>
                                     <button
                                         type="button"
                                         className="story-primary-start-btn story-back-assessments-btn"
                                         onClick={() => navigate("/tests")}
                                     >
-                                        Back to Assessments
+                                        {t("attention.backToAssessments")}
                                     </button>
                                 </div>
                             </div>
@@ -865,9 +867,9 @@ export function SavtAssessment() {
                     <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
                         <div className="story-exit-modal animate-scaleUp">
                             <div className="exit-modal-icon">⚠️</div>
-                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <h3 className="exit-modal-title vyom-serif">{t("attention.leaveAssessment")}</h3>
                             <p className="exit-modal-text">
-                                Your current assessment progress will be lost if you leave now.
+                                {t("attention.leaveWarning")}
                             </p>
                             <div className="exit-modal-actions">
                                 <button
@@ -875,14 +877,14 @@ export function SavtAssessment() {
                                     onClick={handleCancelExit}
                                     className="modal-btn modal-btn-secondary"
                                 >
-                                    Continue Test
+                                    {t("attention.continueTest")}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleConfirmExit}
                                     className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Test
+                                    {t("attention.leaveTest")}
                                 </button>
                             </div>
                         </div>

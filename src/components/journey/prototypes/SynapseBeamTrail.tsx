@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { JOURNEY_NODES, type ActivityId, type JourneyNodeInfo, type ActivityScoreInfo } from "../../../hooks/useJourneyState";
 import { Icon, type IconName } from "../../common";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import "./SynapseBeamTrail.css";
 
 interface SynapseBeamTrailProps {
@@ -75,6 +76,7 @@ export function SynapseBeamTrail({
     filterMode = 'all',
 }: SynapseBeamTrailProps) {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [hoveredNodeId, setHoveredNodeId] = useState<ActivityId | null>(null);
     const [activeInfoId, setActiveInfoId] = useState<ActivityId | null>(null);
 
@@ -97,39 +99,69 @@ export function SynapseBeamTrail({
         });
     }, [completedActivityIds, filterMode]);
 
-    // Dynamically generate smooth Bezier spline path for the exact number of visible nodes
-    const splinePath = useMemo(() => {
-        const count = filteredNodes.length;
-        if (count <= 1) return "";
-        const points: Array<{ x: number; y: number }> = [];
+    const streamLayoutRef = useRef<HTMLDivElement>(null);
+    const [splineData, setSplineData] = useState<{ path: string; width: number; height: number }>({
+        path: "",
+        width: 800,
+        height: 400,
+    });
 
-        for (let i = 0; i < count; i++) {
-            const y = 70 + i * 200;
-            let x = 230;
-            if (i === count - 1 && count > 1) {
-                x = 400; // Center final node
-            } else if (i % 2 === 1) {
-                x = 570; // Right
-            } else {
-                x = 230; // Left
+    useLayoutEffect(() => {
+        const calculateSpine = () => {
+            if (!streamLayoutRef.current) return;
+            const container = streamLayoutRef.current;
+            const containerRect = container.getBoundingClientRect();
+            const orbElements = container.querySelectorAll<HTMLElement>('.synapse-junction-orb');
+
+            if (orbElements.length <= 1) {
+                setSplineData({ path: "", width: Math.round(containerRect.width) || 800, height: Math.round(containerRect.height) || 400 });
+                return;
             }
-            points.push({ x, y });
-        }
 
-        let d = `M ${points[0].x} ${points[0].y}`;
-        for (let i = 1; i < points.length; i++) {
-            const prev = points[i - 1];
-            const curr = points[i];
-            const cp1Y = prev.y + 100;
-            const cp2Y = curr.y - 100;
-            d += ` C ${prev.x} ${cp1Y}, ${curr.x} ${cp2Y}, ${curr.x} ${curr.y}`;
-        }
-        return d;
-    }, [filteredNodes.length]);
+            const points: Array<{ x: number; y: number }> = [];
+            orbElements.forEach((orb) => {
+                const orbRect = orb.getBoundingClientRect();
+                const x = Math.round(orbRect.left - containerRect.left + orbRect.width / 2);
+                const y = Math.round(orbRect.top - containerRect.top + orbRect.height / 2);
+                points.push({ x, y });
+            });
 
-    const svgHeight = useMemo(() => {
-        return Math.max(250, filteredNodes.length * 200 - 50);
-    }, [filteredNodes.length]);
+            if (points.length <= 1) {
+                setSplineData({ path: "", width: Math.round(containerRect.width) || 800, height: Math.round(containerRect.height) || 400 });
+                return;
+            }
+
+            // Path connects from points[0] and strictly ends at the last test points[points.length - 1]
+            // It never extends beyond the last test
+            let d = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 1; i < points.length; i++) {
+                const prev = points[i - 1];
+                const curr = points[i];
+                const dy = curr.y - prev.y;
+                const cp1Y = prev.y + dy * 0.5;
+                const cp2Y = curr.y - dy * 0.5;
+                d += ` C ${prev.x} ${cp1Y}, ${curr.x} ${cp2Y}, ${curr.x} ${curr.y}`;
+            }
+
+            setSplineData({
+                path: d,
+                width: Math.max(100, Math.round(containerRect.width)),
+                height: Math.max(100, Math.round(containerRect.height)),
+            });
+        };
+
+        calculateSpine();
+
+        const raf = requestAnimationFrame(calculateSpine);
+        const timeout = setTimeout(calculateSpine, 80);
+        window.addEventListener('resize', calculateSpine);
+
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(timeout);
+            window.removeEventListener('resize', calculateSpine);
+        };
+    }, [filteredNodes, filterMode]);
 
     // Empty state when filter produces 0 items
     if (filteredNodes.length === 0) {
@@ -175,15 +207,14 @@ export function SynapseBeamTrail({
     return (
         <div className="synapse-beam-container animate-fadeIn">
             {/* Winding Synaptic Stream Layout */}
-            <div className="synapse-stream-layout">
+            <div className="synapse-stream-layout" ref={streamLayoutRef}>
                 {/* Continuous Winding SVG Neural River (Desktop >= 768px) */}
-                {filteredNodes.length > 1 && splinePath && (
+                {filteredNodes.length > 1 && splineData.path && (
                     <svg
                         className="synapse-svg-spine hidden md:block"
-                        viewBox={`0 0 800 ${svgHeight}`}
+                        viewBox={`0 0 ${splineData.width} ${splineData.height}`}
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        preserveAspectRatio="none"
                         aria-hidden="true"
                     >
                         <defs>
@@ -212,7 +243,7 @@ export function SynapseBeamTrail({
 
                         {/* Background Guide Spline */}
                         <path
-                            d={splinePath}
+                            d={splineData.path}
                             className="synapse-path-bg"
                             stroke="url(#synapse-base-glow)"
                             strokeWidth="3.5"
@@ -221,7 +252,7 @@ export function SynapseBeamTrail({
 
                         {/* Ambient Glow Spline */}
                         <path
-                            d={splinePath}
+                            d={splineData.path}
                             className="synapse-path-glow"
                             stroke="var(--color-accent)"
                             strokeWidth="5"
@@ -231,7 +262,7 @@ export function SynapseBeamTrail({
 
                         {/* Traveling Light Beam */}
                         <path
-                            d={splinePath}
+                            d={splineData.path}
                             className="synapse-path-pulse"
                             stroke="url(#synapse-pulse-beam)"
                             strokeWidth="4"
@@ -251,6 +282,13 @@ export function SynapseBeamTrail({
                         const latestScore = activityLatestScoreMap[node.id];
                         const isInfoOpen = activeInfoId === node.id;
                         const originalIndex = JOURNEY_NODES.findIndex((n) => n.id === node.id);
+
+                        const nodeTitle = t(`journeyNodes.${node.id}.title`) || node.title;
+                        const nodeDomain = t(`journeyNodes.${node.id}.domain`) || meta.domain;
+                        const nodeFocus = t(`journeyNodes.${node.id}.focus`) || meta.focus;
+                        const nodeTag = t(`journeyNodes.${node.id}.tag`) || meta.tag;
+                        const nodeRationale = t(`journeyNodes.${node.id}.rationale`) || meta.rationale;
+                        const nodeBiomarkers = meta.biomarkers; // Keep in English for clinical precision
 
                         return (
                             <div
@@ -289,7 +327,7 @@ export function SynapseBeamTrail({
                                             handleNodeClick(node);
                                         }
                                     }}
-                                    aria-label={`${node.title}, ${isCompleted ? "Completed" : isActive ? "Current test" : "Upcoming test"}`}
+                                    aria-label={`${nodeTitle}, ${isCompleted ? t("journey.completed") : isActive ? t("journey.upNext") : t("journey.upcoming")}`}
                                 >
                                     {/* Up Next: Animated Sazzad Aurora Blobs (Behind Content Layer) */}
                                     {isActive && (
@@ -306,7 +344,7 @@ export function SynapseBeamTrail({
                                         <div className="synapse-card-top">
                                         <div className="top-meta-left">
                                             <span className="synapse-index-chip">0{originalIndex + 1}</span>
-                                            <span className="synapse-domain-badge">{meta.domain}</span>
+                                            <span className="synapse-domain-badge">{nodeDomain}</span>
                                         </div>
 
                                         <div className="top-meta-right">
@@ -315,12 +353,12 @@ export function SynapseBeamTrail({
                                             </span>
                                             {isCompleted && (
                                                 <span className="synapse-status-done">
-                                                    <Icon name="check" size={11} /> Done
+                                                    <Icon name="check" size={11} /> {t("journey.done")}
                                                 </span>
                                             )}
                                             {isActive && (
                                                 <span className="synapse-status-current">
-                                                    <span className="current-dot" /> Up Next
+                                                    <span className="current-dot" /> {t("journey.upNext")}
                                                 </span>
                                             )}
                                         </div>
@@ -333,7 +371,7 @@ export function SynapseBeamTrail({
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <div className="info-popover-header">
-                                                <span className="info-popover-title">Clinical Measurement Target</span>
+                                                <span className="info-popover-title">{t("journey.clinicalTarget")}</span>
                                                 <button
                                                     type="button"
                                                     className="info-close-btn"
@@ -342,10 +380,10 @@ export function SynapseBeamTrail({
                                                     ×
                                                 </button>
                                             </div>
-                                            <p className="info-popover-rationale">{meta.rationale}</p>
+                                            <p className="info-popover-rationale">{nodeRationale}</p>
                                             <div className="info-popover-biomarkers">
                                                 <Icon name="brain-circuit" size={12} />
-                                                <span>{meta.biomarkers}</span>
+                                                <span>{nodeBiomarkers}</span>
                                             </div>
                                         </div>
                                     )}
@@ -357,7 +395,7 @@ export function SynapseBeamTrail({
                                         </div>
                                         <div className="synapse-title-wrap">
                                             <div className="synapse-title-row">
-                                                <h3 className="synapse-card-title vyom-serif">{node.title}</h3>
+                                                <h3 className="synapse-card-title vyom-serif">{nodeTitle}</h3>
                                                 <button
                                                     type="button"
                                                     className={`synapse-info-trigger ${isInfoOpen ? "active" : ""}`}
@@ -368,14 +406,14 @@ export function SynapseBeamTrail({
                                                     <Icon name="info" size={11} />
                                                 </button>
                                             </div>
-                                            <p className="synapse-card-focus">{meta.focus}</p>
+                                            <p className="synapse-card-focus">{nodeFocus}</p>
                                         </div>
                                     </div>
 
                                     {/* 3. Card Bottom Action Row */}
                                     <div className="synapse-card-bottom">
                                         <div className="bottom-meta-left">
-                                            <span className="synapse-tag-pill">{meta.tag}</span>
+                                            <span className="synapse-tag-pill">{nodeTag}</span>
                                             {isCompleted && latestScore && (
                                                 <span
                                                     className={`synapse-score-badge ${
@@ -422,12 +460,12 @@ export function SynapseBeamTrail({
                                         >
                                             {isCompleted ? (
                                                 <>
-                                                    <Icon name="assess" size={12} /> Retake
+                                                    <Icon name="assess" size={12} /> {t("buttons.retry")}
                                                 </>
                                             ) : isActive ? (
-                                                <>Start Test →</>
+                                                <>{t("buttons.startAssessment")} →</>
                                             ) : (
-                                                <>Begin</>
+                                                <>{t("journey.startActivity")}</>
                                             )}
                                         </button>
                                     </div>

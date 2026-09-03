@@ -214,14 +214,14 @@ export function CognitiveRadarSection({
                     <button
                         onClick={() => setShowCurrent(!showCurrent)}
                         style={{
-                            padding: '0.25rem 0.55rem',
+                            padding: '0.3rem 0.65rem',
                             borderRadius: '6px',
-                            fontSize: '0.725rem',
-                            fontWeight: 600,
+                            fontSize: '0.8125rem',
+                            fontWeight: 650,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
+                            gap: '0.35rem',
                             background: showCurrent ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
                             color: showCurrent ? '#06b6d4' : 'var(--dv2-muted)',
                             border: 'none',
@@ -229,8 +229,8 @@ export function CognitiveRadarSection({
                         }}
                     >
                         <span style={{
-                            width: '6px',
-                            height: '6px',
+                            width: '7px',
+                            height: '7px',
                             borderRadius: '50%',
                             background: '#06b6d4',
                             boxShadow: showCurrent ? '0 0 6px #06b6d4' : 'none',
@@ -243,14 +243,14 @@ export function CognitiveRadarSection({
                         <button
                             onClick={() => setShowBaseline(!showBaseline)}
                             style={{
-                                padding: '0.25rem 0.55rem',
+                                padding: '0.3rem 0.65rem',
                                 borderRadius: '6px',
-                                fontSize: '0.725rem',
-                                fontWeight: 600,
+                                fontSize: '0.8125rem',
+                                fontWeight: 650,
                                 cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '0.3rem',
+                                gap: '0.35rem',
                                 background: showBaseline ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
                                 color: showBaseline ? '#d97706' : 'var(--dv2-muted)',
                                 border: 'none',
@@ -258,8 +258,8 @@ export function CognitiveRadarSection({
                             }}
                         >
                             <span style={{
-                                width: '6px',
-                                height: '6px',
+                                width: '7px',
+                                height: '7px',
                                 borderRadius: '1.5px',
                                 background: '#f59e0b',
                             }} />
@@ -271,14 +271,14 @@ export function CognitiveRadarSection({
                     <button
                         onClick={() => setShowNormative(!showNormative)}
                         style={{
-                            padding: '0.25rem 0.55rem',
+                            padding: '0.3rem 0.65rem',
                             borderRadius: '6px',
-                            fontSize: '0.725rem',
-                            fontWeight: 600,
+                            fontSize: '0.8125rem',
+                            fontWeight: 650,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.3rem',
+                            gap: '0.35rem',
                             background: showNormative ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
                             color: showNormative ? '#10b981' : 'var(--dv2-muted)',
                             border: 'none',
@@ -286,8 +286,8 @@ export function CognitiveRadarSection({
                         }}
                     >
                         <span style={{
-                            width: '6px',
-                            height: '6px',
+                            width: '7px',
+                            height: '7px',
                             borderRadius: '1.5px',
                             background: '#10b981',
                         }} />
@@ -460,13 +460,14 @@ export function CognitiveRadarSection({
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
-                                fontSize: '0.725rem',
-                                color: 'var(--dv2-muted)',
+                                fontSize: '0.8125rem',
+                                fontWeight: 650,
+                                color: 'var(--dv2-text)',
                             }}>
-                                <span>{d.icon} {d.label}</span>
+                                <span>{d.label}</span>
                                 {totalSessions > 1 && delta !== 0 && (
                                     <span style={{
-                                        fontSize: '0.6875rem',
+                                        fontSize: '0.78rem',
                                         fontWeight: 700,
                                         color: isPositive ? '#10b981' : '#ef4444',
                                     }}>
@@ -479,20 +480,20 @@ export function CognitiveRadarSection({
                                 display: 'flex',
                                 alignItems: 'baseline',
                                 gap: '0.25rem',
-                                marginTop: '0.1rem',
+                                marginTop: '0.15rem',
                             }}>
                                 <span style={{
-                                    fontSize: '1rem',
-                                    fontWeight: 700,
+                                    fontSize: '1.15rem',
+                                    fontWeight: 800,
                                     fontFamily: 'monospace',
                                     color: currentVal < 60 ? '#ef4444' : 'var(--dv2-text)',
                                 }}>
                                     {currentVal}
                                 </span>
-                                <span style={{ fontSize: '0.65rem', color: 'var(--dv2-muted)' }}>/100</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--dv2-muted)' }}>/100</span>
                                 {totalSessions > 1 && (
-                                    <span style={{ fontSize: '0.65rem', color: 'var(--dv2-muted)', marginLeft: 'auto' }}>
-                                        Base: <strong style={{ color: 'var(--dv2-text)' }}>{baseVal}</strong>
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--dv2-muted)', marginLeft: 'auto' }}>
+                                        Base: <strong style={{ color: 'var(--dv2-text)', fontWeight: 700 }}>{baseVal}</strong>
                                     </span>
                                 )}
                             </div>

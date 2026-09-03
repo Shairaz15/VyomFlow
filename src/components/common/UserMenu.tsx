@@ -76,7 +76,7 @@ export function UserMenu() {
                     <div className="menu-divider" />
                     <Link to="/tests" className="menu-item" onClick={() => setIsOpen(false)}>
                         <Compass className="menu-item-icon" size={16} strokeWidth={1.75} />
-                        <span>Cognitive Journey</span>
+                        <span>{t('common.cognitiveJourney')}</span>
                     </Link>
                     <Link to="/dashboard" className="menu-item" onClick={() => setIsOpen(false)}>
                         <LayoutDashboard className="menu-item-icon" size={16} strokeWidth={1.75} />

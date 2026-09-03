@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const API_KEY = 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 async function testFormats() {
   console.log('Testing Sarvam AI STT REST API format compatibility...');

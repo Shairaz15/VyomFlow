@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, Icon, Button } from "../../../common";
+import { useLanguage } from "../../../../i18n/LanguageContext";
 import type {
     RouteConfig,
     NavigationDirection,
@@ -33,6 +34,7 @@ export function SeamlessReverseNavigator({
     route,
     onComplete,
 }: SeamlessReverseNavigatorProps) {
+    const { t } = useLanguage();
     const videoRef = useRef<HTMLVideoElement>(null);
 
     const [currentIntersection, setCurrentIntersection] = useState<number>(0); // 0-7 index into PAUSE_TIMESTAMPS
@@ -526,13 +528,13 @@ export function SeamlessReverseNavigator({
                     <div className="text-center space-y-1">
                         <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                             <Icon name="navigation" size={12} />
-                            <span>Intersection {currentIntersectionNumber} of 8</span>
+                            <span>{t("navigation.intersectionOf", { current: currentIntersectionNumber, total: 8 })}</span>
                         </div>
                         <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                             {currentSegment.intersectionLabel}
                         </h3>
                         <p className="text-xs text-slate-400">
-                            Which direction should you take to retrace your path back to Main Gate 1 (Point A)?
+                            {t("navigation.directionRetracePrompt")}
                         </p>
                     </div>
 
@@ -558,7 +560,7 @@ export function SeamlessReverseNavigator({
                                         ↑ / W
                                     </span>
                                 </div>
-                                <span className="mt-0.5">Straight</span>
+                                <span className="mt-0.5">{t("navigation.goStraight")}</span>
                             </button>
                         </div>
 
@@ -583,7 +585,7 @@ export function SeamlessReverseNavigator({
                                         ← / A
                                     </span>
                                 </div>
-                                <span className="mt-0.5">Turn Left</span>
+                                <span className="mt-0.5">{t("navigation.turnLeft")}</span>
                             </button>
 
                             {/* Compass Center Indicator */}
@@ -610,7 +612,7 @@ export function SeamlessReverseNavigator({
                                         → / D
                                     </span>
                                 </div>
-                                <span className="mt-0.5">Turn Right</span>
+                                <span className="mt-0.5">{t("navigation.turnRight")}</span>
                             </button>
                         </div>
 
@@ -634,7 +636,7 @@ export function SeamlessReverseNavigator({
                                         ↓ / S
                                     </span>
                                 </div>
-                                <span className="mt-0.5">Turn Back</span>
+                                <span className="mt-0.5">{t("navigation.turnAround")}</span>
                             </button>
                         </div>
                     </div>
@@ -658,20 +660,20 @@ export function SeamlessReverseNavigator({
                         <div className="space-y-0.5 text-left">
                             <div className="text-slate-800 dark:text-white font-bold text-sm">
                                 {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
-                                    ? `Approaching Intersection ${currentIntersectionNumber}`
-                                    : "Arriving at Point A (Main Gate 1)"}
+                                    ? t("navigation.approachingIntersection", { num: currentIntersectionNumber })
+                                    : t("navigation.arrivingPointA")}
                             </div>
                             <div className="text-slate-600 dark:text-slate-400 text-xs">
                                 {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
-                                    ? `${route.segments[currentIntersection]?.intersectionLabel || "Observe upcoming pathways and landmark cues."}`
-                                    : "Final stretch — completing reverse navigation."}
+                                    ? `${route.segments[currentIntersection]?.intersectionLabel || t("navigation.observePathways")}`
+                                    : t("navigation.finalStretch")}
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="hidden sm:inline-block px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
-                            🚶 Continuous PoV
+                            🚶 {t("navigation.continuousPoV")}
                         </span>
                         {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length && (
                             <Button
@@ -680,7 +682,7 @@ export function SeamlessReverseNavigator({
                                 onClick={handleSkip}
                                 className="text-xs"
                             >
-                                Skip to Decision →
+                                {t("navigation.skipToDecision")}
                             </Button>
                         )}
                     </div>

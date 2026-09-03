@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, Icon } from "../../common";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import type { SupportedLanguage } from "../../../types/storyTypes";
 import "./StoryAssessment.css";
 
-const SARVAM_API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 interface StoryRecorderProps {
     selectedLanguage?: SupportedLanguage;
@@ -18,6 +19,7 @@ interface StoryRecorderProps {
 }
 
 export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderProps) {
+    const { t } = useLanguage();
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState("");
     const [verbatimTranscript, setVerbatimTranscript] = useState("");
@@ -584,20 +586,20 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
             {!isRecording ? (
                 <div className="narration-badge">
                     <Icon name="mic" size={16} />
-                    <span>Voice Retelling Phase</span>
+                    <span>{t("story.voiceRetellingPhase")}</span>
                 </div>
             ) : (
                 <div className="recording-indicator">
                     <span className="pulsing-red-dot" />
-                    <span>Recording in Progress</span>
+                    <span>{t("story.recordingInProgress")}</span>
                 </div>
             )}
 
             <h3 className="select-card-title text-xl font-semibold text-[#17324D] dark:text-[#F7F4EC] mt-1 mb-1">
-                Story Retelling Phase
+                {t("story.storyRetellingTitle")}
             </h3>
             <p className="recorder-sub">
-                Retell the story you heard in as much detail as you can remember. Speak naturally in your chosen language.
+                {t("story.storyRetellingSub")}
             </p>
 
             {/* Timer, Language & Status Meta Bar */}
@@ -631,7 +633,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 ) : isProcessingAudio ? (
                     <div className="flex items-center justify-center gap-2 py-3 text-sm text-[#4F7C78] dark:text-[#00C9B7]">
                         <div className="spinner !w-5 !h-5 !border-2 m-0" />
-                        <span>Processing Audio with Sarvam AI...</span>
+                        <span>{t("story.processingWithSarvam")}</span>
                     </div>
                 ) : (
                     <button 
@@ -646,7 +648,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 )}
                 {!isProcessingAudio && (
                     <p className="player-state-label mt-1 text-xs">
-                        {isRecording ? "Listening to your retelling..." : "Tap microphone to begin"}
+                        {isRecording ? t("story.listeningToRetelling") : t("story.tapMicToBegin")}
                     </p>
                 )}
             </div>
@@ -659,8 +661,8 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 aria-label="Speech transcript"
             >
                 <div className="live-transcript-header">
-                    <span className="live-label">LIVE TRANSCRIPT</span>
-                    {isRecording && <span className="live-pulse-badge">LIVE</span>}
+                    <span className="live-label">{t("story.liveTranscript")}</span>
+                    {isRecording && <span className="live-pulse-badge">{t("story.live")}</span>}
                 </div>
                 {transcript || verbatimTranscript ? (
                     <div className="live-text-container">
@@ -675,10 +677,10 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 ) : (
                     <p className="transcript-idle-hint">
                         {isRecording 
-                            ? "🎙️ Listening... Speak naturally in your chosen language. Live transcription and English subtitles will appear simultaneously." 
+                            ? t("story.listeningHint")
                             : isProcessingAudio
-                            ? "⏳ Analyzing speech audio..."
-                            : "Tap the microphone icon above to begin retelling the story..."}
+                            ? t("story.analyzingSpeech")
+                            : t("story.tapMicIconAbove")}
                     </p>
                 )}
                 <div ref={transcriptEndRef} />
@@ -705,11 +707,11 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                         aria-label="Finish recording and process results"
                     >
                         <span className="stop-square" />
-                        Finish Recording
+                        {t("story.finishRecording")}
                     </button>
                     {timer < 15 && (
                         <p className="text-xs text-[#63788A] dark:text-[#A0B0BC] m-0">
-                            Try to speak for at least 15 seconds for robust story recall analysis
+                            {t("story.speak15Sec")}
                         </p>
                     )}
                 </div>

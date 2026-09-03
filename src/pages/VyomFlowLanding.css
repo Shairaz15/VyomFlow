@@ -1069,10 +1069,109 @@ html.dark .vyom-orbital-card:hover .vyom-orbital-icon {
   transform: scale(1.08);
 }
 
+/* Individual Card Read More Link */
+.vyom-privacy-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.vyom-privacy-card-sage .vyom-privacy-card-link {
+  color: #4F7C78;
+}
+
+.vyom-privacy-card-blue .vyom-privacy-card-link {
+  color: #4A6680;
+}
+
+.vyom-privacy-card-gold .vyom-privacy-card-link {
+  color: #A88752;
+}
+
+.vyom-privacy-card-link:hover {
+  opacity: 0.8;
+}
+
+.vyom-privacy-card-link .readmore-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.vyom-privacy-card-link:hover .readmore-arrow {
+  transform: translateX(4px);
+}
+
+/* Panel Read More Link Button */
+.vyom-privacy-readmore-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+}
+
+.vyom-privacy-readmore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #17324D;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(23, 50, 77, 0.12);
+  box-shadow: 0 4px 14px rgba(23, 50, 77, 0.05);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vyom-privacy-readmore-btn:hover {
+  background: #17324D;
+  color: #FFFFFF;
+  border-color: #17324D;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(23, 50, 77, 0.16);
+}
+
+.vyom-privacy-readmore-btn .readmore-arrow {
+  display: inline-block;
+  font-size: 1.1rem;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vyom-privacy-readmore-btn:hover .readmore-arrow {
+  transform: translateX(4px);
+}
+
+/* Dark mode styling for privacy read more */
+.dark .vyom-privacy-readmore-btn,
+[data-theme="dark"] .vyom-privacy-readmore-btn {
+  background: #1E2D47;
+  color: #F7F4EC;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.dark .vyom-privacy-readmore-btn:hover,
+[data-theme="dark"] .vyom-privacy-readmore-btn:hover {
+  background: #4F7C78;
+  color: #FFFFFF;
+  border-color: #4F7C78;
+  box-shadow: 0 8px 24px rgba(79, 124, 120, 0.3);
+}
+
 @media (max-width: 768px) {
   .vyom-privacy-panel {
     padding: 1.75rem 1.25rem;
     border-radius: 1.5rem;
+  }
+  .vyom-privacy-readmore-wrapper {
+    margin-top: 1.75rem;
   }
 }
 

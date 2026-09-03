@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { PageWrapper } from "../../layout/PageWrapper";
 import { Button, Card, Icon, TutorialVideoPlaceholder } from "../../common";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import { STORIES, LANGUAGE_NAMES, getRandomStory } from "../../../data/stories/storyData";
 import type { Story, SupportedLanguage, ComprehensionResponse, StoryAssessmentResult } from "../../../types/storyTypes";
 import { StoryPlayer } from "./StoryPlayer";
@@ -26,6 +27,7 @@ type Phase =
 
 export function StoryAssessment() {
     const { isAuthenticated } = useAuth();
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const { saveResult } = useStoryResults();
 
@@ -43,37 +45,27 @@ export function StoryAssessment() {
     const scrollToActiveStage = useCallback(() => {
         if (!activeStageRef.current) return;
 
+        // Give the browser a tick to layout the new phase content
         requestAnimationFrame(() => {
-            if (!activeStageRef.current) return;
-            const rect = activeStageRef.current.getBoundingClientRect();
-            const topClearance = 80; // Safe clearance for mobile sticky header
-            const isComfortablyVisible = 
-                rect.top >= topClearance && 
-                rect.bottom <= window.innerHeight + 40;
-
-            if (!isComfortablyVisible) {
-                activeStageRef.current.scrollIntoView({
-                    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-                    block: "center",
-                    inline: "nearest"
-                });
-            }
+            activeStageRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+                inline: "nearest"
+            });
         });
     }, []);
 
-    // Trigger auto-scroll on phase change
+    // Trigger auto-scroll whenever the active phase transitions
     useEffect(() => {
         scrollToActiveStage();
     }, [phase, scrollToActiveStage]);
 
-    // Handle Exit / Back Navigation
+    // Handle Top Navigation Back / Exit Button
     const handleExitClick = () => {
-        // If on initial instruction or already on results, navigate immediately without warning
-        if (phase === "instructions" || phase === "language_select" || phase === "results") {
+        if (phase === "instructions" || phase === "results") {
             navigate("/tests");
             return;
         }
-        // If in-flight during active evaluation, confirm before losing session progress
         setShowExitConfirm(true);
     };
 
@@ -86,7 +78,7 @@ export function StoryAssessment() {
         setShowExitConfirm(false);
     };
 
-    // 1. Language Selection
+    // Phase Transitions
     const handleSelectLanguage = (lang: SupportedLanguage) => {
         if (!isAuthenticated) return;
         setSelectedLanguage(lang);
@@ -95,37 +87,28 @@ export function StoryAssessment() {
         setPhase("narration");
     };
 
-    // 2. Narration Completed -> Go directly to Comprehension Quiz
     const handleNarrationComplete = () => {
         setPhase("comprehension");
     };
 
-    // 4. Comprehension Quiz Completed
     const handleComprehensionComplete = (responses: ComprehensionResponse[]) => {
         setComprehensionResponses(responses);
         setPhase("recall");
     };
 
-    // 5. Spoken Recall Completed
-    const handleRecallComplete = (data: {
+    const handleRecallComplete = async (data: {
         transcript: string;
-        verbatimTranscript: string;
         englishTranslation: string;
+        verbatimTranscript: string;
         durationMs: number;
         pauseCount: number;
         pauseDurationMs: number;
     }) => {
         setPhase("processing");
 
-        // Run Story Matching Engine (evaluates spoken transcript and English translation)
-        const matchResult = matchStoryUnits(
-            data.transcript,
-            data.englishTranslation,
-            story.informationUnits
-        );
-
-        // Run Story Scoring Engine
-        const { biomarkers, storyRecallScore } = computeStoryScore({
+        // Execute matching and biomarker extraction
+        const matchResult = matchStoryUnits(data.transcript, data.englishTranslation, story.informationUnits);
+        const { storyRecallScore, biomarkers } = computeStoryScore({
             story,
             recalledText: data.transcript,
             englishTranslation: data.englishTranslation,
@@ -173,19 +156,19 @@ export function StoryAssessment() {
                         type="button"
                         onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to Assessments"
+                        aria-label={t("story.backToAssessments")}
                     >
                         <span className="back-arrow" aria-hidden="true">←</span>
-                        <span>Back to Assessments</span>
+                        <span>{t("story.backToAssessments")}</span>
                     </button>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
                 {phase === "instructions" && (
                     <div className="story-header animate-fadeInUp">
-                        <h1 className="story-title vyom-serif">Story Narration Recall</h1>
+                        <h1 className="story-title vyom-serif">{t("story.title")}</h1>
                         <p className="story-subtitle">
-                            Listen to a short narrated story and answer questions about what you remember.
+                            {t("story.subtitle")}
                         </p>
                     </div>
                 )}
@@ -200,35 +183,35 @@ export function StoryAssessment() {
                                     <div className="instructions-icon-wrapper" aria-hidden="true">
                                         <Icon name="story" size={28} />
                                     </div>
-                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+                                    <h2 className="instructions-card-title vyom-serif">{t("story.howItWorks")}</h2>
                                     
                                     <ol className="instructions-step-list">
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">1</div>
                                             <div className="step-content">
-                                                <strong>Select Language:</strong>
-                                                <span>Choose your preferred Indian narration language.</span>
+                                                <strong>{t("story.step1Title")}</strong>
+                                                <span>{t("story.step1Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">2</div>
                                             <div className="step-content">
-                                                <strong>Listen Carefully:</strong>
-                                                <span>Hear a short narrative audio passage played <strong>once</strong>.</span>
+                                                <strong>{t("story.step2Title")}</strong>
+                                                <span>{t("story.step2Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">3</div>
                                             <div className="step-content">
-                                                <strong>Comprehension Questions:</strong>
-                                                <span>Answer 4 quick multiple-choice questions about the story.</span>
+                                                <strong>{t("story.step3Title")}</strong>
+                                                <span>{t("story.step3Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">4</div>
                                             <div className="step-content">
-                                                <strong>Spoken Recall:</strong>
-                                                <span>Retell the story in your own words (30–60 seconds).</span>
+                                                <strong>{t("story.step4Title")}</strong>
+                                                <span>{t("story.step4Desc")}</span>
                                             </div>
                                         </li>
                                     </ol>
@@ -239,7 +222,7 @@ export function StoryAssessment() {
                                             className="story-primary-start-btn"
                                             onClick={() => setPhase("language_select")}
                                         >
-                                            Start Test
+                                            {t("story.startTest")}
                                         </Button>
                                     </div>
                                 </div>
@@ -253,8 +236,8 @@ export function StoryAssessment() {
                     {/* Phase 2: Language Selection */}
                     {phase === "language_select" && (
                         <Card className="language-select-card animate-fadeIn">
-                            <h2 className="select-card-title vyom-serif">Select Narration Language</h2>
-                            <p className="select-desc">The story will be narrated in your chosen language.</p>
+                            <h2 className="select-card-title vyom-serif">{t("story.selectLanguage")}</h2>
+                            <p className="select-desc">{t("story.selectLanguageDesc")}</p>
                             <div className="languages-grid">
                                 {(Object.keys(LANGUAGE_NAMES) as SupportedLanguage[]).map(langKey => (
                                     <button
@@ -301,8 +284,8 @@ export function StoryAssessment() {
                         <Card className="processing-card animate-fadeIn">
                             <div className="processing-body">
                                 <div className="spinner" />
-                                <h3 className="processing-title vyom-serif">Analyzing Narrative Biomarkers...</h3>
-                                <p className="processing-desc">Transcribing recall, calculating Information Unit retention, and computing your Story Recall Profile.</p>
+                                <h3 className="processing-title vyom-serif">{t("story.analyzingBiomarkers")}</h3>
+                                <p className="processing-desc">{t("story.transcribingRecall")}</p>
                             </div>
                         </Card>
                     )}
@@ -321,9 +304,9 @@ export function StoryAssessment() {
                     <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
                         <div className="story-exit-modal animate-scaleUp">
                             <div className="exit-modal-icon">⚠️</div>
-                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <h3 className="exit-modal-title vyom-serif">{t("story.leaveAssessment")}</h3>
                             <p className="exit-modal-text">
-                                Your current assessment progress will be lost if you leave now.
+                                {t("story.leaveWarning")}
                             </p>
                             <div className="exit-modal-actions">
                                 <button
@@ -331,14 +314,14 @@ export function StoryAssessment() {
                                     onClick={handleCancelExit}
                                     className="modal-btn modal-btn-secondary"
                                 >
-                                    Continue Test
+                                    {t("story.continueTest")}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleConfirmExit}
                                     className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Test
+                                    {t("story.leaveTest")}
                                 </button>
                             </div>
                         </div>

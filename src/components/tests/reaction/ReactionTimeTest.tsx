@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
 import type { ReactionState, RoundResult } from "./reactionLogic";
@@ -10,7 +11,6 @@ import {
     getRandomWaitTime,
     isCalibrationRound,
     isTestComplete,
-    STATE_MESSAGES,
 } from "./reactionLogic";
 import { createReactionTestResult } from "./reactionFeatures";
 import { useReactionResults } from "../../../hooks/useTestResults";
@@ -23,12 +23,30 @@ export function ReactionTimeTest() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
     const { isAuthenticated } = useAuth();
+    const { t } = useLanguage();
     const { results, saveResult } = useReactionResults();
     const [state, setState] = useState<ReactionState>("idle");
     const [roundIndex, setRoundIndex] = useState(0);
     const [rounds, setRounds] = useState<RoundResult[]>([]);
     const [currentReactionTime, setCurrentReactionTime] = useState<number | null>(null);
-    const [message, setMessage] = useState(STATE_MESSAGES.idle);
+
+    const getStateMessage = useCallback((s: ReactionState) => {
+        switch (s) {
+            case "idle": return t("reaction.readyToBegin");
+            case "instructions": return t("reaction.getReady");
+            case "calibration": return t("reaction.practiceRoundWait");
+            case "wait": return t("reaction.waitForGreen");
+            case "stimulus": return t("reaction.tapNow");
+            case "response": return t("reaction.responseRecorded");
+            case "false_start": return t("reaction.tooEarly");
+            case "timeout": return t("reaction.timeOut");
+            case "round_complete": return t("reaction.nextRoundComing");
+            case "test_complete": return t("reaction.assessmentComplete");
+            default: return "";
+        }
+    }, [t]);
+
+    const [message, setMessage] = useState(() => getStateMessage("idle"));
     const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     // Custom tick renderer for Radar Chart
@@ -85,14 +103,14 @@ export function ReactionTimeTest() {
         const currentRound = targetRoundIndex !== undefined ? targetRoundIndex : roundIndex;
         const isCalibration = isCalibrationRound(currentRound, config);
         setState(isCalibration ? "calibration" : "wait");
-        setMessage(isCalibration ? STATE_MESSAGES.calibration : STATE_MESSAGES.wait);
+        setMessage(isCalibration ? getStateMessage("calibration") : getStateMessage("wait"));
         setCurrentReactionTime(null);
 
         const waitTime = getRandomWaitTime(config);
         waitTimeoutRef.current = setTimeout(() => {
             // Show stimulus
             setState("stimulus");
-            setMessage(STATE_MESSAGES.stimulus);
+            setMessage(getStateMessage("stimulus"));
             stimulusStartTime.current = performance.now();
 
             // Start timeout timer
@@ -100,7 +118,7 @@ export function ReactionTimeTest() {
                 handleTimeout(currentRound);
             }, config.timeoutMs);
         }, waitTime);
-    }, [roundIndex, config]);
+    }, [roundIndex, config, getStateMessage]);
 
     // Start the test from idle
     const handleStart = useCallback(() => {
@@ -115,12 +133,12 @@ export function ReactionTimeTest() {
         const nextRound = roundIndex + 1;
         if (isTestComplete(nextRound, config)) {
             setState("test_complete");
-            setMessage(STATE_MESSAGES.test_complete);
+            setMessage(getStateMessage("test_complete"));
         } else {
             setRoundIndex(nextRound);
             startRound(nextRound);
         }
-    }, [roundIndex, config, startRound]);
+    }, [roundIndex, config, startRound, getStateMessage]);
 
     // Handle user click during different states
     const handleClick = useCallback(() => {
@@ -130,7 +148,7 @@ export function ReactionTimeTest() {
             // False start
             if (waitTimeoutRef.current) clearTimeout(waitTimeoutRef.current);
             setState("false_start");
-            setMessage(STATE_MESSAGES.false_start);
+            setMessage(getStateMessage("false_start"));
 
             const result: RoundResult = {
                 reactionTime: null,
@@ -165,14 +183,14 @@ export function ReactionTimeTest() {
                 advanceRound();
             }, config.roundDelayMs);
         }
-    }, [state, roundIndex, config, advanceRound]);
+    }, [state, roundIndex, config, advanceRound, getStateMessage]);
 
     // Handle timeout when user doesn't respond in time
     const handleTimeout = useCallback((overrideRoundIndex?: number) => {
         const activeRound = overrideRoundIndex !== undefined ? overrideRoundIndex : roundIndex;
         const isCalibration = isCalibrationRound(activeRound, config);
         setState("timeout");
-        setMessage(STATE_MESSAGES.timeout);
+        setMessage(getStateMessage("timeout"));
 
         const result: RoundResult = {
             reactionTime: null,
@@ -222,7 +240,7 @@ export function ReactionTimeTest() {
         setRoundIndex(0);
         setRounds([]);
         setCurrentReactionTime(null);
-        setMessage(STATE_MESSAGES.idle);
+        setMessage(getStateMessage("idle"));
     };
 
     // Exit / Back Navigation
@@ -273,19 +291,19 @@ export function ReactionTimeTest() {
                         type="button"
                         onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to Assessments"
+                        aria-label={t("reaction.backToAssessments")}
                     >
                         <span className="back-arrow" aria-hidden="true">←</span>
-                        <span>Back to Assessments</span>
+                        <span>{t("reaction.backToAssessments")}</span>
                     </button>
                 </div>
 
                 {/* Primary Test Header (shown only on instructions intro) */}
                 {state === "idle" && (
                     <div className="story-header animate-fadeInUp">
-                        <h1 className="story-title vyom-serif">Reaction Time</h1>
+                        <h1 className="story-title vyom-serif">{t("reaction.title")}</h1>
                         <p className="story-subtitle">
-                            Respond rapidly to visual cues to measure motor processing speed and attentional vigilance.
+                            {t("reaction.subtitle")}
                         </p>
                     </div>
                 )}
@@ -300,35 +318,35 @@ export function ReactionTimeTest() {
                                     <div className="instructions-icon-wrapper" aria-hidden="true">
                                         <Icon name="reaction" size={28} />
                                     </div>
-                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+                                    <h2 className="instructions-card-title vyom-serif">{t("reaction.howItWorks")}</h2>
 
                                     <ol className="instructions-step-list">
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">1</div>
                                             <div className="step-content">
-                                                <strong>Wait for Color Shift:</strong>
-                                                <span>Keep your finger or mouse poised while the screen is waiting.</span>
+                                                <strong>{t("reaction.step1Title")}</strong>
+                                                <span>{t("reaction.step1Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">2</div>
                                             <div className="step-content">
-                                                <strong>Instant Response:</strong>
-                                                <span>Tap, click, or press spacebar as soon as the glowing stimulus appears.</span>
+                                                <strong>{t("reaction.step2Title")}</strong>
+                                                <span>{t("reaction.step2Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">3</div>
                                             <div className="step-content">
-                                                <strong>Avoid False Starts:</strong>
-                                                <span>Tapping too early registers a false start penalty for that trial.</span>
+                                                <strong>{t("reaction.step3Title")}</strong>
+                                                <span>{t("reaction.step3Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">4</div>
                                             <div className="step-content">
-                                                <strong>Complete 6 Rounds:</strong>
-                                                <span>Round 1 calibrates latency followed by 5 scored precision trials.</span>
+                                                <strong>{t("reaction.step4Title")}</strong>
+                                                <span>{t("reaction.step4Desc")}</span>
                                             </div>
                                         </li>
                                     </ol>
@@ -339,7 +357,7 @@ export function ReactionTimeTest() {
                                             className="story-primary-start-btn"
                                             onClick={handleStart}
                                         >
-                                            Start Test
+                                            {t("reaction.startTest")}
                                         </Button>
                                     </div>
                                 </div>
@@ -367,9 +385,9 @@ export function ReactionTimeTest() {
                         >
                             {/* Round Progress Pill */}
                             <div className="reaction-progress-pill">
-                                <span>Round {Math.min(roundIndex + 1, config.totalRounds)} of {config.totalRounds}</span>
+                                <span>{t("reaction.roundOf", { current: Math.min(roundIndex + 1, config.totalRounds), total: config.totalRounds })}</span>
                                 {roundIndex < config.calibrationRounds && (
-                                    <span className="calib-tag">Calibration</span>
+                                    <span className="calib-tag">{t("reaction.calibration")}</span>
                                 )}
                             </div>
 
@@ -396,7 +414,7 @@ export function ReactionTimeTest() {
                             {/* Tap Hint */}
                             {["wait", "calibration", "stimulus"].includes(state) && (
                                 <p className="reaction-tap-hint">
-                                    {state === "stimulus" ? "PRESS SPACEBAR OR TAP NOW" : "Tap screen or press spacebar"}
+                                    {state === "stimulus" ? t("reaction.pressSpaceOrTap") : t("reaction.tapScreenOrSpace")}
                                 </p>
                             )}
                         </div>
@@ -459,10 +477,10 @@ export function ReactionTimeTest() {
                                 <Card className="results-overview-card">
                                     <div className="overview-header">
                                         <div className="overview-title-group">
-                                            <h2 className="vyom-serif">Reaction Time Profile</h2>
+                                            <h2 className="vyom-serif">{t("reaction.profileTitle")}</h2>
                                             <span className={`story-trend-pill ${trend === "up" ? "trend-up" : "trend-down"}`}>
                                                 <Icon name={trend === "up" ? "trend-up" : "trend-down"} size={13} />
-                                                <span>{trend === "up" ? "Improving" : "Declining"}</span>
+                                                <span>{trend === "up" ? t("vmra.improving") : t("vmra.declining")}</span>
                                             </span>
                                         </div>
                                         <div className="score-badge-circle">
@@ -481,32 +499,32 @@ export function ReactionTimeTest() {
                                 <div className="biomarkers-grid-row">
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Processing Speed</h4>
-                                            <p className="metric-desc">Average response latency</p>
+                                            <h4>{t("reaction.processingSpeed")}</h4>
+                                            <p className="metric-desc">{t("reaction.avgResponseLatency")}</p>
                                         </div>
                                         <div className="metric-val">{avgTime > 0 ? avgTime : "—"} <span className="metric-unit">ms</span></div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Peak Vigilance</h4>
-                                            <p className="metric-desc">Fastest valid reflex</p>
+                                            <h4>{t("reaction.peakVigilance")}</h4>
+                                            <p className="metric-desc">{t("reaction.fastestValidReflex")}</p>
                                         </div>
                                         <div className="metric-val">{fastestTime > 0 ? fastestTime : "—"} <span className="metric-unit">ms</span></div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Inhibitory Control</h4>
-                                            <p className="metric-desc">{falseStarts === 0 ? "Zero premature taps" : `${falseStarts} false start${falseStarts > 1 ? "s" : ""}`}</p>
+                                            <h4>{t("reaction.inhibitoryControl")}</h4>
+                                            <p className="metric-desc">{falseStarts === 0 ? t("reaction.zeroPremature") : t("reaction.falseStartsCount", { count: falseStarts })}</p>
                                         </div>
                                         <div className="metric-val">{inhibitionPercent}%</div>
                                     </Card>
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Trial Consistency</h4>
-                                            <p className="metric-desc">{variance > 0 ? `SD: ±${variance}ms variance` : "Uniform response rate"}</p>
+                                            <h4>{t("reaction.trialConsistency")}</h4>
+                                            <p className="metric-desc">{variance > 0 ? t("reaction.varianceDesc", { variance }) : t("reaction.uniformResponse")}</p>
                                         </div>
                                         <div className="metric-val">{consistencyPercent}%</div>
                                     </Card>
@@ -514,7 +532,7 @@ export function ReactionTimeTest() {
 
                                 {/* Full-Length Biomarker Radar & Trial Breakdown Card */}
                                 <Card className="radar-chart-card full-width-radar">
-                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <h3 className="radar-title">{t("vmra.biomarkerRadar")}</h3>
                                     <div className="chart-wrapper">
                                         <ResponsiveContainer width="100%" height={155}>
                                             <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
@@ -539,8 +557,8 @@ export function ReactionTimeTest() {
                                     {/* Trial-by-Trial Response Breakdown */}
                                     <div className="reaction-trials-section">
                                         <div className="reaction-trials-header">
-                                            <span className="reaction-trials-title">Trial Response Times</span>
-                                            <span className="reaction-trials-badge">{validRounds.length} / {testRounds.length} Valid Trials</span>
+                                            <span className="reaction-trials-title">{t("reaction.trialResponseTimes")}</span>
+                                            <span className="reaction-trials-badge">{t("reaction.validTrialsCount", { valid: validRounds.length, total: testRounds.length })}</span>
                                         </div>
                                         <div className="reaction-trials-grid">
                                             {testRounds.map((r, i) => {
@@ -548,10 +566,10 @@ export function ReactionTimeTest() {
                                                 let label = `${r.reactionTime} ms`;
                                                 if (r.isFalseStart) {
                                                     statusClass = "false-start";
-                                                    label = "Early";
+                                                    label = t("reaction.early");
                                                 } else if (r.isTimeout) {
                                                     statusClass = "timeout";
-                                                    label = "Timeout";
+                                                    label = t("reaction.timeout");
                                                 }
                                                 return (
                                                     <div key={i} className={`reaction-trial-chip ${statusClass}`}>
@@ -567,14 +585,14 @@ export function ReactionTimeTest() {
                                 {/* Centered Actions */}
                                 <div className="results-actions">
                                     <button type="button" onClick={handleRetake} className="story-retake-btn">
-                                        <Icon name="reaction" size={15} /> Retake Test
+                                        <Icon name="reaction" size={15} /> {t("reaction.retakeTest")}
                                     </button>
                                     <button
                                         type="button"
                                         className="story-primary-start-btn story-back-assessments-btn"
                                         onClick={() => navigate("/tests")}
                                     >
-                                        Back to Assessments
+                                        {t("reaction.backToAssessments")}
                                     </button>
                                 </div>
                             </div>
@@ -587,9 +605,9 @@ export function ReactionTimeTest() {
                     <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
                         <div className="story-exit-modal animate-scaleUp">
                             <div className="exit-modal-icon">⚠️</div>
-                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <h3 className="exit-modal-title vyom-serif">{t("reaction.leaveAssessment")}</h3>
                             <p className="exit-modal-text">
-                                Your current assessment progress will be lost if you leave now.
+                                {t("reaction.leaveWarning")}
                             </p>
                             <div className="exit-modal-actions">
                                 <button
@@ -597,14 +615,14 @@ export function ReactionTimeTest() {
                                     onClick={handleCancelExit}
                                     className="modal-btn modal-btn-secondary"
                                 >
-                                    Continue Test
+                                    {t("reaction.continueTest")}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleConfirmExit}
                                     className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Test
+                                    {t("reaction.leaveTest")}
                                 </button>
                             </div>
                         </div>

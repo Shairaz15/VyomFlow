@@ -80,7 +80,7 @@
 .synapse-stream-layout {
     position: relative;
     width: 100%;
-    min-height: 1250px;
+    min-height: auto;
     padding: 0.5rem 0 2rem;
 }
 

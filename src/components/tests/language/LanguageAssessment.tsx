@@ -5,6 +5,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { PageWrapper } from "../../layout/PageWrapper";
 import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import { useLanguageResults } from "../../../hooks/useTestResults";
 import { extractLanguageFeatures } from "../../../ai/languageFeatures";
 import type { LanguageAssessmentResult } from "../../../types/languageTypes";
@@ -26,7 +27,7 @@ const PROMPTS = [
     "Describe a person who has influenced your life."
 ];
 
-const SARVAM_API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 const formatDetectedLanguage = (code: string): string => {
     if (!code || code === 'Auto-detecting...' || code === 'Listening...') return code;
@@ -46,6 +47,7 @@ const formatDetectedLanguage = (code: string): string => {
 export function LanguageAssessment() {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const { t } = useLanguage();
     const { theme } = useTheme();
     const isDark = theme === 'dark';
     const { results, saveResult } = useLanguageResults();
@@ -835,19 +837,19 @@ export function LanguageAssessment() {
                         type="button"
                         onClick={handleExitClick}
                         className="story-back-btn"
-                        aria-label="Back to Assessments"
+                        aria-label={t("language.backToAssessments")}
                     >
                         <span className="back-arrow" aria-hidden="true">←</span>
-                        <span>Back to Assessments</span>
+                        <span>{t("language.backToAssessments")}</span>
                     </button>
                 </div>
 
                 {/* ── Primary Test Header (shown only on instructions intro) ── */}
                 {phase === "instructions" && (
                     <div className="story-header animate-fadeInUp">
-                        <h1 className="story-title vyom-serif">Language Fluency</h1>
+                        <h1 className="story-title vyom-serif">{t("language.title")}</h1>
                         <p className="story-subtitle">
-                            Speak naturally on the assigned topic to analyze speech fluency, vocabulary depth, and acoustic biomarkers.
+                            {t("language.subtitle")}
                         </p>
                     </div>
                 )}
@@ -862,35 +864,35 @@ export function LanguageAssessment() {
                                     <div className="instructions-icon-wrapper" aria-hidden="true">
                                         <Icon name="language" size={28} />
                                     </div>
-                                    <h2 className="instructions-card-title vyom-serif">How this assessment works</h2>
+                                    <h2 className="instructions-card-title vyom-serif">{t("language.howItWorks")}</h2>
 
                                     <ol className="instructions-step-list">
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">1</div>
                                             <div className="step-content">
-                                                <strong>View Prompt:</strong>
-                                                <span>A conversational speaking topic will be displayed on screen.</span>
+                                                <strong>{t("language.step1Title")}</strong>
+                                                <span>{t("language.step1Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">2</div>
                                             <div className="step-content">
-                                                <strong>Speak Naturally:</strong>
-                                                <span>Express your thoughts in your preferred language for 15–30 seconds.</span>
+                                                <strong>{t("language.step2Title")}</strong>
+                                                <span>{t("language.step2Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">3</div>
                                             <div className="step-content">
-                                                <strong>Detail & Flow:</strong>
-                                                <span>Describe your ideas with natural vocabulary and descriptive depth.</span>
+                                                <strong>{t("language.step3Title")}</strong>
+                                                <span>{t("language.step3Desc")}</span>
                                             </div>
                                         </li>
                                         <li className="instruction-step-item">
                                             <div className="step-num-bubble">4</div>
                                             <div className="step-content">
-                                                <strong>Instant Biomarkers:</strong>
-                                                <span>Speech rate, pause dynamics, and lexical diversity are analyzed automatically.</span>
+                                                <strong>{t("language.step4Title")}</strong>
+                                                <span>{t("language.step4Desc")}</span>
                                             </div>
                                         </li>
                                     </ol>
@@ -901,7 +903,7 @@ export function LanguageAssessment() {
                                             className="story-primary-start-btn"
                                             onClick={() => setPhase('permission')}
                                         >
-                                            Start Test
+                                            {t("language.startTest")}
                                         </Button>
                                     </div>
                                 </div>
@@ -917,9 +919,9 @@ export function LanguageAssessment() {
                         <div className="lang-step-container animate-fadeIn">
                             <Card className="lang-phase-card">
                                 <div className="lang-card-icon-badge">🎙️</div>
-                                <h2 className="lang-phase-title vyom-serif">Microphone Access</h2>
+                                <h2 className="lang-phase-title vyom-serif">{t("language.micAccessTitle")}</h2>
                                 <p className="lang-phase-subtitle">
-                                    We need access to your microphone to capture voice acoustics and multilingual speech biomarkers securely.
+                                    {t("language.micAccessSubtitle")}
                                 </p>
                                 <div className="instructions-action-row" style={{ marginTop: '1.25rem' }}>
                                     <Button 
@@ -931,7 +933,7 @@ export function LanguageAssessment() {
                                             setPhase('warmup');
                                         }}
                                     >
-                                        Enable Microphone & Continue
+                                        {t("language.enableMic")}
                                     </Button>
                                 </div>
                             </Card>
@@ -944,20 +946,20 @@ export function LanguageAssessment() {
                             <Card className="story-recorder-card lang-phase-card">
                                 <div className="narration-badge">
                                     <Icon name="mic" size={16} />
-                                    <span>Sound Check Phase</span>
+                                    <span>{t("language.soundCheck")}</span>
                                 </div>
                                 
                                 <h2 className="select-card-title text-xl font-semibold text-[#17324D] dark:text-[#F7F4EC] mt-1 mb-1 vyom-serif">
-                                    Microphone Sound Check
+                                    {t("language.soundCheckTitle")}
                                 </h2>
                                 <p className="recorder-sub">
-                                    Let's verify your microphone and speech detection before starting the assessment.
+                                    {t("language.soundCheckDesc")}
                                 </p>
 
                                 <div className="lang-prompt-box">
-                                    <span className="lang-prompt-label">Please Read Aloud</span>
+                                    <span className="lang-prompt-label">{t("language.pleaseReadAloud")}</span>
                                     <h3 className="lang-prompt-text vyom-serif">
-                                        "The quick brown fox jumps over the lazy dog."
+                                        "{t("language.sampleSentence")}"
                                     </h3>
                                 </div>
 
@@ -983,7 +985,7 @@ export function LanguageAssessment() {
                                         </button>
                                     )}
                                     <p className="player-state-label mt-1 text-xs">
-                                        {isRecording ? "Listening to your voice..." : "Tap microphone to test"}
+                                        {isRecording ? t("language.listeningVoice") : t("language.tapMicTest")}
                                     </p>
                                 </div>
 
@@ -995,8 +997,8 @@ export function LanguageAssessment() {
                                     aria-label="Warmup speech transcript"
                                 >
                                     <div className="live-transcript-header">
-                                        <span className="live-label">LIVE TRANSCRIPT PREVIEW</span>
-                                        {isRecording && <span className="live-pulse-badge">LIVE</span>}
+                                        <span className="live-label">{t("language.liveTranscriptPreview")}</span>
+                                        {isRecording && <span className="live-pulse-badge">{t("language.live")}</span>}
                                     </div>
                                     {warmupTranscript ? (
                                         <div className="live-text-container">
@@ -1050,25 +1052,25 @@ export function LanguageAssessment() {
                                 {!isRecording ? (
                                     <div className="narration-badge">
                                         <Icon name="mic" size={16} />
-                                        <span>Spoken Response Phase</span>
+                                        <span>{t("language.spokenResponsePhase")}</span>
                                     </div>
                                 ) : (
                                     <div className="recording-indicator">
                                         <span className="pulsing-red-dot" />
-                                        <span>Recording in Progress</span>
+                                        <span>{t("story.recordingInProgress")}</span>
                                     </div>
                                 )}
 
                                 <h3 className="select-card-title text-xl font-semibold text-[#17324D] dark:text-[#F7F4EC] mt-1 mb-1 vyom-serif">
-                                    Spoken Response Phase
+                                    {t("language.spokenResponsePhase")}
                                 </h3>
                                 <p className="recorder-sub">
-                                    Speak naturally and in detail about the prompt below in your chosen language.
+                                    {t("language.spokenResponseDesc")}
                                 </p>
 
                                 {/* Speaking Prompt Box */}
                                 <div className="lang-prompt-box">
-                                    <span className="lang-prompt-label">Your Speaking Prompt</span>
+                                    <span className="lang-prompt-label">{t("language.yourSpeakingPrompt")}</span>
                                     <h2 className="lang-prompt-text vyom-serif">{prompt}</h2>
                                 </div>
 
@@ -1103,7 +1105,7 @@ export function LanguageAssessment() {
                                     ) : isProcessingAudio ? (
                                         <div className="flex items-center justify-center gap-2 py-3 text-sm text-[#4F7C78] dark:text-[#00C9B7]">
                                             <div className="spinner !w-5 !h-5 !border-2 m-0" />
-                                            <span>Processing Audio with Sarvam AI...</span>
+                                            <span>{t("story.processingAudioSarvam")}</span>
                                         </div>
                                     ) : (
                                         <button 
@@ -1118,7 +1120,7 @@ export function LanguageAssessment() {
                                     )}
                                     {!isProcessingAudio && (
                                         <p className="player-state-label mt-1 text-xs">
-                                            {isRecording ? "Listening to your response..." : "Tap microphone to begin"}
+                                            {isRecording ? t("language.listeningPrompt") : t("language.tapMicToSpeak")}
                                         </p>
                                     )}
                                 </div>
@@ -1131,8 +1133,8 @@ export function LanguageAssessment() {
                                     aria-label="Speech transcript"
                                 >
                                     <div className="live-transcript-header">
-                                        <span className="live-label">LIVE TRANSCRIPT</span>
-                                        {isRecording && <span className="live-pulse-badge">LIVE</span>}
+                                        <span className="live-label">{t("language.liveTranscript")}</span>
+                                        {isRecording && <span className="live-pulse-badge">{t("language.live")}</span>}
                                     </div>
                                     {transcript || verbatimTranscript ? (
                                         <div className="live-text-container">
@@ -1150,7 +1152,7 @@ export function LanguageAssessment() {
                                                 ? "🎙️ Listening... Speak naturally. Transcribed text and English translation will appear here simultaneously." 
                                                 : isProcessingAudio
                                                 ? "⏳ Analyzing speech audio..."
-                                                : "Tap the microphone icon above to begin speaking."}
+                                                : t("language.tapMicToSpeak")}
                                         </p>
                                     )}
                                     <div ref={transcriptEndRef} />
@@ -1158,7 +1160,7 @@ export function LanguageAssessment() {
 
                                 {/* Diagnostic Error Banner */}
                                 {errorMessage && (
-                                    <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-200 text-xs my-3 flex items-start gap-2 text-left shadow-sm">
+                                    <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:rose-800 rounded-xl text-rose-700 dark:text-rose-200 text-xs my-3 flex items-start gap-2 text-left shadow-sm">
                                         <span className="text-base leading-none">⚠️</span>
                                         <div className="flex-1">
                                             <p className="font-semibold text-rose-800 dark:text-rose-300">Notice:</p>
@@ -1177,11 +1179,11 @@ export function LanguageAssessment() {
                                             aria-label="Finish recording and process results"
                                         >
                                             <span className="stop-square" />
-                                            Finish Recording
+                                            {t("language.finishAssessment")}
                                         </button>
                                         {timer < 15 && (
                                             <p className="text-xs text-[#63788A] dark:text-[#A0B0BC] m-0">
-                                                Try to speak for at least 15 seconds for robust speech analysis
+                                                {t("story.durationWarning")}
                                             </p>
                                         )}
                                     </div>
@@ -1196,10 +1198,10 @@ export function LanguageAssessment() {
                             <div className="processing-body">
                                 <div className="spinner" />
                                 <h3 className="processing-title vyom-serif">
-                                    {isProcessingAudio ? "Processing Audio with Multilingual Engine..." : "Analyzing Speech Biomarkers..."}
+                                    {t("language.analyzingSpeech")}
                                 </h3>
                                 <p className="processing-desc">
-                                    Analyzing phonation ratios, vocabulary richness (Guiraud TTR), and conversational fluency.
+                                    {t("language.analyzingSpeechDesc")}
                                 </p>
                             </div>
                         </Card>
@@ -1216,10 +1218,10 @@ export function LanguageAssessment() {
                                 <Card className="results-overview-card">
                                     <div className="overview-header">
                                         <div className="overview-title-group">
-                                            <h2 className="vyom-serif">Language Fluency Profile</h2>
+                                            <h2 className="vyom-serif">{t("language.profileTitle")}</h2>
                                             <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
                                                 <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
-                                                <span>{trend === 'up' ? 'Improving' : 'Declining'}</span>
+                                                <span>{trend === 'up' ? t("vmra.improving") : t("vmra.declining")}</span>
                                             </span>
                                         </div>
                                         <div className="score-badge-circle">
@@ -1238,7 +1240,7 @@ export function LanguageAssessment() {
                                 <div className="biomarkers-grid-row">
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Speech Rate</h4>
+                                            <h4>{t("language.speechRate")}</h4>
                                             <p className="metric-desc">{result.rawMetrics.wordCount} words • {(result.rawMetrics.speechDuration / 1000).toFixed(1)}s duration</p>
                                         </div>
                                         <div className="metric-val">
@@ -1248,7 +1250,7 @@ export function LanguageAssessment() {
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Fluency Index</h4>
+                                            <h4>{t("language.fluencyIndex")}</h4>
                                             <p className="metric-desc">Speech continuity & flow</p>
                                         </div>
                                         <div className="metric-val">
@@ -1258,7 +1260,7 @@ export function LanguageAssessment() {
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Vocabulary Depth</h4>
+                                            <h4>{t("language.vocabularyDiversity")}</h4>
                                             <p className="metric-desc">{result.rawMetrics.uniqueWordCount} unique words (Root TTR)</p>
                                         </div>
                                         <div className="metric-val">
@@ -1268,7 +1270,7 @@ export function LanguageAssessment() {
 
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
-                                            <h4>Acoustic Phonation</h4>
+                                            <h4>{t("language.phonationRatio")}</h4>
                                             <p className="metric-desc">{result.rawMetrics.pauseCount} pauses (avg {result.rawMetrics.pauseDurationAvg}ms)</p>
                                         </div>
                                         <div className="metric-val">
@@ -1279,7 +1281,7 @@ export function LanguageAssessment() {
 
                                 {/* Full-Length Biomarker Radar & Speech Transcript Card */}
                                 <Card className="radar-chart-card full-width-radar">
-                                    <h3 className="radar-title">Biomarker Radar</h3>
+                                    <h3 className="radar-title">{t("vmra.biomarkerRadar")}</h3>
                                     <div className="chart-wrapper">
                                         <ResponsiveContainer width="100%" height={155}>
                                             <RadarChart cx="50%" cy="50%" outerRadius="52%" data={radarData}>
@@ -1306,7 +1308,7 @@ export function LanguageAssessment() {
                                         <div className="transcript-section-header">
                                             <div className="transcript-section-title-group">
                                                 <Icon name="language" size={15} />
-                                                <span className="transcript-section-title">Speech Transcript & Analysis</span>
+                                                <span className="transcript-section-title">{t("language.transcriptAnalysis")}</span>
                                             </div>
                                             <span className="transcript-meta-badge">
                                                 {result.rawMetrics.wordCount} words • {(result.rawMetrics.speechDuration / 1000).toFixed(1)}s • {result.detectedLanguage ? result.detectedLanguage.toUpperCase() : "AUTO"}
@@ -1344,14 +1346,14 @@ export function LanguageAssessment() {
                                 {/* Centered Actions */}
                                 <div className="results-actions">
                                     <button type="button" onClick={handleRetake} className="story-retake-btn">
-                                        <Icon name="language" size={16} /> Retake Test
+                                        <Icon name="language" size={16} /> {t("language.retakeTest")}
                                     </button>
                                     <button 
                                         type="button" 
                                         className="story-primary-start-btn story-back-assessments-btn" 
                                         onClick={() => navigate('/tests')}
                                     >
-                                        Back to Assessments
+                                        {t("language.backToAssessments")}
                                     </button>
                                 </div>
                             </div>
@@ -1364,9 +1366,9 @@ export function LanguageAssessment() {
                     <div className="story-modal-backdrop animate-fadeIn" role="dialog" aria-modal="true">
                         <div className="story-exit-modal animate-scaleUp">
                             <div className="exit-modal-icon">⚠️</div>
-                            <h3 className="exit-modal-title vyom-serif">Leave this assessment?</h3>
+                            <h3 className="exit-modal-title vyom-serif">{t("language.leaveAssessment")}</h3>
                             <p className="exit-modal-text">
-                                Your current recording or speech progress will be lost if you leave now.
+                                {t("language.leaveWarning")}
                             </p>
                             <div className="exit-modal-actions">
                                 <button
@@ -1374,14 +1376,14 @@ export function LanguageAssessment() {
                                     onClick={handleCancelExit}
                                     className="modal-btn modal-btn-secondary"
                                 >
-                                    Continue Test
+                                    {t("language.continueTest")}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={confirmExit}
                                     className="modal-btn modal-btn-danger"
                                 >
-                                    Leave Test
+                                    {t("language.leaveTest")}
                                 </button>
                             </div>
                         </div>

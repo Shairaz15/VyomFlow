@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Button, Card, Icon } from "../../common";
+import { useLanguage } from "../../../i18n/LanguageContext";
 import type { ComprehensionQuestion, ComprehensionResponse, SupportedLanguage } from "../../../types/storyTypes";
 
 interface ComprehensionQuizProps {
@@ -9,6 +10,7 @@ interface ComprehensionQuizProps {
 }
 
 export function ComprehensionQuiz({ questions, selectedLanguage = 'en-IN', onComplete }: ComprehensionQuizProps) {
+    const { t } = useLanguage();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const responsesRef = useRef<ComprehensionResponse[]>([]);
@@ -69,9 +71,9 @@ export function ComprehensionQuiz({ questions, selectedLanguage = 'en-IN', onCom
         <Card className="quiz-card animate-fadeIn">
             <div className="quiz-header">
                 <span className="question-progress">
-                    Question {currentIndex + 1} of {questions.length}
+                    {t("story.questionProgress", { current: currentIndex + 1, total: questions.length })}
                 </span>
-                <h3>Listening Comprehension</h3>
+                <h3>{t("story.listeningComprehension")}</h3>
             </div>
 
             <div className="question-box">
@@ -100,7 +102,7 @@ export function ComprehensionQuiz({ questions, selectedLanguage = 'en-IN', onCom
                     disabled={!selectedOption}
                     onClick={handleNext}
                 >
-                    {currentIndex + 1 === questions.length ? "Submit Answers" : "Next Question"}
+                    {currentIndex + 1 === questions.length ? t("story.submitAnswers") : t("story.nextQuestion")}
                     <Icon name="chevron-right" size={16} />
                 </Button>
             </div>

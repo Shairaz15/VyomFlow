@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const SARVAM_API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
+const SARVAM_API_KEY = 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 async function runTests() {
   console.log('====================================================');
