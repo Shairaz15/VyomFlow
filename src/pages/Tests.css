@@ -139,6 +139,85 @@
     box-shadow: 0 4px 14px rgba(58, 157, 155, 0.2);
 }
 
+.journey-completed-cta {
+    background: #15803d !important;
+    box-shadow: 0 4px 16px rgba(21, 128, 61, 0.3) !important;
+}
+
+.journey-completed-cta:hover {
+    background: #166534 !important;
+    transform: translateY(-2px);
+}
+
+.hero-top-row.is-protocol-complete {
+    border-color: rgba(21, 128, 61, 0.35) !important;
+    box-shadow: 0 12px 36px -8px rgba(21, 128, 61, 0.15) !important;
+}
+
+.badge-pill-success {
+    background: rgba(21, 128, 61, 0.12) !important;
+    color: #15803d !important;
+    border-color: rgba(21, 128, 61, 0.3) !important;
+}
+
+/* Protocol Focus Filter Tabs Bar */
+.journey-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 1.25rem auto 1.5rem;
+    max-width: 440px;
+    background: #FFFFFF;
+    border: 1px solid rgba(23, 50, 77, 0.10);
+    padding: 0.35rem;
+    border-radius: 9999px;
+    box-shadow: 0 2px 10px rgba(23, 50, 77, 0.04);
+}
+
+.filter-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.95rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #63788A;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-pill-btn:hover {
+    color: #17324D;
+    background: rgba(23, 50, 77, 0.04);
+}
+
+.filter-pill-btn.active {
+    background: #4F7C78;
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(79, 124, 120, 0.25);
+}
+
+.filter-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    background: rgba(23, 50, 77, 0.08);
+    color: #63788A;
+}
+
+.filter-pill-btn.active .filter-pill-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+}
+
 /* Main Journey Map Container (70-80% Visual Focus) */
 .journey-map-main {
     width: 100%;
@@ -196,7 +275,7 @@
     }
 }
 
-/* ===== Light Theme "Velora" Moss & Sage Styling Overrides ===== */
+/* ===== Light Theme Calm-Tech Harmonized Styling Overrides ===== */
 html:not(.dark) .journey-page,
 [data-theme="light"] .journey-page {
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
@@ -204,92 +283,136 @@ html:not(.dark) .journey-page,
 
 html:not(.dark) .hero-top-row,
 [data-theme="light"] .hero-top-row {
-    background: #1C352D !important; /* Deep Moss Forest Green */
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 10px 30px rgba(28, 53, 45, 0.15);
-    color: #F7F4EC;
+    background: #FFFFFF !important;
+    border: 1.5px solid rgba(23, 50, 77, 0.10) !important;
+    box-shadow: 0 10px 30px -8px rgba(23, 50, 77, 0.08) !important;
+    color: #17324D !important;
 }
 
 html:not(.dark) .hero-greeting-title,
 [data-theme="light"] .hero-greeting-title {
     font-family: 'Playfair Display', Georgia, serif;
     font-weight: 700;
-    color: #FAF8F5;
+    color: #17324D !important;
 }
 
 html:not(.dark) .journey-subtitle,
 [data-theme="light"] .journey-subtitle {
-    color: #C5D3CD;
+    color: #40566B !important;
 }
 
 html:not(.dark) .journey-badge-pill,
 [data-theme="light"] .journey-badge-pill {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
-    color: #FAF8F5;
+    background: rgba(79, 124, 120, 0.10) !important;
+    border: 1px solid rgba(79, 124, 120, 0.2) !important;
+    color: #4F7C78 !important;
 }
 
 html:not(.dark) .progress-label,
 [data-theme="light"] .progress-label {
-    color: #A6B8B0;
+    color: #63788A !important;
 }
 
 html:not(.dark) .progress-pill-count,
 [data-theme="light"] .progress-pill-count {
-    color: #FAF8F5;
+    color: #17324D !important;
 }
 
 html:not(.dark) .hero-progress-pill,
 [data-theme="light"] .hero-progress-pill {
-    border-left-color: rgba(255, 255, 255, 0.15);
+    border-left-color: rgba(23, 50, 77, 0.10) !important;
 }
 
 html:not(.dark) .dot-mini,
 [data-theme="light"] .dot-mini {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(23, 50, 77, 0.12) !important;
 }
 
 html:not(.dark) .dot-mini.done,
 [data-theme="light"] .dot-mini.done {
-    background: #8FAF8B;
+    background: #15803d !important;
 }
 
 html:not(.dark) .dot-mini.current,
 [data-theme="light"] .dot-mini.current {
-    background: #D8B878; /* Gold sand active */
-    box-shadow: 0 0 8px rgba(216, 184, 120, 0.6);
+    background: #4F7C78 !important;
+    box-shadow: 0 0 8px rgba(79, 124, 120, 0.5) !important;
 }
 
 html:not(.dark) .journey-compact-cta,
 [data-theme="light"] .journey-compact-cta {
-    background: #D8B878 !important; /* Elegant gold sand button */
-    color: #1C352D !important;
+    background: #4F7C78 !important;
+    color: #FFFFFF !important;
     border: none;
     font-weight: 700;
-    box-shadow: 0 4px 14px rgba(216, 184, 120, 0.25);
+    box-shadow: 0 4px 14px rgba(79, 124, 120, 0.25) !important;
     transition: all 0.25s ease;
 }
 
 html:not(.dark) .journey-compact-cta:hover,
 [data-theme="light"] .journey-compact-cta:hover {
-    background: #FAF8F5 !important;
-    color: #1C352D !important;
+    background: #3d6360 !important;
+    color: #FFFFFF !important;
     transform: translateY(-2px);
 }
 
 html:not(.dark) .link-chip,
 [data-theme="light"] .link-chip {
-    background: #E2EBE5;
-    border-color: #C5D3CD;
-    color: #1C352D;
-    box-shadow: 0 2px 8px rgba(28, 53, 45, 0.04);
+    background: #FFFFFF !important;
+    border: 1px solid rgba(23, 50, 77, 0.10) !important;
+    color: #17324D !important;
+    box-shadow: 0 2px 8px rgba(23, 50, 77, 0.04) !important;
 }
 
 html:not(.dark) .link-chip:hover,
 [data-theme="light"] .link-chip:hover {
-    background: #FAF8F5;
-    border-color: #1C352D;
-    color: #1C352D;
+    background: rgba(79, 124, 120, 0.08) !important;
+    border-color: #4F7C78 !important;
+    color: #4F7C78 !important;
+}
+
+/* Dark Theme Overrides for Tests Page */
+.dark .journey-filter-bar,
+[data-theme="dark"] .journey-filter-bar {
+    background: #142538 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .filter-pill-btn,
+[data-theme="dark"] .filter-pill-btn {
+    color: #A0B0BA !important;
+}
+
+.dark .filter-pill-btn:hover,
+[data-theme="dark"] .filter-pill-btn:hover {
+    color: #F7F4EC !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark .filter-pill-btn.active,
+[data-theme="dark"] .filter-pill-btn.active {
+    background: #4F7C78 !important;
+    color: #FFFFFF !important;
+}
+
+.dark .filter-pill-badge,
+[data-theme="dark"] .filter-pill-badge {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #D2DDE2 !important;
+}
+
+.dark .hero-top-row.is-protocol-complete,
+[data-theme="dark"] .hero-top-row.is-protocol-complete {
+    border-color: rgba(34, 197, 94, 0.4) !important;
+    box-shadow: 0 16px 40px -10px rgba(34, 197, 94, 0.2) !important;
+}
+
+.dark .badge-pill-success,
+[data-theme="dark"] .badge-pill-success {
+    background: rgba(34, 197, 94, 0.18) !important;
+    color: #4ade80 !important;
+    border-color: rgba(34, 197, 94, 0.35) !important;
 }
 
 @media (max-width: 767px) {

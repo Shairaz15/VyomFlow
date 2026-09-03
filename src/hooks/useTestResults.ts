@@ -44,12 +44,53 @@ export function getDateKey(timestamp: Date | string): string {
     return d.toISOString().split("T")[0];
 }
 
-/** Trim an array to the most recent MAX_STORED_RESULTS entries */
-function trimResults<T>(results: T[]): T[] {
-    if (results.length > MAX_STORED_RESULTS) {
-        return results.slice(results.length - MAX_STORED_RESULTS);
+/**
+ * Deduplicate results by id/sessionId or within a 30-second timestamp window.
+ * Ensures that dual writes (local + cloud) or multiple clicks never produce double records.
+ */
+export function deduplicateModuleResults<T extends { id?: string; sessionId?: string; timestamp: Date | string | number }>(
+    results: T[]
+): T[] {
+    if (!results || results.length <= 1) return results || [];
+
+    const sorted = [...results].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    const deduped: T[] = [];
+    const seenIds = new Set<string>();
+
+    for (const item of sorted) {
+        const id = item.id || item.sessionId;
+        if (id && seenIds.has(id)) {
+            continue;
+        }
+
+        const itemTime = new Date(item.timestamp).getTime();
+        const duplicateIdx = deduped.findIndex((existing) => {
+            if (id && (existing.id === id || existing.sessionId === id)) return true;
+            const existingTime = new Date(existing.timestamp).getTime();
+            return Math.abs(itemTime - existingTime) < 30000;
+        });
+
+        if (duplicateIdx !== -1) {
+            deduped[duplicateIdx] = item;
+        } else {
+            if (id) seenIds.add(id);
+            deduped.push(item);
+        }
     }
-    return results;
+
+    return deduped;
+}
+
+/** Trim an array to the most recent MAX_STORED_RESULTS entries after deduplicating */
+function trimResults<T extends { id?: string; sessionId?: string; timestamp: Date | string | number }>(results: T[]): T[] {
+    const deduped = deduplicateModuleResults(results);
+    if (deduped.length > MAX_STORED_RESULTS) {
+        return deduped.slice(deduped.length - MAX_STORED_RESULTS);
+    }
+    return deduped;
 }
 
 export const STORAGE_KEYS = {
@@ -97,7 +138,12 @@ export async function clearAllTestData(): Promise<void> {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useLanguageResults() {
-    const [results, setResults] = useState<LanguageAssessmentResult[]>([]);
+    const [results, setResults] = useState<LanguageAssessmentResult[]>(() =>
+        safeJsonParse<LanguageAssessmentResult[]>(
+            localStorage.getItem(STORAGE_KEYS.languageResults),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     // Load results (called on mount and when auth state changes)
@@ -107,7 +153,7 @@ export function useLanguageResults() {
                 const firestoreResults = await loadResultsFromFirestore<LanguageAssessmentResult>(
                     "language_results"
                 );
-                if (mounted.current) {
+                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
                     setResults(firestoreResults);
                     localStorage.setItem(
                         STORAGE_KEYS.languageResults,
@@ -202,7 +248,12 @@ export interface MemoryTestResult {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useReactionResults() {
-    const [results, setResults] = useState<ReactionTestResult[]>([]);
+    const [results, setResults] = useState<ReactionTestResult[]>(() =>
+        safeJsonParse<ReactionTestResult[]>(
+            localStorage.getItem(STORAGE_KEYS.reactionResults),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     // Load results (called on mount and when auth state changes)
@@ -212,7 +263,7 @@ export function useReactionResults() {
                 const firestoreResults = await loadResultsFromFirestore<ReactionTestResult>(
                     "reaction_results"
                 );
-                if (mounted.current) {
+                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
                     setResults(firestoreResults);
                     localStorage.setItem(
                         STORAGE_KEYS.reactionResults,
@@ -451,7 +502,12 @@ export function useMemoryResults() {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function usePatternResults() {
-    const [results, setResults] = useState<PatternAssessmentResult[]>([]);
+    const [results, setResults] = useState<PatternAssessmentResult[]>(() =>
+        safeJsonParse<PatternAssessmentResult[]>(
+            localStorage.getItem(STORAGE_KEYS.patternResults),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     // Load results (called on mount and when auth state changes)
@@ -461,7 +517,7 @@ export function usePatternResults() {
                 const firestoreResults = await loadResultsFromFirestore<PatternAssessmentResult>(
                     "pattern_results"
                 );
-                if (mounted.current) {
+                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
                     setResults(firestoreResults);
                     localStorage.setItem(
                         STORAGE_KEYS.patternResults,
@@ -545,7 +601,12 @@ export function usePatternResults() {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useVmraResults() {
-    const [results, setResults] = useState<VmraAssessmentResult[]>([]);
+    const [results, setResults] = useState<VmraAssessmentResult[]>(() =>
+        safeJsonParse<VmraAssessmentResult[]>(
+            localStorage.getItem(STORAGE_KEYS.vmraResults),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
@@ -554,7 +615,7 @@ export function useVmraResults() {
                 const firestoreResults = await loadResultsFromFirestore<VmraAssessmentResult>(
                     "vmra_results"
                 );
-                if (mounted.current) {
+                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
                     setResults(firestoreResults);
                     localStorage.setItem(
                         STORAGE_KEYS.vmraResults,
@@ -662,7 +723,12 @@ export function useVmraResults() {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useAttentionResults() {
-    const [results, setResults] = useState<SavtAssessmentResult[]>([]);
+    const [results, setResults] = useState<SavtAssessmentResult[]>(() =>
+        safeJsonParse<SavtAssessmentResult[]>(
+            localStorage.getItem(STORAGE_KEYS.attentionResults),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
@@ -671,7 +737,7 @@ export function useAttentionResults() {
                 const firestoreResults = await loadResultsFromFirestore<SavtAssessmentResult>(
                     "attention_results"
                 );
-                if (mounted.current) {
+                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
                     setResults(firestoreResults);
                     localStorage.setItem(
                         STORAGE_KEYS.attentionResults,
@@ -768,7 +834,12 @@ export function useAttentionResults() {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useStoryResults() {
-    const [results, setResults] = useState<StoryAssessmentResult[]>([]);
+    const [results, setResults] = useState<StoryAssessmentResult[]>(() =>
+        safeJsonParse<StoryAssessmentResult[]>(
+            localStorage.getItem(STORAGE_KEYS.storyResults),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
@@ -777,7 +848,7 @@ export function useStoryResults() {
                 const firestoreResults = await loadResultsFromFirestore<StoryAssessmentResult>(
                     "story_results"
                 );
-                if (mounted.current) {
+                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
                     setResults(firestoreResults);
                     localStorage.setItem(
                         STORAGE_KEYS.storyResults,
@@ -859,7 +930,12 @@ export function useStoryResults() {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useNavigationResults() {
-    const [results, setResults] = useState<ImmersiveNavigationResult[]>([]);
+    const [results, setResults] = useState<ImmersiveNavigationResult[]>(() =>
+        safeJsonParse<ImmersiveNavigationResult[]>(
+            localStorage.getItem(STORAGE_KEYS.navigationResults),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
@@ -868,7 +944,7 @@ export function useNavigationResults() {
                 const firestoreResults = await loadResultsFromFirestore<ImmersiveNavigationResult>(
                     "navigation_results"
                 );
-                if (mounted.current) {
+                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
                     setResults(firestoreResults);
                     localStorage.setItem(
                         STORAGE_KEYS.navigationResults,

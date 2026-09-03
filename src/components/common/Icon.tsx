@@ -5,6 +5,9 @@ export type IconName =
     | "pulse"
     | "shield-check"
     | "chart-line-up"
+    | "chart-line-down"
+    | "trend-up"
+    | "trend-down"
     | "memory"
     | "reaction"
     | "pattern"
@@ -63,6 +66,24 @@ const iconPaths: Record<IconName, React.ReactNode> = {
         <>
             <path d="M3 20h18" />
             <path d="M3 17l5-5 4 4 8-10" className="icon-animated-path" />
+        </>
+    ),
+    "chart-line-down": (
+        <>
+            <path d="M3 4h18" />
+            <path d="M3 7l5 5 4-4 8 10" className="icon-animated-path" />
+        </>
+    ),
+    "trend-up": (
+        <>
+            <path d="M23 6l-9.5 9.5-5-5L1 18" className="icon-animated-path" />
+            <polyline points="17 6 23 6 23 12" />
+        </>
+    ),
+    "trend-down": (
+        <>
+            <path d="M23 18l-9.5-9.5-5 5L1 6" className="icon-animated-path" />
+            <polyline points="17 18 23 18 23 12" />
         </>
     ),
     "memory": (

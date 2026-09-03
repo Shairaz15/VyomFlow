@@ -364,19 +364,52 @@ function extractModuleScore(moduleKey: string, result: any): number | null {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// DEDUPLICATION HELPER
+// ═══════════════════════════════════════════════════════════════════
+
+export function deduplicateRawResults<T extends { id?: string; sessionId?: string; timestamp: Date | string | number }>(
+    results: T[]
+): T[] {
+    if (!results || results.length <= 1) return results || [];
+    const sorted = [...results].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const deduped: T[] = [];
+    const seenIds = new Set<string>();
+
+    for (const item of sorted) {
+        const id = item.id || item.sessionId;
+        if (id && seenIds.has(id)) continue;
+        const itemTime = new Date(item.timestamp).getTime();
+        const dupIdx = deduped.findIndex((existing) => {
+            if (id && (existing.id === id || existing.sessionId === id)) return true;
+            const exTime = new Date(existing.timestamp).getTime();
+            return Math.abs(itemTime - exTime) < 30000;
+        });
+        if (dupIdx !== -1) {
+            deduped[dupIdx] = item;
+        } else {
+            if (id) seenIds.add(id);
+            deduped.push(item);
+        }
+    }
+    return deduped;
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // MODULE TREND BUILDER
 // ═══════════════════════════════════════════════════════════════════
 
 function buildModuleTrends(rawData: RawDashboardData): ModuleTrendViewModel[] {
     const moduleDataMap: Record<string, any[]> = {
-        reaction: rawData.reaction || [],
-        attention: rawData.attention || [],
-        vmra: rawData.vmra || [],
-        story: rawData.story || [],
-        language: rawData.language || [],
-        pattern: rawData.pattern || [],
-        navigation: rawData.navigation || [],
-        memory: rawData.memory || [],
+        reaction: deduplicateRawResults(rawData.reaction || []),
+        attention: deduplicateRawResults(rawData.attention || []),
+        vmra: deduplicateRawResults(rawData.vmra || []),
+        story: deduplicateRawResults(rawData.story || []),
+        language: deduplicateRawResults(rawData.language || []),
+        pattern: deduplicateRawResults(rawData.pattern || []),
+        navigation: deduplicateRawResults(rawData.navigation || []),
+        memory: deduplicateRawResults(rawData.memory || []),
     };
 
     return MODULE_META.map(meta => {
@@ -626,14 +659,14 @@ const MODULE_ENRICHMENT: Record<string, { domainName: string; duration: string }
 
 function buildAssessmentModules(rawData: RawDashboardData): AssessmentModuleViewModel[] {
     const moduleDataMap: Record<string, any[]> = {
-        reaction: rawData.reaction || [],
-        attention: rawData.attention || [],
-        vmra: rawData.vmra || [],
-        story: rawData.story || [],
-        language: rawData.language || [],
-        pattern: rawData.pattern || [],
-        navigation: rawData.navigation || [],
-        memory: rawData.memory || [],
+        reaction: deduplicateRawResults(rawData.reaction || []),
+        attention: deduplicateRawResults(rawData.attention || []),
+        vmra: deduplicateRawResults(rawData.vmra || []),
+        story: deduplicateRawResults(rawData.story || []),
+        language: deduplicateRawResults(rawData.language || []),
+        pattern: deduplicateRawResults(rawData.pattern || []),
+        navigation: deduplicateRawResults(rawData.navigation || []),
+        memory: deduplicateRawResults(rawData.memory || []),
     };
 
     return MODULE_META.map(meta => {
@@ -832,14 +865,14 @@ function buildSessionHistory(rawData: RawDashboardData): ClinicianReportViewMode
     // Group all module results by date
     const allDates = new Set<string>();
     const moduleDataMap: Record<string, any[]> = {
-        reaction: rawData.reaction || [],
-        attention: rawData.attention || [],
-        vmra: rawData.vmra || [],
-        story: rawData.story || [],
-        language: rawData.language || [],
-        pattern: rawData.pattern || [],
-        navigation: rawData.navigation || [],
-        memory: rawData.memory || [],
+        reaction: deduplicateRawResults(rawData.reaction || []),
+        attention: deduplicateRawResults(rawData.attention || []),
+        vmra: deduplicateRawResults(rawData.vmra || []),
+        story: deduplicateRawResults(rawData.story || []),
+        language: deduplicateRawResults(rawData.language || []),
+        pattern: deduplicateRawResults(rawData.pattern || []),
+        navigation: deduplicateRawResults(rawData.navigation || []),
+        memory: deduplicateRawResults(rawData.memory || []),
     };
 
     for (const [_modKey, results] of Object.entries(moduleDataMap)) {
@@ -872,14 +905,14 @@ function buildSessionHistory(rawData: RawDashboardData): ClinicianReportViewMode
 function findLatestTimestamp(rawData: RawDashboardData): string {
     let latest = 0;
     const allResults = [
-        ...(rawData.reaction || []),
-        ...(rawData.attention || []),
-        ...(rawData.vmra || []),
-        ...(rawData.story || []),
-        ...(rawData.language || []),
-        ...(rawData.pattern || []),
-        ...(rawData.navigation || []),
-        ...(rawData.memory || []),
+        ...deduplicateRawResults(rawData.reaction || []),
+        ...deduplicateRawResults(rawData.attention || []),
+        ...deduplicateRawResults(rawData.vmra || []),
+        ...deduplicateRawResults(rawData.story || []),
+        ...deduplicateRawResults(rawData.language || []),
+        ...deduplicateRawResults(rawData.pattern || []),
+        ...deduplicateRawResults(rawData.navigation || []),
+        ...deduplicateRawResults(rawData.memory || []),
     ];
     for (const r of allResults) {
         const ts = new Date(r.timestamp).getTime();
@@ -896,14 +929,14 @@ function buildRadarTimeline(
     const dateToTimestampMap = new Map<string, number>();
 
     const moduleDataMap: Record<string, any[]> = {
-        reaction: rawData.reaction || [],
-        attention: rawData.attention || [],
-        vmra: rawData.vmra || [],
-        story: rawData.story || [],
-        language: rawData.language || [],
-        pattern: rawData.pattern || [],
-        navigation: rawData.navigation || [],
-        memory: rawData.memory || [],
+        reaction: deduplicateRawResults(rawData.reaction || []),
+        attention: deduplicateRawResults(rawData.attention || []),
+        vmra: deduplicateRawResults(rawData.vmra || []),
+        story: deduplicateRawResults(rawData.story || []),
+        language: deduplicateRawResults(rawData.language || []),
+        pattern: deduplicateRawResults(rawData.pattern || []),
+        navigation: deduplicateRawResults(rawData.navigation || []),
+        memory: deduplicateRawResults(rawData.memory || []),
     };
 
     for (const results of Object.values(moduleDataMap)) {

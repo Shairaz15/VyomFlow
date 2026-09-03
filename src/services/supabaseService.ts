@@ -15,6 +15,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { auth } from '../lib/firebase';
 import { extract75Biomarkers } from './clinicalModelEngine';
 import type { RawDashboardData, UserDemographics } from './dataMapper';
+export type { RawDashboardData };
 import type { CognitiveModelPrediction } from './clinicalModelEngine';
 import type { LongitudinalEvaluation, DriftMetrics } from './statisticalDriftEngine';
 import { generateTop10Recommendations } from './recommendationEngine';
@@ -431,7 +432,39 @@ export async function fetchLiveModuleResultsFromSupabase(
             else if (modType === 'navigation') rawData.navigation.push(resultObj as any);
         }
 
-        return rawData;
+        // Helper to deduplicate items by id or 30-second cluster window
+        const dedup = <T extends { id?: string; timestamp: Date | string | number }>(list: T[]): T[] => {
+            if (!list || list.length <= 1) return list || [];
+            const sorted = [...list].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+            const out: T[] = [];
+            const seen = new Set<string>();
+            for (const item of sorted) {
+                if (item.id && seen.has(item.id)) continue;
+                const time = new Date(item.timestamp).getTime();
+                const dupIdx = out.findIndex(ex => {
+                    if (item.id && ex.id === item.id) return true;
+                    return Math.abs(time - new Date(ex.timestamp).getTime()) < 30000;
+                });
+                if (dupIdx !== -1) {
+                    out[dupIdx] = item;
+                } else {
+                    if (item.id) seen.add(item.id);
+                    out.push(item);
+                }
+            }
+            return out;
+        };
+
+        return {
+            reaction: dedup(rawData.reaction),
+            memory: dedup(rawData.memory),
+            pattern: dedup(rawData.pattern),
+            language: dedup(rawData.language),
+            vmra: dedup(rawData.vmra),
+            story: dedup(rawData.story),
+            navigation: dedup(rawData.navigation),
+            attention: dedup(rawData.attention || []),
+        };
     } catch (err) {
         logger.error('Error in fetchLiveModuleResultsFromSupabase:', err);
         return rawData;

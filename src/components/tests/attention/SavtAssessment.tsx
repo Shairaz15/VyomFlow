@@ -59,10 +59,15 @@ export function SavtAssessment() {
     const [sessionTarget, setSessionTarget] = useState<SessionTarget>(() => pickSessionTarget());
     const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-    // Practice UI state
+    // Practice & Test Feedback UI state
     const [practiceIndex, setPracticeIndex] = useState(0);
     const [practiceTotal, setPracticeTotal] = useState(0);
     const [practiceFeedback, setPracticeFeedback] = useState<{
+        show: boolean;
+        correct: boolean;
+        message: string;
+    }>({ show: false, correct: false, message: '' });
+    const [testFeedback, setTestFeedback] = useState<{
         show: boolean;
         correct: boolean;
         message: string;
@@ -217,12 +222,11 @@ export function SavtAssessment() {
         }, 150);
     }, [config, clearAllTimers, runPracticeTrial]);
 
-    // ─── Test Logic ───────────────────────────────────────────────
-
     const finishTest = useCallback(() => {
         clearAllTimers();
         setPhase('scoring');
         setShowStimulus(false);
+        setTestFeedback({ show: false, correct: false, message: '' });
         setCurrentStimulus(null);
         currentStimulusRef.current = null;
 
@@ -251,6 +255,7 @@ export function SavtAssessment() {
         respondedRef.current = false;
         trialIndexRef.current = idx;
         setTrialIndex(idx);
+        setTestFeedback({ show: false, correct: false, message: '' });
 
         isiTimerRef.current = setTimeout(() => {
             if (phaseRef.current !== 'testing') return;
@@ -267,6 +272,7 @@ export function SavtAssessment() {
                     if (respondedRef.current) return;
 
                     // No response — record trial
+                    const outcome = getTrialOutcome(seq[idx], false);
                     const trial: TrialEvent = {
                         trialIndex: idx,
                         stimulus: stim,
@@ -275,13 +281,25 @@ export function SavtAssessment() {
                         stimulusOffsetTimestamp: stimulusOnsetRef.current + config.stimulusDurationMs,
                         reactionTimeMs: null,
                         didRespond: false,
-                        outcome: getTrialOutcome(seq[idx], false),
+                        outcome,
                         blockIndex: getBlockIndex(idx, config),
                     };
                     trialsRef.current = [...trialsRef.current, trial];
 
-                    // Next trial
-                    runTestTrial(seq, idx + 1, target);
+                    // Immediate feedback for withholding
+                    const correct = outcome === 'correct_rejection';
+                    setTestFeedback({
+                        show: true,
+                        correct,
+                        message: correct
+                            ? '✓ Correct! You held back.'
+                            : `✗ Missed! Tap the ${target.label}.`,
+                    });
+
+                    setTimeout(() => {
+                        setTestFeedback({ show: false, correct: false, message: '' });
+                        runTestTrial(seq, idx + 1, target);
+                    }, 1000);
                 }, config.responseWindowMs);
             }, config.stimulusDurationMs);
         }, getRandomIsi(config));
@@ -298,7 +316,9 @@ export function SavtAssessment() {
         const idx = trialIndexRef.current;
         const seq = sequenceRef.current;
         const stim = currentStimulusRef.current;
+        const target = sessionTargetRef.current;
 
+        const outcome = getTrialOutcome(seq[idx], true);
         const trial: TrialEvent = {
             trialIndex: idx,
             stimulus: stim,
@@ -307,15 +327,27 @@ export function SavtAssessment() {
             stimulusOffsetTimestamp: stimulusOnsetRef.current + config.stimulusDurationMs,
             reactionTimeMs: rt,
             didRespond: true,
-            outcome: getTrialOutcome(seq[idx], true),
+            outcome,
             blockIndex: getBlockIndex(idx, config),
         };
 
         trialsRef.current = [...trialsRef.current, trial];
         hideStimulusFromScreen();
 
-        // Next trial
-        runTestTrial(seq, idx + 1, sessionTargetRef.current);
+        // Immediate feedback for tap
+        const correct = outcome === 'hit';
+        setTestFeedback({
+            show: true,
+            correct,
+            message: correct
+                ? '✓ Correct! Quick response.'
+                : `✗ Only tap the ${target.label}!`,
+        });
+
+        setTimeout(() => {
+            setTestFeedback({ show: false, correct: false, message: '' });
+            runTestTrial(seq, idx + 1, target);
+        }, 1000);
     }, [config, clearAllTimers, hideStimulusFromScreen, runTestTrial]);
 
     const startTest = useCallback(() => {
@@ -325,6 +357,7 @@ export function SavtAssessment() {
         trialsRef.current = [];
         trialIndexRef.current = 0;
         setTrialIndex(0);
+        setTestFeedback({ show: false, correct: false, message: '' });
         testStartTimeRef.current = Date.now();
         setPhase('testing');
 
@@ -614,8 +647,13 @@ export function SavtAssessment() {
                             {/* Center Large Stimulus Stage */}
                             <div className="savt-stimulus-stage">
                                 {showStimulus && currentStimulus && renderStimulus(currentStimulus, false)}
-                                {!showStimulus && (
+                                {!showStimulus && !testFeedback.show && (
                                     <div className="savt-fixation-cross">+</div>
+                                )}
+                                {testFeedback.show && (
+                                    <div className={`savt-feedback-pill ${testFeedback.correct ? 'correct' : 'incorrect'}`}>
+                                        {testFeedback.message}
+                                    </div>
                                 )}
                             </div>
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     useStoryResults,
     useVmraResults,
@@ -7,7 +7,14 @@ import {
     useAttentionResults,
     useNavigationResults,
     useLanguageResults,
+    STORAGE_KEYS,
 } from './useTestResults';
+import {
+    fetchLiveModuleResultsFromSupabase,
+    subscribeToLiveAssessmentUpdates,
+    getCurrentFirebaseUid,
+    type RawDashboardData
+} from '../services/supabaseService';
 
 export type ActivityId = 'story' | 'memory' | 'reaction' | 'pattern' | 'attention' | 'navigation' | 'language';
 
@@ -167,6 +174,13 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
     },
 ];
 
+export interface ActivityScoreInfo {
+    score: number;
+    label: string;
+    trend: 'up' | 'down' | 'neutral';
+    previousScore?: number;
+}
+
 export interface JourneyState {
     completedActivityIds: Set<ActivityId>;
     completedCount: number;
@@ -181,6 +195,7 @@ export interface JourneyState {
         nextThreshold: number;
     };
     activityLastCompletedMap: Record<ActivityId, Date | null>;
+    activityLatestScoreMap: Record<ActivityId, ActivityScoreInfo | null>;
     isLoading: boolean;
 }
 
@@ -193,39 +208,316 @@ export function useJourneyState(): JourneyState {
     const { results: navigationResults, isLoading: navigationLoading } = useNavigationResults();
     const { results: languageResults, isLoading: languageLoading } = useLanguageResults();
 
-    const isLoading = storyLoading || vmraLoading || reactionLoading || patternLoading || attentionLoading || navigationLoading || languageLoading;
+    const [supabaseData, setSupabaseData] = useState<RawDashboardData | null>(null);
+    const [isSupabaseLoading, setIsSupabaseLoading] = useState(true);
+
+    useEffect(() => {
+        let mounted = true;
+        const uid = getCurrentFirebaseUid();
+
+        async function loadData() {
+            if (!uid) {
+                if (mounted) setIsSupabaseLoading(false);
+                return;
+            }
+            try {
+                const data = await fetchLiveModuleResultsFromSupabase(uid, false);
+                if (mounted) {
+                    setSupabaseData(data);
+                }
+            } catch {
+                // Ignore Supabase load failure
+            } finally {
+                if (mounted) setIsSupabaseLoading(false);
+            }
+        }
+
+        loadData();
+
+        let unsubscribe = () => {};
+        if (uid) {
+            unsubscribe = subscribeToLiveAssessmentUpdates(uid, () => {
+                loadData();
+            });
+        }
+
+        return () => {
+            mounted = false;
+            unsubscribe();
+        };
+    }, []);
+
+    const isLoading = (storyLoading || vmraLoading || reactionLoading || patternLoading || attentionLoading || navigationLoading || languageLoading) && isSupabaseLoading;
 
     return useMemo(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const getLatestTimestamp = (items: Array<{ timestamp?: Date | string }>): Date | null => {
+            if (!items || items.length === 0) return null;
+            let latest: Date | null = null;
+            for (const item of items) {
+                if (item.timestamp) {
+                    const d = item.timestamp instanceof Date ? item.timestamp : new Date(item.timestamp);
+                    if (!isNaN(d.getTime())) {
+                        if (!latest || d.getTime() > latest.getTime()) {
+                            latest = d;
+                        }
+                    }
+                }
+            }
+            return latest;
+        };
 
-        const isCompletedToday = (timestamp: Date | string | undefined) => {
+        const extractNumericValue = (item: any, type: ActivityId): number => {
+            if (!item) return 0;
+            if (type === 'story') {
+                return Number(item.storyRecallScore ?? item.score ?? item.features?.recallAccuracy ?? 0);
+            }
+            if (type === 'memory') {
+                let val = Number(item.features?.recallAccuracy ?? item.score ?? 0);
+                if (val <= 1 && val > 0) val = val * 100;
+                return val;
+            }
+            if (type === 'reaction') {
+                return Number(
+                    item.aggregates?.median ||
+                    item.aggregates?.avg ||
+                    item.aggregates?.meanResponseTime ||
+                    item.aggregates?.medianReactionTime ||
+                    item.metrics?.avg ||
+                    item.metrics?.median ||
+                    item.metrics?.medianReactionTime ||
+                    item.rawMetrics?.aggregates?.median ||
+                    item.rawMetrics?.aggregates?.avg ||
+                    item.rawMetrics?.median ||
+                    item.rawMetrics?.avg ||
+                    item.score ||
+                    0
+                );
+            }
+            if (type === 'pattern') {
+                let val = Number(item.score ?? (item.accuracy ? item.accuracy * 100 : 0));
+                if (val <= 1 && val > 0) val = val * 100;
+                return val;
+            }
+            if (type === 'attention') {
+                return Number(item.score ?? (item.features?.dPrime ? item.features.dPrime * 20 : 0));
+            }
+            if (type === 'navigation') {
+                return Number(item.navigationScore ?? item.score ?? 0);
+            }
+            if (type === 'language') {
+                return Number(item.score ?? (item.features?.fluencyIndex ? item.features.fluencyIndex * 10 : 0));
+            }
+            return 0;
+        };
+
+        const getLatestScore = (items: Array<any>, type: ActivityId): ActivityScoreInfo | null => {
+            if (!items || items.length === 0) return null;
+
+            // Extract numeric values and timestamps
+            const rawEntries: Array<{ val: number; timeMs: number; sessionId?: string }> = [];
+
+            for (const item of items) {
+                if (!item) continue;
+                const timeMs = item.timestamp
+                    ? (item.timestamp instanceof Date ? item.timestamp.getTime() : new Date(item.timestamp).getTime())
+                    : 0;
+                const numericVal = extractNumericValue(item, type);
+                if (numericVal > 0) {
+                    rawEntries.push({
+                        val: numericVal,
+                        timeMs: isNaN(timeMs) ? 0 : timeMs,
+                        sessionId: item.sessionId || item.id,
+                    });
+                }
+            }
+
+            if (rawEntries.length === 0) return null;
+
+            // Sort by time descending (newest first)
+            rawEntries.sort((a, b) => b.timeMs - a.timeMs);
+
+            // Deduplicate runs: items within 15 seconds of each other belong to the same test session/save
+            const distinctRuns: Array<{ val: number; timeMs: number; sessionId?: string }> = [];
+            for (const entry of rawEntries) {
+                const isDuplicate = distinctRuns.some((existing) => {
+                    if (existing.sessionId && entry.sessionId && existing.sessionId === entry.sessionId) return true;
+                    if (existing.timeMs > 0 && entry.timeMs > 0 && Math.abs(existing.timeMs - entry.timeMs) < 15000) {
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (!isDuplicate) {
+                    distinctRuns.push(entry);
+                }
+            }
+
+            if (distinctRuns.length === 0) return null;
+
+            const latest = distinctRuns[0];
+            const currentScore = latest.val;
+
+            // Find a distinct previous test run
+            let previousScore: number | undefined = undefined;
+            if (distinctRuns.length > 1) {
+                for (let i = 1; i < distinctRuns.length; i++) {
+                    const prevRun = distinctRuns[i];
+                    if (prevRun.val > 0) {
+                        previousScore = prevRun.val;
+                        break;
+                    }
+                }
+            }
+
+            // Determine trend (good vs worse)
+            let trend: 'up' | 'down' | 'neutral' = 'neutral';
+            if (previousScore !== undefined && previousScore > 0) {
+                if (type === 'reaction') {
+                    // For reaction time: LOWER ms is faster (better)
+                    if (currentScore < previousScore) {
+                        trend = 'up'; // Improved (faster)
+                    } else if (currentScore > previousScore) {
+                        trend = 'down'; // Declined (slower)
+                    } else {
+                        trend = 'neutral';
+                    }
+                } else {
+                    // For accuracy/recall/match: HIGHER is better
+                    if (currentScore > previousScore) {
+                        trend = 'up'; // Improved
+                    } else if (currentScore < previousScore) {
+                        trend = 'down'; // Declined
+                    } else {
+                        trend = 'neutral';
+                    }
+                }
+            } else {
+                trend = 'neutral';
+            }
+
+            let label = `${Math.round(currentScore)}% Score`;
+            if (type === 'story') label = `${Math.round(currentScore)}% Recall`;
+            else if (type === 'memory') label = `${Math.round(currentScore)}% Accuracy`;
+            else if (type === 'reaction') label = `${Math.round(currentScore)} ms`;
+            else if (type === 'pattern') label = `${Math.round(currentScore)}% Match`;
+            else if (type === 'attention') label = `${Math.round(currentScore)}% Stability`;
+            else if (type === 'navigation') label = `${Math.round(currentScore)}% Route`;
+            else if (type === 'language') label = `${Math.round(currentScore)}% Fluency`;
+
+            return {
+                score: currentScore,
+                label,
+                trend,
+                previousScore,
+            };
+        };
+
+        const isCompletedToday = (timestamp: Date | string | undefined | null) => {
             if (!timestamp) return false;
             try {
                 const dateObj = timestamp instanceof Date ? timestamp : new Date(timestamp);
-                return dateObj.toISOString().split('T')[0] === todayStr;
+                if (isNaN(dateObj.getTime())) return false;
+                const now = new Date();
+                
+                // 1. Same local calendar date
+                const isSameLocalDate = dateObj.getFullYear() === now.getFullYear() &&
+                                        dateObj.getMonth() === now.getMonth() &&
+                                        dateObj.getDate() === now.getDate();
+                // 2. Same UTC calendar date
+                const isSameUtcDate = dateObj.toISOString().split('T')[0] === now.toISOString().split('T')[0];
+                // 3. Within the last 24 hours
+                const diffHours = (now.getTime() - dateObj.getTime()) / (1000 * 60 * 60);
+                const isRecent = diffHours >= 0 && diffHours < 24;
+
+                return isSameLocalDate || isSameUtcDate || isRecent;
             } catch {
                 return false;
             }
         };
 
+        const getLocalFallback = (key: string): any[] => {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
+        };
+
+        const localStory = getLocalFallback(STORAGE_KEYS.storyResults);
+        const localVmra = [...getLocalFallback(STORAGE_KEYS.vmraResults), ...getLocalFallback(STORAGE_KEYS.memoryResults)];
+        const localReaction = getLocalFallback(STORAGE_KEYS.reactionResults);
+        const localPattern = getLocalFallback(STORAGE_KEYS.patternResults);
+        const localAttention = getLocalFallback(STORAGE_KEYS.attentionResults);
+        const localNavigation = getLocalFallback(STORAGE_KEYS.navigationResults);
+        const localLanguage = getLocalFallback(STORAGE_KEYS.languageResults);
+
+        const mergedStory = [...localStory, ...storyResults, ...(supabaseData?.story || [])];
+        const mergedVmra = [...localVmra, ...vmraResults, ...(supabaseData?.vmra || [])];
+        const mergedReaction = [...localReaction, ...reactionResults, ...(supabaseData?.reaction || [])];
+        const mergedPattern = [...localPattern, ...patternResults, ...(supabaseData?.pattern || [])];
+        const mergedAttention = [...localAttention, ...attentionResults, ...(supabaseData?.attention || [])];
+        const mergedNavigation = [...localNavigation, ...navigationResults, ...(supabaseData?.navigation || [])];
+        const mergedLanguage = [...localLanguage, ...languageResults, ...(supabaseData?.language || [])];
+
         const activityLastCompletedMap: Record<ActivityId, Date | null> = {
-            story: storyResults.length > 0 ? new Date(storyResults[storyResults.length - 1].timestamp) : null,
-            memory: vmraResults.length > 0 ? new Date(vmraResults[vmraResults.length - 1].timestamp) : null,
-            reaction: reactionResults.length > 0 ? new Date(reactionResults[reactionResults.length - 1].timestamp) : null,
-            pattern: patternResults.length > 0 ? new Date(patternResults[patternResults.length - 1].timestamp) : null,
-            attention: attentionResults.length > 0 ? new Date(attentionResults[attentionResults.length - 1].timestamp) : null,
-            navigation: navigationResults.length > 0 ? new Date(navigationResults[navigationResults.length - 1].timestamp) : null,
-            language: languageResults.length > 0 ? new Date(languageResults[languageResults.length - 1].timestamp) : null,
+            story: getLatestTimestamp(mergedStory),
+            memory: getLatestTimestamp(mergedVmra),
+            reaction: getLatestTimestamp(mergedReaction),
+            pattern: getLatestTimestamp(mergedPattern),
+            attention: getLatestTimestamp(mergedAttention),
+            navigation: getLatestTimestamp(mergedNavigation),
+            language: getLatestTimestamp(mergedLanguage),
+        };
+
+        const activityLatestScoreMap: Record<ActivityId, ActivityScoreInfo | null> = {
+            story: getLatestScore(mergedStory, 'story'),
+            memory: getLatestScore(mergedVmra, 'memory'),
+            reaction: getLatestScore(mergedReaction, 'reaction'),
+            pattern: getLatestScore(mergedPattern, 'pattern'),
+            attention: getLatestScore(mergedAttention, 'attention'),
+            navigation: getLatestScore(mergedNavigation, 'navigation'),
+            language: getLatestScore(mergedLanguage, 'language'),
+        };
+
+        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+        const isActivityCompletedWithin7Days = (items: Array<any>, type: ActivityId): boolean => {
+            if (!items || items.length === 0) return false;
+            const now = Date.now();
+
+            return items.some((item) => {
+                if (!item) return false;
+                if (item.timestamp) {
+                    const d = item.timestamp instanceof Date ? item.timestamp : new Date(item.timestamp);
+                    const timeMs = d.getTime();
+                    if (!isNaN(timeMs)) {
+                        const diff = now - timeMs;
+                        // Completed within the 7-day protocol window
+                        if (diff >= 0 && diff <= SEVEN_DAYS_MS) {
+                            return true;
+                        }
+                    }
+                }
+                
+                // Fallback: If score exists and was recorded in current session
+                if (extractNumericValue(item, type) > 0 && !item.timestamp) {
+                    return true;
+                }
+                return false;
+            });
         };
 
         const completedActivityIds = new Set<ActivityId>();
-        if (isCompletedToday(activityLastCompletedMap.story ?? undefined)) completedActivityIds.add('story');
-        if (isCompletedToday(activityLastCompletedMap.memory ?? undefined)) completedActivityIds.add('memory');
-        if (isCompletedToday(activityLastCompletedMap.reaction ?? undefined)) completedActivityIds.add('reaction');
-        if (isCompletedToday(activityLastCompletedMap.pattern ?? undefined)) completedActivityIds.add('pattern');
-        if (isCompletedToday(activityLastCompletedMap.attention ?? undefined)) completedActivityIds.add('attention');
-        if (isCompletedToday(activityLastCompletedMap.navigation ?? undefined)) completedActivityIds.add('navigation');
-        if (isCompletedToday(activityLastCompletedMap.language ?? undefined)) completedActivityIds.add('language');
+        if (isActivityCompletedWithin7Days(mergedStory, 'story')) completedActivityIds.add('story');
+        if (isActivityCompletedWithin7Days(mergedVmra, 'memory')) completedActivityIds.add('memory');
+        if (isActivityCompletedWithin7Days(mergedReaction, 'reaction')) completedActivityIds.add('reaction');
+        if (isActivityCompletedWithin7Days(mergedPattern, 'pattern')) completedActivityIds.add('pattern');
+        if (isActivityCompletedWithin7Days(mergedAttention, 'attention')) completedActivityIds.add('attention');
+        if (isActivityCompletedWithin7Days(mergedNavigation, 'navigation')) completedActivityIds.add('navigation');
+        if (isActivityCompletedWithin7Days(mergedLanguage, 'language')) completedActivityIds.add('language');
 
         const completedCount = completedActivityIds.size;
         const totalCount = JOURNEY_NODES.length;
@@ -243,13 +535,13 @@ export function useJourneyState(): JourneyState {
         // Compute total unique check-in days across all test history for participation growth
         const uniqueDates = new Set<string>();
         [
-            ...storyResults,
-            ...vmraResults,
-            ...reactionResults,
-            ...patternResults,
-            ...attentionResults,
-            ...navigationResults,
-            ...languageResults,
+            ...mergedStory,
+            ...mergedVmra,
+            ...mergedReaction,
+            ...mergedPattern,
+            ...mergedAttention,
+            ...mergedNavigation,
+            ...mergedLanguage,
         ].forEach((item) => {
             if (item.timestamp) {
                 try {
@@ -284,6 +576,7 @@ export function useJourneyState(): JourneyState {
             totalSessionsCompleted,
             growthLevel,
             activityLastCompletedMap,
+            activityLatestScoreMap,
             isLoading,
         };
     }, [
@@ -294,6 +587,7 @@ export function useJourneyState(): JourneyState {
         attentionResults,
         navigationResults,
         languageResults,
+        supabaseData,
         isLoading,
     ]);
 }

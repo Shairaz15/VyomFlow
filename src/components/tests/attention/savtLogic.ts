@@ -53,7 +53,7 @@ export function pickSessionTarget(): SessionTarget {
 // ─── Default Configuration ────────────────────────────────────────
 
 export const DEFAULT_SAVT_CONFIG: SavtSessionConfig = {
-    totalTrials: 20,
+    totalTrials: 10,
     practiceTrials: 5,
     goRatio: 0.7,
     stimulusDurationMs: 500,
@@ -61,7 +61,7 @@ export const DEFAULT_SAVT_CONFIG: SavtSessionConfig = {
     minIsiMs: 1000,
     maxIsiMs: 2000,
     maxConsecutiveNogo: 3,
-    blocksCount: 4,
+    blocksCount: 2,
 };
 
 // ─── State Machine ────────────────────────────────────────────────

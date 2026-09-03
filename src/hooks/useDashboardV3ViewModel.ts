@@ -21,6 +21,7 @@ import {
     useStoryResults,
     useNavigationResults,
     useAttentionResults,
+    deduplicateModuleResults,
 } from './useTestResults';
 import { predictCognitiveProfile, type CognitiveModelPrediction } from '../services/clinicalModelEngine';
 import { evaluatePatientTrajectory, evaluateLongitudinalDrift, type LongitudinalEvaluation, type DriftMetrics } from '../services/statisticalDriftEngine';
@@ -160,17 +161,17 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
             };
         }
 
-        // Live mode: Prioritize Supabase live results, merge with local cache
+        // Live mode: Prioritize Supabase live results, merge with local cache, and deduplicate
         const sb = supabaseRawData;
         return {
-            reaction: (sb?.reaction && sb.reaction.length > 0) ? sb.reaction : reactionResults,
-            memory: (sb?.memory && sb.memory.length > 0) ? sb.memory : memoryResults,
-            pattern: (sb?.pattern && sb.pattern.length > 0) ? sb.pattern : patternResults,
-            language: (sb?.language && sb.language.length > 0) ? sb.language : languageResults,
-            vmra: (sb?.vmra && sb.vmra.length > 0) ? sb.vmra : vmraResults,
-            story: (sb?.story && sb.story.length > 0) ? sb.story : storyResults,
-            navigation: (sb?.navigation && sb.navigation.length > 0) ? sb.navigation : navigationResults,
-            attention: (sb?.attention && sb.attention.length > 0) ? sb.attention : attentionResults,
+            reaction: deduplicateModuleResults((sb?.reaction && sb.reaction.length > 0) ? sb.reaction : reactionResults),
+            memory: deduplicateModuleResults((sb?.memory && sb.memory.length > 0) ? sb.memory : memoryResults),
+            pattern: deduplicateModuleResults((sb?.pattern && sb.pattern.length > 0) ? sb.pattern : patternResults),
+            language: deduplicateModuleResults((sb?.language && sb.language.length > 0) ? sb.language : languageResults),
+            vmra: deduplicateModuleResults((sb?.vmra && sb.vmra.length > 0) ? sb.vmra : vmraResults),
+            story: deduplicateModuleResults((sb?.story && sb.story.length > 0) ? sb.story : storyResults),
+            navigation: deduplicateModuleResults((sb?.navigation && sb.navigation.length > 0) ? sb.navigation : navigationResults),
+            attention: deduplicateModuleResults((sb?.attention && sb.attention.length > 0) ? sb.attention : attentionResults),
         };
     }, [dataMode, supabaseRawData, reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults, navigationResults, attentionResults]);
 

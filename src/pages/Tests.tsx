@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Button } from "../components/common";
+import { Button, Icon } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { PageWrapper } from "../components/layout";
 import { useJourneyState, JOURNEY_NODES, type ActivityId } from "../hooks/useJourneyState";
@@ -13,6 +13,7 @@ export function Tests() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth();
+    const [filterMode, setFilterMode] = useState<'all' | 'remaining' | 'completed'>('all');
 
     const {
         completedActivityIds,
@@ -21,6 +22,7 @@ export function Tests() {
         activeNodeId,
         isJourneyComplete,
         activityLastCompletedMap,
+        activityLatestScoreMap,
     } = useJourneyState();
 
     // Modals state
@@ -49,9 +51,19 @@ export function Tests() {
 
     const activeNode = JOURNEY_NODES.find((n) => n.id === activeNodeId) || JOURNEY_NODES[0];
 
+    // Compute dynamic remaining estimated protocol duration
+    const remainingMinutes = useMemo(() => {
+        const remainingNodes = JOURNEY_NODES.filter((n) => !completedActivityIds.has(n.id));
+        const totalMin = remainingNodes.reduce((acc, n) => {
+            const num = parseFloat(n.duration) || 2;
+            return acc + num;
+        }, 0);
+        return Math.ceil(totalMin);
+    }, [completedActivityIds]);
+
     const handlePrimaryCtaClick = () => {
         if (isJourneyComplete) {
-            setShowJourneyCompleteModal(true);
+            navigate("/dashboard");
         } else {
             navigate(activeNode.route);
         }
@@ -74,14 +86,22 @@ export function Tests() {
             <div className="journey-page container animate-fadeIn">
                 {/* Responsive Unified Hero Header */}
                 <header className="journey-hero-compact">
-                    <div className="hero-top-row">
+                    <div className={`hero-top-row ${isJourneyComplete ? "is-protocol-complete" : ""}`}>
                         <div className="hero-text-col">
                             <h1 className="hero-greeting-title">{getGreeting()}</h1>
                             <div className="hero-sub-row">
-                                <span className="journey-badge-pill">Cognitive Protocol</span>
+                                <span className={`journey-badge-pill ${isJourneyComplete ? "badge-pill-success" : ""}`}>
+                                    {isJourneyComplete ? "✓ Protocol Complete" : "Cognitive Protocol"}
+                                </span>
                                 <span className="journey-subtitle-dot">•</span>
                                 <span className="journey-subtitle">
-                                    7 clinical activities • ~12 min total • Track performance & biomarkers
+                                    {isJourneyComplete ? (
+                                        "All 7 clinical biomarkers assessed today • Ready for clinical review"
+                                    ) : completedCount > 0 ? (
+                                        `${totalCount - completedCount} activities remaining • ~${remainingMinutes} min left • Track performance & biomarkers`
+                                    ) : (
+                                        "7 clinical activities • ~18 min total • Track performance & biomarkers"
+                                    )}
                                 </span>
                             </div>
                         </div>
@@ -111,10 +131,12 @@ export function Tests() {
                             <Button
                                 variant="primary"
                                 onClick={handlePrimaryCtaClick}
-                                className="journey-compact-cta"
+                                className={`journey-compact-cta ${isJourneyComplete ? "journey-completed-cta" : ""}`}
                             >
                                 {isJourneyComplete ? (
-                                    <>✓ Protocol Complete</>
+                                    <>
+                                        <Icon name="chart-line-up" size={14} /> View Full Clinical Report →
+                                    </>
                                 ) : completedCount > 0 ? (
                                     <>Continue ({activeNode.title}) →</>
                                 ) : (
@@ -125,19 +147,55 @@ export function Tests() {
                     </div>
                 </header>
 
+                {/* Protocol Focus Filter Tabs */}
+                <div className="journey-filter-bar" role="tablist" aria-label="Assessment Filters">
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={filterMode === 'all'}
+                        className={`filter-pill-btn ${filterMode === 'all' ? 'active' : ''}`}
+                        onClick={() => setFilterMode('all')}
+                    >
+                        All Activities <span className="filter-pill-badge">{totalCount}</span>
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={filterMode === 'remaining'}
+                        className={`filter-pill-btn ${filterMode === 'remaining' ? 'active' : ''}`}
+                        onClick={() => setFilterMode('remaining')}
+                    >
+                        Remaining <span className="filter-pill-badge">{totalCount - completedCount}</span>
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={filterMode === 'completed'}
+                        className={`filter-pill-btn ${filterMode === 'completed' ? 'active' : ''}`}
+                        onClick={() => setFilterMode('completed')}
+                    >
+                        Completed <span className="filter-pill-badge">{completedCount}</span>
+                    </button>
+                </div>
+
                 {/* Main Feature: Spacious Organic Journey Map Landscape */}
                 <main className="journey-map-main" aria-label="Journey Map">
                     <JourneyMap
                         completedActivityIds={completedActivityIds}
                         activeNodeId={activeNodeId}
                         activityLastCompletedMap={activityLastCompletedMap}
+                        activityLatestScoreMap={activityLatestScoreMap}
+                        filterMode={filterMode}
                     />
                 </main>
 
                 {/* Small Supporting Text Links */}
                 <div className="journey-bottom-links">
+                    <button className="link-chip" onClick={() => navigate("/dashboard")}>
+                        <Icon name="chart-line-up" size={13} /> View Clinical Dashboard →
+                    </button>
                     <button className="link-chip" onClick={() => navigate("/progress")}>
-                        My Progress & Growth →
+                        <Icon name="timeline" size={13} /> My Progress & Growth →
                     </button>
                     <button className="link-chip" onClick={() => navigate("/privacy")}>
                         Privacy & Data Safeguards →

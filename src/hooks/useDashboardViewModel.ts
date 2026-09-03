@@ -22,6 +22,7 @@ import {
     useStoryResults,
     useNavigationResults,
     useAttentionResults,
+    deduplicateModuleResults,
 } from './useTestResults';
 import { predictCognitiveProfile, type CognitiveModelPrediction } from '../services/clinicalModelEngine';
 import { evaluatePatientTrajectory, evaluateLongitudinalDrift, type LongitudinalEvaluation, type DriftMetrics } from '../services/statisticalDriftEngine';
@@ -49,16 +50,16 @@ export function useDashboardViewModel(): DashboardViewModel {
     const [driftMetrics, setDriftMetrics] = useState<DriftMetrics | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // ─── 3. Aggregate raw data ───────────────────────────────────
+    // ─── 3. Aggregate raw data (deduplicated) ────────────────────
     const rawData: RawDashboardData = useMemo(() => ({
-        reaction: reactionResults,
-        memory: memoryResults,
-        pattern: patternResults,
-        language: languageResults,
-        vmra: vmraResults,
-        story: storyResults,
-        navigation: navigationResults,
-        attention: attentionResults,
+        reaction: deduplicateModuleResults(reactionResults),
+        memory: deduplicateModuleResults(memoryResults),
+        pattern: deduplicateModuleResults(patternResults),
+        language: deduplicateModuleResults(languageResults),
+        vmra: deduplicateModuleResults(vmraResults),
+        story: deduplicateModuleResults(storyResults),
+        navigation: deduplicateModuleResults(navigationResults),
+        attention: deduplicateModuleResults(attentionResults),
     }), [reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults, navigationResults, attentionResults]);
 
     // ─── 4. Read demographics from localStorage ──────────────────
