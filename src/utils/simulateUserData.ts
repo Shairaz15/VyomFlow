@@ -8,6 +8,7 @@ import type { RoundResult } from "../components/tests/reaction/reactionLogic";
 import type { MemoryTestResult } from "../hooks/useTestResults";
 import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
+import type { VmraAssessmentResult } from "../types/vmraTypes";
 
 type SimulationPattern = "stable" | "declining";
 
@@ -16,6 +17,7 @@ interface BaselineData {
     memory?: MemoryTestResult;
     pattern?: PatternAssessmentResult;
     language?: LanguageAssessmentResult;
+    vmra?: VmraAssessmentResult;
 }
 
 /**
@@ -225,15 +227,70 @@ export function simulateLanguageResults(
             derivedFeatures: {
                 wpm: Math.round(wpm),
                 lexicalDiversity: Math.max(0.3, baseline.derivedFeatures.lexicalDiversity + modifier * 0.2),
+                rootTTR: Math.max(0.4, (baseline.derivedFeatures.rootTTR || 0.72) + modifier * 0.15),
                 fluencyIndex: Math.round(fluency),
-                hesitationIndex: pattern === "declining" ? baseline.derivedFeatures.hesitationIndex + i * 0.02 : baseline.derivedFeatures.hesitationIndex,
+                hesitationIndex: pattern === "declining" ? (baseline.derivedFeatures.hesitationIndex || 0.05) + i * 0.02 : (baseline.derivedFeatures.hesitationIndex || 0.05),
+                phonationRatio: pattern === "declining" ? Math.max(0.45, 0.8 - i * 0.06) : 0.82,
+                articulationRate: Math.round(wpm * 1.2),
+                ideaDensity: 0.55,
+                syntacticComplexity: pattern === "declining" ? Math.max(40, 75 - i * 6) : 78,
+                semanticCoherence: pattern === "declining" ? Math.max(45, 85 - i * 7) : 88,
+                cognitiveSpeechIndex: Math.round(pattern === "declining" ? Math.max(42, 86 - i * 8) : 87),
                 speechStability: pattern === "stable" ? 85 : Math.max(50, 85 - i * 8),
                 coherenceProxy: pattern === "stable" ? 80 : Math.max(50, 80 - i * 6),
             },
             explainability: {
                 keyFactors: pattern === "declining"
-                    ? ["Increased hesitation", "Reduced speech rate"]
-                    : ["Consistent speaking rate", "Stable fluency"],
+                    ? ["Increased hesitation", "Reduced speech rate", "Elevated silent pauses"]
+                    : ["Consistent speaking rate", "Stable fluency", "Rich lexical diversity"],
+            },
+        });
+    }
+
+    return results;
+}
+
+// ============= VMRA TEST SIMULATION =============
+
+export function simulateVmraResults(
+    baseline: VmraAssessmentResult,
+    pattern: SimulationPattern
+): VmraAssessmentResult[] {
+    const results: VmraAssessmentResult[] = [];
+    const baseAccuracy = baseline.profile.accuracy;
+    const baseScore = baseline.profile.compositeScore;
+
+    for (let i = 0; i < 5; i++) {
+        const modifier = getTrendModifier(i + 1, pattern);
+        const accuracy = Math.max(0.1, Math.min(1, baseAccuracy + modifier));
+        const compositeScore = Math.max(0, Math.min(100, Math.round(baseScore + (modifier * 100))));
+        const correctHits = Math.round(accuracy * baseline.config.targetCount);
+
+        results.push({
+            ...baseline,
+            sessionId: `sim-vmra-${Date.now()}-${i}`,
+            timestamp: daysFromNow(7, i * 7),
+            rawMetrics: {
+                ...baseline.rawMetrics,
+                correctHits,
+                misses: baseline.config.targetCount - correctHits,
+                falsePositives: pattern === "declining" ? i + 1 : 0,
+            },
+            features: {
+                ...baseline.features,
+                recallAccuracy: accuracy,
+                netRecallScore: correctHits - (pattern === "declining" ? i + 1 : 0),
+            },
+            profile: {
+                ...baseline.profile,
+                accuracy,
+                compositeScore,
+                starRating: compositeScore > 80 ? 5 : compositeScore > 60 ? 4 : compositeScore > 40 ? 3 : compositeScore > 20 ? 2 : 1,
+            },
+            explainability: {
+                keyFactors: pattern === "declining"
+                    ? ["Decline in visual recognition", "Increased false positives"]
+                    : ["Consistent visual memory", "Stable recall"],
             },
         });
     }
@@ -248,6 +305,7 @@ export interface SimulatedData {
     memory: MemoryTestResult[];
     pattern: PatternAssessmentResult[];
     language: LanguageAssessmentResult[];
+    vmra: VmraAssessmentResult[];
 }
 
 /**
@@ -263,6 +321,7 @@ export function generateSimulatedData(
         memory: baseline.memory ? simulateMemoryResults(baseline.memory, pattern) : [],
         pattern: baseline.pattern ? simulatePatternResults(baseline.pattern, pattern) : [],
         language: baseline.language ? simulateLanguageResults(baseline.language, pattern) : [],
+        vmra: baseline.vmra ? simulateVmraResults(baseline.vmra, pattern) : [],
     };
 }
 
@@ -270,7 +329,7 @@ export function generateSimulatedData(
  * Checks if user has any baseline data.
  */
 export function hasBaseline(baseline: BaselineData): boolean {
-    return !!(baseline.reaction || baseline.memory || baseline.pattern || baseline.language);
+    return !!(baseline.reaction || baseline.memory || baseline.pattern || baseline.language || baseline.vmra);
 }
 
 /**
@@ -335,12 +394,50 @@ export function getMockBaseline(): BaselineData {
             derivedFeatures: {
                 wpm: 120,
                 lexicalDiversity: 0.6,
+                rootTTR: 0.75,
                 fluencyIndex: 85,
                 hesitationIndex: 0.05,
+                phonationRatio: 0.82,
+                articulationRate: 145,
+                ideaDensity: 0.58,
+                syntacticComplexity: 80,
+                semanticCoherence: 90,
+                cognitiveSpeechIndex: 88,
                 speechStability: 85,
                 coherenceProxy: 80
             },
             explainability: { keyFactors: [] }
+        },
+        vmra: {
+            sessionId: "mock-base-vmra",
+            timestamp: now,
+            config: {
+                targetCount: 5,
+                distractorCount: 5,
+                encodingTimePerImage: 3000,
+                fadeDuration: 1000,
+                retentionDuration: 15000,
+                similarityLevel: "medium",
+                gridColumns: 3,
+                gridRows: 3,
+            },
+            rawMetrics: {
+                targetImages: [], distractorImages: [], gridLayout: [], selectedImages: [], tapEvents: [],
+                correctHits: 4, falsePositives: 0, misses: 1, correctRejections: 5,
+                totalRecallDurationMs: 8000, encodingDurationMs: 15000, retentionDurationMs: 15000,
+                interferenceCorrect: 5, interferenceTotal: 5
+            },
+            features: {
+                recallAccuracy: 0.8, falsePositiveRate: 0, precision: 1, f1Score: 0.88, netRecallScore: 4,
+                meanSelectionLatencyMs: 1500, firstTapLatencyMs: 1200, meanInterTapIntervalMs: 1000, latencyVariance: 200,
+                primacyBias: 0.5, recencyBias: 0.5, midListDeficit: 0.2, intrusionErrors: 0, confusionPairs: [],
+                spatialBias: { topHalf: 0.5, bottomHalf: 0.5, leftHalf: 0.5, rightHalf: 0.5, dominant: 'none' },
+                gridCoverage: 0.8, possibleGuessing: false, possibleRandomTapping: false
+            },
+            profile: {
+                accuracy: 0.8, speed: 50, consistency: 0.8, compositeScore: 85, starRating: 5 as any
+            },
+            explainability: { keyFactors: ["Strong visual recognition"] }
         }
     };
 }

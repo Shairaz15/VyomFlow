@@ -21,11 +21,30 @@
     margin: 0;
 }
 
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
+}
+
 /* ===== Simulation Controls ===== */
 .simulation-controls {
     margin-bottom: var(--spacing-xl);
     background: var(--gradient-card);
     border: 1px solid var(--glass-border);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .simulation-buttons {
@@ -477,6 +496,9 @@
 
 /* Mode Toggle */
 .mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
     padding: var(--spacing-sm) var(--spacing-lg);
     border-radius: var(--radius-full);
     border: 1px solid var(--glass-border);
@@ -486,6 +508,7 @@
     transition: all var(--transition-normal);
     background: transparent;
     color: var(--color-text-secondary);
+    white-space: nowrap;
 }
 
 .mode-toggle.demo-active {

@@ -2,14 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const SARVAM_API_KEY = process.env.SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
 
-export const config = {
-  api: {
-    bodyParser: false, // Disable Vercel body parser to stream raw audio file
-  },
-};
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers for browser security
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, api-subscription-key');
@@ -23,23 +17,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Collect raw request body chunks
-    const chunks: Buffer[] = [];
-    for await (const chunk of req) {
-      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    const { audioBase64, mimeType, model = 'saaras:v4', mode = 'transcribe' } = req.body || {};
+
+    if (!audioBase64) {
+      return res.status(400).json({ error: 'Missing audioBase64 in request body' });
     }
-    const buffer = Buffer.concat(chunks);
 
-    const contentType = req.headers['content-type'] || 'multipart/form-data';
+    // Convert Base64 back to Buffer
+    const cleanBase64 = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
+    const audioBuffer = Buffer.from(cleanBase64, 'base64');
 
-    // Forward raw audio multipart request to Sarvam STT REST API
+    // Determine extension from mimeType
+    let ext = 'webm';
+    if (mimeType && mimeType.includes('mp4')) ext = 'mp4';
+    else if (mimeType && mimeType.includes('aac')) ext = 'aac';
+    else if (mimeType && mimeType.includes('wav')) ext = 'wav';
+
+    const filename = `speech_audio.${ext}`;
+    const blob = new Blob([audioBuffer], { type: mimeType || 'audio/webm' });
+
+    // Construct server-side FormData
+    const formData = new FormData();
+    formData.append('file', blob, filename);
+    formData.append('model', model);
+    formData.append('mode', mode);
+
     const response = await fetch('https://api.sarvam.ai/speech-to-text', {
       method: 'POST',
       headers: {
         'api-subscription-key': SARVAM_API_KEY,
-        'content-type': contentType,
       },
-      body: buffer,
+      body: formData,
     });
 
     const data = await response.json();

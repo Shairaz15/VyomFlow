@@ -6,9 +6,9 @@ This document defines the strict workflow for advancing **VyomFlow** using 5-com
 
 ## 📌 Current Tracking State
 
-- **Current CogniTrack Base Commit:** `d75001465ee2a78807ede3d2100e022dd315d527` (`d750014`)
+- **Current CogniTrack Base Commit:** `9e4ca12ad3bc5a88c4f87aef93322c112f552afd` (`9e4ca12`)
 - **Date:** `2026-08-02`
-- **Message:** `feat(api): implement Vercel Cloud Serverless Functions /api/sarvam-stt and /api/sarvam-translate for universal CORS-free mobile & cross-device Sarvam AI speech support`
+- **Message:** `feat(language): enhance clinical biomarkers engine, 4-pillar scorecard UI, and CSI dashboard tracking`
 - **Target VyomFlow Remote:** `https://github.com/Shairaz15/VyomFlow.git` (`origin/main`)
 
 ---
@@ -26,7 +26,7 @@ When instructed to *"fetch 5th upcoming commit and push"*:
 ## 🔄 Step-by-Step Execution Workflow
 
 ### Step 1: Identify the Next 5 Commits from CogniTrack
-Run the following command in PowerShell to list the upcoming 5 commits:
+Run in PowerShell:
 ```powershell
 git log --pretty=format:"%h - %an, %ad : %s" --date=short --ancestry-path --topo-order --reverse <CURRENT_COGNITRACK_SHA>..cognitrack/main | Select-Object -First 5
 ```
@@ -34,15 +34,20 @@ git log --pretty=format:"%h - %an, %ad : %s" --date=short --ancestry-path --topo
 - Identify commit **#5** (`TARGET_SHA`) and its exact commit message.
 
 ### Step 2: Apply the Tree State of the 5th Commit
-Extract the entire working tree of `TARGET_SHA` onto the current branch without pulling in the intermediate git history:
+Extract the working tree of `TARGET_SHA` while skipping legacy LFS smudge errors:
 ```powershell
-git checkout <TARGET_SHA> -- .
+$env:GIT_LFS_SKIP_SMUDGE="1"; git checkout <TARGET_SHA> -- .
 ```
 
-### Step 3: Preserve Clean Security & LFS Guardrails
-Ensure no broken LFS files or temporary folders are staged:
-1. Verify `.gitignore` still excludes `.gemini/`, `.planning/`, `.env`, and `deploy.zip`.
-2. Ensure no `.gitattributes` introduces broken legacy Git LFS pointers for `logo.png`.
+### Step 3: Enforce Clean Security & LFS Guardrails
+Immediately apply the guardrails:
+1. Unstage any `.env`, `.gemini`, `.planning`, or `deploy.zip`:
+   ```powershell
+   git reset HEAD -- .env .gemini .planning deploy.zip .gitattributes
+   git checkout HEAD -- .gitignore public/logo.png
+   Remove-Item -Force .gitattributes, deploy.zip -ErrorAction SilentlyContinue
+   ```
+2. Confirm `.env` is uncommitted and ignored.
 
 ### Step 4: Sync Dependencies (if package.json changed)
 If `package.json` was updated in the target commit:
@@ -50,18 +55,18 @@ If `package.json` was updated in the target commit:
 npm install
 ```
 
-### Step 5: Commit ONLY the 5th Milestone Commit
-Stage all changes and commit with the exact commit message of the 5th commit:
+### Step 5: Update Tracking Pointer in WORKFLOW_INSTRUCTIONS.md
+Update the `Current CogniTrack Base Commit` section at the top of this file to `<TARGET_SHA>`.
+
+### Step 6: Commit ONLY the 5th Milestone Commit
+Stage all clean changes and commit with the exact commit message of the 5th commit:
 ```powershell
 git add .
 git commit -m "<MESSAGE_OF_5TH_COMMIT>"
 ```
 
-### Step 6: Push to VyomFlow
+### Step 7: Push to VyomFlow
 Push the single clean commit directly to `VyomFlow`:
 ```powershell
 git push origin main
 ```
-
-### Step 7: Update the Pointer in this File
-Update the `Current CogniTrack Base Commit` section at the top of this file to `<TARGET_SHA>` so the next iteration continues seamlessly.

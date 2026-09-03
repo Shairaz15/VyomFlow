@@ -51,6 +51,14 @@ export const NORMATIVE_RANGES = {
         ]
     },
     language: {
+        // Cognitive Speech Index (CSI 0-100)
+        csi: [
+            { limit: 85, category: 'Exceptional', message: "Optimal cognitive-linguistic fluency & coherence." },
+            { limit: 75, category: 'Above Average', message: "Strong speech flow, rich vocabulary, and steady pacing." },
+            { limit: 60, category: 'Average', message: "Typical conversational speech dynamics." },
+            { limit: 45, category: 'Below Average', message: "Mild pauses or speech rate slowing detected." },
+            { limit: 0, category: 'Needs Attention', message: "Elevated hesitation or disfluencies detected." }
+        ],
         // WPM (Higher is better within reason, >165 is fast)
         wpm: [
             { limit: 160, category: 'Fast', message: "Rapid speech rate." },
@@ -60,10 +68,10 @@ export const NORMATIVE_RANGES = {
         ],
         // Hesitation (Lower is better)
         hesitation: [
-            { limit: 0.02, category: 'Exceptional', message: "Highly fluent speech." },
-            { limit: 0.04, category: 'Average', message: "Normal hesitation frequency." },
-            { limit: 0.07, category: 'Below Average', message: "Frequent pauses detected." },
-            { limit: 1.0, category: 'Needs Attention', message: "Disrupted fluency." }
+            { limit: 0.03, category: 'Exceptional', message: "Highly fluent speech with minimal hesitation." },
+            { limit: 0.08, category: 'Average', message: "Normal hesitation frequency." },
+            { limit: 0.15, category: 'Below Average', message: "Frequent pauses or filler words detected." },
+            { limit: 1.0, category: 'Needs Attention', message: "Significantly disrupted fluency." }
         ]
     },
     attention: {
@@ -114,9 +122,24 @@ export function getPatternFeedback(spanOrLevel: number): FeedbackResult {
     return formatResult(ranges[4]);
 }
 
-export function getLanguageFeedback(wpm: number, hesitation: number): FeedbackResult {
-    // Composite view or just WPM? User asked generically.
-    // Let's prioritize Fluency (Hesitation) as it's a stronger marker
+export function getCSIFeedback(csi: number): FeedbackResult {
+    const ranges = NORMATIVE_RANGES.language.csi;
+    for (const range of ranges) {
+        if (csi >= range.limit) {
+            return {
+                category: range.category as PerformanceCategory,
+                color: getCategoryColor(range.category as PerformanceCategory),
+                message: range.message
+            };
+        }
+    }
+    return { category: 'Average', color: 'neutral', message: "Within normal limits." };
+}
+
+export function getLanguageFeedback(wpm: number, hesitation: number, csi?: number): FeedbackResult {
+    if (typeof csi === 'number' && csi > 0) {
+        return getCSIFeedback(csi);
+    }
 
     // Check Hesitation first
     const hesRanges = NORMATIVE_RANGES.language.hesitation;
@@ -138,13 +161,6 @@ export function getLanguageFeedback(wpm: number, hesitation: number): FeedbackRe
         };
     }
 
-    // If fluency is okay, check speed
-    // WPM Logic: 
-    // >160 Fast
-    // >130 Avg
-    // >100 Below 
-    // <100 Needs Attention
-    // Array: 160, 130, 100, 0
     let wpmCategory = 'Average';
     if (wpm >= 160) wpmCategory = 'Fast';
     else if (wpm >= 130) wpmCategory = 'Average';
@@ -152,10 +168,9 @@ export function getLanguageFeedback(wpm: number, hesitation: number): FeedbackRe
     else wpmCategory = 'Needs Attention';
 
     if (wpmCategory === 'Needs Attention') {
-        return { category: 'Needs Attention', color: 'warning', message: "Speech rate is very slow." };
+        return { category: 'Needs Attention', color: 'warning', message: "Speech rate is slower than expected." };
     }
 
-    // Default to Hesitation result if both good
     return {
         category: hesResult.category as PerformanceCategory,
         color: getCategoryColor(hesResult.category as PerformanceCategory),

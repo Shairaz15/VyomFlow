@@ -11,7 +11,7 @@ import {
 import { Card, CardHeader, CardContent, RiskBadge, Button, Icon } from "../components/common";
 import { PageWrapper } from "../components/layout";
 import { useAuth } from "../contexts/AuthContext";
-import { useReactionResults, useMemoryResults, usePatternResults, useLanguageResults, useVmraResults, clearAllTestData, STORAGE_KEYS } from "../hooks/useTestResults";
+import { useReactionResults, useMemoryResults, usePatternResults, useLanguageResults, useVmraResults, clearAllTestData } from "../hooks/useTestResults";
 import { generateSimulatedData, hasBaseline, getMockBaseline } from "../utils/simulateUserData";
 import { useWeeklyReminder } from "../hooks/useWeeklyReminder";
 import { predictTrend } from "../ml";
@@ -28,21 +28,24 @@ import "./Dashboard.css";
 
 export function Dashboard() {
     // Load test results (all from hooks — hooks handle Firestore vs localStorage)
-    const { results: reactionResults } = useReactionResults();
-    const { results: memoryResults } = useMemoryResults();
-    const { results: patternResults } = usePatternResults();
-    const { results: languageResults } = useLanguageResults();
-    const { results: vmraResults } = useVmraResults();
+    const { results: reactionResults, saveResult: saveReaction } = useReactionResults();
+    const { results: memoryResults, saveResult: saveMemory } = useMemoryResults();
+    const { results: patternResults, saveResult: savePattern } = usePatternResults();
+    const { results: languageResults, saveResult: saveLanguage } = useLanguageResults();
+    const { results: vmraResults, saveResult: saveVmra } = useVmraResults();
 
     // Weekly Reminder Hook
     useWeeklyReminder();
 
-    // Auth for admin check
-    const { isAdmin } = useAuth();
+    // Auth (kept for potential future use)
+    useAuth();
     const { t } = useLanguage();
 
     // ML Prediction State
     const [mlPrediction, setMlPrediction] = useState<TrendPrediction | null>(null);
+
+    // Simulation Controls Toggle
+    const [showSimControls, setShowSimControls] = useState(false);
 
     // Refresh data from localStorage (used after simulation)
     const refreshData = () => {
@@ -57,41 +60,17 @@ export function Dashboard() {
         }
     };
 
-    /** Safely parse JSON, returning fallback on corruption */
-    const safeParse = (key: string): any[] => {
-        try {
-            return JSON.parse(localStorage.getItem(key) || "[]");
-        } catch {
-            logger.warn(`Corrupted localStorage data for ${key}, resetting`);
-            localStorage.removeItem(key);
-            return [];
-        }
-    };
-
     // Handle Mock Data (No Baseline Required)
-    const handleMockData = (pattern: "stable" | "declining") => {
+    const handleMockData = async (pattern: "stable" | "declining") => {
         const baseline = getMockBaseline();
         const simulated = generateSimulatedData(baseline, pattern);
 
-        // Append simulated data to localStorage
         try {
-            if (simulated.reaction.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.reactionResults);
-                localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify([...existing, ...simulated.reaction]));
-            }
-            if (simulated.memory.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.memoryResults);
-                localStorage.setItem(STORAGE_KEYS.memoryResults, JSON.stringify([...existing, ...simulated.memory]));
-            }
-            if (simulated.pattern.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.patternResults);
-                localStorage.setItem(STORAGE_KEYS.patternResults, JSON.stringify([...existing, ...simulated.pattern]));
-            }
-            if (simulated.language.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.languageResults);
-                localStorage.setItem(STORAGE_KEYS.languageResults, JSON.stringify([...existing, ...simulated.language]));
-            }
-            refreshData();
+            if (simulated.reaction.length > 0) simulated.reaction.forEach(r => saveReaction(r));
+            if (simulated.memory.length > 0) simulated.memory.forEach(r => saveMemory(r));
+            if (simulated.pattern.length > 0) simulated.pattern.forEach(r => savePattern(r));
+            if (simulated.language.length > 0) simulated.language.forEach(r => saveLanguage(r));
+            if (simulated.vmra.length > 0) simulated.vmra.forEach(r => saveVmra(r));
         } catch (error) {
             logger.error("Failed to save mock data:", error);
             alert(t('dashboard.mockFailed'));
@@ -99,12 +78,13 @@ export function Dashboard() {
     };
 
     // Handle Simulate Data
-    const handleSimulateData = (pattern: "stable" | "declining") => {
+    const handleSimulateData = async (pattern: "stable" | "declining") => {
         const baseline = {
             reaction: reactionResults.length > 0 ? reactionResults[reactionResults.length - 1] : undefined,
             memory: memoryResults.length > 0 ? memoryResults[memoryResults.length - 1] : undefined,
             pattern: patternResults.length > 0 ? patternResults[patternResults.length - 1] : undefined,
             language: languageResults.length > 0 ? languageResults[languageResults.length - 1] : undefined,
+            vmra: vmraResults.length > 0 ? vmraResults[vmraResults.length - 1] : undefined,
         };
 
         if (!hasBaseline(baseline)) {
@@ -114,25 +94,12 @@ export function Dashboard() {
 
         const simulated = generateSimulatedData(baseline, pattern);
 
-        // Append simulated data to localStorage
         try {
-            if (simulated.reaction.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.reactionResults);
-                localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify([...existing, ...simulated.reaction]));
-            }
-            if (simulated.memory.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.memoryResults);
-                localStorage.setItem(STORAGE_KEYS.memoryResults, JSON.stringify([...existing, ...simulated.memory]));
-            }
-            if (simulated.pattern.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.patternResults);
-                localStorage.setItem(STORAGE_KEYS.patternResults, JSON.stringify([...existing, ...simulated.pattern]));
-            }
-            if (simulated.language.length > 0) {
-                const existing = safeParse(STORAGE_KEYS.languageResults);
-                localStorage.setItem(STORAGE_KEYS.languageResults, JSON.stringify([...existing, ...simulated.language]));
-            }
-            refreshData();
+            if (simulated.reaction.length > 0) simulated.reaction.forEach(r => saveReaction(r));
+            if (simulated.memory.length > 0) simulated.memory.forEach(r => saveMemory(r));
+            if (simulated.pattern.length > 0) simulated.pattern.forEach(r => savePattern(r));
+            if (simulated.language.length > 0) simulated.language.forEach(r => saveLanguage(r));
+            if (simulated.vmra.length > 0) simulated.vmra.forEach(r => saveVmra(r));
         } catch (error) {
             logger.error("Failed to save simulated data:", error);
             alert(t('dashboard.simFailed'));
@@ -169,6 +136,7 @@ export function Dashboard() {
                 reaction: reaction ? Math.round(reaction.aggregates.avg) : null,
                 pattern: patternScore,
                 speech: language ? Math.round(language.derivedFeatures.wpm) : null,
+                csi: language ? Math.round(language.derivedFeatures.cognitiveSpeechIndex ?? 85) : null,
                 vmra: vmra ? Math.round(vmra.features.recallAccuracy * 100) : null,
             };
         });
@@ -180,19 +148,22 @@ export function Dashboard() {
         async function fetchML() {
             if (chartData.length >= 3) {
                 // Build features for ML model
-                const dataPoints = chartData.map((session, index) => ({
-                    timestamp: new Date().getTime() - (chartData.length - index - 1) * 7 * 24 * 60 * 60 * 1000,
-                    features: {
-                        memoryAccuracy: (session.memory || 70) / 100,
-                        reactionTimeAvg: session.reaction || 350,
-                        reactionTimeVariance: 500,
-                        patternScore: session.pattern || 50,
-                        speechWPM: session.speech || 120,
-                        lexicalDiversity: 0.6,
-                        fillerWordRatio: 0.05,
-                        hesitationMarkers: 2,
-                    }
-                }));
+                const dataPoints = chartData.map((session, index) => {
+                    const langResult = languageResults[index] || languageResults[languageResults.length - 1];
+                    return {
+                        timestamp: new Date().getTime() - (chartData.length - index - 1) * 7 * 24 * 60 * 60 * 1000,
+                        features: {
+                            memoryAccuracy: (session.memory || 70) / 100,
+                            reactionTimeAvg: session.reaction || 350,
+                            reactionTimeVariance: 500,
+                            patternScore: session.pattern || 50,
+                            speechWPM: session.speech || 120,
+                            lexicalDiversity: langResult?.derivedFeatures?.lexicalDiversity ?? 0.6,
+                            fillerWordRatio: langResult?.derivedFeatures?.hesitationIndex ?? 0.05,
+                            hesitationMarkers: langResult?.rawMetrics?.pauseCount ?? 2,
+                        }
+                    };
+                });
 
                 try {
                     const pred = await predictTrend(dataPoints);
@@ -255,16 +226,26 @@ export function Dashboard() {
                             {t('dashboard.subtitle')}
                         </p>
                     </div>
-                    <Button variant="primary" onClick={() => window.location.href = "/tests"}>
-                        {t('dashboard.takeNewAssessment')}
-                    </Button>
+                    <div className="dashboard-header-actions">
+                        <button
+                            className={`mode-toggle ${showSimControls ? 'demo-active' : ''}`}
+                            onClick={() => setShowSimControls(prev => !prev)}
+                            title="Toggle demo data simulation controls"
+                        >
+                            <Icon name="chart-trend" size={14} />
+                            {' '}{showSimControls ? t('dashboard.hideSimControls') : t('dashboard.showSimControls')}
+                        </button>
+                        <Button variant="primary" onClick={() => window.location.href = "/tests"}>
+                            {t('dashboard.takeNewAssessment')}
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Simulation Controls - Admin only */}
-                {isAdmin && (
+                {/* Simulation Controls - Toggle for anyone */}
+                {showSimControls && (
                     <Card className="simulation-controls">
                         <CardHeader
-                            title={t('dashboard.dataControlsAdmin')}
+                            title={t('dashboard.dataControlsTitle')}
                             subtitle={t('dashboard.dataControlsSubtitle')}
                         />
                         <CardContent>
@@ -389,6 +370,7 @@ export function Dashboard() {
                         {renderChart(t('dashboard.visualMemoryVmra'), t('dashboard.visualMemoryVmraSub'), "vmra", "#f472b6", [0, 100], "%")}
                         {renderChart(t('dashboard.reactionTime'), t('dashboard.reactionTimeSub'), "reaction", "#fbbf24", ['auto', 'auto'], "ms")}
                         {renderChart(t('dashboard.patternRecognition'), t('dashboard.patternRecognitionSub'), "pattern", "#38bdf8", [0, 100], "%")}
+                        {renderChart("Cognitive Speech Index (CSI)", "Multilingual linguistic & acoustic composite", "csi", "#c084fc", [0, 100], "/100")}
                         {renderChart(t('dashboard.speechRate'), t('dashboard.speechRateSub'), "speech", "#a78bfa", ['auto', 'auto'], " wpm")}
                     </div>
                 )}
@@ -407,6 +389,7 @@ export function Dashboard() {
                                             <th>{t('dashboard.visual')}</th>
                                             <th>{t('dashboard.reaction')}</th>
                                             <th>{t('dashboard.pattern')}</th>
+                                            <th>CSI Score</th>
                                             <th>{t('dashboard.speechWpm')}</th>
                                         </tr>
                                     </thead>
@@ -418,6 +401,7 @@ export function Dashboard() {
                                                 <td>{session.vmra ? `${session.vmra}%` : '-'}</td>
                                                 <td>{session.reaction ? `${session.reaction}ms` : '-'}</td>
                                                 <td>{session.pattern ? `${session.pattern}%` : '-'}</td>
+                                                <td>{session.csi ? `${session.csi}/100` : '-'}</td>
                                                 <td>{session.speech ? session.speech : '-'}</td>
                                             </tr>
                                         ))}

@@ -17,6 +17,11 @@ import { Analytics } from "./admin/pages/Analytics";
 import { ModelMonitoring } from "./admin/pages/ModelMonitoring";
 import "./index.css";
 
+// Pre-warm the Render WebSocket proxy on website load (wakes it from cold start)
+if (typeof window !== 'undefined' && !window.location.hostname.match(/^(localhost|127\.0\.0\.1)$/)) {
+  fetch('https://vyomflow-proxy.onrender.com/health', { mode: 'cors' }).catch(() => {});
+}
+
 function App() {
   return (
     <AuthProvider>
