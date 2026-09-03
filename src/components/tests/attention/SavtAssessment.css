@@ -1,0 +1,657 @@
+/**
+ * Sustained Attention & Vigilance Test (SAVT)
+ * Styles following the existing glass-card design system.
+ */
+
+/* ─── Layout ────────────────────────────────────────────────────── */
+
+.savt {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+    min-height: 100vh;
+}
+
+.savt-phase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* ─── Instructions ──────────────────────────────────────────────── */
+
+.savt-title-section {
+    text-align: center;
+}
+
+.savt-title-section h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--accent, #a78bfa));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.savt-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-top: 0.25rem;
+}
+
+.savt-rules {
+    width: 100%;
+    padding: 1.5rem;
+}
+
+.savt-rules h3 {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.savt-rules-desc {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+}
+
+.savt-rule-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.savt-rule {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.savt-rule-go {
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.savt-rule-nogo {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.savt-rule-stimulus {
+    width: 64px;
+    height: 64px;
+}
+
+.savt-rule-action {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+
+.savt-rule-action.go {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.savt-rule-action.nogo {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.savt-rule-text p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.savt-rule-hint {
+    font-size: 0.75rem !important;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+.savt-info {
+    width: 100%;
+    padding: 1.25rem;
+}
+
+.savt-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.savt-info li {
+    padding: 0.4rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.savt-info li::before {
+    content: '•';
+    position: absolute;
+    left: 0.5rem;
+    color: var(--primary);
+}
+
+.savt-start-btn {
+    margin-top: 0.5rem;
+    min-width: 200px;
+}
+
+/* ─── Test Area ─────────────────────────────────────────────────── */
+
+.savt-test-area {
+    width: 100%;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.savt-phase-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.savt-stimulus-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    width: 100%;
+}
+
+/* ─── Stimulus Shapes ───────────────────────────────────────────── */
+
+.savt-stimulus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: savtPop 0.15s ease-out;
+}
+
+.savt-stimulus svg {
+    width: 100%;
+    height: 100%;
+}
+
+.savt-stimulus-large {
+    width: 140px;
+    height: 140px;
+}
+
+.savt-stimulus-small {
+    width: 56px;
+    height: 56px;
+}
+
+.savt-color-green svg circle,
+.savt-color-green svg rect,
+.savt-color-green svg polygon {
+    fill: #22c55e;
+    stroke: #16a34a;
+    stroke-width: 2;
+}
+
+.savt-color-red svg circle,
+.savt-color-red svg rect,
+.savt-color-red svg polygon {
+    fill: #ef4444;
+    stroke: #dc2626;
+    stroke-width: 2;
+}
+
+.savt-color-blue svg circle,
+.savt-color-blue svg rect,
+.savt-color-blue svg polygon {
+    fill: #3b82f6;
+    stroke: #2563eb;
+    stroke-width: 2;
+}
+
+.savt-color-orange svg circle,
+.savt-color-orange svg rect,
+.savt-color-orange svg polygon {
+    fill: #f97316;
+    stroke: #ea580c;
+    stroke-width: 2;
+}
+
+@keyframes savtPop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ─── Fixation Cross ────────────────────────────────────────────── */
+
+.savt-fixation {
+    font-size: 3rem;
+    color: var(--text-secondary);
+    opacity: 0.4;
+    font-weight: 300;
+    user-select: none;
+}
+
+/* ─── Progress Bar ──────────────────────────────────────────────── */
+
+.savt-progress-bar {
+    width: 100%;
+    max-width: 400px;
+    height: 4px;
+    background: var(--glass-border, rgba(255, 255, 255, 0.06));
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.savt-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent, #a78bfa));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.savt-progress-fill.practice {
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+}
+
+/* ─── Practice Feedback ─────────────────────────────────────────── */
+
+.savt-feedback {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    animation: savtFadeIn 0.3s ease;
+}
+
+.savt-feedback.correct {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.savt-feedback.incorrect {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.savt-practice-done {
+    text-align: center;
+}
+
+.savt-practice-done h2 {
+    color: #22c55e;
+    margin-bottom: 0.5rem;
+}
+
+.savt-practice-done p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* ─── Scoring ───────────────────────────────────────────────────── */
+
+.savt-scoring {
+    min-height: 60vh;
+    justify-content: center;
+    text-align: center;
+}
+
+.savt-scoring h2 {
+    margin-top: 1.5rem;
+}
+
+.savt-scoring p {
+    color: var(--text-secondary);
+}
+
+.savt-scoring-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: savtSpin 0.8s linear infinite;
+}
+
+@keyframes savtSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─── Results ───────────────────────────────────────────────────── */
+
+.savt-results {
+    width: 100%;
+    gap: 1.25rem;
+}
+
+.savt-results h1 {
+    text-align: center;
+    font-size: 1.6rem;
+}
+
+/* Stars */
+.savt-stars {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.savt-star {
+    font-size: 1.8rem;
+    color: var(--glass-border, rgba(255, 255, 255, 0.15));
+    transition: color 0.3s ease;
+}
+
+.savt-star.filled {
+    color: #f59e0b;
+    text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+/* Score Circle */
+.savt-score-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    width: 100%;
+    text-align: center;
+}
+
+.savt-score-value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--accent, #a78bfa));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.savt-score-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.savt-feedback-badge {
+    display: inline-block;
+    padding: 0.3rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    letter-spacing: 0.02em;
+}
+
+.savt-feedback-badge.success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.savt-feedback-badge.primary {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+}
+
+.savt-feedback-badge.neutral {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+.savt-feedback-badge.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.savt-feedback-badge.danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+/* Sub-scores */
+.savt-subscores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.savt-subscore {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0.5rem;
+    text-align: center;
+}
+
+.savt-subscore-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.savt-subscore-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+}
+
+/* Signal Detection Metrics */
+.savt-metrics,
+.savt-errors,
+.savt-factors,
+.savt-vigilance-chart {
+    width: 100%;
+    padding: 1.25rem;
+}
+
+.savt-metrics h3,
+.savt-errors h3,
+.savt-factors h3,
+.savt-vigilance-chart h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.savt-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.savt-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.savt-metric-val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+}
+
+.savt-metric-key {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+}
+
+/* Vigilance Chart */
+.savt-block-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 120px;
+    gap: 0.5rem;
+}
+
+.savt-block-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.savt-block-bar {
+    width: 100%;
+    max-width: 60px;
+    background: linear-gradient(180deg, var(--primary), var(--accent, #a78bfa));
+    border-radius: 6px 6px 0 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 0.35rem;
+    transition: height 0.6s ease;
+    min-height: 8px;
+}
+
+.savt-block-val {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.savt-block-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Error Rows */
+.savt-error-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+    font-size: 0.9rem;
+}
+
+.savt-error-row:last-child {
+    border-bottom: none;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+    font-weight: 600;
+}
+
+/* Key Factors */
+.savt-factors ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.savt-factors li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.savt-factors li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+}
+
+/* Actions */
+.savt-actions {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+/* ─── Animations ────────────────────────────────────────────────── */
+
+@keyframes savtFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─── Responsive ────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .savt {
+        padding: 1rem 0.75rem 2rem;
+    }
+
+    .savt-title-section h1 {
+        font-size: 1.4rem;
+    }
+
+    .savt-rule-grid {
+        gap: 0.75rem;
+    }
+
+    .savt-stimulus-large {
+        width: 110px;
+        height: 110px;
+    }
+
+    .savt-subscores {
+        gap: 0.5rem;
+    }
+
+    .savt-subscore-value {
+        font-size: 1.4rem;
+    }
+
+    .savt-score-value {
+        font-size: 2.8rem;
+    }
+
+    .savt-metric-grid {
+        gap: 0.75rem;
+    }
+
+    .savt-actions {
+        flex-direction: column;
+    }
+}

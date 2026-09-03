@@ -1,0 +1,84 @@
+/**
+ * Firestore Security Rules
+ * Role-based access control using JWT Custom Claims.
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      // Single source of truth: admin role via Firebase Custom Claims
+      // Set admin role using Cloud Function setAdminRole or Firebase Admin SDK
+      // See README.md for instructions on adding admins
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read/write their own data
+      allow read, write: if isOwner(userId);
+      // Admins can read all users
+      allow read: if isAdmin();
+      // Admins can delete users
+      allow delete: if isAdmin();
+      
+      // User sessions subcollection
+      match /sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+        allow read: if isAdmin();
+        allow delete: if isAdmin();
+      }
+      
+      // Test result subcollections (reaction, memory, pattern, language)
+      match /reaction_results/{resultId} {
+        allow read, write: if isOwner(userId);
+        allow read: if isAdmin();
+        allow delete: if isAdmin();
+      }
+      match /memory_results/{resultId} {
+        allow read, write: if isOwner(userId);
+        allow read: if isAdmin();
+        allow delete: if isAdmin();
+      }
+      match /pattern_results/{resultId} {
+        allow read, write: if isOwner(userId);
+        allow read: if isAdmin();
+        allow delete: if isAdmin();
+      }
+      match /language_results/{resultId} {
+        allow read, write: if isOwner(userId);
+        allow read: if isAdmin();
+        allow delete: if isAdmin();
+      }
+    }
+    
+    // Admin Analytics - read-only for admins
+    match /adminAnalytics/{docId} {
+      allow read: if isAdmin();
+      // Only Cloud Functions can write (using Admin SDK)
+      allow write: if false;
+    }
+    
+    // Admin Logs - read-only for admins
+    match /adminLogs/{logId} {
+      allow read: if isAdmin();
+      // Only Cloud Functions can write (using Admin SDK)
+      allow write: if false;
+    }
+    
+    // Block access to everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

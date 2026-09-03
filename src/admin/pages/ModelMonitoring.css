@@ -1,0 +1,118 @@
+/**
+ * Model Monitoring Page Styles
+ */
+
+.model-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .model-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.model-metric-card {
+    text-align: center;
+}
+
+.model-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.model-metric .metric-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.model-metric .metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+}
+
+.model-metric .metric-value.warning {
+    color: #f59e0b;
+}
+
+.feature-importance-card {
+    margin-bottom: 1.5rem;
+}
+
+.feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.feature-name {
+    width: 180px;
+    font-size: 0.9rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.feature-bar-container {
+    flex: 1;
+    height: 8px;
+    background: var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.feature-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.feature-value {
+    width: 50px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary, #fff);
+}
+
+.model-info-card {
+    max-width: 600px;
+}
+
+.model-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 600px) {
+    .model-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+.info-value {
+    font-size: 0.95rem;
+    color: var(--text-primary, #fff);
+}

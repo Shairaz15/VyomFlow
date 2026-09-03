@@ -1,0 +1,398 @@
+﻿================================================================================
+  PRODUCT REQUIREMENTS DOCUMENT (PRD) â€” REDESIGNED MODULE
+  Visual Memory Recall Assessment (VMRA) â€” Indian Context
+  Version: 2.0 | Date: March 24, 2026
+  Project: VyomFlow â€” AI-Powered Cognitive Assessment Platform
+================================================================================
+
+
+1. MODULE NAME
+--------------------------------------------------------------------------------
+  Visual Memory Recall Assessment (VMRA) â€” Indian Context
+  Internal Code: VMRA-IN
+
+  Tagline: "A language-free, image-based episodic memory test designed
+  for inclusive cognitive screening across India."
+
+  Replaces: Verbal Memory Test (word list recall)
+
+
+2. TEST FLOW â€” STEP-BY-STEP UX
+--------------------------------------------------------------------------------
+
+  PHASE 0: ONBOARDING (One-time, ~15 seconds)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Animated walkthrough (no text) showing:
+    1. Eyes watching images appear
+    2. Images disappearing
+    3. Hand tapping correct images from a grid
+  â€¢ Audio instruction available in: Hindi, Tamil, Telugu, Kannada,
+    Bengali, Marathi, English (toggle via flag icons)
+  â€¢ Skip button (icon-based) for returning users
+
+  PHASE 1: ENCODING (Image Memorization) â€” 25 seconds
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Display: 6 target images shown ONE AT A TIME in the center
+    of the screen (large, ~200Ã—200px on mobile)
+  â€¢ Timing: Each image shown for 3 seconds with a 1-second fade
+    transition between images
+  â€¢ Layout: Single centered image with a subtle circular highlight
+    border; progress dots below (â— â— â— â—‹ â—‹ â—‹)
+  â€¢ No text labels on images
+  â€¢ Subtle chime sound as each image appears (auditory reinforcement)
+
+  PHASE 2: RETENTION GAP â€” 15 seconds
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Purpose: Prevent rehearsal; engage different cognitive pathway
+  â€¢ Distractor Task: Simple "tap the odd one out" mini-game
+    - Show 3 shapes (e.g., 2 circles + 1 triangle) â†’ user taps different one
+    - 3 rounds, purely visual
+  â€¢ This phase data is NOT scored but prevents rote rehearsal
+
+  PHASE 3: IMMEDIATE RECALL â€” untimed (typically 30â€“60 seconds)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Display: A 4Ã—3 grid (12 images total) on screen
+    - 6 are the ORIGINAL targets
+    - 6 are DISTRACTORS (visually similar but different objects)
+  â€¢ Interaction: User TAPS images they remember seeing
+    - Tapped images show a green checkmark overlay
+    - Tap again to deselect (undo accidental taps)
+  â€¢ Submit: Large green "Done âœ“" button (icon-based) at bottom
+  â€¢ Grid is RANDOMIZED on every session (position shuffled)
+  â€¢ No time pressure, but selection latency per tap is recorded silently
+
+  PHASE 4: DELAYED RECALL (Optional) â€” triggered after 5 minutes
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ After user has completed other tests (reaction time, pattern, etc.),
+    they are prompted again with a DIFFERENT grid arrangement
+  â€¢ Same 6 targets + 6 NEW distractors (different from Phase 3)
+  â€¢ Purpose: Measure memory consolidation and decay rate
+  â€¢ This phase is critical for the forgetting curve biomarker
+
+  PHASE 5: RESULTS â€” 10 seconds
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Show simple visual score:
+    - Correct picks highlighted in GREEN
+    - Missed targets shown with a subtle amber outline
+    - False positives (distractor clicks) shown in light red
+  â€¢ Star rating (1â€“5 stars) as quick feedback
+  â€¢ No numerical scores shown to user (to avoid anxiety)
+  â€¢ Detailed metrics stored internally for dashboard/trend analysis
+
+
+3. IMAGE DESIGN GUIDELINES
+--------------------------------------------------------------------------------
+
+  3.1 ILLUSTRATION STYLE
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Flat vector illustrations (SVG format for scalability)
+  â€¢ Thick outlines (2â€“3px), solid fill colors
+  â€¢ NO realistic photos (photos cause cultural/socioeconomic bias)
+  â€¢ NO gradients or shadows (keep simple for low-end screens)
+  â€¢ Style Reference: Google Material Icons meets Indian everyday objects
+  â€¢ Color palette: Warm, saturated colors (avoid pastels â€” low visibility
+    on cheap screens)
+
+  3.2 OBJECT CATEGORIES (60+ objects across 8 categories)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Category            | Examples
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Fruits & Vegetables | Mango, banana, coconut, brinjal, lemon,
+                      | pomegranate, watermelon, chili, onion
+  Kitchen Items       | Pressure cooker, steel tumbler, tawa (pan),
+                      | rolling pin (belan), steel plate, chai cup,
+                      | water pot (matka), ladle (karchi)
+  Transport           | Auto rickshaw, bus, bicycle, bullock cart,
+                      | train, motorcycle, tractor
+  Animals             | Cow, crow, peacock, elephant, dog, goat,
+                      | parrot, buffalo
+  Household           | Broom (jhadoo), fan (ceiling), bucket, cot
+                      | (charpai), lantern, sewing machine, umbrella
+  Nature & Outdoors   | Banyan tree, lotus, sunflower, river, hill,
+                      | well, field
+  Cultural/Religious  | Temple bell, diya (oil lamp), rangoli,
+                      | incense stick, prayer beads, flute, drum
+  Tools & Work        | Sickle, plough, fishing net, potter's wheel,
+                      | weaving loom, hammer
+
+  3.3 CULTURAL CONSTRAINTS
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ AVOID objects specific to only one region unless using
+    adaptive regional sets (see Section 8)
+  â€¢ AVOID religious symbols that may be exclusive (e.g., cross, crescent)
+    â€” use culturally shared items (diya, bell, flower)
+  â€¢ AVOID brand-specific items (no Coca-Cola bottle, specific phone)
+  â€¢ AVOID items unfamiliar to rural users (laptop, smartwatch, espresso)
+  â€¢ AVOID food items that are regionally sensitive (beef, pork depictions)
+
+  3.4 AMBIGUITY AVOIDANCE RULES
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Each image must be identifiable in < 1 second
+  â€¢ Maximum 2 colors per object (keep recognition instant)
+  â€¢ Object should fill at least 70% of the image frame
+  â€¢ No overlapping or composite scenes (one object per image)
+  â€¢ Test with 5 users from rural backgrounds before finalizing any image
+  â€¢ If > 20% misidentify an image, redesign or replace it
+
+
+4. DISTRACTOR STRATEGY
+--------------------------------------------------------------------------------
+
+  4.1 DISTRACTOR GENERATION RULES
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Each distractor must be from the SAME CATEGORY as a target
+    Example: If target = mango â†’ distractor = orange or papaya
+    Example: If target = auto rickshaw â†’ distractor = tempo or van
+  â€¢ Distractors must be SIMILAR but clearly distinguishable
+    (tests true memory, not pattern matching)
+
+  4.2 SIMILARITY TIERS
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Tier   | Description                 | Example Pair
+  â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  High   | Same category, similar shape| Lemon â†” Lime
+  Medium | Same category, diff shape   | Mango â†” Banana
+  Low    | Same category, very diff    | Coconut â†” Watermelon
+
+  4.3 DIFFICULTY SCALING
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Session Count | Targets | Distractors | Grid  | Similarity
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  1â€“3           | 5       | 5           | 3Ã—4*  | Lowâ€“Medium
+  4â€“8           | 6       | 6           | 4Ã—3   | Medium
+  9â€“15          | 7       | 7           | 4Ã—4*  | Mediumâ€“High
+  16+           | 8       | 8           | 4Ã—4   | High
+  (* = one cell blank for layout; grid adapts)
+
+  4.4 DISTRACTOR POOL MANAGEMENT
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Maintain a pool of 60+ objects
+  â€¢ Never repeat the SAME distractor set in consecutive sessions
+  â€¢ Track which distractors the user has seen (per-user history)
+  â€¢ Rotate targets every 3 sessions to prevent rote learning
+
+
+5. METRICS & COGNITIVE BIOMARKERS
+--------------------------------------------------------------------------------
+
+  5.1 PRIMARY METRICS
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Metric                    | Formula / Definition
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Recall Accuracy (%)       | (Correct selections / Total targets) Ã— 100
+  False Positive Rate (%)   | (Distractor clicks / Total distractors) Ã— 100
+  Precision                 | Correct selections / (Correct + False Positives)
+  F1 Score                  | Harmonic mean of Precision and Recall
+  Net Recall Score          | Correct hits âˆ’ False positives (penalized score)
+
+  5.2 TEMPORAL BIOMARKERS
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Metric                    | What it measures
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Mean Selection Latency    | Average time (ms) between grid appearance
+                            | and each tap â€” measures retrieval speed
+  First-Tap Latency         | Time to first selection â€” measures
+                            | confidence/search initiation
+  Inter-Tap Interval        | Time between consecutive taps â€” measures
+                            | recall fluency vs. deliberation
+  Latency Variance          | SD of selection times â€” high variance may
+                            | indicate uncertainty or guessing
+  Delayed vs. Immediate     | Ratio of delayed recall accuracy to
+  Recall Ratio              | immediate recall accuracy â€” tracks
+                            | memory consolidation
+
+  5.3 ERROR ANALYSIS BIOMARKERS
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Metric                    | What it measures
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Confusion Matrix          | Object-level confusion: which specific
+  (per object-pair)         | distractors are mistaken for which targets.
+                            | Persistent confusion on specific pairs may
+                            | indicate category-specific decline
+  Intrusion Errors          | Selecting distractors that were NOT similar
+                            | to any target â€” may indicate random guessing
+                            | or executive dysfunction
+  Omission Pattern          | Which targets are consistently missed â€”
+                            | may reveal serial position effects
+  Primacy Bias              | Tendency to recall images shown FIRST
+  Recency Bias              | Tendency to recall images shown LAST
+  Mid-List Deficit          | Poor recall of middle items â€” strongest
+                            | marker of encoding failure
+
+  5.4 LONGITUDINAL BIOMARKERS
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Metric                    | What it measures
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Forgetting Curve Slope    | Rate of accuracy drop from immediate to
+                            | delayed recall across sessions. Steepening
+                            | slope over time = possible decline signal
+  Session-over-Session      | Rolling average of recall accuracy over
+  Trend                     | last 5 sessions. Detects gradual decline
+  Consistency Score (CoV)   | Coefficient of variation of accuracy across
+                            | sessions. High variability = instability
+  Performance Deviation     | Current score vs. user's personal baseline
+  from Baseline             | (first 3 sessions). > 2 SD drop = alert
+  Response Strategy Shift   | Change in selection patterns (e.g., user
+                            | starts guessing more, or becomes overly
+                            | conservative) â€” detected via F1 trend
+
+  5.5 VISUAL ATTENTION PROXY (FROM TAP DATA)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Metric                    | What it measures
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Spatial Selection Bias    | Whether user predominantly selects from
+                            | one region of the grid (top-left, center).
+                            | May indicate visual field neglect
+  Scan Pattern              | Order of taps mapped to grid positions.
+                            | Systematic scanning (Lâ†’R, Tâ†’B) vs. random
+                            | jumping. Disorganized scanning = possible
+                            | executive dysfunction
+  Grid Coverage             | Percentage of grid positions interacted
+                            | with. Low coverage = possible inattention
+
+
+6. LONGITUDINAL TRACKING & COGNITIVE TRENDS
+--------------------------------------------------------------------------------
+
+  6.1 HOW VMRA FEEDS INTO VyomFlow DASHBOARD
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ The VMRA module produces a session score packet:
+    {
+      sessionId, timestamp,
+      recallAccuracy, falsePositiveRate, f1Score,
+      meanLatency, firstTapLatency, delayedRecallRatio,
+      forgettingCurveSlope, primacyBias, recencyBias
+    }
+  â€¢ This packet is stored in Firestore (cloud users) or localStorage
+    (demo mode) and fed into the dashboard trend engine.
+
+  6.2 EARLY DECLINE SIGNALS (RED FLAGS)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Signal                          | Threshold
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Accuracy drop from baseline     | > 2 SD below personal baseline
+  Forgetting curve steepening     | Slope increase > 30% over
+                                  | 4 consecutive sessions
+  False positive spike            | FPR increasing > 15% over
+                                  | 3 sessions
+  Response strategy shift         | F1 dropping while accuracy
+                                  | remains same (guessing pattern)
+  Delayed recall collapse         | Delayed/Immediate ratio
+                                  | drops below 0.5
+  Consistency breakdown           | CoV of accuracy > 0.3 over
+                                  | last 5 sessions
+
+  6.3 RISK MESSAGING (Ethical, Non-Alarming)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Risk Level  | Message (shown via icon + optional translated text)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Stable      | Green shield icon. "Your memory performance is steady."
+  Watch       | Amber eye icon. "Some changes noticed. Keep tracking."
+  Attention   | Orange alert icon. "Consider discussing with a
+              | healthcare provider for a routine check."
+
+  NOTE: The app NEVER says "decline detected" or "you may have
+  Alzheimer's." Language is always supportive and non-diagnostic.
+
+
+7. EDGE CASE HANDLING
+--------------------------------------------------------------------------------
+
+  7.1 RANDOM GUESSING DETECTION
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ If user selects ALL or nearly all images (> 80% of grid), flag
+    session as "possible random guessing" â€” exclude from trend analysis
+  â€¢ If mean selection latency < 300ms per tap (impossibly fast),
+    flag as random tapping
+  â€¢ If accuracy â‰ˆ 50% consistently with high FPR, flag guessing pattern
+
+  7.2 ACCIDENTAL TAP HANDLING
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Allow DESELECTION (tap again to remove green check)
+  â€¢ Show a brief "You selected [count] images" indicator
+  â€¢ If user submits with 0 selections, prompt: "Are you sure?
+    Tap images you remember." (icon-based prompt)
+  â€¢ Double-tap prevention: ignore taps within 200ms of each other
+    on the same image
+
+  7.3 ELDERLY USER ACCESSIBILITY
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Minimum tap target size: 60Ã—60px (WCAG AAA touch target)
+  â€¢ High contrast mode: Bold outlines, white background, dark borders
+  â€¢ Images spaced with minimum 12px gap (prevent mis-taps)
+  â€¢ Large "Done âœ“" button (full-width, 56px height minimum)
+  â€¢ Optional "Magnify" mode: tap-and-hold previews image at 2Ã— zoom
+  â€¢ Audio feedback on tap (soft click sound)
+  â€¢ Screen reader fallback: images have hidden alt-text labels
+    (for visually impaired users using assistive tech)
+
+  7.4 DEVICE & CONNECTIVITY
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ All image assets bundled as SVGs (< 5KB each) â†’ total
+    module asset size < 500KB
+  â€¢ Runs fully offline after first load (Service Worker cached)
+  â€¢ Works on low-end Android phones (tested target: 1GB RAM devices)
+  â€¢ Minimum screen size supported: 320px width (small smartphones)
+
+
+8. OPTIONAL ENHANCEMENTS (Post-MVP)
+--------------------------------------------------------------------------------
+
+  8.1 PROGRESSIVE DIFFICULTY
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ System auto-adapts based on user performance:
+    - High accuracy (> 85%) â†’ increase targets by 1, add harder distractors
+    - Low accuracy (< 50%) â†’ decrease targets by 1, use easier distractors
+  â€¢ Cap: Maximum 10 targets, minimum 4 targets
+
+  8.2 ADAPTIVE IMAGE SETS BY REGION
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Region        | Added Objects
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€|â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  South India   | Idli plate, banana leaf, kathakali mask,
+                | coconut tree, lungi, temple gopuram
+  North India   | Roti/chapati, turban (pagri), bullock
+                | cart, hookah (historical), haveli
+  East India    | Rasgulla, fish, dhol drum, jute bag,
+                | bamboo basket
+  West India    | Dhokla, camel, windmill, ship/boat,
+                | cotton reel
+  Northeast     | Bamboo house, tea garden, hornbill,
+                | handloom shawl, bamboo steamer
+
+  â€¢ Region can be auto-detected (IP-based) or manually selected
+    during onboarding with a simple map interaction
+
+  8.3 PERSONALIZATION ENGINE
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Track which objects user recalls best/worst
+  â€¢ Rotate "easy" objects out over time to maintain challenge
+  â€¢ Introduce new objects gradually (1â€“2 new per session)
+
+  8.4 FAMILY/CAREGIVER SHARING (Future)
+  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  â€¢ Generate a simple PDF/image report showing 4-week trend
+  â€¢ Shareable via WhatsApp (most used app in rural India)
+  â€¢ No medical jargon â€” use simple visual indicators (arrows, stars)
+
+
+================================================================================
+  SUMMARY
+================================================================================
+
+  The Visual Memory Recall Assessment (VMRA) is designed as a
+  culturally inclusive, language-independent digital biomarker for
+  episodic memory. By replacing word lists with familiar Indian
+  object illustrations and using tap-based recall with calibrated
+  distractors, it achieves:
+
+  âœ“ Accessibility for 1.4B+ Indians regardless of literacy or language
+  âœ“ Rich cognitive biomarker extraction (15+ metrics per session)
+  âœ“ Longitudinal decline detection via forgetting curves and trend analysis
+  âœ“ Lightweight browser-based execution (offline-capable, < 500KB)
+  âœ“ Ethical, non-diagnostic risk communication
+  âœ“ Scalability beyond MoCA/MMSE for population-level screening
+
+================================================================================
+  END OF DOCUMENT
+================================================================================

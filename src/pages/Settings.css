@@ -1,0 +1,272 @@
+/**
+ * Settings Page Styles
+ */
+
+.settings-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.settings-header {
+    margin-bottom: 2rem;
+}
+
+.settings-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: var(--text-primary, #fff);
+}
+
+.settings-header p {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+    margin: 0;
+}
+
+.settings-section {
+    background: var(--card-bg, rgba(255, 255, 255, 0.03));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.settings-section h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: var(--text-primary, #fff);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.setting-label {
+    font-weight: 500;
+    color: var(--text-primary, #fff);
+}
+
+.setting-value {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+    font-size: 0.9rem;
+}
+
+.setting-description {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    font-size: 0.85rem;
+    max-width: 300px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border-color, rgba(255, 255, 255, 0.15));
+    border-radius: 26px;
+    transition: background 0.2s ease;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked+.toggle-slider {
+    background: #10b981;
+}
+
+.toggle-switch input:checked+.toggle-slider::before {
+    transform: translateX(22px);
+}
+
+.toggle-switch input:disabled+.toggle-slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.last-reminder-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    margin: 0.5rem 0 0;
+}
+
+.settings-message {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.settings-message.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.settings-message.error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.settings-message.info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.setting-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 8px;
+    color: #fbbf24;
+    font-size: 0.85rem;
+}
+
+.notice-icon {
+    font-size: 1rem;
+}
+
+.settings-loading {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+/* Profile inputs */
+.settings-input,
+.settings-select {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    font-family: var(--font-body, 'Inter', sans-serif);
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--color-text-primary, #f1f5f9);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+    border-radius: var(--radius-md, 10px);
+    outline: none;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.settings-input::placeholder {
+    color: var(--color-text-muted, #64748b);
+}
+
+.settings-input:focus,
+.settings-select:focus {
+    border-color: var(--color-accent, #5eead4);
+    box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.12);
+}
+
+.settings-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    padding-right: 2.25rem;
+}
+
+.settings-select option {
+    background: #16161d;
+    color: #f1f5f9;
+}
+
+.setting-item-vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.settings-save-btn {
+    margin-top: 0.75rem;
+    width: 100%;
+}
+
+/* Number input — hide arrows */
+.settings-input[type='number']::-webkit-inner-spin-button,
+.settings-input[type='number']::-webkit-outer-spin-button {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.settings-input[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+    .settings-page {
+        padding: 1.5rem 0.75rem;
+    }
+
+    .settings-section {
+        padding: 1rem;
+    }
+
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .setting-description {
+        max-width: 100%;
+    }
+
+    .setting-notice {
+        font-size: 0.8rem;
+    }
+
+    .settings-header h1 {
+        font-size: 1.5rem;
+    }
+}

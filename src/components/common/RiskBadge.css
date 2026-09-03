@@ -1,0 +1,72 @@
+/* ===== Risk Badge Component ===== */
+/* Calm status indicators using soft colors */
+
+.risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    text-transform: capitalize;
+    background: rgba(var(--badge-color), 0.12);
+    border: 1px solid rgba(var(--badge-color), 0.2);
+    transition: all var(--transition-fast);
+}
+
+.risk-badge__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--badge-color);
+    animation: pulse 2.5s ease-in-out infinite;
+}
+
+.risk-badge__label {
+    color: var(--badge-color);
+}
+
+/* Status Variants */
+.risk-badge--stable {
+    --badge-color: var(--color-status-stable);
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.25);
+}
+
+.risk-badge--stable .risk-badge__dot {
+    background: var(--color-status-stable);
+}
+
+.risk-badge--stable .risk-badge__label {
+    color: var(--color-status-stable);
+}
+
+.risk-badge--change_detected {
+    --badge-color: var(--color-status-change);
+    background: rgba(251, 191, 36, 0.12);
+    border-color: rgba(251, 191, 36, 0.25);
+}
+
+.risk-badge--change_detected .risk-badge__dot {
+    background: var(--color-status-change);
+}
+
+.risk-badge--change_detected .risk-badge__label {
+    color: var(--color-status-change);
+}
+
+.risk-badge--possible_risk {
+    --badge-color: var(--color-status-attention);
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.2);
+}
+
+.risk-badge--possible_risk .risk-badge__dot {
+    background: var(--color-status-attention);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.risk-badge--possible_risk .risk-badge__label {
+    color: var(--color-status-attention);
+}
