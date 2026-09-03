@@ -465,6 +465,10 @@ export function VmraAssessment() {
     // ─── Render image / SVG icon for a stimulus item ─────────────────
 
     const renderIcon = (image: ImageStimulus, size: number = 80) => {
+        const IconComponent = image.svgComponent ? VMRA_ICON_MAP[image.svgComponent] : undefined;
+        if (IconComponent) {
+            return <IconComponent size={size} />;
+        }
         if (image.imageSrc) {
             return (
                 <img
@@ -477,9 +481,7 @@ export function VmraAssessment() {
                 />
             );
         }
-        const IconComponent = image.svgComponent ? VMRA_ICON_MAP[image.svgComponent] : undefined;
-        if (!IconComponent) return <div className="vmra-icon-placeholder">?</div>;
-        return <IconComponent size={size} />;
+        return <div className="vmra-icon-placeholder">?</div>;
     };    // ─── Render Phase ─────────────────────────────────────────────
 
     const renderPhase = () => {
