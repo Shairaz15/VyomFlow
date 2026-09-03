@@ -4,6 +4,7 @@ import { Icon, UserMenu, GoogleSignInButton } from "../common";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { FOOTER_DISCLAIMER } from "../../ethics/disclaimer";
+import brainLogo from "../../assets/logo.png";
 import "./PageWrapper.css";
 
 interface PageWrapperProps {
@@ -36,7 +37,7 @@ export function PageWrapper({
                     <div className="container">
                         <a href="/" className="logo">
                             <img
-                                src="/logo.png"
+                                src={brainLogo}
                                 alt="VyomFlow Logo"
                                 className="logo-img"
                             />

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Icon } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
+import brainLogo from "../assets/logo.png";
 import "./Landing.css";
 
 export function Landing() {
@@ -138,9 +139,10 @@ export function Landing() {
                     {/* CENTERPIECE: Bio-Digital Brain */}
                     <div className="logo-wrapper animate-fadeIn">
                         <img
-                            src="/logo.png"
+                            src={brainLogo}
                             alt="VyomFlow Brain Logo"
                             className="antigravity-logo"
+                            loading="eager"
                         />
                     </div>
 

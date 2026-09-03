@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from "react";
 import "./Button.css";
 
-interface ButtonProps {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children: React.ReactNode;
     variant?: "primary" | "secondary" | "ghost";
     size?: "sm" | "md" | "lg";
@@ -19,11 +19,15 @@ export function Button({
     disabled = false,
     onClick,
     type = "button",
+    onMouseMove,
+    onMouseLeave,
+    ...rest
 }: ButtonProps) {
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     // Magnetic hover effect - button moves slightly toward cursor
     const handleMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (onMouseMove) onMouseMove(e);
         if (disabled || !buttonRef.current) return;
         const rect = buttonRef.current.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -35,14 +39,15 @@ export function Button({
 
         buttonRef.current.style.setProperty('--mx', `${deltaX}px`);
         buttonRef.current.style.setProperty('--my', `${deltaY}px`);
-    }, [disabled]);
+    }, [disabled, onMouseMove]);
 
-    const handleMouseLeave = useCallback(() => {
+    const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (onMouseLeave) onMouseLeave(e);
         if (buttonRef.current) {
             buttonRef.current.style.setProperty('--mx', '0px');
             buttonRef.current.style.setProperty('--my', '0px');
         }
-    }, []);
+    }, [onMouseLeave]);
 
     return (
         <button
@@ -53,6 +58,7 @@ export function Button({
             onClick={onClick}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
+            {...rest}
         >
             {children}
         </button>

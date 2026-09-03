@@ -49,6 +49,7 @@ export type LanguageCode = (typeof INDIAN_LANGUAGES)[number]['code'];
 export interface OnboardingData {
     age: number;
     gender: Gender;
+    educationYears?: number;
     preferredLanguage: LanguageCode;
 }
 
@@ -58,6 +59,7 @@ export function OnboardingModal() {
 
     const [age, setAge] = useState('');
     const [gender, setGender] = useState<Gender | ''>('');
+    const [educationYears, setEducationYears] = useState<number>(16);
     const [language, setLanguage] = useState<LanguageCode>('en');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -75,11 +77,14 @@ export function OnboardingModal() {
         setError(null);
 
         try {
-            await completeOnboarding({
+            const profileData: OnboardingData = {
                 age: Number(age),
                 gender: gender as Gender,
+                educationYears: Number(educationYears) || 16,
                 preferredLanguage: language,
-            });
+            };
+            localStorage.setItem('vyomflow_user_profile', JSON.stringify(profileData));
+            await completeOnboarding(profileData);
         } catch (err) {
             console.error('Onboarding error:', err);
             setError(t('onboarding.error'));
@@ -141,6 +146,26 @@ export function OnboardingModal() {
                                     {t(`gender.${opt.value}`)}
                                 </option>
                             ))}
+                        </select>
+                    </div>
+
+                    {/* Education Level */}
+                    <div className="onboarding-field">
+                        <label htmlFor="onboarding-education" className="onboarding-label">
+                            Education Level (Years)
+                        </label>
+                        <select
+                            id="onboarding-education"
+                            className="onboarding-select"
+                            value={educationYears}
+                            onChange={(e) => setEducationYears(Number(e.target.value))}
+                        >
+                            <option value={10}>Secondary School (10 yrs)</option>
+                            <option value={12}>High School / Intermediate (12 yrs)</option>
+                            <option value={14}>Diploma / Vocational (14 yrs)</option>
+                            <option value={16}>Bachelor's Degree (16 yrs)</option>
+                            <option value={18}>Master's Degree (18 yrs)</option>
+                            <option value={20}>Doctorate / Professional (20+ yrs)</option>
                         </select>
                     </div>
 

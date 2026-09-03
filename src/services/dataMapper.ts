@@ -6,6 +6,12 @@ import type { VmraAssessmentResult } from '../types/vmraTypes';
 import type { StoryAssessmentResult } from '../types/storyTypes';
 import type { ImmersiveNavigationResult } from '../types/navigationTypes';
 
+export interface UserDemographics {
+    age?: number;
+    educationYears?: number;
+    gender?: string;
+}
+
 export interface RawDashboardData {
     reaction: ReactionTestResult[];
     memory: any[]; // Or MemoryTestResult[] if imported
@@ -72,7 +78,7 @@ export function mapToSessionData(data: RawDashboardData): SessionData[] {
 
     // Map Language
     processResults(data.language || [], 'LANGUAGE', (l) => {
-        return (l.rawMetrics ? (l.rawMetrics.correctWords / Math.max(1, l.rawMetrics.totalWords || 1)) : 0.8) * 100;
+        return l.derivedFeatures?.fluencyIndex ?? 80;
     });
 
     // Map VMRA

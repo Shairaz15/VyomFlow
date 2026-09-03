@@ -135,6 +135,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             {
                 age: data.age,
                 gender: data.gender,
+                educationYears: data.educationYears || 16,
                 preferredLanguage: data.preferredLanguage,
                 onboardingComplete: true,
             },

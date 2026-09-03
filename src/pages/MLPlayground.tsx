@@ -1,926 +1,859 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { loadVyomFlowMLModel } from '../ml/modelLoader';
-import { predictWithBundle, type AssessmentInputFeatures } from '../ml/vyomflowPredictor';
-import type { VyomFlowMLModelBundle, VyomFlowMLPrediction } from '../ml/types';
+import * as ort from 'onnxruntime-web';
 import { Icon } from '../components/common/Icon';
+import { evaluatePatientTrajectory, type SessionPoint } from '../services/statisticalDriftEngine';
+import { generateClinicalAlert, type ConfidenceMetrics } from '../services/clinicalAlertEngine';
 import './MLPlayground.css';
 
-// Pre-defined clinical test presets
-const PRESETS = {
-  healthyYoung: {
-    name: '🟢 Healthy Young Adult',
-    description: 'Optimal cognitive performance (Age 28, High Speed, Low Hesitation)',
-    data: {
-      age: 28,
-      gender: 'Female',
-      yearsOfEducation: 16,
-      primaryLanguage: 'English',
-      urbanRural: 'Urban',
-      nav_navigationScore: 96,
-      nav_navigationAccuracy: 0.98,
-      nav_averageDecisionLatencyMs: 2150,
-      nav_decisionLatencyVariance: 500,
-      nav_landmarkRecognitionAccuracy: 0.98,
-      nav_destinationRecallAccuracy: 1,
-      lang_cognitiveSpeechIndex: 94,
-      lang_wpm: 155,
-      lang_phonationRatio: 0.96,
-      lang_hesitationIndex: 0.02,
-      story_storyRecallScore: 92,
-      story_recallAccuracy: 0.90,
-      story_mcqAccuracy: 1.0,
-      vmra_compositeMemoryScore: 95,
-      vmra_recallAccuracy: 0.95,
-      savt_compositeSAVTScore: 96,
-      savt_hitRate: 0.98,
-      savt_falseAlarmRate: 0.02,
-      savt_dPrime: 3.6,
-      pat_patternScore: 94,
-      pat_maxSequenceSpan: 8,
-      rxn_meanReactionTime: 225,
-      rxn_consistencyScore: 0.98,
-      cross_previousMoCAEstimate: 29,
-    },
-  },
+// 19 NACC Features schema
+interface NACCFeatures {
+  NACCAGE: number;     // Age (years)
+  EDUC: number;        // Education (years)
+  CRAFTVRS: number;    // Craft Story Immediate Recall (0-25)
+  CRAFTDVR: number;    // Craft Story Delayed Recall (0-25)
+  UDSBENTC: number;    // Benson Visual Copy (0-17)
+  UDSBENTD: number;    // Benson Visual Delayed Recall (0-17)
+  ANIMALS: number;     // Animal Fluency (0-35)
+  VEG: number;         // Vegetable Fluency (0-30)
+  MOCAFLUE: number;    // MoCA Phonemic Fluency (0-5)
+  MINTTOTS: number;    // Multilingual Naming Test (0-32)
+  TRAILA: number;      // Trail Making A (seconds)
+  TRAILB: number;      // Trail Making B (seconds)
+  WAIS: number;        // WAIS Digit Symbol Score (0-90)
+  DIGIFLEN: number;    // Digit Span Forward Length (0-12)
+  DIGIBLEN: number;    // Digit Span Backward Length (0-12)
+  MOCALETT: number;    // MoCA Letter Tapping (0=error, 1=intact)
+  MOCACUBE: number;    // MoCA 3D Cube (0=fail, 1=pass)
+  MOCACLOC: number;    // MoCA Clock Drawing (0-3)
+  ORIENT: number;      // CDR Orientation (0.0=Intact, 0.5=Questionable, 1.0=Moderate, 2.0=Severe)
+}
+
+interface PreprocessorMeta {
+  features: string[];
+  imputer_medians: number[];
+  scaler_means: number[];
+  scaler_scales: number[];
+}
+
+const PRESETS: Record<string, { name: string; tag: string; description: string; data: NACCFeatures }> = {
   healthySenior: {
     name: '🟢 Healthy Senior (Normal)',
-    description: 'Age-appropriate healthy senior baseline with intact functional independence',
+    tag: 'Normal Cognition',
+    description: 'Intact episodic recall, fast processing speed, and perfect spatial/temporal orientation.',
     data: {
-      age: 72,
-      gender: 'Male',
-      yearsOfEducation: 14,
-      primaryLanguage: 'Hindi',
-      urbanRural: 'Urban',
-      nav_navigationScore: 84,
-      nav_navigationAccuracy: 0.86,
-      nav_averageDecisionLatencyMs: 2850,
-      nav_decisionLatencyVariance: 850,
-      nav_landmarkRecognitionAccuracy: 0.88,
-      nav_destinationRecallAccuracy: 1,
-      lang_cognitiveSpeechIndex: 86,
-      lang_wpm: 135,
-      lang_phonationRatio: 0.92,
-      lang_hesitationIndex: 0.06,
-      story_storyRecallScore: 80,
-      story_recallAccuracy: 0.78,
-      story_mcqAccuracy: 0.85,
-      vmra_compositeMemoryScore: 82,
-      vmra_recallAccuracy: 0.82,
-      savt_compositeSAVTScore: 84,
-      savt_hitRate: 0.88,
-      savt_falseAlarmRate: 0.08,
-      savt_dPrime: 2.7,
-      pat_patternScore: 80,
-      pat_maxSequenceSpan: 6,
-      rxn_meanReactionTime: 310,
-      rxn_consistencyScore: 0.95,
-      cross_previousMoCAEstimate: 28,
-    },
+      NACCAGE: 68,
+      EDUC: 16,
+      CRAFTVRS: 22,
+      CRAFTDVR: 20,
+      UDSBENTC: 17,
+      UDSBENTD: 15,
+      ANIMALS: 24,
+      VEG: 18,
+      MOCAFLUE: 4,
+      MINTTOTS: 30,
+      TRAILA: 28,
+      TRAILB: 65,
+      WAIS: 54,
+      DIGIFLEN: 8,
+      DIGIBLEN: 6,
+      MOCALETT: 1,
+      MOCACUBE: 1,
+      MOCACLOC: 3,
+      ORIENT: 0.0
+    }
   },
-  earlyMci: {
-    name: '🟡 Early MCI (Mild Impairment)',
-    description: 'Subtle spatial disorientation, elevated speech pauses, and mild episodic decay',
+  amnesticMCI: {
+    name: '🟠 Amnestic MCI (Memory Deficit)',
+    tag: 'Mild Cognitive Impairment',
+    description: 'Isolated episodic delayed memory decline with relatively preserved general orientation and language.',
     data: {
-      age: 77,
-      gender: 'Female',
-      yearsOfEducation: 8,
-      primaryLanguage: 'Tamil',
-      urbanRural: 'Rural',
-      nav_navigationScore: 63,
-      nav_navigationAccuracy: 0.58,
-      nav_averageDecisionLatencyMs: 4980,
-      nav_decisionLatencyVariance: 3340,
-      nav_landmarkRecognitionAccuracy: 0.66,
-      nav_destinationRecallAccuracy: 1,
-      lang_cognitiveSpeechIndex: 72,
-      lang_wpm: 112,
-      lang_phonationRatio: 0.86,
-      lang_hesitationIndex: 0.16,
-      story_storyRecallScore: 54,
-      story_recallAccuracy: 0.58,
-      story_mcqAccuracy: 0.60,
-      vmra_compositeMemoryScore: 62,
-      vmra_recallAccuracy: 0.65,
-      savt_compositeSAVTScore: 72,
-      savt_hitRate: 0.68,
-      savt_falseAlarmRate: 0.22,
-      savt_dPrime: 1.4,
-      pat_patternScore: 68,
-      pat_maxSequenceSpan: 4,
-      rxn_meanReactionTime: 420,
-      rxn_consistencyScore: 0.90,
-      cross_previousMoCAEstimate: 23,
-    },
+      NACCAGE: 73,
+      EDUC: 14,
+      CRAFTVRS: 13,
+      CRAFTDVR: 7,
+      UDSBENTC: 15,
+      UDSBENTD: 6,
+      ANIMALS: 18,
+      VEG: 14,
+      MOCAFLUE: 3,
+      MINTTOTS: 28,
+      TRAILA: 45,
+      TRAILB: 120,
+      WAIS: 38,
+      DIGIFLEN: 6,
+      DIGIBLEN: 4,
+      MOCALETT: 1,
+      MOCACUBE: 1,
+      MOCACLOC: 3,
+      ORIENT: 0.5
+    }
   },
-  dementia: {
-    name: '🔴 Moderate-Severe Decline',
-    description: 'Multi-domain impairment across spatial route, episodic recall, and attention span',
+  executiveMCI: {
+    name: '🟠 Multi-Domain Executive MCI',
+    tag: 'Mild Cognitive Impairment',
+    description: 'Slowed processing speed, high Trail Making latencies, and mild language fluency reduction.',
     data: {
-      age: 82,
-      gender: 'Male',
-      yearsOfEducation: 6,
-      primaryLanguage: 'Bengali',
-      urbanRural: 'Rural',
-      nav_navigationScore: 42,
-      nav_navigationAccuracy: 0.38,
-      nav_averageDecisionLatencyMs: 6800,
-      nav_decisionLatencyVariance: 4800,
-      nav_landmarkRecognitionAccuracy: 0.45,
-      nav_destinationRecallAccuracy: 0,
-      lang_cognitiveSpeechIndex: 48,
-      lang_wpm: 78,
-      lang_phonationRatio: 0.74,
-      lang_hesitationIndex: 0.32,
-      story_storyRecallScore: 36,
-      story_recallAccuracy: 0.32,
-      story_mcqAccuracy: 0.40,
-      vmra_compositeMemoryScore: 38,
-      vmra_recallAccuracy: 0.35,
-      savt_compositeSAVTScore: 48,
-      savt_hitRate: 0.45,
-      savt_falseAlarmRate: 0.42,
-      savt_dPrime: 0.5,
-      pat_patternScore: 42,
-      pat_maxSequenceSpan: 2,
-      rxn_meanReactionTime: 590,
-      rxn_consistencyScore: 0.82,
-      cross_previousMoCAEstimate: 16,
-    },
+      NACCAGE: 75,
+      EDUC: 12,
+      CRAFTVRS: 12,
+      CRAFTDVR: 9,
+      UDSBENTC: 13,
+      UDSBENTD: 9,
+      ANIMALS: 13,
+      VEG: 9,
+      MOCAFLUE: 2,
+      MINTTOTS: 24,
+      TRAILA: 68,
+      TRAILB: 185,
+      WAIS: 26,
+      DIGIFLEN: 5,
+      DIGIBLEN: 3,
+      MOCALETT: 0,
+      MOCACUBE: 0,
+      MOCACLOC: 2,
+      ORIENT: 0.5
+    }
   },
+  earlyDementia: {
+    name: '🔴 Early-Stage Dementia',
+    tag: 'Dementia',
+    description: 'Multi-domain deficits across delayed recall, verbal fluency, and executive task switching.',
+    data: {
+      NACCAGE: 78,
+      EDUC: 12,
+      CRAFTVRS: 6,
+      CRAFTDVR: 2,
+      UDSBENTC: 8,
+      UDSBENTD: 3,
+      ANIMALS: 9,
+      VEG: 6,
+      MOCAFLUE: 1,
+      MINTTOTS: 18,
+      TRAILA: 105,
+      TRAILB: 260,
+      WAIS: 16,
+      DIGIFLEN: 4,
+      DIGIBLEN: 2,
+      MOCALETT: 0,
+      MOCACUBE: 0,
+      MOCACLOC: 1,
+      ORIENT: 1.0
+    }
+  },
+  severeDementia: {
+    name: '🔴 Severe Alzheimer Phenotype',
+    tag: 'Dementia',
+    description: 'Severe disorientation, zero delayed story recall, severe Trail B test failure, and prominent language loss.',
+    data: {
+      NACCAGE: 82,
+      EDUC: 10,
+      CRAFTVRS: 2,
+      CRAFTDVR: 0,
+      UDSBENTC: 4,
+      UDSBENTD: 0,
+      ANIMALS: 5,
+      VEG: 3,
+      MOCAFLUE: 0,
+      MINTTOTS: 10,
+      TRAILA: 160,
+      TRAILB: 300,
+      WAIS: 8,
+      DIGIFLEN: 3,
+      DIGIBLEN: 1,
+      MOCALETT: 0,
+      MOCACUBE: 0,
+      MOCACLOC: 0,
+      ORIENT: 2.0
+    }
+  }
+};
+
+const FEATURE_METADATA: Record<keyof NACCFeatures, { label: string; domain: string; min: number; max: number; step: number; unit: string; desc: string }> = {
+  NACCAGE: { label: 'Age', domain: 'Demographics', min: 45, max: 95, step: 1, unit: 'yrs', desc: 'Patient age at assessment' },
+  EDUC: { label: 'Education', domain: 'Demographics', min: 0, max: 24, step: 1, unit: 'yrs', desc: 'Completed years of formal education' },
+  CRAFTVRS: { label: 'Craft Story Immediate Recall', domain: 'Episodic Memory', min: 0, max: 25, step: 1, unit: 'pts', desc: 'Verbatim immediate recall score' },
+  CRAFTDVR: { label: 'Craft Story Delayed Recall', domain: 'Episodic Memory', min: 0, max: 25, step: 1, unit: 'pts', desc: 'Delayed verbatim recall after 20 mins' },
+  UDSBENTC: { label: 'Benson Visual Copy', domain: 'Episodic Memory', min: 0, max: 17, step: 1, unit: 'pts', desc: 'Complex visual figure copy accuracy' },
+  UDSBENTD: { label: 'Benson Visual Recall', domain: 'Episodic Memory', min: 0, max: 17, step: 1, unit: 'pts', desc: 'Delayed visual figure recall' },
+  ANIMALS: { label: 'Animal Fluency', domain: 'Language & Semantic', min: 0, max: 35, step: 1, unit: 'words', desc: 'Category naming in 60 seconds' },
+  VEG: { label: 'Vegetable Fluency', domain: 'Language & Semantic', min: 0, max: 30, step: 1, unit: 'words', desc: 'Category naming in 60 seconds' },
+  MOCAFLUE: { label: 'Phonemic Fluency (Letter F)', domain: 'Language & Semantic', min: 0, max: 5, step: 1, unit: 'pts', desc: 'Words starting with F in 60s (scaled)' },
+  MINTTOTS: { label: 'Multilingual Naming (MINT)', domain: 'Language & Semantic', min: 0, max: 32, step: 1, unit: 'pts', desc: 'Picture object confrontation naming' },
+  TRAILA: { label: 'Trail Making Test A', domain: 'Executive & Speed', min: 15, max: 200, step: 1, unit: 'sec', desc: 'Visual processing speed (lower is better)' },
+  TRAILB: { label: 'Trail Making Test B', domain: 'Executive & Speed', min: 30, max: 300, step: 1, unit: 'sec', desc: 'Cognitive flexibility & task-switching' },
+  WAIS: { label: 'WAIS Digit Symbol Substitution', domain: 'Executive & Speed', min: 0, max: 80, step: 1, unit: 'pts', desc: 'Psychomotor speed & symbol coding' },
+  DIGIFLEN: { label: 'Digit Span Forward', domain: 'Attention & Working Memory', min: 2, max: 12, step: 1, unit: 'digits', desc: 'Auditory attention capacity' },
+  DIGIBLEN: { label: 'Digit Span Backward', domain: 'Attention & Working Memory', min: 2, max: 12, step: 1, unit: 'digits', desc: 'Working memory manipulation' },
+  MOCALETT: { label: 'MoCA Vigilance (Letter Tapping)', domain: 'Attention & Working Memory', min: 0, max: 1, step: 1, unit: '', desc: '1 = No errors (intact), 0 = Error' },
+  MOCACUBE: { label: 'MoCA 3D Cube Copy', domain: 'Visuospatial & Orientation', min: 0, max: 1, step: 1, unit: '', desc: '1 = Intact 3D drawing, 0 = Impaired' },
+  MOCACLOC: { label: 'MoCA Clock Drawing', domain: 'Visuospatial & Orientation', min: 0, max: 3, step: 1, unit: 'pts', desc: 'Contour (1), Numbers (1), Hands (1)' },
+  ORIENT: { label: 'CDR Orientation Box Score', domain: 'Visuospatial & Orientation', min: 0.0, max: 3.0, step: 0.5, unit: 'CDR', desc: '0.0=Intact, 0.5=Questionable, 1.0=Moderate, 2.0=Severe' }
 };
 
 export function MLPlayground() {
-  const [bundle, setBundle] = useState<VyomFlowMLModelBundle | null>(null);
-  const [activePreset, setActivePreset] = useState<string>('earlyMci');
-  const [formData, setFormData] = useState<AssessmentInputFeatures>(PRESETS.earlyMci.data);
-  const [showJsonPayload, setShowJsonPayload] = useState<boolean>(false);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    demographics: true,
-    navigation: true,
-    language: true,
-    story: true,
-    vmra: true,
-    savt: true,
-    pattern: false,
-    reaction: false,
-  });
+  const [activeTab, setActiveTab] = useState<'cross-sectional' | 'longitudinal'>('cross-sectional');
+  const [selectedPreset, setSelectedPreset] = useState<string>('healthySenior');
+  const [features, setFeatures] = useState<NACCFeatures>(PRESETS.healthySenior.data);
+  const [activeDomain, setActiveDomain] = useState<string>('All');
+  
+  // Model state
+  const [isLoadingModel, setIsLoadingModel] = useState<boolean>(true);
+  const [modelLoaded, setModelLoaded] = useState<boolean>(false);
+  const [session, setSession] = useState<ort.InferenceSession | null>(null);
+  const [preprocessorMeta, setPreprocessorMeta] = useState<PreprocessorMeta | null>(null);
+  
+  // Inference outputs
+  const [probabilities, setProbabilities] = useState<[number, number, number]>([0.96, 0.03, 0.01]);
+  const [predictedClass, setPredictedClass] = useState<number>(0);
+  const [inferenceLatencyMs, setInferenceLatencyMs] = useState<number>(0);
+  const [isInferring, setIsInferring] = useState<boolean>(false);
 
-  // Load Model Bundle on Mount
+  // Longitudinal Simulation State
+  const [simSessionsCount, setSimSessionsCount] = useState<number>(4);
+  const [simDeclineRate, setSimDeclineRate] = useState<number>(1.5); // score points per month
+  const [simNoise, setSimNoise] = useState<number>(3.0);
+
+  // 1. Initialize ONNX Session and Preprocessor Metadata
   useEffect(() => {
-    loadVyomFlowMLModel().then((loaded) => {
-      setBundle(loaded);
-    });
+    let isCancelled = false;
+
+    async function initONNX() {
+      try {
+        setIsLoadingModel(true);
+        // Load preprocessor JSON
+        const metaRes = await fetch('/models/nacc-xgboost/preprocessor.json');
+        const meta: PreprocessorMeta = await metaRes.json();
+        
+        // Configure WASM paths
+        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
+
+        // Load ONNX model
+        const sess = await ort.InferenceSession.create('/models/nacc-xgboost/xgboost_model.onnx', {
+          executionProviders: ['wasm']
+        });
+
+        if (!isCancelled) {
+          setPreprocessorMeta(meta);
+          setSession(sess);
+          setModelLoaded(true);
+          setIsLoadingModel(false);
+        }
+      } catch (err) {
+        console.error('Failed to initialize NACC XGBoost ONNX runtime:', err);
+        if (!isCancelled) {
+          setIsLoadingModel(false);
+        }
+      }
+    }
+
+    initONNX();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
-  // Handle Preset Switching
-  const handleSelectPreset = (key: keyof typeof PRESETS) => {
-    setActivePreset(key);
-    setFormData({ ...PRESETS[key].data });
+  // 2. Perform Inference
+  const runInference = useCallback(async (currentFeatures: NACCFeatures) => {
+    if (!session || !preprocessorMeta) return;
+
+    try {
+      setIsInferring(true);
+      const startTime = performance.now();
+
+      // Ordered 19 features
+      const rawVector = [
+        currentFeatures.NACCAGE,
+        currentFeatures.EDUC,
+        currentFeatures.CRAFTVRS,
+        currentFeatures.CRAFTDVR,
+        currentFeatures.UDSBENTC,
+        currentFeatures.UDSBENTD,
+        currentFeatures.ANIMALS,
+        currentFeatures.VEG,
+        currentFeatures.MOCAFLUE,
+        currentFeatures.MINTTOTS,
+        currentFeatures.TRAILA,
+        currentFeatures.TRAILB,
+        currentFeatures.WAIS,
+        currentFeatures.DIGIFLEN,
+        currentFeatures.DIGIBLEN,
+        currentFeatures.MOCALETT,
+        currentFeatures.MOCACUBE,
+        currentFeatures.MOCACLOC,
+        currentFeatures.ORIENT
+      ];
+
+      // Standardize features using training scaler
+      const scaledVector = rawVector.map((val, idx) => {
+        const mean = preprocessorMeta.scaler_means[idx];
+        const scale = preprocessorMeta.scaler_scales[idx];
+        return (val - mean) / scale;
+      });
+
+      const tensor = new ort.Tensor('float32', new Float32Array(scaledVector), [1, 19]);
+      const results = await session.run({ [session.inputNames[0]]: tensor });
+
+      const labelOutput = results[session.outputNames[0]];
+      const probOutput = results[session.outputNames[1]];
+
+      const endTime = performance.now();
+      setInferenceLatencyMs(Math.round((endTime - startTime) * 10) / 10);
+
+      if (labelOutput && labelOutput.data) {
+        setPredictedClass(Number(labelOutput.data[0]));
+      }
+
+      if (probOutput && probOutput.data) {
+        const probs = Array.from(probOutput.data as Float32Array);
+        if (probs.length >= 3) {
+          setProbabilities([probs[0], probs[1], probs[2]]);
+        }
+      }
+    } catch (err) {
+      console.error('Inference execution error:', err);
+    } finally {
+      setIsInferring(false);
+    }
+  }, [session, preprocessorMeta]);
+
+  // Run inference whenever features change
+  useEffect(() => {
+    if (modelLoaded) {
+      runInference(features);
+    }
+  }, [features, modelLoaded, runInference]);
+
+  // Handle Preset Change
+  const handleSelectPreset = (presetKey: string) => {
+    setSelectedPreset(presetKey);
+    if (PRESETS[presetKey]) {
+      setFeatures(PRESETS[presetKey].data);
+    }
   };
 
-  // Handle Field Value Changes
-  const handleChange = (field: string, value: any) => {
-    setFormData((prev) => ({
+  // Handle Feature Slider Change
+  const handleFeatureChange = (featureKey: keyof NACCFeatures, value: number) => {
+    setSelectedPreset('custom');
+    setFeatures(prev => ({
       ...prev,
-      [field]: value,
-    }));
-    setActivePreset('custom');
-  };
-
-  // Toggle Section Collapse
-  const toggleSection = (section: string) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
+      [featureKey]: value
     }));
   };
 
-  // Real-Time Inference
-  const prediction: VyomFlowMLPrediction | null = useMemo(() => {
-    if (!bundle) return null;
-    return predictWithBundle(formData, bundle);
-  }, [formData, bundle]);
+  // Randomized profile generator
+  const handleRandomize = () => {
+    setSelectedPreset('custom');
+    setFeatures({
+      NACCAGE: Math.floor(55 + Math.random() * 35),
+      EDUC: Math.floor(8 + Math.random() * 12),
+      CRAFTVRS: Math.floor(Math.random() * 26),
+      CRAFTDVR: Math.floor(Math.random() * 26),
+      UDSBENTC: Math.floor(Math.random() * 18),
+      UDSBENTD: Math.floor(Math.random() * 18),
+      ANIMALS: Math.floor(5 + Math.random() * 25),
+      VEG: Math.floor(4 + Math.random() * 20),
+      MOCAFLUE: Math.floor(Math.random() * 6),
+      MINTTOTS: Math.floor(10 + Math.random() * 23),
+      TRAILA: Math.floor(20 + Math.random() * 140),
+      TRAILB: Math.floor(50 + Math.random() * 250),
+      WAIS: Math.floor(10 + Math.random() * 60),
+      DIGIFLEN: Math.floor(3 + Math.random() * 8),
+      DIGIBLEN: Math.floor(2 + Math.random() * 8),
+      MOCALETT: Math.random() > 0.3 ? 1 : 0,
+      MOCACUBE: Math.random() > 0.4 ? 1 : 0,
+      MOCACLOC: Math.floor(Math.random() * 4),
+      ORIENT: [0.0, 0.5, 1.0, 2.0][Math.floor(Math.random() * 4)]
+    });
+  };
+
+  // Estimated MoCA score calculation based on clinical markers
+  const estimatedMoCA = useMemo(() => {
+    const memoryRatio = (features.CRAFTDVR / 25) * 5; // 5 pts
+    const languageRatio = ((features.ANIMALS + features.VEG) / 60) * 6; // 6 pts
+    const executiveRatio = (Math.max(0, 300 - features.TRAILB) / 260) * 4; // 4 pts
+    const attentionRatio = ((features.DIGIFLEN + features.DIGIBLEN) / 20) * 5; // 5 pts
+    const visuoRatio = (features.MOCACUBE + (features.MOCACLOC / 3) * 3); // 4 pts
+    const orientScore = Math.max(0, 6 - (features.ORIENT * 2.5)); // 6 pts
+
+    const rawTotal = memoryRatio + languageRatio + executiveRatio + attentionRatio + visuoRatio + orientScore;
+    // Education correction (+1 for <= 12 years if < 30)
+    const eduBoost = features.EDUC <= 12 ? 1 : 0;
+    const finalScore = Math.min(30, Math.max(0, Math.round((rawTotal + eduBoost) * 10) / 10));
+    return finalScore;
+  }, [features]);
+
+  // Clinical Alert output
+  const clinicalAlert = useMemo(() => {
+    const trajectory = predictedClass === 0 ? 'STABLE' : predictedClass === 1 ? 'POSSIBLE_DECLINE' : 'RAPID_DECLINE';
+    const confidenceMetrics: ConfidenceMetrics = {
+      density: 92,
+      completeness: 100,
+      oodDistance: 88,
+      uncertainty: Math.round(Math.max(...probabilities) * 100),
+      history: 100
+    };
+    return generateClinicalAlert(trajectory, probabilities[2] + (probabilities[1] * 0.5), confidenceMetrics);
+  }, [predictedClass, probabilities]);
+
+  // Longitudinal Simulation Data points
+  const simulatedTrajectoryPoints: SessionPoint[] = useMemo(() => {
+    const points: SessionPoint[] = [];
+    const baseScore = estimatedMoCA * 3.33; // scale to 0-100
+    const now = Date.now();
+    const MS_PER_MONTH = 1000 * 60 * 60 * 24 * 30.44;
+
+    for (let i = 0; i < simSessionsCount; i++) {
+      const monthOffset = (simSessionsCount - 1 - i) * 6; // 6 months apart
+      const expectedDrop = (simSessionsCount - 1 - i) * (simDeclineRate * 2);
+      const randomNoise = (Math.random() - 0.5) * simNoise * 2;
+      const score = Math.max(0, Math.min(100, Math.round(baseScore - expectedDrop + randomNoise)));
+
+      points.push({
+        timestamp: now - (monthOffset * MS_PER_MONTH),
+        score,
+        domainScores: {
+          memory: Math.max(0, Math.min(100, Math.round((features.CRAFTDVR / 25) * 100 - expectedDrop))),
+          language: Math.max(0, Math.min(100, Math.round(((features.ANIMALS + features.VEG) / 55) * 100))),
+          executive: Math.max(0, Math.min(100, Math.round((Math.max(0, 300 - features.TRAILB) / 260) * 100))),
+          attention: Math.max(0, Math.min(100, Math.round((features.WAIS / 80) * 100)))
+        }
+      });
+    }
+    return points;
+  }, [estimatedMoCA, simSessionsCount, simDeclineRate, simNoise, features]);
+
+  const simulatedEvaluation = useMemo(() => {
+    return evaluatePatientTrajectory(simulatedTrajectoryPoints);
+  }, [simulatedTrajectoryPoints]);
+
+  const uniqueDomains = useMemo(() => {
+    const doms = new Set<string>();
+    Object.values(FEATURE_METADATA).forEach(m => doms.add(m.domain));
+    return ['All', ...Array.from(doms)];
+  }, []);
 
   return (
     <div className="ml-playground-container">
-      {/* Top Hero Navigation Header */}
+      {/* Top Header */}
       <header className="ml-hero-header">
-        <div className="max-w-6xl mx-auto flex flex-col items-center">
-          <div className="flex items-center justify-between w-full mb-4">
-            <Link
-              to="/dashboard"
-              className="text-xs font-semibold text-slate-400 hover:text-cyan-400 flex items-center gap-1.5 transition-colors"
-            >
-              <Icon name="chevron-right" size={16} className="rotate-180" /> Back to Dashboard
-            </Link>
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-xs font-mono text-emerald-400">In-Browser ML Engine v2.0</span>
+        <div className="ml-nav-bar">
+          <Link to="/dashboard" className="ml-back-link">
+            <Icon name="chevron-right" size={16} className="ml-back-icon" />
+            Back to Clinical Dashboard
+          </Link>
+          <div className="ml-status-badges">
+            <div className={`ml-runtime-badge ${modelLoaded ? 'loaded' : 'loading'}`}>
+              <span className="ml-pulse-dot" />
+              {isLoadingModel ? 'Loading ONNX Model...' : isInferring ? 'Evaluating Feature Vectors...' : modelLoaded ? 'ONNX WASM Runtime Active (Zero-Latency)' : 'Runtime Offline'}
+            </div>
+            <div className="ml-badge-pill">
+              NACC UDS-74 XGBoost Model
             </div>
           </div>
+        </div>
 
-          <div className="ml-badge-pill">
-            <Icon name="brain-circuit" size={16} /> SaMD AI Model Testing Console
-          </div>
+        <h1 className="ml-title">NACC Clinical Model Interactive Sandbox</h1>
+        <p className="ml-subtitle">
+          Test real-time 3-class cognitive staging (Normal, MCI, Dementia) with 19 standard neuropsychological biomarkers running 100% client-side via ONNX WebAssembly.
+        </p>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
-            VyomFlow Cognitive AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-500">Live Predictor</span>
-          </h1>
-          <p className="text-sm text-slate-400 max-w-2xl text-center">
-            Adjust individual digital micro-biomarkers from all 7 assessment modules to test real-time multi-task diagnosis, continuous MoCA scoring, and SHAP feature attributions.
-          </p>
+        {/* Tab Selector */}
+        <div className="ml-tab-container">
+          <button
+            className={`ml-tab-btn ${activeTab === 'cross-sectional' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cross-sectional')}
+          >
+            <Icon name="brain-circuit" size={18} />
+            Cross-Sectional Staging Tester
+          </button>
+          <button
+            className={`ml-tab-btn ${activeTab === 'longitudinal' ? 'active' : ''}`}
+            onClick={() => setActiveTab('longitudinal')}
+          >
+            <Icon name="chart-trend" size={18} />
+            Longitudinal Drift & Alert Simulator
+          </button>
+        </div>
 
-          {/* Quick Preset Selector */}
-          <div className="ml-presets-bar">
-            {Object.entries(PRESETS).map(([key, preset]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleSelectPreset(key as keyof typeof PRESETS)}
-                className={`ml-preset-btn ${activePreset === key ? 'active' : ''}`}
-                title={preset.description}
-              >
-                {preset.name}
-              </button>
-            ))}
-          </div>
+        {/* Presets Bar */}
+        <div className="ml-presets-bar">
+          <span className="ml-preset-label">Clinical Presets:</span>
+          {Object.entries(PRESETS).map(([key, preset]) => (
+            <button
+              key={key}
+              className={`ml-preset-btn ${selectedPreset === key ? 'active' : ''}`}
+              onClick={() => handleSelectPreset(key)}
+              title={preset.description}
+            >
+              {preset.name}
+            </button>
+          ))}
+          <button
+            className={`ml-preset-btn ${selectedPreset === 'custom' ? 'active' : ''}`}
+            onClick={handleRandomize}
+          >
+            🎲 Randomize Profile
+          </button>
         </div>
       </header>
 
-      {/* Main 2-Column Responsive Layout */}
+      {/* Main Grid Content */}
       <main className="ml-grid-layout">
-        {/* LEFT COLUMN: Input Modulators (7 Modules + Demographics) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-              <Icon name="assess" size={18} className="text-cyan-400" />
-              Assessment Feature Modulators
-            </h2>
-            <button
-              onClick={() => handleSelectPreset('earlyMci')}
-              className="text-xs text-slate-400 hover:text-cyan-400 font-medium transition-colors"
-            >
-              Reset Inputs
-            </button>
-          </div>
-
-          {/* 1. Demographics & Context */}
-          <div className="ml-module-accordion">
-            <div className="ml-module-header" onClick={() => toggleSection('demographics')}>
-              <span className="font-semibold text-sm text-slate-200 flex items-center gap-2">
-                👤 Demographics & Covariates
-              </span>
-              <span className="text-xs text-slate-400">
-                {expandedSections.demographics ? '▲' : '▼'}
-              </span>
-            </div>
-            {expandedSections.demographics && (
-              <div className="ml-module-body">
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Age (Years)</span>
-                    <span className="ml-slider-val">{formData.age ?? 65} yrs</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="18"
-                    max="95"
-                    value={Number(formData.age ?? 65)}
-                    onChange={(e) => handleChange('age', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
+        
+        {/* LEFT COLUMN: Controls & Input Biomarkers */}
+        <section className="ml-left-panel">
+          {activeTab === 'cross-sectional' ? (
+            <div className="ml-card-panel">
+              <div className="ml-panel-header">
+                <div>
+                  <h2 className="ml-panel-title">19-Biomarker Neuropsychological Profile</h2>
+                  <p className="ml-panel-subtitle">Adjust patient parameters to evaluate live inference response</p>
                 </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Education (Years)</span>
-                    <span className="ml-slider-val">{formData.yearsOfEducation ?? 12} yrs</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="22"
-                    value={Number(formData.yearsOfEducation ?? 12)}
-                    onChange={(e) => handleChange('yearsOfEducation', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <label className="text-xs text-slate-400">Primary Language</label>
-                  <select
-                    value={String(formData.primaryLanguage ?? 'English')}
-                    onChange={(e) => handleChange('primaryLanguage', e.target.value)}
-                    className="ml-select-input"
-                  >
-                    <option value="English">English</option>
-                    <option value="Hindi">Hindi</option>
-                    <option value="Tamil">Tamil</option>
-                    <option value="Telugu">Telugu</option>
-                    <option value="Kannada">Kannada</option>
-                    <option value="Bengali">Bengali</option>
-                    <option value="Marathi">Marathi</option>
-                  </select>
-                </div>
-
-                <div className="ml-control-field">
-                  <label className="text-xs text-slate-400">Setting</label>
-                  <select
-                    value={String(formData.urbanRural ?? 'Urban')}
-                    onChange={(e) => handleChange('urbanRural', e.target.value)}
-                    className="ml-select-input"
-                  >
-                    <option value="Urban">Urban</option>
-                    <option value="Rural">Rural</option>
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 2. Navigation Assessment */}
-          <div className="ml-module-accordion">
-            <div className="ml-module-header" onClick={() => toggleSection('navigation')}>
-              <span className="font-semibold text-sm text-cyan-300 flex items-center gap-2">
-                <Icon name="navigation" size={16} /> 1. Video Navigation & Spatial Orientation
-              </span>
-              <span className="text-xs text-slate-400">
-                Score: {Math.round(Number(formData.nav_navigationScore ?? 80))}% {expandedSections.navigation ? '▲' : '▼'}
-              </span>
-            </div>
-            {expandedSections.navigation && (
-              <div className="ml-module-body">
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Navigation Composite Score</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.nav_navigationScore ?? 80))}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={Number(formData.nav_navigationScore ?? 80)}
-                    onChange={(e) => handleChange('nav_navigationScore', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Turn Decision Latency</span>
-                    <span className="ml-slider-val">{formData.nav_averageDecisionLatencyMs ?? 2500} ms</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1500"
-                    max="8000"
-                    step="50"
-                    value={Number(formData.nav_averageDecisionLatencyMs ?? 2500)}
-                    onChange={(e) => handleChange('nav_averageDecisionLatencyMs', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Decision Latency Variance</span>
-                    <span className="ml-slider-val">{formData.nav_decisionLatencyVariance ?? 1000} ms²</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="100"
-                    max="6000"
-                    step="100"
-                    value={Number(formData.nav_decisionLatencyVariance ?? 1000)}
-                    onChange={(e) => handleChange('nav_decisionLatencyVariance', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Landmark Recognition</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.nav_landmarkRecognitionAccuracy ?? 0.8) * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.2"
-                    max="1.0"
-                    step="0.05"
-                    value={Number(formData.nav_landmarkRecognitionAccuracy ?? 0.8)}
-                    onChange={(e) => handleChange('nav_landmarkRecognitionAccuracy', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 3. Language & Speech */}
-          <div className="ml-module-accordion">
-            <div className="ml-module-header" onClick={() => toggleSection('language')}>
-              <span className="font-semibold text-sm text-indigo-300 flex items-center gap-2">
-                <Icon name="language" size={16} /> 2. Language & Acoustic Biomarkers
-              </span>
-              <span className="text-xs text-slate-400">
-                CSI: {Math.round(Number(formData.lang_cognitiveSpeechIndex ?? 85))} {expandedSections.language ? '▲' : '▼'}
-              </span>
-            </div>
-            {expandedSections.language && (
-              <div className="ml-module-body">
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Cognitive Speech Index (CSI)</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.lang_cognitiveSpeechIndex ?? 85))}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={Number(formData.lang_cognitiveSpeechIndex ?? 85)}
-                    onChange={(e) => handleChange('lang_cognitiveSpeechIndex', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Hesitation Disfluency Index</span>
-                    <span className="ml-slider-val">{Number(formData.lang_hesitationIndex ?? 0.05).toFixed(2)}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.0"
-                    max="0.5"
-                    step="0.01"
-                    value={Number(formData.lang_hesitationIndex ?? 0.05)}
-                    onChange={(e) => handleChange('lang_hesitationIndex', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Speech Phonation Ratio</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.lang_phonationRatio ?? 0.9) * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="1.0"
-                    step="0.02"
-                    value={Number(formData.lang_phonationRatio ?? 0.9)}
-                    onChange={(e) => handleChange('lang_phonationRatio', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Speaking Rate (WPM)</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.lang_wpm ?? 140))} wpm</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="40"
-                    max="220"
-                    step="5"
-                    value={Number(formData.lang_wpm ?? 140)}
-                    onChange={(e) => handleChange('lang_wpm', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 4. Story Recall */}
-          <div className="ml-module-accordion">
-            <div className="ml-module-header" onClick={() => toggleSection('story')}>
-              <span className="font-semibold text-sm text-purple-300 flex items-center gap-2">
-                <Icon name="story" size={16} /> 3. Story Narration & Auditory Recall
-              </span>
-              <span className="text-xs text-slate-400">
-                Score: {Math.round(Number(formData.story_storyRecallScore ?? 80))} {expandedSections.story ? '▲' : '▼'}
-              </span>
-            </div>
-            {expandedSections.story && (
-              <div className="ml-module-body">
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Story Recall Score (25–100)</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.story_storyRecallScore ?? 80))}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="25"
-                    max="100"
-                    value={Number(formData.story_storyRecallScore ?? 80)}
-                    onChange={(e) => handleChange('story_storyRecallScore', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Information Units Recall Rate</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.story_recallAccuracy ?? 0.8) * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1.0"
-                    step="0.05"
-                    value={Number(formData.story_recallAccuracy ?? 0.8)}
-                    onChange={(e) => handleChange('story_recallAccuracy', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 5. VMRA (Visual Memory Recall) */}
-          <div className="ml-module-accordion">
-            <div className="ml-module-header" onClick={() => toggleSection('vmra')}>
-              <span className="font-semibold text-sm text-emerald-300 flex items-center gap-2">
-                <Icon name="memory" size={16} /> 4. Visual Memory Recall (VMRA)
-              </span>
-              <span className="text-xs text-slate-400">
-                Score: {Math.round(Number(formData.vmra_compositeMemoryScore ?? 85))} {expandedSections.vmra ? '▲' : '▼'}
-              </span>
-            </div>
-            {expandedSections.vmra && (
-              <div className="ml-module-body">
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Composite Memory Score</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.vmra_compositeMemoryScore ?? 85))}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={Number(formData.vmra_compositeMemoryScore ?? 85)}
-                    onChange={(e) => handleChange('vmra_compositeMemoryScore', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Visual Recall Accuracy</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.vmra_recallAccuracy ?? 0.85) * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1.0"
-                    step="0.05"
-                    value={Number(formData.vmra_recallAccuracy ?? 0.85)}
-                    onChange={(e) => handleChange('vmra_recallAccuracy', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 6. SAVT (Attention & Vigilance) */}
-          <div className="ml-module-accordion">
-            <div className="ml-module-header" onClick={() => toggleSection('savt')}>
-              <span className="font-semibold text-sm text-amber-300 flex items-center gap-2">
-                <Icon name="attention" size={16} /> 5. Sustained Attention & Vigilance (SAVT)
-              </span>
-              <span className="text-xs text-slate-400">
-                Score: {Math.round(Number(formData.savt_compositeSAVTScore ?? 88))} {expandedSections.savt ? '▲' : '▼'}
-              </span>
-            </div>
-            {expandedSections.savt && (
-              <div className="ml-module-body">
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>SAVT Composite Score</span>
-                    <span className="ml-slider-val">{Math.round(Number(formData.savt_compositeSAVTScore ?? 88))}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={Number(formData.savt_compositeSAVTScore ?? 88)}
-                    onChange={(e) => handleChange('savt_compositeSAVTScore', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Signal Sensitivity (d')</span>
-                    <span className="ml-slider-val">{Number(formData.savt_dPrime ?? 2.8).toFixed(1)}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.2"
-                    max="4.5"
-                    step="0.1"
-                    value={Number(formData.savt_dPrime ?? 2.8)}
-                    onChange={(e) => handleChange('savt_dPrime', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 7. Pattern & Reaction */}
-          <div className="ml-module-accordion">
-            <div className="ml-module-header" onClick={() => toggleSection('pattern')}>
-              <span className="font-semibold text-sm text-rose-300 flex items-center gap-2">
-                <Icon name="pattern" size={16} /> 6 & 7. Pattern Span & Psychomotor Speed
-              </span>
-              <span className="text-xs text-slate-400">
-                {expandedSections.pattern ? '▲' : '▼'}
-              </span>
-            </div>
-            {expandedSections.pattern && (
-              <div className="ml-module-body">
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Pattern Sequence Span</span>
-                    <span className="ml-slider-val">Level {formData.pat_maxSequenceSpan ?? 6}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="9"
-                    value={Number(formData.pat_maxSequenceSpan ?? 6)}
-                    onChange={(e) => handleChange('pat_maxSequenceSpan', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-
-                <div className="ml-control-field">
-                  <div className="ml-slider-header">
-                    <span>Reaction Time (ms)</span>
-                    <span className="ml-slider-val">{formData.rxn_meanReactionTime ?? 280} ms</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="150"
-                    max="750"
-                    step="10"
-                    value={Number(formData.rxn_meanReactionTime ?? 280)}
-                    onChange={(e) => handleChange('rxn_meanReactionTime', Number(e.target.value))}
-                    className="ml-range-slider"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: Real-Time Prediction Output & Explainability */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-              <Icon name="insight" size={18} className="text-emerald-400" />
-              Real-Time AI Clinical Estimation
-            </h2>
-            {prediction && (
-              <span className="text-xs font-mono text-slate-400">
-                Latency: {prediction.inferenceLatencyMs} ms
-              </span>
-            )}
-          </div>
-
-          {prediction ? (
-            <>
-              {/* Main Classification & Alert Banner */}
-              <div
-                className={`ml-status-hero ${
-                  prediction.predictedDiagnosis === 'Normal'
-                    ? 'status-normal'
-                    : prediction.predictedDiagnosis === 'MCI'
-                    ? 'status-mci'
-                    : 'status-dementia'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs uppercase tracking-wider font-semibold text-slate-300">
-                    Predicted Cognitive Status
-                  </span>
-                  <span
-                    className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                      prediction.predictedRiskLevel === 'Low'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : prediction.predictedRiskLevel === 'Moderate'
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                    }`}
-                  >
-                    {prediction.predictedRiskLevel} Risk
-                  </span>
-                </div>
-
-                <div className="text-3xl font-extrabold text-white tracking-tight my-1">
-                  {prediction.predictedDiagnosis === 'Normal' && 'Normal Healthy Cognition'}
-                  {prediction.predictedDiagnosis === 'MCI' && 'Mild Cognitive Impairment (MCI)'}
-                  {prediction.predictedDiagnosis === 'Dementia' && 'Significant Cognitive Decline'}
-                </div>
-
-                {/* Calibrated Probabilities */}
-                <div className="grid grid-cols-3 gap-2 mt-4 text-xs font-medium">
-                  <div className="bg-black/30 p-2 rounded border border-white/5">
-                    <div className="text-slate-400">Normal</div>
-                    <div className="text-emerald-400 font-bold text-sm">
-                      {(prediction.diagnosisProbabilities.normal * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                  <div className="bg-black/30 p-2 rounded border border-white/5">
-                    <div className="text-slate-400">MCI Stage</div>
-                    <div className="text-amber-400 font-bold text-sm">
-                      {(prediction.diagnosisProbabilities.mci * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                  <div className="bg-black/30 p-2 rounded border border-white/5">
-                    <div className="text-slate-400">Dementia</div>
-                    <div className="text-rose-400 font-bold text-sm">
-                      {(prediction.diagnosisProbabilities.dementia * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4-Tier Clinical Alert Card */}
-                <div className="mt-4 p-3 bg-black/40 rounded-lg border border-white/10 text-left">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-200 mb-1">
-                    <span className="text-base">
-                      {prediction.clinicalAlertTier === 'Stable' && '🟢'}
-                      {prediction.clinicalAlertTier === 'Continue Monitoring' && '🟡'}
-                      {prediction.clinicalAlertTier === 'Recommend Earlier Re-Assessment' && '🟠'}
-                      {prediction.clinicalAlertTier === 'Recommend Clinical Evaluation' && '🔴'}
-                    </span>
-                    Clinical Guidance: {prediction.clinicalAlertTier}
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {prediction.clinicalAlertTier === 'Stable' &&
-                      'Performance consistent with healthy normative baseline. Routine annual check-in suggested.'}
-                    {prediction.clinicalAlertTier === 'Continue Monitoring' &&
-                      'Minor score fluctuations observed within physiological range. Repeat test in 6–8 weeks.'}
-                    {prediction.clinicalAlertTier === 'Recommend Earlier Re-Assessment' &&
-                      'Noticeable variance observed in spatial/memory domains. Recommend re-assessment in 3–4 weeks.'}
-                    {prediction.clinicalAlertTier === 'Recommend Clinical Evaluation' &&
-                      'Marked multi-domain shift detected. Recommend sharing assessment summary with a healthcare provider.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* MoCA Continuous Score & 4 Domains */}
-              <div className="ml-card-panel">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div>
-                    <div className="text-xs text-slate-400 uppercase font-semibold">Continuous MoCA Equivalent</div>
-                    <div className="text-2xl font-black text-white">
-                      {prediction.predictedMoCAScore.toFixed(1)}{' '}
-                      <span className="text-sm font-medium text-slate-400">/ 30.0</span>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-xs text-slate-400 uppercase font-semibold">Multi-Factor Confidence</div>
-                    <div className="text-xl font-extrabold text-cyan-400">
-                      {Math.round(prediction.confidenceScore * 100)}%
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4 Cognitive Domains */}
-                <div className="ml-domain-bars">
-                  <div className="ml-domain-row">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-slate-300">🧠 Episodic Memory</span>
-                      <span className="text-cyan-400">{prediction.domainScores.memory} / 100</span>
-                    </div>
-                    <div className="ml-progress-track">
-                      <div
-                        className="ml-progress-fill bg-gradient-to-r from-cyan-500 to-blue-500"
-                        style={{ width: `${prediction.domainScores.memory}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="ml-domain-row">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-slate-300">🎯 Sustained Attention & Speed</span>
-                      <span className="text-amber-400">{prediction.domainScores.attention} / 100</span>
-                    </div>
-                    <div className="ml-progress-track">
-                      <div
-                        className="ml-progress-fill bg-gradient-to-r from-amber-500 to-orange-500"
-                        style={{ width: `${prediction.domainScores.attention}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="ml-domain-row">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-slate-300">🗣️ Language & Speech Dynamics</span>
-                      <span className="text-indigo-400">{prediction.domainScores.language} / 100</span>
-                    </div>
-                    <div className="ml-progress-track">
-                      <div
-                        className="ml-progress-fill bg-gradient-to-r from-indigo-500 to-purple-500"
-                        style={{ width: `${prediction.domainScores.language}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="ml-domain-row">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-slate-300">🧭 Executive & Visuospatial</span>
-                      <span className="text-emerald-400">{prediction.domainScores.executive} / 100</span>
-                    </div>
-                    <div className="ml-progress-track">
-                      <div
-                        className="ml-progress-fill bg-gradient-to-r from-emerald-500 to-teal-500"
-                        style={{ width: `${prediction.domainScores.executive}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* TreeSHAP Local Biomarker Attributions */}
-              <div className="ml-card-panel">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-                    <Icon name="chart-trend" size={16} className="text-cyan-400" />
-                    Top Contributing Biomarkers (TreeSHAP)
-                  </h3>
-                  <span className="text-[11px] text-slate-400">Directional Impact</span>
-                </div>
-
-                <div className="space-y-1.5">
-                  {prediction.biomarkerAttributions.map((attr, idx) => (
-                    <div
-                      key={idx}
-                      className={`ml-attribution-item ${
-                        attr.direction === 'risk'
-                          ? 'ml-attribution-risk'
-                          : 'ml-attribution-protective'
-                      }`}
+                {/* Domain filter tags */}
+                <div className="ml-domain-filters">
+                  {uniqueDomains.map(d => (
+                    <button
+                      key={d}
+                      className={`ml-domain-filter-btn ${activeDomain === d ? 'active' : ''}`}
+                      onClick={() => setActiveDomain(d)}
                     >
-                      <div>
-                        <div className="font-semibold text-slate-200">{attr.biomarker}</div>
-                        <div className="text-[10px] text-slate-400">{attr.domain}</div>
-                      </div>
-
-                      <div className="text-right">
-                        <span
-                          className={`font-mono font-bold ${
-                            attr.direction === 'risk' ? 'text-rose-400' : 'text-emerald-400'
-                          }`}
-                        >
-                          {attr.direction === 'risk' ? '+' : ''}
-                          {attr.impactValue.toFixed(3)}
-                        </span>
-                        <div className="text-[10px] uppercase font-semibold text-slate-400">
-                          {attr.direction === 'risk' ? 'Risk Factor' : 'Protective'}
-                        </div>
-                      </div>
-                    </div>
+                      {d}
+                    </button>
                   ))}
                 </div>
               </div>
 
-              {/* Raw JSON Payload Toggle */}
-              <div className="ml-card-panel">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-slate-300">
-                    Developer & Clinical Audit Payload
-                  </span>
-                  <button
-                    onClick={() => setShowJsonPayload(!showJsonPayload)}
-                    className="text-xs text-cyan-400 hover:underline font-mono"
-                  >
-                    {showJsonPayload ? 'Hide JSON' : 'Inspect JSON Payload'}
-                  </button>
+              <div className="ml-features-list">
+                {Object.entries(FEATURE_METADATA)
+                  .filter(([_, meta]) => activeDomain === 'All' || meta.domain === activeDomain)
+                  .map(([key, meta]) => {
+                    const featureKey = key as keyof NACCFeatures;
+                    const val = features[featureKey];
+                    return (
+                      <div key={key} className="ml-feature-control">
+                        <div className="ml-feature-meta">
+                          <div className="ml-feature-label-group">
+                            <span className="ml-feature-name">{meta.label}</span>
+                            <span className="ml-feature-code">({key})</span>
+                          </div>
+                          <div className="ml-feature-val-badge">
+                            {val} {meta.unit}
+                          </div>
+                        </div>
+                        <input
+                          type="range"
+                          min={meta.min}
+                          max={meta.max}
+                          step={meta.step}
+                          value={val}
+                          onChange={(e) => handleFeatureChange(featureKey, parseFloat(e.target.value))}
+                          className="ml-slider-input"
+                        />
+                        <div className="ml-feature-hint">
+                          <span>{meta.desc}</span>
+                          <span>Range: {meta.min} - {meta.max} {meta.unit}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          ) : (
+            /* Longitudinal Simulation Controls */
+            <div className="ml-card-panel">
+              <div className="ml-panel-header">
+                <div>
+                  <h2 className="ml-panel-title">Longitudinal Drift Test Controls</h2>
+                  <p className="ml-panel-subtitle">Configure multi-session intervals to test Theil-Sen slope & RCI</p>
+                </div>
+              </div>
+
+              <div className="ml-sim-controls-grid">
+                <div className="ml-control-group">
+                  <label className="ml-control-label">Total Visits / Sessions: {simSessionsCount}</label>
+                  <input
+                    type="range"
+                    min={2}
+                    max={8}
+                    step={1}
+                    value={simSessionsCount}
+                    onChange={(e) => setSimSessionsCount(parseInt(e.target.value))}
+                    className="ml-slider-input"
+                  />
+                  <span className="ml-control-desc">Interval: 6 months between visits</span>
                 </div>
 
-                {showJsonPayload && (
-                  <pre className="ml-code-box">
-                    {JSON.stringify(prediction, null, 2)}
-                  </pre>
-                )}
+                <div className="ml-control-group">
+                  <label className="ml-control-label">Cognitive Decline Rate: -{simDeclineRate} pts / month</label>
+                  <input
+                    type="range"
+                    min={0.0}
+                    max={4.0}
+                    step={0.1}
+                    value={simDeclineRate}
+                    onChange={(e) => setSimDeclineRate(parseFloat(e.target.value))}
+                    className="ml-slider-input"
+                  />
+                  <span className="ml-control-desc">Slope parameter for Theil-Sen estimator</span>
+                </div>
+
+                <div className="ml-control-group">
+                  <label className="ml-control-label">Test-Retest Physiological Noise: ±{simNoise} pts</label>
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={8.0}
+                    step={0.5}
+                    value={simNoise}
+                    onChange={(e) => setSimNoise(parseFloat(e.target.value))}
+                    className="ml-slider-input"
+                  />
+                  <span className="ml-control-desc">Simulates transient fatigue or sleep fluctuations</span>
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="ml-card-panel text-center py-12">
-              <div className="inline-block w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3"></div>
-              <div className="text-sm font-semibold text-slate-300">Loading AI Model Bundle...</div>
+
+              <div className="ml-sim-sessions-preview">
+                <h3 className="ml-subheading">Generated Multi-Session History</h3>
+                <div className="ml-sessions-table-wrapper">
+                  <table className="ml-sessions-table">
+                    <thead>
+                      <tr>
+                        <th>Visit</th>
+                        <th>Composite Score</th>
+                        <th>Memory</th>
+                        <th>Executive</th>
+                        <th>Language</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {simulatedTrajectoryPoints.map((s, idx) => (
+                        <tr key={idx}>
+                          <td>Visit {idx + 1} (M+{idx * 6})</td>
+                          <td className="ml-table-bold">{s.score}/100</td>
+                          <td>{s.domainScores?.memory ?? '-'}</td>
+                          <td>{s.domainScores?.executive ?? '-'}</td>
+                          <td>{s.domainScores?.language ?? '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
-        </div>
+        </section>
+
+        {/* RIGHT COLUMN: Inference Diagnostic Output */}
+        <section className="ml-right-panel">
+          
+          {/* Main Status Hero */}
+          <div className={`ml-status-hero ${
+            predictedClass === 0 ? 'status-normal' : predictedClass === 1 ? 'status-mci' : 'status-dementia'
+          }`}>
+            <div className="ml-status-badge-row">
+              <span className="ml-status-tag">
+                {predictedClass === 0 ? '🟢 Stage 0: Normal' : predictedClass === 1 ? '🟠 Stage 1: MCI' : '🔴 Stage 2: Dementia'}
+              </span>
+              <span className="ml-latency-tag">
+                ⚡ Inference Latency: {inferenceLatencyMs} ms
+              </span>
+            </div>
+
+            <h2 className="ml-diagnosis-title">
+              {predictedClass === 0 && 'Normal Cognition'}
+              {predictedClass === 1 && 'Mild Cognitive Impairment (MCI)'}
+              {predictedClass === 2 && 'Probable Dementia'}
+            </h2>
+            <p className="ml-diagnosis-desc">
+              {predictedClass === 0 && 'Biomarker parameters align with healthy age-matched population baselines.'}
+              {predictedClass === 1 && 'Measurable domain-specific decline exceeding expected normal test-retest variance.'}
+              {predictedClass === 2 && 'Significant multi-domain impairment across memory, executive speed, and orientation.'}
+            </p>
+
+            {/* Probability Bars */}
+            <div className="ml-probabilities-container">
+              <div className="ml-prob-row">
+                <div className="ml-prob-header">
+                  <span>Normal Cognition</span>
+                  <span className="ml-prob-val">{(probabilities[0] * 100).toFixed(1)}%</span>
+                </div>
+                <div className="ml-progress-track">
+                  <div className="ml-progress-fill prob-normal" style={{ width: `${probabilities[0] * 100}%` }} />
+                </div>
+              </div>
+
+              <div className="ml-prob-row">
+                <div className="ml-prob-header">
+                  <span>Mild Cognitive Impairment (MCI)</span>
+                  <span className="ml-prob-val">{(probabilities[1] * 100).toFixed(1)}%</span>
+                </div>
+                <div className="ml-progress-track">
+                  <div className="ml-progress-fill prob-mci" style={{ width: `${probabilities[1] * 100}%` }} />
+                </div>
+              </div>
+
+              <div className="ml-prob-row">
+                <div className="ml-prob-header">
+                  <span>Dementia Phenotype</span>
+                  <span className="ml-prob-val">{(probabilities[2] * 100).toFixed(1)}%</span>
+                </div>
+                <div className="ml-progress-track">
+                  <div className="ml-progress-fill prob-dementia" style={{ width: `${probabilities[2] * 100}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Clinical Metrics & Estimated MoCA */}
+          <div className="ml-metrics-cards-grid">
+            <div className="ml-metric-card">
+              <div className="ml-metric-icon">
+                <Icon name="assess" size={20} />
+              </div>
+              <div className="ml-metric-info">
+                <span className="ml-metric-label">Estimated Continuous MoCA</span>
+                <span className="ml-metric-value">{estimatedMoCA} <span className="ml-metric-denom">/ 30</span></span>
+                <span className="ml-metric-status">
+                  {estimatedMoCA >= 26 ? '🟢 Normal (≥26)' : estimatedMoCA >= 18 ? '🟠 Mild Impairment' : '🔴 Severe Impairment'}
+                </span>
+              </div>
+            </div>
+
+            <div className="ml-metric-card">
+              <div className="ml-metric-icon">
+                <Icon name="shield-check" size={20} />
+              </div>
+              <div className="ml-metric-info">
+                <span className="ml-metric-label">Clinical Alert Tier</span>
+                <span className="ml-metric-value alert-badge" style={{ color: clinicalAlert.colorCode === 'RED' ? '#ef4444' : clinicalAlert.colorCode === 'ORANGE' ? '#f59e0b' : '#10b981' }}>
+                  {clinicalAlert.alertLevel}
+                </span>
+                <span className="ml-metric-status">
+                  Confidence: {clinicalAlert.confidenceScore.toFixed(0)}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Longitudinal Drift Results (when on longitudinal tab) */}
+          {activeTab === 'longitudinal' && (
+            <div className="ml-card-panel ml-longitudinal-panel">
+              <h3 className="ml-panel-title">Biostatistical Drift Engine Analysis</h3>
+              <div className="ml-drift-results-grid">
+                <div className="ml-drift-stat">
+                  <span className="ml-stat-title">Theil-Sen Slope (β)</span>
+                  <span className="ml-stat-value">{simulatedEvaluation.trajectory.theilSenSlopePerMonth.toFixed(2)} pts/mo</span>
+                  <span className="ml-stat-note">Median pairwise slope</span>
+                </div>
+                <div className="ml-drift-stat">
+                  <span className="ml-stat-title">Reliable Change Index</span>
+                  <span className="ml-stat-value">{simulatedEvaluation.trajectory.rci.toFixed(2)} σ</span>
+                  <span className="ml-stat-note">SEM-corrected test-retest threshold</span>
+                </div>
+                <div className="ml-drift-stat">
+                  <span className="ml-stat-title">Longitudinal Trajectory</span>
+                  <span className="ml-stat-value trajectory-badge">
+                    {simulatedEvaluation.trajectory.tier}
+                  </span>
+                  <span className="ml-stat-note">{simulatedEvaluation.trajectory.actionGuidance}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Feature Importance & Explainability */}
+          <div className="ml-card-panel">
+            <div className="ml-panel-header">
+              <h3 className="ml-panel-title">Top Clinically Plausible Biomarker Drivers</h3>
+            </div>
+            <div className="ml-explainability-list">
+              <div className="ml-driver-item">
+                <div className="ml-driver-info">
+                  <span className="ml-driver-rank">#1</span>
+                  <div>
+                    <span className="ml-driver-name">Orientation to Time & Place (ORIENT)</span>
+                    <span className="ml-driver-domain">Visuospatial / Orientation</span>
+                  </div>
+                </div>
+                <span className="ml-driver-weight">76.9% Model Weight</span>
+              </div>
+
+              <div className="ml-driver-item">
+                <div className="ml-driver-info">
+                  <span className="ml-driver-rank">#2</span>
+                  <div>
+                    <span className="ml-driver-name">Vegetable Category Fluency (VEG)</span>
+                    <span className="ml-driver-domain">Semantic Language</span>
+                  </div>
+                </div>
+                <span className="ml-driver-weight">4.4% Model Weight</span>
+              </div>
+
+              <div className="ml-driver-item">
+                <div className="ml-driver-info">
+                  <span className="ml-driver-rank">#3</span>
+                  <div>
+                    <span className="ml-driver-name">Animal Category Fluency (ANIMALS)</span>
+                    <span className="ml-driver-domain">Semantic Language</span>
+                  </div>
+                </div>
+                <span className="ml-driver-weight">3.9% Model Weight</span>
+              </div>
+
+              <div className="ml-driver-item">
+                <div className="ml-driver-info">
+                  <span className="ml-driver-rank">#4</span>
+                  <div>
+                    <span className="ml-driver-name">Trail Making Test B (TRAILB)</span>
+                    <span className="ml-driver-domain">Executive / Task Switching</span>
+                  </div>
+                </div>
+                <span className="ml-driver-weight">2.9% Model Weight</span>
+              </div>
+
+              <div className="ml-driver-item">
+                <div className="ml-driver-info">
+                  <span className="ml-driver-rank">#5</span>
+                  <div>
+                    <span className="ml-driver-name">Craft Story Delayed Recall (CRAFTDVR)</span>
+                    <span className="ml-driver-domain">Episodic Memory</span>
+                  </div>
+                </div>
+                <span className="ml-driver-weight">2.8% Model Weight</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Raw ONNX Tensor Inspector */}
+          <div className="ml-card-panel">
+            <details className="ml-raw-inspector">
+              <summary className="ml-inspector-summary">
+                <Icon name="brain-circuit" size={16} />
+                Inspect Raw ONNX Tensor Vector (19-D)
+              </summary>
+              <div className="ml-tensor-code">
+                <pre>
+{JSON.stringify({
+  model: "XGBoost 3-Class Classifier (ONNX WASM)",
+  input_tensor_shape: [1, 19],
+  raw_features: features,
+  runtime_probabilities: {
+    normal: probabilities[0],
+    mci: probabilities[1],
+    dementia: probabilities[2]
+  },
+  predicted_class: predictedClass,
+  inference_latency_ms: inferenceLatencyMs
+}, null, 2)}
+                </pre>
+              </div>
+            </details>
+          </div>
+
+        </section>
+
       </main>
     </div>
   );

@@ -6,9 +6,9 @@ This document defines the strict workflow for advancing **VyomFlow** using 5-com
 
 ## 📌 Current Tracking State
 
-- **Current CogniTrack Base Commit:** `c74aa01d4e8711696560d389f6aa3d71558094b9` (`c74aa01`)
-- **Date:** `2026-08-22`
-- **Message:** `feat(navigation): map arrowpad, WASD, numpad, and touch swipe controls for direction decisions`
+- **Current CogniTrack Base Commit:** `a7881d7c98d583f6df52af8bdc847f8eae529ed0` (`a7881d7`)
+- **Date:** `2026-08-25`
+- **Message:** `feat(ml): implement high-fidelity multi-biomarker mapping for 19 NACC features with real demographics`
 - **Target VyomFlow Remote:** `https://github.com/Shairaz15/VyomFlow.git` (`origin/main`)
 
 ---

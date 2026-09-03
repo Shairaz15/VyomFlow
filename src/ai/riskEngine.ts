@@ -148,7 +148,7 @@ export function computeRisk(
         // Add ML factors
         if (mlResult.domainContributions) {
             Object.entries(mlResult.domainContributions)
-                .sort(([, a], [, b]) => b - a)
+                .sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0))
                 .slice(0, 1) // Top ML factor
                 .forEach(([domain]) => {
                     if (!factors.includes(`${domain} (ML detected)`)) {

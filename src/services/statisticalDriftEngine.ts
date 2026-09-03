@@ -110,6 +110,8 @@ export interface LongitudinalSessionPoint {
     domainScores?: Record<string, number>;
 }
 
+export type SessionPoint = LongitudinalSessionPoint;
+
 export interface LongitudinalEvaluation {
     trajectory: TrajectoryClassification;
     sessionCount: number;

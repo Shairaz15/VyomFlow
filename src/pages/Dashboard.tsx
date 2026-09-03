@@ -236,8 +236,19 @@ export function Dashboard() {
                         driftMetrics = evaluateLongitudinalDrift(sessions, 10);
                     }
 
-                    // Cross-sectional risk requires all raw data to extract features
-                    const crossRisk = await evaluateCrossSectionalRisk(rawData);
+                    // Read demographics from local storage profile if available
+                    let demographics = undefined;
+                    try {
+                        const saved = localStorage.getItem('vyomflow_user_profile');
+                        if (saved) {
+                            demographics = JSON.parse(saved);
+                        }
+                    } catch {
+                        // ignore and use normative defaults
+                    }
+
+                    // Cross-sectional risk with full 19-feature NACC biomarker extraction
+                    const crossRisk = await evaluateCrossSectionalRisk(rawData, demographics);
                     const impairmentRisk = 1 - crossRisk[0]; // 1 - Normal probability
                     
                     // Alert engine takes longitudinal trajectory + cross-sectional risk

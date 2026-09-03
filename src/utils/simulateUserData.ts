@@ -221,8 +221,6 @@ export function simulateLanguageResults(
             transcript: "Simulated transcript for demonstration purposes.",
             rawMetrics: {
                 wordCount: Math.round(wpm * (baseline.rawMetrics.speechDuration / 60000)),
-                totalWords: Math.round(wpm * (baseline.rawMetrics.speechDuration / 60000)),
-                correctWords: Math.round(wpm * (baseline.rawMetrics.speechDuration / 60000) * (pattern === "declining" ? 0.6 : 0.95)),
                 speechDuration: baseline.rawMetrics.speechDuration,
                 pauseCount: pattern === "declining" ? baseline.rawMetrics.pauseCount + i * 2 : baseline.rawMetrics.pauseCount,
                 pauseDurationAvg: pattern === "declining" ? baseline.rawMetrics.pauseDurationAvg + i * 100 : baseline.rawMetrics.pauseDurationAvg,
@@ -285,7 +283,6 @@ export function simulateVmraResults(
             features: {
                 ...baseline.features,
                 recallAccuracy: accuracy,
-                accuracy: accuracy,
                 netRecallScore: correctHits - (pattern === "declining" ? i + 1 : 0),
             },
             profile: {
@@ -316,6 +313,7 @@ export function simulateStoryResults(
         const modifier = getTrendModifier(i + 1, pattern);
         const accuracy = Math.max(0.1, Math.min(1, baseline.biomarkers.memory.recallAccuracy + modifier));
         results.push({
+            ...baseline,
             id: `sim-story-${Date.now()}-${i}`,
             sessionId: `sim-session-${Date.now()}-${i}`,
             timestamp: daysFromNow(7, i * 7),
