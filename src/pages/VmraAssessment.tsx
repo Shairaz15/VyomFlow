@@ -465,10 +465,6 @@ export function VmraAssessment() {
     // ─── Render image / SVG icon for a stimulus item ─────────────────
 
     const renderIcon = (image: ImageStimulus, size: number = 80) => {
-        const IconComponent = image.svgComponent ? VMRA_ICON_MAP[image.svgComponent] : undefined;
-        if (IconComponent) {
-            return <IconComponent size={size} />;
-        }
         if (image.imageSrc) {
             return (
                 <img
@@ -478,10 +474,21 @@ export function VmraAssessment() {
                     style={{ maxWidth: `${size}px`, maxHeight: `${size}px` }}
                     loading="eager"
                     draggable={false}
+                    onError={(e) => {
+                        // Fallback to SVG if image fails to load
+                        (e.target as HTMLElement).style.display = 'none';
+                        const parent = (e.target as HTMLElement).parentElement;
+                        if (parent) {
+                            const fallback = parent.querySelector('.vmra-svg-fallback');
+                            if (fallback) (fallback as HTMLElement).style.display = 'block';
+                        }
+                    }}
                 />
             );
         }
-        return <div className="vmra-icon-placeholder">?</div>;
+        const IconComponent = image.svgComponent ? VMRA_ICON_MAP[image.svgComponent] : undefined;
+        if (!IconComponent) return <div className="vmra-icon-placeholder">?</div>;
+        return <IconComponent size={size} />;
     };    // ─── Render Phase ─────────────────────────────────────────────
 
     const renderPhase = () => {

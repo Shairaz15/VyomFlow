@@ -42,6 +42,7 @@ CLAUDE.md
 graphify-out/
 WORKFLOW_INSTRUCTIONS.md
 workflow_instruction.md
+vyom_images/
 
 # Environment variables
 .env
