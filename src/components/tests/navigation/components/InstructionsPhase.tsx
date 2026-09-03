@@ -24,7 +24,7 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
             num: "03",
             icon: "reaction" as const,
             title: "Navigate in Reverse (B → A)",
-            description: "Watch video clips retracing the route backwards. At each of the 8 intersections, choose whether to go Straight, turn Left, turn Right, or go Back.",
+            description: "Watch the video retracing the route. At each of the 8 decision points, use your laptop arrowpad (↑, ←, →, ↓) or tap the touch buttons to choose your direction.",
             badge: "Phase 3",
         },
         {

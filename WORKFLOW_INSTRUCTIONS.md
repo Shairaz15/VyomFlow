@@ -6,9 +6,9 @@ This document defines the strict workflow for advancing **VyomFlow** using 5-com
 
 ## 📌 Current Tracking State
 
-- **Current CogniTrack Base Commit:** `1c67559bb2525059a19243b64ad60bfef448b03b` (`1c67559`)
-- **Date:** `2026-08-20`
-- **Message:** `fix(build): resolve unused local and state compilation errors in SeamlessReverseNavigator`
+- **Current CogniTrack Base Commit:** `c74aa01d4e8711696560d389f6aa3d71558094b9` (`c74aa01`)
+- **Date:** `2026-08-22`
+- **Message:** `feat(navigation): map arrowpad, WASD, numpad, and touch swipe controls for direction decisions`
 - **Target VyomFlow Remote:** `https://github.com/Shairaz15/VyomFlow.git` (`origin/main`)
 
 ---

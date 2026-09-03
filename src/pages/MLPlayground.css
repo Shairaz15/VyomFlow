@@ -1,0 +1,285 @@
+/* VyomFlow ML Model Playground & Interactive Tester Styles */
+
+.ml-playground-container {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 0%, #0d1527 0%, #060913 100%);
+  color: #f1f5f9;
+  font-family: inherit;
+  padding-bottom: 4rem;
+}
+
+.ml-hero-header {
+  position: relative;
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.08) 0%, rgba(0, 0, 0, 0) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2.5rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.ml-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  color: #38bdf8;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.ml-presets-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.ml-preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.5rem;
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.ml-preset-btn:hover {
+  background: rgba(51, 65, 85, 0.9);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.ml-preset-btn.active {
+  background: rgba(14, 165, 233, 0.2);
+  border-color: #0ea5e9;
+  color: #38bdf8;
+  box-shadow: 0 0 15px rgba(14, 165, 233, 0.25);
+}
+
+.ml-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 2rem auto 0;
+  padding: 0 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .ml-grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ml-card-panel {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.ml-module-accordion {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.ml-module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.ml-module-header:hover {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.ml-module-body {
+  padding: 1.1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 640px) {
+  .ml-module-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ml-control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ml-slider-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.785rem;
+  color: #94a3b8;
+}
+
+.ml-slider-val {
+  font-family: monospace;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.ml-range-slider {
+  width: 100%;
+  accent-color: #0ea5e9;
+  cursor: pointer;
+  height: 6px;
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+.ml-select-input,
+.ml-text-input {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.825rem;
+}
+
+.ml-select-input:focus,
+.ml-text-input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+/* Prediction Output Cards */
+
+.ml-status-hero {
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.ml-status-hero.status-normal {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.3) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.ml-status-hero.status-mci {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(120, 53, 15, 0.3) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.ml-status-hero.status-dementia {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(127, 29, 29, 0.4) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.ml-moca-meter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 1.25rem 0;
+}
+
+.ml-moca-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  border: 4px solid;
+}
+
+.ml-domain-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.ml-domain-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ml-progress-track {
+  width: 100%;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ml-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* SHAP Feature Attribution items */
+
+.ml-attribution-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.4rem;
+  background: rgba(30, 41, 59, 0.4);
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
+}
+
+.ml-attribution-risk {
+  border-left: 3px solid #ef4444;
+}
+
+.ml-attribution-protective {
+  border-left: 3px solid #10b981;
+}
+
+.ml-code-box {
+  background: #090d16;
+  border: 1px solid #1e293b;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  max-height: 250px;
+  overflow-y: auto;
+}

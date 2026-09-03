@@ -14,17 +14,18 @@ import { useAuth } from "../contexts/AuthContext";
 import { useReactionResults, useMemoryResults, usePatternResults, useLanguageResults, useVmraResults, useStoryResults, useNavigationResults, clearAllTestData } from "../hooks/useTestResults";
 import { generateSimulatedData, hasBaseline, getMockBaseline } from "../utils/simulateUserData";
 import { useWeeklyReminder } from "../hooks/useWeeklyReminder";
-import { predictTrend } from "../ml";
-import type { TrendPrediction } from "../ml";
+import { evaluateLongitudinalDrift } from "../services/statisticalDriftEngine";
+import { generateClinicalAlert } from "../services/clinicalAlertEngine";
+import { evaluateCrossSectionalRisk } from "../services/clinicalModelEngine";
+import { mapToSessionData, type RawDashboardData } from "../services/dataMapper";
 import { logger } from "../utils/logger";
 import { useLanguage } from "../i18n/LanguageContext";
+import { ClinicalAlertCard } from "../components/dashboard/ClinicalAlertCard";
+import { LongitudinalTrajectoryCard } from "../components/dashboard/LongitudinalTrajectoryCard";
+import { ClinicianReportModal } from "../components/dashboard/ClinicianReportModal";
+import { evaluatePatientTrajectory } from "../services/statisticalDriftEngine";
+import { determineClinicalAlert } from "../services/clinicalAlertService";
 import "./Dashboard.css";
-
-// ... inside Dashboard component ...
-
-
-
-
 
 export function Dashboard() {
     // Load test results (all from hooks — hooks handle Firestore vs localStorage)
@@ -33,8 +34,8 @@ export function Dashboard() {
     const { results: patternResults, saveResult: savePattern } = usePatternResults();
     const { results: languageResults, saveResult: saveLanguage } = useLanguageResults();
     const { results: vmraResults, saveResult: saveVmra } = useVmraResults();
-    const { results: storyResults } = useStoryResults();
-    const { results: navigationResults } = useNavigationResults();
+    const { results: storyResults, saveResult: saveStory } = useStoryResults();
+    const { results: navigationResults, saveResult: saveNavigation } = useNavigationResults();
 
     // Weekly Reminder Hook
     useWeeklyReminder();
@@ -43,8 +44,9 @@ export function Dashboard() {
     useAuth();
     const { t } = useLanguage();
 
-    // ML Prediction State
-    const [mlPrediction, setMlPrediction] = useState<TrendPrediction | null>(null);
+    // Clinical Alert & Modal State
+    const [clinicalAlert, setClinicalAlert] = useState<any>(null);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     // Simulation Controls Toggle
     const [showSimControls, setShowSimControls] = useState(false);
@@ -73,6 +75,9 @@ export function Dashboard() {
             if (simulated.pattern.length > 0) simulated.pattern.forEach(r => savePattern(r));
             if (simulated.language.length > 0) simulated.language.forEach(r => saveLanguage(r));
             if (simulated.vmra.length > 0) simulated.vmra.forEach(r => saveVmra(r));
+            if (simulated.story.length > 0) simulated.story.forEach(r => saveStory(r));
+            if (simulated.navigation.length > 0) simulated.navigation.forEach(r => saveNavigation(r));
+            setTimeout(refreshData, 150);
         } catch (error) {
             logger.error("Failed to save mock data:", error);
             alert(t('dashboard.mockFailed'));
@@ -87,6 +92,8 @@ export function Dashboard() {
             pattern: patternResults.length > 0 ? patternResults[patternResults.length - 1] : undefined,
             language: languageResults.length > 0 ? languageResults[languageResults.length - 1] : undefined,
             vmra: vmraResults.length > 0 ? vmraResults[vmraResults.length - 1] : undefined,
+            story: storyResults.length > 0 ? storyResults[storyResults.length - 1] : undefined,
+            navigation: navigationResults.length > 0 ? navigationResults[navigationResults.length - 1] : undefined,
         };
 
         if (!hasBaseline(baseline)) {
@@ -102,6 +109,9 @@ export function Dashboard() {
             if (simulated.pattern.length > 0) simulated.pattern.forEach(r => savePattern(r));
             if (simulated.language.length > 0) simulated.language.forEach(r => saveLanguage(r));
             if (simulated.vmra.length > 0) simulated.vmra.forEach(r => saveVmra(r));
+            if (simulated.story.length > 0) simulated.story.forEach(r => saveStory(r));
+            if (simulated.navigation.length > 0) simulated.navigation.forEach(r => saveNavigation(r));
+            setTimeout(refreshData, 150);
         } catch (error) {
             logger.error("Failed to save simulated data:", error);
             alert(t('dashboard.simFailed'));
@@ -150,42 +160,113 @@ export function Dashboard() {
         });
     }, [reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults, navigationResults]);
 
-    // Fetch ML Prediction when enough data
+    // Prepare session points for statistical drift engine
+    const sessionPoints = useMemo(() => {
+        return chartData.map((session, index) => {
+            const timestamp = new Date().getTime() - (chartData.length - index - 1) * 14 * 24 * 60 * 60 * 1000;
+            const memoryVal = session.vmra ?? session.memory ?? 80;
+            const navVal = session.navigation ?? 80;
+            const langVal = session.csi ?? 85;
+            const attnVal = session.reaction ? Math.min(100, Math.max(0, 100 - (session.reaction - 250) / 4)) : 85;
+            const compositeScore = Math.round(memoryVal * 0.3 + navVal * 0.25 + langVal * 0.25 + attnVal * 0.2);
+
+            return {
+                timestamp,
+                score: compositeScore,
+                domainScores: {
+                    memory: memoryVal,
+                    navigation: navVal,
+                    language: langVal,
+                    attention: attnVal,
+                }
+            };
+        });
+    }, [chartData]);
+
+    const evaluation = useMemo(() => {
+        return evaluatePatientTrajectory(sessionPoints);
+    }, [sessionPoints]);
+
+    const latestSession = chartData.length > 0 ? chartData[chartData.length - 1] : null;
+
+    const latestScores = useMemo(() => ({
+        memory: latestSession?.vmra ?? latestSession?.memory ?? 85,
+        navigation: latestSession?.navigation ?? 82,
+        language: latestSession?.csi ?? 86,
+        story: latestSession?.storyRecall ?? 80,
+        reaction: latestSession?.reaction ?? 280,
+        pattern: latestSession?.pattern ?? 75,
+        savt: latestSession?.reaction ? Math.min(100, Math.max(0, Math.round(100 - (latestSession.reaction - 250) / 4))) : 88,
+    }), [latestSession]);
+
+    const alertContext = useMemo(() => ({
+        completedModulesCount: Math.min(6, (reactionResults.length > 0 ? 1 : 0) + (vmraResults.length > 0 || memoryResults.length > 0 ? 1 : 0) + (languageResults.length > 0 ? 1 : 0) + (navigationResults.length > 0 ? 1 : 0) + (storyResults.length > 0 ? 1 : 0) + (patternResults.length > 0 ? 1 : 0)),
+        sessionHistoryCount: chartData.length || 1,
+        estimatedMoCA: latestScores.memory ? Math.round((latestScores.memory / 100) * 30 * 10) / 10 : 28.5,
+        trajectory: evaluation.trajectory,
+        predictionProbabilities: clinicalAlert?.crossSectionalRisk ? {
+            normal: clinicalAlert.crossSectionalRisk[0],
+            mci: clinicalAlert.crossSectionalRisk[1],
+            dementia: clinicalAlert.crossSectionalRisk[2]
+        } : undefined
+    }), [reactionResults, vmraResults, memoryResults, languageResults, navigationResults, storyResults, patternResults, chartData, latestScores, evaluation, clinicalAlert]);
+
+    const alertDecision = useMemo(() => determineClinicalAlert(alertContext), [alertContext]);
+
+    // Fetch Clinical Engine Output (Cross-sectional ONNX + Longitudinal drift)
     useEffect(() => {
         let mounted = true;
-        async function fetchML() {
-            if (chartData.length >= 3) {
-                // Build features for ML model
-                const dataPoints = chartData.map((session, index) => {
-                    const langResult = languageResults[index] || languageResults[languageResults.length - 1];
-                    return {
-                        timestamp: new Date().getTime() - (chartData.length - index - 1) * 7 * 24 * 60 * 60 * 1000,
-                        features: {
-                            memoryAccuracy: (session.memory || 70) / 100,
-                            reactionTimeAvg: session.reaction || 350,
-                            reactionTimeVariance: 500,
-                            patternScore: session.pattern || 50,
-                            speechWPM: session.speech || 120,
-                            lexicalDiversity: langResult?.derivedFeatures?.lexicalDiversity ?? 0.6,
-                            fillerWordRatio: langResult?.derivedFeatures?.hesitationIndex ?? 0.05,
-                            hesitationMarkers: langResult?.rawMetrics?.pauseCount ?? 2,
-                        }
-                    };
-                });
+        async function fetchClinicalAlert() {
+            if (chartData.length >= 1) { 
+                const rawData: RawDashboardData = {
+                    reaction: reactionResults,
+                    memory: memoryResults,
+                    pattern: patternResults,
+                    language: languageResults,
+                    vmra: vmraResults,
+                    story: storyResults,
+                    navigation: navigationResults
+                };
 
+                const sessions = mapToSessionData(rawData);
+                
                 try {
-                    const pred = await predictTrend(dataPoints);
+                    let driftMetrics = null;
+                    if (sessions.length >= 2) {
+                        driftMetrics = evaluateLongitudinalDrift(sessions, 10);
+                    }
+
+                    // Cross-sectional risk requires all raw data to extract features
+                    const crossRisk = await evaluateCrossSectionalRisk(rawData);
+                    const impairmentRisk = 1 - crossRisk[0]; // 1 - Normal probability
+                    
+                    // Alert engine takes longitudinal trajectory + cross-sectional risk
+                    const alertOutput = generateClinicalAlert(
+                        driftMetrics ? driftMetrics.overallTrajectory : 'STABLE',
+                        impairmentRisk,
+                        { 
+                            density: 100, 
+                            completeness: 100, 
+                            oodDistance: 100, 
+                            uncertainty: 100, 
+                            history: sessions.length >= 3 ? 100 : (sessions.length === 2 ? 60 : 30)
+                        }
+                    );
+
+                    // Attach for UI rendering
+                    (alertOutput as any).crossSectionalRisk = crossRisk;
+
                     if (mounted) {
-                        setMlPrediction(pred);
+                        setClinicalAlert(alertOutput);
                     }
                 } catch (err) {
-                    logger.error('Error in predictTrend:', err);
+                    logger.error('Error in clinical engines:', err);
                 }
             } else {
-                if (mounted) setMlPrediction(null);
+                if (mounted) setClinicalAlert(null);
             }
         }
-        fetchML();
+        fetchClinicalAlert();
         return () => { mounted = false; };
     }, [chartData]);
 
@@ -209,13 +290,13 @@ export function Dashboard() {
                                 formatter={(value) => [String(value ?? '') + unit, title]}
                             />
                             <Line
-                                connectNulls
                                 type="monotone"
                                 dataKey={dataKey}
                                 stroke={color}
                                 strokeWidth={2}
-                                dot={{ fill: color }}
+                                dot={{ fill: color, r: 4 }}
                                 activeDot={{ r: 6 }}
+                                connectNulls
                             />
                         </LineChart>
                     </ResponsiveContainer>
@@ -226,37 +307,43 @@ export function Dashboard() {
 
     return (
         <PageWrapper>
-            <div className="dashboard container">
+            <div className="dashboard-container">
+                {/* Header */}
                 <div className="dashboard-header">
-                    <div>
+                    <div className="header-left">
                         <h1>{t('dashboard.title')}</h1>
-                        <p className="text-secondary">
-                            {t('dashboard.subtitle')}
-                        </p>
+                        <p>{t('dashboard.subtitle')}</p>
                     </div>
-                    <div className="dashboard-header-actions">
-                        <button
-                            className={`mode-toggle ${showSimControls ? 'demo-active' : ''}`}
-                            onClick={() => setShowSimControls(prev => !prev)}
-                            title="Toggle demo data simulation controls"
+                    <div className="header-actions">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowSimControls(!showSimControls)}
+                            className="sim-toggle-btn"
+                            title={t('dashboard.toggleSimControls')}
                         >
-                            <Icon name="chart-trend" size={14} />
-                            {' '}{showSimControls ? t('dashboard.hideSimControls') : t('dashboard.showSimControls')}
-                        </button>
-                        <Button variant="primary" onClick={() => window.location.href = "/tests"}>
-                            {t('dashboard.takeNewAssessment')}
+                            <Icon name="chart-trend" size={18} />
+                            {showSimControls ? t('dashboard.hideSimControls') : t('dashboard.showSimControls')}
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={() => window.location.href = "/"}
+                        >
+                            {t('dashboard.takeAssessment')}
                         </Button>
                     </div>
                 </div>
 
-                {/* Simulation Controls - Toggle for anyone */}
+                {/* Simulation Controls Card */}
                 {showSimControls && (
-                    <Card className="simulation-controls">
+                    <Card className="simulation-controls-card animate-fadeIn">
                         <CardHeader
-                            title={t('dashboard.dataControlsTitle')}
-                            subtitle={t('dashboard.dataControlsSubtitle')}
+                            title={t('dashboard.demoSimulation')}
+                            subtitle={t('dashboard.demoSimulationSub')}
                         />
                         <CardContent>
+                            <div className="simulation-section-label">
+                                <span>{t('dashboard.basedOnBaseline')}</span>
+                            </div>
                             <div className="simulation-buttons">
                                 <Button
                                     variant="secondary"
@@ -284,12 +371,14 @@ export function Dashboard() {
                                 </Button>
                             </div>
 
-                            <div className="simulation-buttons mt-4 pt-4 border-t border-white/10">
-                                <h4 className="text-sm font-medium text-secondary mb-2 w-full">{t('dashboard.mockNoBaseline')}</h4>
+                            <div className="simulation-section-label" style={{ marginTop: '1rem' }}>
+                                <span>{t('dashboard.withoutBaseline')}</span>
+                            </div>
+                            <div className="simulation-buttons">
                                 <Button
                                     variant="secondary"
                                     onClick={() => handleMockData("declining")}
-                                    className="simulate-decline-btn"
+                                    className="mock-decline-btn"
                                 >
                                     <Icon name="chart-trend" size={16} />
                                     {t('dashboard.mockDeclining')}
@@ -297,7 +386,7 @@ export function Dashboard() {
                                 <Button
                                     variant="secondary"
                                     onClick={() => handleMockData("stable")}
-                                    className="simulate-stable-btn"
+                                    className="mock-stable-btn"
                                 >
                                     <Icon name="chart-line-up" size={16} />
                                     {t('dashboard.mockStable')}
@@ -313,43 +402,60 @@ export function Dashboard() {
                     </Card>
                 )}
 
-                {/* Your Trend Analysis - Shows when 3+ sessions and ML prediction exists */}
-                {chartData.length >= 3 && mlPrediction && (
+                {/* Clinical Decision Support & Statistical Longitudinal Drift Cards */}
+                {hasUserData && (
+                    <div className="space-y-4 mb-4 animate-fadeIn">
+                        <ClinicalAlertCard
+                            completedModulesCount={alertContext.completedModulesCount}
+                            sessionHistoryCount={alertContext.sessionHistoryCount}
+                            estimatedMoCA={alertContext.estimatedMoCA}
+                            predictionProbabilities={alertContext.predictionProbabilities}
+                            trajectory={evaluation.trajectory}
+                            onOpenClinicianReport={() => setIsReportModalOpen(true)}
+                        />
+
+                        <LongitudinalTrajectoryCard sessionPoints={sessionPoints} />
+                    </div>
+                )}
+
+                {/* Cross-Sectional & Longitudinal Risk Card */}
+                {clinicalAlert && (
                     <Card className="risk-summary animate-fadeIn">
                         <div className="risk-summary-header">
                             <div>
                                 <h2>{t('dashboard.trendAnalysis')}</h2>
                                 <RiskBadge level={
-                                    mlPrediction.direction === 'declining' ? 'possible_risk' :
-                                        mlPrediction.direction === 'improving' ? 'stable' : 'change_detected'
+                                    clinicalAlert.alertLevel === 'EVALUATE' ? 'possible_risk' :
+                                    clinicalAlert.alertLevel === 'RE_ASSESS' ? 'change_detected' :
+                                    clinicalAlert.alertLevel === 'MONITOR' ? 'change_detected' : 'stable'
                                 } />
                             </div>
                             <div className="risk-confidence">
-                                <span className="label">{t('dashboard.mlConfidence')}</span>
+                                <span className="label">Confidence Score</span>
                                 <span className="value">
-                                    {Math.round(mlPrediction.confidence * 100)}%
+                                    {Math.round(clinicalAlert.confidenceScore)}%
                                 </span>
                             </div>
                         </div>
-                        <p className="risk-message">
-                            {mlPrediction.direction === 'declining'
-                                ? t('dashboard.riskDeclining')
-                                : mlPrediction.direction === 'improving'
-                                    ? t('dashboard.riskImproving')
-                                    : t('dashboard.riskStable')}
+                        <p className="risk-message text-lg font-medium text-white mb-4">
+                            {clinicalAlert.recommendationText}
                         </p>
-                        <div className="risk-factors">
-                            <span className="factors-label">{t('dashboard.trendDetected')}</span>
-                            <div className="factors-list">
-                                <span className={`factor-tag direction-tag ${mlPrediction.direction}`}>
-                                    {mlPrediction.direction === 'improving' ? '↗' :
-                                        mlPrediction.direction === 'declining' ? '↘' : '↔'} {mlPrediction.direction}
-                                </span>
-                                <span className="factor-tag">
-                                    {t('dashboard.sessionsAnalyzed', { count: String(chartData.length) })}
-                                </span>
+                        {clinicalAlert.crossSectionalRisk && (
+                            <div className="risk-factors">
+                                <span className="factors-label">Detected Status probabilities:</span>
+                                <div className="factors-list">
+                                    <span className="factor-tag">
+                                        Normal: {Math.round(clinicalAlert.crossSectionalRisk[0]*100)}%
+                                    </span>
+                                    <span className="factor-tag">
+                                        MCI: {Math.round(clinicalAlert.crossSectionalRisk[1]*100)}%
+                                    </span>
+                                    <span className="factor-tag">
+                                        Dementia: {Math.round(clinicalAlert.crossSectionalRisk[2]*100)}%
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </Card>
                 )}
 
@@ -357,72 +463,20 @@ export function Dashboard() {
                 {!hasUserData && (
                     <Card className="no-data-card">
                         <CardContent>
-                            <div className="no-data-message">
-                                <div className="no-data-icon">
-                                    <Icon name="chart-line-up" size={64} />
-                                </div>
+                            <div className="no-data-content">
+                                <Icon name="chart-line-up" size={48} className="no-data-icon" />
                                 <h3>{t('dashboard.noDataTitle')}</h3>
                                 <p>{t('dashboard.noDataDesc')}</p>
-                                <Button variant="primary" onClick={() => window.location.href = "/tests"}>
-                                    {t('dashboard.takeFirstTest')}
+                                <Button
+                                    variant="primary"
+                                    onClick={() => window.location.href = "/"}
+                                >
+                                    {t('dashboard.takeAssessment')}
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Navigation Score Spotlight Card */}
-                {navigationResults.length > 0 && (() => {
-                    const latest = navigationResults[navigationResults.length - 1];
-                    return (
-                        <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-xl space-y-4 animate-fadeIn">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
-                                        <Icon name="navigation" size={22} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white">Immersive PoV Navigation & Spatial Memory</h3>
-                                        <p className="text-xs text-slate-400">Latest session biomarker indices and route recall</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-2xl font-extrabold font-mono text-cyan-400">
-                                        {latest.navigationScore}
-                                    </span>
-                                    <span className="text-xs text-slate-400 font-semibold">/ 100</span>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
-                                    <span className="text-[11px] text-slate-400 block">Route Accuracy</span>
-                                    <span className="text-sm font-bold font-mono text-white">
-                                        {Math.round(latest.biomarkers.navigationAccuracy * 100)}%
-                                    </span>
-                                </div>
-                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
-                                    <span className="text-[11px] text-slate-400 block">Avg Decision Latency</span>
-                                    <span className="text-sm font-bold font-mono text-amber-300">
-                                        {latest.biomarkers.averageDecisionLatencyMs} ms
-                                    </span>
-                                </div>
-                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
-                                    <span className="text-[11px] text-slate-400 block">Landmark Sequence</span>
-                                    <span className="text-sm font-bold font-mono text-emerald-400">
-                                        {Math.round(latest.biomarkers.landmarkSequenceAccuracy * 100)}%
-                                    </span>
-                                </div>
-                                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
-                                    <span className="text-[11px] text-slate-400 block">Destination Recall</span>
-                                    <span className="text-sm font-bold font-mono text-cyan-300">
-                                        {latest.biomarkers.destinationRecallAccuracy === 1 ? "Passed" : "Missed"}
-                                    </span>
-                                </div>
-                            </div>
-                        </Card>
-                    );
-                })()}
 
                 {/* Charts Grid */}
                 {hasUserData && (
@@ -479,7 +533,14 @@ export function Dashboard() {
                     </Card>
                 )}
 
-
+                {/* Clinician Summary Report Modal */}
+                <ClinicianReportModal
+                    isOpen={isReportModalOpen}
+                    onClose={() => setIsReportModalOpen(false)}
+                    alertDecision={alertDecision}
+                    evaluation={evaluation}
+                    latestScores={latestScores}
+                />
             </div>
         </PageWrapper>
     );

@@ -70,7 +70,7 @@ describe('computeDelta', () => {
         const baseline = createBaseline({ memoryAccuracy: 0.8 });
         const delta = computeDelta(current, baseline);
 
-        expect(delta.memoryDelta).toBe(-0.2);
+        expect(delta.memoryDelta).toBeCloseTo(-0.2);
     });
 
     it('should detect slower reaction time', () => {

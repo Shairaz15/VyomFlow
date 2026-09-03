@@ -25,7 +25,9 @@ export type IconName =
     | "info"
     | "attention"
     | "story"
-    | "navigation";
+    | "navigation"
+    | "add"
+    | "plus";
 
 interface IconProps {
     name: IconName;
@@ -212,6 +214,18 @@ const iconPaths: Record<IconName, React.ReactNode> = {
     "navigation": (
         <>
             <polygon points="12 2 19 21 12 17 5 21 12 2" />
+        </>
+    ),
+    "add": (
+        <>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+        </>
+    ),
+    "plus": (
+        <>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
         </>
     ),
 };

@@ -113,7 +113,8 @@ export function computeRisk(
 
     // Trend signals
     const avgSlope = (slopes.memoryTrendSlope + slopes.reactionTrendSlope + slopes.patternTrendSlope + slopes.languageTrendSlope) / 4;
-    if (avgSlope < -0.0005) { negativeSignals++; ruleSignalStrength += Math.abs(avgSlope) * 100; }
+    const hasSlopeDecline = slopes.memoryTrendSlope < -0.0002 || slopes.reactionTrendSlope < -0.0002 || slopes.patternTrendSlope < -0.0002 || slopes.languageTrendSlope < -0.0002;
+    if (avgSlope < -0.0005 || hasSlopeDecline) { negativeSignals++; ruleSignalStrength += Math.max(Math.abs(avgSlope) * 100, 0.3); }
 
     // Anomaly signal
     if (anomaly.isAnomaly) { negativeSignals++; ruleSignalStrength += anomaly.anomalyScore; }

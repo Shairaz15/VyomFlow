@@ -157,7 +157,7 @@ export function NavigationAssessment() {
                         </div>
                         <h2 className="text-xl font-bold text-white">Computing Biomarkers...</h2>
                         <p className="text-xs text-slate-400">
-                            Analyzing decision latencies across 8 intersections, trajectory accuracy, and spatial landmark sequence fidelity.
+                            Analyzing decision latencies across 8 intersections, trajectory accuracy, and spatial landmark sequence fidelity across 6 recall targets.
                         </p>
                     </div>
                 )}

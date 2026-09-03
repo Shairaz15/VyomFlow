@@ -94,10 +94,13 @@ export function analyzeTrends(sessions: SessionDataPoint[]): TrendSlopes {
  */
 export function getOverallTrendDirection(slopes: TrendSlopes): number {
     const slopeValues = Object.values(slopes);
-    const avgSlope = slopeValues.reduce((a, b) => a + b, 0) / slopeValues.length;
+    const nonZeroSlopes = slopeValues.filter(s => Math.abs(s) > 1e-9);
+    const activeSlope = nonZeroSlopes.length > 0
+        ? nonZeroSlopes.reduce((a, b) => a + b, 0) / nonZeroSlopes.length
+        : 0;
 
-    // Normalize to -1 to 1 range (using sigmoid-like transformation)
-    return Math.tanh(avgSlope * 1000); // Scale factor for sensitivity
+    // Normalize to -1 to 1 range (using sigmoid-like transformation with robust sensitivity)
+    return Math.tanh(activeSlope * 2000);
 }
 
 /**

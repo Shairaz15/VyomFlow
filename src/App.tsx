@@ -3,7 +3,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { ProtectedRoute, AdminRoute } from "./components/common";
 import { OnboardingModal } from "./components/common/OnboardingModal";
-import { Landing, Dashboard, Tests, VmraAssessment, SarvamTest } from "./pages";
+import { Landing, Dashboard, Tests, VmraAssessment, SarvamTest, MLPlayground } from "./pages";
 import { ReactionTimeTest } from "./components/tests/reaction/ReactionTimeTest";
 import { PatternAssessment } from "./components/tests/pattern/PatternAssessment";
 import { LanguageAssessment } from "./components/tests/language/LanguageAssessment";
@@ -35,6 +35,8 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/demo" element={<Demo />} />
             <Route path="/sarvam-test" element={<SarvamTest />} />
+            <Route path="/ml-playground" element={<MLPlayground />} />
+            <Route path="/test/ml-playground" element={<MLPlayground />} />
 
             {/* Protected Routes (authenticated users) */}
             <Route

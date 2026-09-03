@@ -16,7 +16,9 @@ export const DEMO_ROUTE: RouteConfig = {
     routeName: "Main Entrance (Gate 1) to Campus Sports Plaza",
     description: "First-person walking route from Main Gate 1 (Point A) through campus corridors and central lawn to the Basketball Court Plaza (Point B).",
     encodingVideoUrl: "/videos/navigation/encoding_full.mp4",
-    startVideoUrl: "/videos/navigation/start.mp4",
+    // Single reverse video (res.mp4) replaces start.mp4 and all intersection clips.
+    // The SeamlessReverseNavigator handles timestamp-based pausing internally.
+    startVideoUrl: undefined,
     destination: {
         question: "Where were you headed at the end of the walking route (Point B)?",
         options: [
@@ -103,6 +105,7 @@ export const DEMO_ROUTE: RouteConfig = {
     ],
     landmarks: [
         // Real Landmarks in forward chronological order (Point A → Point B)
+        // 6 correct answers the participant must identify and sequence
         {
             id: "lm_01",
             name: "Gate 1 Campus Layout Board",
@@ -111,95 +114,46 @@ export const DEMO_ROUTE: RouteConfig = {
             chronologicalOrder: 1,
         },
         {
+            id: "lm_02",
+            name: "Main Entrance Arch & Steps",
+            imageUrl: "/images/navigation/landmarks/landmark_2.jpg",
+            isReal: true,
+            chronologicalOrder: 2,
+        },
+        {
             id: "lm_04",
             name: "Bose Block Blue Robot Sculpture",
             imageUrl: "/images/navigation/landmarks/landmark_4.jpg",
             isReal: true,
-            chronologicalOrder: 2,
+            chronologicalOrder: 3,
         },
         {
             id: "lm_05",
             name: "Yellow Blossom Tree Driveway",
             imageUrl: "/images/navigation/landmarks/landmark_5.jpg",
             isReal: true,
-            chronologicalOrder: 3,
+            chronologicalOrder: 4,
         },
         {
             id: "lm_07",
             name: "Silver Jubilee Building Blue Grids",
             imageUrl: "/images/navigation/landmarks/landmark_7.jpg",
             isReal: true,
-            chronologicalOrder: 4,
-        },
-        {
-            id: "lm_08",
-            name: "Tree with Giant White Hand Sculpture",
-            imageUrl: "/images/navigation/landmarks/landmark_8.jpg",
-            isReal: true,
             chronologicalOrder: 5,
-        },
-        {
-            id: "lm_12",
-            name: "Vine Pergola Canopy Walkway",
-            imageUrl: "/images/navigation/landmarks/landmark_12.jpg",
-            isReal: true,
-            chronologicalOrder: 6,
-        },
-        {
-            id: "lm_17",
-            name: "Student Seating with Floral Mosaic Tiles",
-            imageUrl: "/images/navigation/landmarks/landmark_17.jpg",
-            isReal: true,
-            chronologicalOrder: 7,
-        },
-        {
-            id: "lm_19",
-            name: "Amar Hemu Kalani Block Entrance",
-            imageUrl: "/images/navigation/landmarks/landmark_19.jpg",
-            isReal: true,
-            chronologicalOrder: 8,
-        },
-
-        // Distractor Landmarks / Alternate Angle Lures from the 21 photo set
-        {
-            id: "lm_02",
-            name: "Main Entrance Arch & Steps",
-            imageUrl: "/images/navigation/landmarks/landmark_2.jpg",
-            isReal: false,
-            chronologicalOrder: -1,
-        },
-        {
-            id: "lm_03",
-            name: "Bamboo Cluster Garden & Stone Benches",
-            imageUrl: "/images/navigation/landmarks/landmark_3.jpg",
-            isReal: false,
-            chronologicalOrder: -1,
-        },
-        {
-            id: "lm_06",
-            name: "Sports Ground Perimeter Fence View",
-            imageUrl: "/images/navigation/landmarks/landmark_6.jpg",
-            isReal: false,
-            chronologicalOrder: -1,
-        },
-        {
-            id: "lm_09",
-            name: "White Hand Sculpture (Front Angle)",
-            imageUrl: "/images/navigation/landmarks/landmark_9.jpg",
-            isReal: false,
-            chronologicalOrder: -1,
-        },
-        {
-            id: "lm_10",
-            name: "White Hand Sculpture (Lawn Angle)",
-            imageUrl: "/images/navigation/landmarks/landmark_10.jpg",
-            isReal: false,
-            chronologicalOrder: -1,
         },
         {
             id: "lm_11",
             name: "Central Lawn Black Lamp Post",
             imageUrl: "/images/navigation/landmarks/landmark_11.jpg",
+            isReal: true,
+            chronologicalOrder: 6,
+        },
+
+        // Distractor Landmarks (4 shown per attempt, randomly rotated from this pool)
+        {
+            id: "lm_12",
+            name: "Vine Pergola Canopy Walkway",
+            imageUrl: "/images/navigation/landmarks/landmark_12.jpg",
             isReal: false,
             chronologicalOrder: -1,
         },
@@ -232,9 +186,23 @@ export const DEMO_ROUTE: RouteConfig = {
             chronologicalOrder: -1,
         },
         {
+            id: "lm_17",
+            name: "Student Seating with Floral Mosaic Tiles",
+            imageUrl: "/images/navigation/landmarks/landmark_17.jpg",
+            isReal: false,
+            chronologicalOrder: -1,
+        },
+        {
             id: "lm_18",
             name: "Row of Wooden Classroom Desks",
             imageUrl: "/images/navigation/landmarks/landmark_18.jpg",
+            isReal: false,
+            chronologicalOrder: -1,
+        },
+        {
+            id: "lm_19",
+            name: "Amar Hemu Kalani Block Entrance",
+            imageUrl: "/images/navigation/landmarks/landmark_19.jpg",
             isReal: false,
             chronologicalOrder: -1,
         },

@@ -9,6 +9,8 @@ import type { MemoryTestResult } from "../hooks/useTestResults";
 import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
 import type { VmraAssessmentResult } from "../types/vmraTypes";
+import type { StoryAssessmentResult } from "../types/storyTypes";
+import type { ImmersiveNavigationResult } from "../types/navigationTypes";
 
 type SimulationPattern = "stable" | "declining";
 
@@ -18,6 +20,8 @@ interface BaselineData {
     pattern?: PatternAssessmentResult;
     language?: LanguageAssessmentResult;
     vmra?: VmraAssessmentResult;
+    story?: StoryAssessmentResult;
+    navigation?: ImmersiveNavigationResult;
 }
 
 /**
@@ -217,6 +221,8 @@ export function simulateLanguageResults(
             transcript: "Simulated transcript for demonstration purposes.",
             rawMetrics: {
                 wordCount: Math.round(wpm * (baseline.rawMetrics.speechDuration / 60000)),
+                totalWords: Math.round(wpm * (baseline.rawMetrics.speechDuration / 60000)),
+                correctWords: Math.round(wpm * (baseline.rawMetrics.speechDuration / 60000) * (pattern === "declining" ? 0.6 : 0.95)),
                 speechDuration: baseline.rawMetrics.speechDuration,
                 pauseCount: pattern === "declining" ? baseline.rawMetrics.pauseCount + i * 2 : baseline.rawMetrics.pauseCount,
                 pauseDurationAvg: pattern === "declining" ? baseline.rawMetrics.pauseDurationAvg + i * 100 : baseline.rawMetrics.pauseDurationAvg,
@@ -279,6 +285,7 @@ export function simulateVmraResults(
             features: {
                 ...baseline.features,
                 recallAccuracy: accuracy,
+                accuracy: accuracy,
                 netRecallScore: correctHits - (pattern === "declining" ? i + 1 : 0),
             },
             profile: {
@@ -298,6 +305,79 @@ export function simulateVmraResults(
     return results;
 }
 
+// ============= STORY TEST SIMULATION =============
+
+export function simulateStoryResults(
+    baseline: StoryAssessmentResult,
+    pattern: SimulationPattern
+): StoryAssessmentResult[] {
+    const results: StoryAssessmentResult[] = [];
+    for (let i = 0; i < 5; i++) {
+        const modifier = getTrendModifier(i + 1, pattern);
+        const accuracy = Math.max(0.1, Math.min(1, baseline.biomarkers.memory.recallAccuracy + modifier));
+        results.push({
+            id: `sim-story-${Date.now()}-${i}`,
+            sessionId: `sim-session-${Date.now()}-${i}`,
+            timestamp: daysFromNow(7, i * 7),
+            nativeTranscript: "Mock transcript",
+            englishTranslation: "Mock translation",
+            comprehensionResponses: [],
+            matchResult: { jaccardSimilarity: 0.8, levenshteinSimilarity: 0.8, sequenceMatchScore: 0.8, infoUnitsMatched: [], infoUnitsOmitted: [], falseRecalls: [] },
+            biomarkers: {
+                ...baseline.biomarkers,
+                memory: {
+                    ...baseline.biomarkers?.memory,
+                    recallAccuracy: accuracy,
+                    infoUnitsRecalled: Math.round(20 * accuracy),
+                    totalInfoUnits: 20,
+                    omissionCount: 20 - Math.round(20 * accuracy),
+                    falseRecallCount: 0
+                },
+                comprehension: { mcqAccuracy: accuracy, correctCount: Math.round(5 * accuracy), totalQuestions: 5, avgResponseTimeMs: 2000 },
+                narrative: { storySequenceScore: accuracy, narrativeCompleteness: accuracy, similarityScore: accuracy },
+                speech: { speechRateWPM: 120, lexicalDiversity: 0.6, hesitationRate: 0.1, pauseFrequency: 5 }
+            },
+            storyRecallScore: accuracy * 100
+        });
+    }
+    return results;
+}
+
+// ============= NAVIGATION TEST SIMULATION =============
+
+export function simulateNavigationResults(
+    baseline: ImmersiveNavigationResult,
+    pattern: SimulationPattern
+): ImmersiveNavigationResult[] {
+    const results: ImmersiveNavigationResult[] = [];
+    for (let i = 0; i < 5; i++) {
+        const modifier = getTrendModifier(i + 1, pattern);
+        const accuracy = Math.max(0, Math.min(100, baseline.biomarkers.navigationAccuracy * 100 + modifier * 100));
+        results.push({
+            id: `sim-nav-${Date.now()}-${i}`,
+            sessionId: `sim-session-${Date.now()}-${i}`,
+            timestamp: daysFromNow(7, i * 7),
+            routeId: baseline.routeId || "mock-route",
+            destinationAnswer: { selectedIndex: 0, isCorrect: true, responseTimeMs: 2000 },
+            intersectionResponses: [],
+            landmarkOrdering: { selectedLandmarkIds: [], orderedLandmarkIds: [], correctOrderIds: [], recognitionAccuracy: accuracy / 100, sequenceAccuracy: accuracy / 100, falseLandmarkCount: 0 },
+            biomarkers: {
+                ...baseline.biomarkers,
+                navigationAccuracy: accuracy / 100,
+                destinationRecallAccuracy: 1,
+                wrongTurnCount: 0,
+                correctDecisionRate: accuracy / 100,
+                averageDecisionLatencyMs: 1500, maxDecisionLatencyMs: 2000, decisionLatencyVariance: 100, hesitationCount: 0,
+                landmarkRecognitionAccuracy: accuracy / 100, falseLandmarkRate: 0, landmarkSequenceAccuracy: accuracy / 100, chronologicalRecallScore: accuracy / 100,
+                routeMemoryScore: accuracy / 100, visualAttentionScore: accuracy / 100, episodicMemoryScore: accuracy / 100,
+                navigationScore: accuracy
+            },
+            navigationScore: accuracy
+        });
+    }
+    return results;
+}
+
 // ============= MAIN SIMULATION FUNCTION =============
 
 export interface SimulatedData {
@@ -306,6 +386,8 @@ export interface SimulatedData {
     pattern: PatternAssessmentResult[];
     language: LanguageAssessmentResult[];
     vmra: VmraAssessmentResult[];
+    story: StoryAssessmentResult[];
+    navigation: ImmersiveNavigationResult[];
 }
 
 /**
@@ -322,6 +404,8 @@ export function generateSimulatedData(
         pattern: baseline.pattern ? simulatePatternResults(baseline.pattern, pattern) : [],
         language: baseline.language ? simulateLanguageResults(baseline.language, pattern) : [],
         vmra: baseline.vmra ? simulateVmraResults(baseline.vmra, pattern) : [],
+        story: baseline.story ? simulateStoryResults(baseline.story, pattern) : [],
+        navigation: baseline.navigation ? simulateNavigationResults(baseline.navigation, pattern) : [],
     };
 }
 
@@ -438,6 +522,31 @@ export function getMockBaseline(): BaselineData {
                 accuracy: 0.8, speed: 50, consistency: 0.8, compositeScore: 85, starRating: 5 as any
             },
             explainability: { keyFactors: ["Strong visual recognition"] }
+        },
+        story: {
+            id: "mock-base-story", sessionId: "mock-base-story", timestamp: now,
+            storyId: "story-1", difficulty: "medium", selectedLanguage: "en-IN",
+            nativeTranscript: "Mock transcript", englishTranslation: "Mock transcript",
+            comprehensionResponses: [], matchResult: { jaccardSimilarity: 0.8, levenshteinSimilarity: 0.8, sequenceMatchScore: 0.8, infoUnitsMatched: [], infoUnitsOmitted: [], falseRecalls: [] },
+            biomarkers: {
+                memory: { recallAccuracy: 0.85, infoUnitsRecalled: 17, totalInfoUnits: 20, omissionCount: 3, falseRecallCount: 0 },
+                comprehension: { mcqAccuracy: 0.8, correctCount: 4, totalQuestions: 5, avgResponseTimeMs: 2000 },
+                narrative: { storySequenceScore: 0.85, narrativeCompleteness: 0.85, similarityScore: 0.85 },
+                speech: { speechRateWPM: 120, lexicalDiversity: 0.6, hesitationRate: 0.1, pauseFrequency: 5 }
+            },
+            storyRecallScore: 85
+        },
+        navigation: {
+            id: "mock-base-nav", sessionId: "mock-base-nav", timestamp: now, routeId: "route-1",
+            destinationAnswer: { selectedIndex: 0, isCorrect: true, responseTimeMs: 2000 },
+            intersectionResponses: [], landmarkOrdering: { selectedLandmarkIds: [], orderedLandmarkIds: [], correctOrderIds: [], recognitionAccuracy: 0.9, sequenceAccuracy: 0.9, falseLandmarkCount: 0 },
+            biomarkers: {
+                navigationAccuracy: 0.9, destinationRecallAccuracy: 1, wrongTurnCount: 0, correctDecisionRate: 0.9,
+                averageDecisionLatencyMs: 1500, maxDecisionLatencyMs: 2000, decisionLatencyVariance: 100, hesitationCount: 0,
+                landmarkRecognitionAccuracy: 0.9, falseLandmarkRate: 0, landmarkSequenceAccuracy: 0.9, chronologicalRecallScore: 0.9,
+                routeMemoryScore: 0.9, visualAttentionScore: 0.9, episodicMemoryScore: 0.9, navigationScore: 90
+            },
+            navigationScore: 90
         }
     };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, Icon, Button } from "../../../common";
 import type {
     RouteConfig,
@@ -11,26 +11,31 @@ interface SeamlessReverseNavigatorProps {
     onComplete: (responses: IntersectionResponse[]) => void;
 }
 
-interface PlaylistItem {
-    id: string;
-    type: "start" | "approach" | "continuation";
-    segmentIndex: number; // 0 to 7 (-1 for start)
-    src: string;
-    label: string;
-    subLabel: string;
-    isDecisionPoint?: boolean;
-}
+/**
+ * Pause timestamps for the single reverse-navigation video (res.mp4).
+ * Format from user: MM:SS:ms → converted to seconds.
+ * The video pauses at each timestamp to prompt a direction decision.
+ */
+const PAUSE_TIMESTAMPS_SECONDS: number[] = [
+    0 * 60 + 8 + 5 / 100,    // 00:08:05 → 8.05s
+    0 * 60 + 19 + 2 / 100,   // 00:19:02 → 19.02s
+    0 * 60 + 24 + 14 / 100,  // 00:24:14 → 24.14s
+    0 * 60 + 35 + 3 / 100,   // 00:35:03 → 35.03s
+    0 * 60 + 45 + 17 / 100,  // 00:45:17 → 45.17s
+    0 * 60 + 54 + 0 / 100,   // 00:54:00 → 54.00s
+    1 * 60 + 5 + 8 / 100,    // 01:05:08 → 65.08s
+    1 * 60 + 13 + 0 / 100,   // 01:13:00 → 73.00s
+];
+
+const SINGLE_VIDEO_URL = "/videos/navigation/res.mp4";
 
 export function SeamlessReverseNavigator({
     route,
     onComplete,
 }: SeamlessReverseNavigatorProps) {
-    const videoRefA = useRef<HTMLVideoElement>(null);
-    const videoRefB = useRef<HTMLVideoElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Active video player ('A' or 'B')
-    const [activeVideo, setActiveVideo] = useState<"A" | "B">("A");
-    const [playlistIndex, setPlaylistIndex] = useState<number>(0);
+    const [currentIntersection, setCurrentIntersection] = useState<number>(0); // 0-7 index into PAUSE_TIMESTAMPS
     const [isAwaitingDecision, setIsAwaitingDecision] = useState<boolean>(false);
     const [chosenDirection, setChosenDirection] = useState<NavigationDirection | null>(null);
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
@@ -39,151 +44,107 @@ export function SeamlessReverseNavigator({
     const [hasError, setHasError] = useState<boolean>(false);
 
     const decisionStartTimeRef = useRef<number>(0);
+    // Track which pause points have already been triggered to avoid re-triggering
+    const triggeredPausesRef = useRef<Set<number>>(new Set());
+    // Track whether we're in a post-decision resume phase (to avoid immediate re-trigger)
+    const isResumingRef = useRef<boolean>(false);
 
-    // Build the 17-clip playlist: start + 8*(approach + continuation)
-    const playlist: PlaylistItem[] = useMemo(() => {
-        const items: PlaylistItem[] = [];
+    const currentSegment = route.segments[currentIntersection] || null;
 
-        if (route.startVideoUrl) {
-            items.push({
-                id: "clip_start",
-                type: "start",
-                segmentIndex: -1,
-                src: route.startVideoUrl,
-                label: "Departing Point B (Basketball Court Plaza)",
-                subLabel: "Beginning reverse journey retracing route back to Main Gate 1 (Point A).",
-                isDecisionPoint: false,
-            });
-        }
-
-        route.segments.forEach((seg, idx) => {
-            // Approach clip
-            items.push({
-                id: `clip_approach_${seg.segmentId}`,
-                type: "approach",
-                segmentIndex: idx,
-                src: seg.approachVideoUrl || seg.videoUrl || "",
-                label: `Approaching Intersection ${idx + 1} of ${route.segments.length}`,
-                subLabel: `${seg.intersectionLabel} — Look ahead before deciding turn.`,
-                isDecisionPoint: true,
-            });
-
-            // Continuation clip
-            items.push({
-                id: `clip_continuation_${seg.segmentId}`,
-                type: "continuation",
-                segmentIndex: idx,
-                src: seg.continuationVideoUrl,
-                label: `Navigating through Intersection ${idx + 1}`,
-                subLabel: `Proceeding along route towards ${seg.toWaypoint}.`,
-                isDecisionPoint: false,
-            });
-        });
-
-        return items;
-    }, [route]);
-
-    const currentItem = playlist[playlistIndex];
-    const currentSegment =
-        currentItem && currentItem.segmentIndex >= 0
-            ? route.segments[currentItem.segmentIndex]
-            : null;
-
-    // Preload video links on mount
+    // Load and start the single video on mount
     useEffect(() => {
-        playlist.forEach((item) => {
-            if (item.src) {
-                const link = document.createElement("link");
-                link.rel = "preload";
-                link.as = "video";
-                link.href = item.src;
-                document.head.appendChild(link);
-            }
+        const video = videoRef.current;
+        if (!video) return;
+
+        video.src = SINGLE_VIDEO_URL;
+        video.load();
+        video.play().catch(() => {
+            // Autoplay policy fallback — user may need to interact first
         });
-    }, [playlist]);
+    }, []);
 
-    // Initial setup: load first clip into Video A and second clip into Video B
-    useEffect(() => {
-        if (playlist.length === 0) return;
+    // Core timeupdate handler: monitor playback and pause at timestamps
+    const handleTimeUpdate = useCallback(() => {
+        const video = videoRef.current;
+        if (!video || isAwaitingDecision) return;
 
-        if (videoRefA.current && playlist[0]) {
-            videoRefA.current.src = playlist[0].src;
-            videoRefA.current.load();
-            videoRefA.current.play().catch(() => {
-                // Autoplay policy fallback
-            });
+        const currentTime = video.currentTime;
+        const duration = video.duration;
+
+        // Update progress bar relative to entire video
+        if (duration) {
+            setProgress((currentTime / duration) * 100);
         }
 
-        if (videoRefB.current && playlist[1]) {
-            videoRefB.current.src = playlist[1].src;
-            videoRefB.current.load();
-        }
-    }, [playlist]);
+        // Skip checking during the brief resume window
+        if (isResumingRef.current) return;
 
-    // Handle Time Update for active video
-    const handleTimeUpdate = () => {
-        const activeRef = activeVideo === "A" ? videoRefA.current : videoRefB.current;
-        if (activeRef && activeRef.duration) {
-            setProgress((activeRef.currentTime / activeRef.duration) * 100);
-        }
-    };
-
-    // When the currently active clip ends
-    const handleActiveClipEnded = () => {
-        if (!currentItem) return;
-
-        if (currentItem.isDecisionPoint) {
-            // Pause active video on final frame & prompt for decision below video
-            const activeRef = activeVideo === "A" ? videoRefA.current : videoRefB.current;
-            if (activeRef) {
-                activeRef.pause();
+        // Check if we've reached the next pause point
+        if (currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length) {
+            const pauseAt = PAUSE_TIMESTAMPS_SECONDS[currentIntersection];
+            // Use a tolerance window: pause when we're within 0.15s of or past the timestamp
+            if (currentTime >= pauseAt - 0.15 && !triggeredPausesRef.current.has(currentIntersection)) {
+                triggeredPausesRef.current.add(currentIntersection);
+                video.pause();
+                // Seek exactly to the pause frame for consistency
+                video.currentTime = pauseAt;
+                decisionStartTimeRef.current = performance.now();
+                setChosenDirection(null);
+                setIsSubmitted(false);
+                setIsAwaitingDecision(true);
             }
-            decisionStartTimeRef.current = performance.now();
-            setChosenDirection(null);
-            setIsSubmitted(false);
-            setIsAwaitingDecision(true);
-        } else {
-            // Move directly to next clip
-            advanceToNextClip();
         }
-    };
+    }, [currentIntersection, isAwaitingDecision]);
 
-    const advanceToNextClip = () => {
-        const nextIndex = playlistIndex + 1;
-
-        if (nextIndex >= playlist.length) {
-            // Finished full reverse route!
+    // Handle video ending (after all 8 intersections, the video plays to the end)
+    const handleVideoEnded = useCallback(() => {
+        if (currentIntersection >= PAUSE_TIMESTAMPS_SECONDS.length) {
+            // All intersections done, video finished
             onComplete(allResponses);
+        }
+    }, [currentIntersection, allResponses, onComplete]);
+
+    // After a decision is made, resume playback toward the next pause point (or end)
+    const resumeAfterDecision = useCallback(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const nextIntersection = currentIntersection + 1;
+        setCurrentIntersection(nextIntersection);
+        setIsAwaitingDecision(false);
+        setChosenDirection(null);
+        setIsSubmitted(false);
+
+        // If all 8 intersections are done, check if there's remaining video
+        if (nextIntersection >= PAUSE_TIMESTAMPS_SECONDS.length) {
+            // Let video play to end, then handleVideoEnded fires
+            isResumingRef.current = true;
+            video.play().catch(() => {});
+            setTimeout(() => {
+                isResumingRef.current = false;
+            }, 500);
+
+            // If video is already at/near the end, complete immediately
+            if (video.duration && video.currentTime >= video.duration - 0.5) {
+                onComplete(allResponses);
+            }
             return;
         }
 
-        // Toggle active player
-        const nextActive = activeVideo === "A" ? "B" : "A";
-        const currentRef = activeVideo === "A" ? videoRefA.current : videoRefB.current;
-        const nextRef = nextActive === "A" ? videoRefA.current : videoRefB.current;
+        // Resume playback — set a brief resuming flag to avoid re-triggering the same pause
+        isResumingRef.current = true;
+        video.play().catch((err) => {
+            console.warn("Video playback error:", err);
+        });
 
-        setPlaylistIndex(nextIndex);
-        setActiveVideo(nextActive);
-        setIsAwaitingDecision(false);
-        setProgress(0);
+        // Clear the resuming flag after passing the current pause point
+        setTimeout(() => {
+            isResumingRef.current = false;
+        }, 300);
+    }, [currentIntersection, allResponses, onComplete]);
 
-        if (nextRef) {
-            nextRef.currentTime = 0;
-            nextRef.play().catch((err) => {
-                console.warn("Video playback error:", err);
-            });
-        }
-
-        // Preload the item after next into currentRef
-        const preloadIndex = nextIndex + 1;
-        if (preloadIndex < playlist.length && currentRef && playlist[preloadIndex]) {
-            currentRef.src = playlist[preloadIndex].src;
-            currentRef.load();
-        }
-    };
-
-    // Direction Decision Handlers
-    const handleChooseDirection = (direction: NavigationDirection) => {
+    // Direction Decision Handler
+    const handleChooseDirection = useCallback((direction: NavigationDirection) => {
         if (isSubmitted || !currentSegment) return;
 
         const decisionLatencyMs = Math.round(performance.now() - decisionStartTimeRef.current);
@@ -204,32 +165,96 @@ export function SeamlessReverseNavigator({
         const updatedResponses = [...allResponses, response];
         setAllResponses(updatedResponses);
 
-        // Feedback delay before seamless continuation playback
+        // Feedback delay before resuming video
         const delay = isCorrect ? 450 : 1200;
         setTimeout(() => {
-            advanceToNextClip();
+            resumeAfterDecision();
         }, delay);
-    };
+    }, [isSubmitted, currentSegment, allResponses, resumeAfterDecision]);
 
-    // Keyboard controls for directions
+    // Keyboard & Laptop Arrowpad controls for directions
     useEffect(() => {
         if (!isAwaitingDecision || isSubmitted) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+            const key = e.key;
+            const code = e.code;
+
+            if (key === "ArrowUp" || key === "w" || key === "W" || code === "ArrowUp" || code === "KeyW" || code === "Numpad8") {
+                e.preventDefault();
+                e.stopPropagation();
                 handleChooseDirection("straight");
-            } else if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+            } else if (key === "ArrowLeft" || key === "a" || key === "A" || code === "ArrowLeft" || code === "KeyA" || code === "Numpad4") {
+                e.preventDefault();
+                e.stopPropagation();
                 handleChooseDirection("left");
-            } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+            } else if (key === "ArrowRight" || key === "d" || key === "D" || code === "ArrowRight" || code === "KeyD" || code === "Numpad6") {
+                e.preventDefault();
+                e.stopPropagation();
                 handleChooseDirection("right");
-            } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+            } else if (key === "ArrowDown" || key === "s" || key === "S" || code === "ArrowDown" || code === "KeyS" || code === "Numpad2") {
+                e.preventDefault();
+                e.stopPropagation();
                 handleChooseDirection("back");
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keydown", handleKeyDown, { passive: false });
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isAwaitingDecision, isSubmitted, currentSegment]);
+    }, [isAwaitingDecision, isSubmitted, handleChooseDirection]);
+
+    // Touch Swipe Gestures
+    const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!isAwaitingDecision || isSubmitted) return;
+        const touch = e.touches[0];
+        touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (!isAwaitingDecision || isSubmitted || !touchStartRef.current) return;
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - touchStartRef.current.x;
+        const dy = touch.clientY - touchStartRef.current.y;
+        touchStartRef.current = null;
+
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+        const minSwipeDistance = 35; // Minimum px threshold
+
+        if (Math.max(absDx, absDy) < minSwipeDistance) return;
+
+        if (absDy > absDx) {
+            // Vertical swipe
+            if (dy < 0) {
+                handleChooseDirection("straight"); // Swipe Up
+            } else {
+                handleChooseDirection("back"); // Swipe Down
+            }
+        } else {
+            // Horizontal swipe
+            if (dx < 0) {
+                handleChooseDirection("left"); // Swipe Left
+            } else {
+                handleChooseDirection("right"); // Swipe Right
+            }
+        }
+    };
+
+    // Skip button: manually advance to next pause point or end
+    const handleSkip = useCallback(() => {
+        const video = videoRef.current;
+        if (!video || isAwaitingDecision) return;
+
+        const nextPauseIdx = currentIntersection;
+        if (nextPauseIdx < PAUSE_TIMESTAMPS_SECONDS.length) {
+            // Jump to the next pause timestamp
+            const pauseAt = PAUSE_TIMESTAMPS_SECONDS[nextPauseIdx];
+            video.currentTime = pauseAt;
+            // The timeupdate handler will pick up the pause
+        }
+    }, [currentIntersection, isAwaitingDecision]);
 
     const getButtonClass = (direction: NavigationDirection) => {
         if (!currentSegment) return "";
@@ -255,8 +280,7 @@ export function SeamlessReverseNavigator({
         return "bg-slate-900/40 border-slate-800/40 text-slate-600 opacity-40";
     };
 
-    const currentIntersectionNumber =
-        currentItem && currentItem.segmentIndex >= 0 ? currentItem.segmentIndex + 1 : 1;
+    const currentIntersectionNumber = currentIntersection + 1;
 
     return (
         <div className="max-w-4xl mx-auto space-y-4 animate-fadeIn">
@@ -276,7 +300,7 @@ export function SeamlessReverseNavigator({
                 <div className="flex items-center gap-1.5">
                     {route.segments.map((seg, idx) => {
                         const isDone = allResponses.some((r) => r.segmentId === seg.segmentId);
-                        const isCurrent = currentItem?.segmentIndex === idx;
+                        const isCurrent = currentIntersection === idx;
                         return (
                             <div
                                 key={seg.segmentId}
@@ -296,35 +320,17 @@ export function SeamlessReverseNavigator({
 
             {/* Persistent Video Player Frame */}
             <div className="nav-video-container relative w-full aspect-video max-h-[58vh] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl">
-                {/* Video Element A */}
+                {/* Single Video Element */}
                 <video
-                    ref={videoRefA}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ease-out ${
-                        activeVideo === "A" ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-                    }`}
+                    ref={videoRef}
+                    className="absolute inset-0 w-full h-full object-cover"
                     playsInline
                     preload="auto"
                     disablePictureInPicture
                     controlsList="nodownload nofullscreen noremoteplayback"
                     onContextMenu={(e) => e.preventDefault()}
-                    onTimeUpdate={activeVideo === "A" ? handleTimeUpdate : undefined}
-                    onEnded={activeVideo === "A" ? handleActiveClipEnded : undefined}
-                    onError={() => setHasError(true)}
-                />
-
-                {/* Video Element B */}
-                <video
-                    ref={videoRefB}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ease-out ${
-                        activeVideo === "B" ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-                    }`}
-                    playsInline
-                    preload="auto"
-                    disablePictureInPicture
-                    controlsList="nodownload nofullscreen noremoteplayback"
-                    onContextMenu={(e) => e.preventDefault()}
-                    onTimeUpdate={activeVideo === "B" ? handleTimeUpdate : undefined}
-                    onEnded={activeVideo === "B" ? handleActiveClipEnded : undefined}
+                    onTimeUpdate={handleTimeUpdate}
+                    onEnded={handleVideoEnded}
                     onError={() => setHasError(true)}
                 />
 
@@ -338,7 +344,7 @@ export function SeamlessReverseNavigator({
                         />
                         {isAwaitingDecision
                             ? `Intersection ${currentIntersectionNumber}: Decision Point`
-                            : currentItem?.label || "Retracing Route"}
+                            : `Retracing Route — Segment ${currentIntersectionNumber}`}
                     </span>
 
                     {isAwaitingDecision && (
@@ -370,7 +376,11 @@ export function SeamlessReverseNavigator({
             {/* Area Directly Below Video */}
             {isAwaitingDecision && currentSegment ? (
                 /* Intersection Direction Selector Panel */
-                <Card className="p-6 bg-slate-900/95 border border-cyan-500/30 rounded-3xl shadow-2xl space-y-4 animate-fadeInUp">
+                <Card
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    className="p-6 bg-slate-900/95 border border-cyan-500/30 rounded-3xl shadow-2xl space-y-4 animate-fadeInUp select-none"
+                >
                     <div className="text-center space-y-1">
                         <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                             <Icon name="navigation" size={12} />
@@ -385,40 +395,58 @@ export function SeamlessReverseNavigator({
                     </div>
 
                     {/* Diamond / Cross Direction Control Grid */}
-                    <div className="flex flex-col items-center justify-center space-y-2 pt-1">
+                    <div className="flex flex-col items-center justify-center space-y-2.5 pt-1">
                         {/* Top: Straight */}
                         <div>
                             <button
                                 type="button"
                                 disabled={isSubmitted}
                                 onClick={() => handleChooseDirection("straight")}
-                                className={`min-w-[130px] min-h-[54px] px-5 py-2.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs ${getButtonClass(
+                                onTouchEnd={(e) => {
+                                    e.preventDefault();
+                                    handleChooseDirection("straight");
+                                }}
+                                className={`min-w-[140px] min-h-[58px] px-5 py-2 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs active:scale-95 touch-manipulation ${getButtonClass(
                                     "straight"
                                 )}`}
                             >
-                                <span className="text-lg leading-none">↑</span>
-                                <span>Straight</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-lg leading-none font-bold">↑</span>
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-950/60 text-cyan-300 border border-slate-700/60">
+                                        ↑ / W
+                                    </span>
+                                </div>
+                                <span className="mt-0.5">Straight</span>
                             </button>
                         </div>
 
                         {/* Middle Row: Left, Compass Icon, Right */}
-                        <div className="flex items-center gap-4 sm:gap-6">
+                        <div className="flex items-center gap-3 sm:gap-6">
                             {/* Left */}
                             <button
                                 type="button"
                                 disabled={isSubmitted}
                                 onClick={() => handleChooseDirection("left")}
-                                className={`min-w-[130px] min-h-[54px] px-5 py-2.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs ${getButtonClass(
+                                onTouchEnd={(e) => {
+                                    e.preventDefault();
+                                    handleChooseDirection("left");
+                                }}
+                                className={`min-w-[140px] min-h-[58px] px-5 py-2 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs active:scale-95 touch-manipulation ${getButtonClass(
                                     "left"
                                 )}`}
                             >
-                                <span className="text-lg leading-none">←</span>
-                                <span>Turn Left</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-lg leading-none font-bold">←</span>
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-950/60 text-cyan-300 border border-slate-700/60">
+                                        ← / A
+                                    </span>
+                                </div>
+                                <span className="mt-0.5">Turn Left</span>
                             </button>
 
                             {/* Compass Center Indicator */}
-                            <div className="w-10 h-10 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-cyan-400 shadow-inner">
-                                <Icon name="navigation" size={18} />
+                            <div className="w-11 h-11 rounded-full bg-slate-950 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner">
+                                <Icon name="navigation" size={20} />
                             </div>
 
                             {/* Right */}
@@ -426,12 +454,21 @@ export function SeamlessReverseNavigator({
                                 type="button"
                                 disabled={isSubmitted}
                                 onClick={() => handleChooseDirection("right")}
-                                className={`min-w-[130px] min-h-[54px] px-5 py-2.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs ${getButtonClass(
+                                onTouchEnd={(e) => {
+                                    e.preventDefault();
+                                    handleChooseDirection("right");
+                                }}
+                                className={`min-w-[140px] min-h-[58px] px-5 py-2 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs active:scale-95 touch-manipulation ${getButtonClass(
                                     "right"
                                 )}`}
                             >
-                                <span className="text-lg leading-none">→</span>
-                                <span>Turn Right</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-lg leading-none font-bold">→</span>
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-950/60 text-cyan-300 border border-slate-700/60">
+                                        → / D
+                                    </span>
+                                </div>
+                                <span className="mt-0.5">Turn Right</span>
                             </button>
                         </div>
 
@@ -441,19 +478,32 @@ export function SeamlessReverseNavigator({
                                 type="button"
                                 disabled={isSubmitted}
                                 onClick={() => handleChooseDirection("back")}
-                                className={`min-w-[130px] min-h-[54px] px-5 py-2.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs ${getButtonClass(
+                                onTouchEnd={(e) => {
+                                    e.preventDefault();
+                                    handleChooseDirection("back");
+                                }}
+                                className={`min-w-[140px] min-h-[58px] px-5 py-2 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed font-semibold text-xs active:scale-95 touch-manipulation ${getButtonClass(
                                     "back"
                                 )}`}
                             >
-                                <span className="text-lg leading-none">↓</span>
-                                <span>Turn Back</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-lg leading-none font-bold">↓</span>
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-950/60 text-cyan-300 border border-slate-700/60">
+                                        ↓ / S
+                                    </span>
+                                </div>
+                                <span className="mt-0.5">Turn Back</span>
                             </button>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-800/80 px-2">
-                        <span>Tip: Use Arrow Keys (↑ / ← / → / ↓) or Click</span>
-                        <span>Latency precision: ~1ms</span>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 border-t border-slate-800/80 px-2">
+                        <span className="flex items-center gap-1">
+                            <span>⌨️ Laptop Arrow Keys (↑ / ← / → / ↓)</span>
+                            <span className="text-slate-600">•</span>
+                            <span>Touch / Tap Screen</span>
+                        </span>
+                        <span className="font-mono text-slate-500">Latency: ~1ms</span>
                     </div>
                 </Card>
             ) : (
@@ -465,10 +515,14 @@ export function SeamlessReverseNavigator({
                         </div>
                         <div className="space-y-0.5">
                             <div className="text-white font-semibold">
-                                {currentItem?.label || "Retracing Route"}
+                                {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
+                                    ? `Approaching Intersection ${currentIntersectionNumber}`
+                                    : "Arriving at Point A (Main Gate 1)"}
                             </div>
                             <div className="text-slate-400 text-[11px]">
-                                {currentItem?.subLabel || "Observe upcoming pathways and landmark cues."}
+                                {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length
+                                    ? `${route.segments[currentIntersection]?.intersectionLabel || "Observe upcoming pathways and landmark cues."}`
+                                    : "Final stretch — completing reverse navigation."}
                             </div>
                         </div>
                     </div>
@@ -477,14 +531,16 @@ export function SeamlessReverseNavigator({
                         <span className="hidden sm:inline-block px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
                             🚶 Continuous PoV
                         </span>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleActiveClipEnded}
-                            className="text-xs"
-                        >
-                            Skip Clip →
-                        </Button>
+                        {currentIntersection < PAUSE_TIMESTAMPS_SECONDS.length && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleSkip}
+                                className="text-xs"
+                            >
+                                Skip to Decision →
+                            </Button>
+                        )}
                     </div>
                 </Card>
             )}

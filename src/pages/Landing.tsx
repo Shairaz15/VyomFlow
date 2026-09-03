@@ -200,7 +200,7 @@ export function Landing() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="hero-actions animate-fadeIn delay-500">
+                        <div className="hero-actions animate-fadeIn delay-500 flex flex-wrap gap-3">
                             <Button
                                 variant="primary"
                                 size="lg"
@@ -209,6 +209,15 @@ export function Landing() {
                                 aria-label={disclaimerAccepted ? "Start cognitive assessment" : "Please accept the disclaimer to start assessment"}
                             >
                                 {t('landing.startAssessment')}
+                            </Button>
+
+                            <Button
+                                variant="secondary"
+                                size="lg"
+                                onClick={() => navigate('/ml-playground')}
+                                aria-label="Open ML Model Live Predictor Playground"
+                            >
+                                🧠 Live ML Predictor
                             </Button>
                         </div>
                     </div>
