@@ -185,7 +185,15 @@
     }
 
     .page-main {
+        padding-top: var(--spacing-md);
         padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+
+    .page-main.test-main-viewport,
+    .is-test-mode .page-main {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        min-height: 100dvh;
     }
 
     .page-footer {

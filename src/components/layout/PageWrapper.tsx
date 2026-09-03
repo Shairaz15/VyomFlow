@@ -30,9 +30,18 @@ export function PageWrapper({
 
     const isActive = (path: string) => currentPath === path;
 
+    const isTestRoute = 
+        currentPath.startsWith("/test/") || 
+        currentPath.startsWith("/tests/") || 
+        currentPath.startsWith("/activities/");
+
+    const shouldShowHeader = showHeader && !isTestRoute;
+    const shouldShowFooter = showFooter && !isTestRoute;
+    const shouldShowMobileNav = !isTestRoute;
+
     return (
-        <div className="page-wrapper">
-            {showHeader && (
+        <div className={`page-wrapper ${isTestRoute ? "is-test-mode" : ""}`}>
+            {shouldShowHeader && (
                 <header className="page-header">
                     <div className="container">
                         <a href="/" className="logo">
@@ -74,11 +83,11 @@ export function PageWrapper({
                 </header>
             )}
 
-            <main className="page-main">
+            <main className={`page-main ${isTestRoute ? "test-main-viewport" : ""}`}>
                 {children}
             </main>
 
-            {showFooter && (
+            {shouldShowFooter && (
                 <footer className="page-footer">
                     <div className="container">
                         <p className="footer-disclaimer">{FOOTER_DISCLAIMER}</p>
@@ -86,37 +95,38 @@ export function PageWrapper({
                 </footer>
             )}
 
-            {/* Mobile Bottom Navigation */}
-            <nav className="mobile-nav">
-                <a
-                    href="/"
-                    className={`mobile-nav-item ${isActive("/") ? "active" : ""}`}
-                >
-                    <span className="mobile-nav-icon">
-                        <Icon name="insight" size={20} />
-                    </span>
-                    <span className="mobile-nav-label">Home</span>
-                </a>
-                <a
-                    href="/dashboard"
-                    className={`mobile-nav-item ${isActive("/dashboard") ? "active" : ""}`}
-                >
-                    <span className="mobile-nav-icon">
-                        <Icon name="chart-line-up" size={20} />
-                    </span>
-                    <span className="mobile-nav-label">Dashboard</span>
-                </a>
-                <a
-                    href="/tests"
-                    className={`mobile-nav-item ${isActive("/tests") ? "active" : ""}`}
-                >
-                    <span className="mobile-nav-icon">
-                        <Icon name="assess" size={20} />
-                    </span>
-                    <span className="mobile-nav-label">Tests</span>
-                </a>
-
-            </nav>
+            {/* Mobile Bottom Navigation (Hidden during active test assessments) */}
+            {shouldShowMobileNav && (
+                <nav className="mobile-nav">
+                    <a
+                        href="/"
+                        className={`mobile-nav-item ${isActive("/") ? "active" : ""}`}
+                    >
+                        <span className="mobile-nav-icon">
+                            <Icon name="insight" size={20} />
+                        </span>
+                        <span className="mobile-nav-label">Home</span>
+                    </a>
+                    <a
+                        href="/dashboard"
+                        className={`mobile-nav-item ${isActive("/dashboard") ? "active" : ""}`}
+                    >
+                        <span className="mobile-nav-icon">
+                            <Icon name="chart-line-up" size={20} />
+                        </span>
+                        <span className="mobile-nav-label">Dashboard</span>
+                    </a>
+                    <a
+                        href="/tests"
+                        className={`mobile-nav-item ${isActive("/tests") ? "active" : ""}`}
+                    >
+                        <span className="mobile-nav-icon">
+                            <Icon name="assess" size={20} />
+                        </span>
+                        <span className="mobile-nav-label">Tests</span>
+                    </a>
+                </nav>
+            )}
         </div>
     );
 }

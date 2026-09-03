@@ -1,0 +1,148 @@
+/* ==========================================================================
+   VYOMFLOW NEURAL FLOW FOOTER BRAND VISUAL
+   Abstract neural network & cognitive flow signature
+   ========================================================================== */
+
+.neural-flow-brand-container {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    margin: 2.5rem auto 0.75rem auto;
+    padding: 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Ambient Radial Cognitive Aura behind Neural Flow */
+.neural-flow-ambient-glow {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(79, 124, 120, 0.22) 0%, rgba(216, 184, 120, 0.08) 50%, transparent 75%);
+    filter: blur(24px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* SVG Graphic Wrapper */
+.neural-flow-svg-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    aspect-ratio: 600 / 220;
+    max-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.neural-flow-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.3));
+}
+
+/* Central Node Soft Halo Pulse */
+.neural-center-halo {
+    animation: neuralHaloBreathe 4s ease-in-out infinite alternate;
+    transform-origin: 300px 110px;
+}
+
+@keyframes neuralHaloBreathe {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+}
+
+/* Traveling Light Pulses */
+.traveling-neural-light {
+    filter: drop-shadow(0 0 4px #D8B878);
+}
+
+.light-alpha {
+    animation: lightPulseAlpha 12s ease-in-out infinite;
+}
+
+@keyframes lightPulseAlpha {
+    0%, 100% {
+        opacity: 0.2;
+    }
+    30%, 70% {
+        opacity: 1;
+    }
+}
+
+.light-beta {
+    animation: lightPulseBeta 14s ease-in-out infinite;
+}
+
+@keyframes lightPulseBeta {
+    0%, 100% {
+        opacity: 0.15;
+    }
+    40%, 80% {
+        opacity: 0.9;
+    }
+}
+
+/* Brand Wordmark & Tagline */
+.neural-flow-brand-text {
+    position: relative;
+    z-index: 2;
+    margin-top: -0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.neural-flow-wordmark {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 7.5vw, 2.75rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #F7F4EC;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    display: block;
+}
+
+.neural-flow-tagline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(0.75rem, 3vw, 0.9rem);
+    letter-spacing: 0.04em;
+    color: rgba(247, 244, 236, 0.72);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   REDUCED MOTION SUPPORT
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .neural-center-halo {
+        animation: none;
+    }
+    .traveling-neural-light {
+        display: none;
+    }
+}

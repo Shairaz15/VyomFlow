@@ -61,7 +61,7 @@ export function VyomFlowVideoBrand() {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const fontSize = Math.min(w * 0.165, h * 0.85);
+                const fontSize = Math.min(w * 0.145, h * 0.75);
                 ctx.font = `900 ${fontSize}px 'Playfair Display', Georgia, serif`;
                 
                 // Safe letter spacing check for cross-browser support
@@ -70,7 +70,7 @@ export function VyomFlowVideoBrand() {
                 }
 
                 const text = 'VYOMFLOW';
-                ctx.fillText(text, w / 2, h / 2 + fontSize * 0.05);
+                ctx.fillText(text, w / 2, h / 2 + fontSize * 0.02);
 
                 // Composite video inside text
                 ctx.globalCompositeOperation = 'source-in';

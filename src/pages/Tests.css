@@ -291,3 +291,11 @@ html:not(.dark) .link-chip:hover,
     border-color: #1C352D;
     color: #1C352D;
 }
+
+@media (max-width: 767px) {
+    .journey-page {
+        padding: 0.5rem 0.5rem 2rem;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+}

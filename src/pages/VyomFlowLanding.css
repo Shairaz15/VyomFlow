@@ -23,6 +23,35 @@
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark .vyom-sarvam-landing,
+[data-theme="dark"] .vyom-sarvam-landing,
+html.dark .vyom-sarvam-landing {
+  background: #0B1929 !important;
+  color: #F7F4EC !important;
+}
+
+.dark .vyom-privacy-section,
+[data-theme="dark"] .vyom-privacy-section {
+  background: #0D1F30 !important;
+}
+
+.dark .vyom-privacy-panel,
+[data-theme="dark"] .vyom-privacy-panel {
+  background: #14283C !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .vyom-heading-dark,
+[data-theme="dark"] .vyom-heading-dark {
+  color: #F7F4EC !important;
+}
+
+.dark .vyom-sub-dark,
+[data-theme="dark"] .vyom-sub-dark {
+  color: #B0C4DE !important;
 }
 
 /* Serif font utility for headings */
@@ -30,34 +59,48 @@
   font-family: 'Playfair Display', Georgia, serif;
 }
 
-/* Top Translucent Blur Mask (Obscures & blurs all content scrolling up behind top viewport) */
+
+/* Top Translucent Blur Mask (Obscures & blurs all content scrolling up behind top viewport on desktop) */
 .vyom-top-blur-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 5.5rem;
-  z-index: 99;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(247, 244, 236, 0.96) 0%, rgba(247, 244, 236, 0.85) 60%, rgba(247, 244, 236, 0) 100%);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .vyom-top-blur-mask {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5.5rem;
+    z-index: 99;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(247, 244, 236, 0.96) 0%, rgba(247, 244, 236, 0.85) 60%, rgba(247, 244, 236, 0) 100%);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
 }
 
 /* ==========================================================================
-   2 & 3. FLOATING STICKY NAVBAR (Pill Container, Always Visible)
+   2 & 3. FLOATING STICKY NAVBAR (Desktop Only, >= 768px)
    ========================================================================== */
 .vyom-navbar-fixed-container {
-  position: fixed;
-  top: 1.25rem;
-  left: 0;
-  right: 0;
-  width: 100%;
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-  padding: 0 1.5rem;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .vyom-navbar-fixed-container {
+    display: flex;
+    position: fixed;
+    top: 1.25rem;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 100;
+    justify-content: center;
+    pointer-events: none;
+    padding: 0 1.5rem;
+  }
 }
 
 .vyom-floating-navbar {
@@ -144,18 +187,24 @@
 }
 
 /* ==========================================================================
-   4 & 5. HERO SECTION & EYEBROW
+   4 & 5. HERO SECTION (Desktop Only >= 768px)
    ========================================================================== */
 .vyom-hero-section {
-  position: relative;
-  min-height: calc(100vh - 5.5rem);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 6.5rem;
-  padding-bottom: 2rem;
-  background: radial-gradient(ellipse 90% 85% at 50% 95%, rgba(154, 192, 218, 0.45) 0%, rgba(195, 221, 238, 0.28) 55%, transparent 100%);
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .vyom-hero-section {
+    display: flex;
+    position: relative;
+    min-height: calc(100vh - 5.5rem);
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6.5rem;
+    padding-bottom: 2rem;
+    background: radial-gradient(ellipse 90% 85% at 50% 95%, rgba(154, 192, 218, 0.45) 0%, rgba(195, 221, 238, 0.28) 55%, transparent 100%);
+  }
 }
 
 .vyom-hero-eyebrow {
@@ -952,13 +1001,155 @@
     filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.55));
   }
 }
+/* ==========================================================================
+   DEDICATED MOBILE COMPONENT STYLES (< 768px)
+   ========================================================================== */
+
+/* Mobile Hero Heading */
+.vyom-mobile-hero-heading {
+  font-family: 'Playfair Display', 'DM Serif Display', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 auto;
+}
+
+/* Mobile Navigation Items */
+.vyom-mobile-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  min-height: 56px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.15rem;
+  color: #F7F4EC;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: left;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.vyom-mobile-nav-item:active {
+  transform: scale(0.98);
+  background: rgba(79, 124, 120, 0.28);
+  border-color: rgba(143, 175, 139, 0.4);
+}
+
+/* Mobile Step Cards (How VyomFlow Works) */
+.vyom-mobile-step-card {
+  width: 100%;
+  padding: 1.5rem 1.35rem;
+  border-radius: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(23, 50, 77, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vyom-mobile-step-card:active {
+  transform: scale(0.99);
+}
+
+/* Mobile Journey Nodes (Your Cognitive Journey on Landing Page) */
+.vyom-mobile-journey-node {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 1.15rem;
+  min-height: 60px;
+  border-radius: 1.25rem;
+  background: #FBFAF6;
+  border: 1.5px solid rgba(79, 124, 120, 0.22);
+  box-shadow: 0 3px 12px rgba(23, 50, 77, 0.04);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  width: 100%;
+}
+
+.dark .vyom-mobile-journey-node {
+  background: #14283C;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.vyom-mobile-journey-node:active {
+  transform: scale(0.98);
+  border-color: var(--vyom-teal);
+  box-shadow: 0 6px 18px rgba(79, 124, 120, 0.12);
+}
+
+.vyom-mobile-node-badge {
+  position: relative;
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 50%;
+  border-width: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(23, 50, 77, 0.06);
+}
+
+.dark .vyom-mobile-node-badge {
+  background: #1C352D;
+}
+
+.vyom-mobile-node-num {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1.5px 4.5px;
+  border-radius: 6px;
+  background: #17324D;
+  color: #FFFFFF;
+  letter-spacing: 0.02em;
+}
+
+.vyom-node-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4F7C78;
+  background: rgba(79, 124, 120, 0.12);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.vyom-mobile-journey-node:active .vyom-node-status-pill {
+  background: #4F7C78;
+  color: #FFFFFF;
+}
+
+/* iOS Safe Area Padding */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1.25rem);
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .vyom-hero-section {
-    padding-top: 7.5rem;
+    padding-top: 5rem;
+    min-height: auto;
   }
 
   .vyom-floating-navbar {
     padding: 0.65rem 1.25rem;
+  }
+
+  .vyom-privacy-card {
+    padding: 1.25rem;
   }
 }

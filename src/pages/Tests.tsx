@@ -21,6 +21,7 @@ export function Tests() {
         totalCount,
         activeNodeId,
         isJourneyComplete,
+        activityLastCompletedMap,
     } = useJourneyState();
 
     // Modals state
@@ -73,8 +74,8 @@ export function Tests() {
     return (
         <PageWrapper>
             <div className="journey-page container animate-fadeIn">
-                {/* Compact Hero Greeting Header */}
-                <header className="journey-hero-compact">
+                {/* Desktop Compact Hero Greeting Header (>= 768px) */}
+                <header className="hidden md:block journey-hero-compact">
                     <div className="hero-top-row">
                         <div className="hero-text-col">
                             <h1 className="hero-greeting-title">{getGreeting()}</h1>
@@ -126,11 +127,22 @@ export function Tests() {
                     </div>
                 </header>
 
+                {/* Mobile Journey Title (< 768px - Clean & Direct) */}
+                <div className="md:hidden text-center mb-3 pt-2 px-2">
+                    <h1 className="vyom-serif text-2xl font-bold text-[#17324D] dark:text-[#F7F4EC] tracking-tight">
+                        Your Cognitive Journey
+                    </h1>
+                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5">
+                        Explore your cognitive journey, one activity at a time.
+                    </p>
+                </div>
+
                 {/* Main Feature: Spacious Organic Journey Map Landscape (70-80% Visual Focus) */}
                 <main className="journey-map-main" aria-label="Journey Map">
                     <JourneyMap
                         completedActivityIds={completedActivityIds}
                         activeNodeId={activeNodeId}
+                        activityLastCompletedMap={activityLastCompletedMap}
                     />
                 </main>
 

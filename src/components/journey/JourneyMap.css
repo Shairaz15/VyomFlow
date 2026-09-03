@@ -140,81 +140,9 @@
     }
 }
 
-/* ===== Mobile Responsiveness (< 768px): Vertical Serpentine Trail ===== */
-@media (max-width: 767px) {
-    .world-map-canvas {
-        min-height: auto;
-        padding: 1rem 0;
-    }
-
-    .desktop-world-trail {
-        display: none;
-    }
-
-    .world-nodes-container {
-        position: relative;
-        height: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 3.5rem;
-        align-items: center;
-        max-width: 360px;
-        margin: 0 auto;
-        padding: 1.5rem 0;
-    }
-
-    .world-nodes-container::before {
-        content: '';
-        position: absolute;
-        top: 40px;
-        bottom: 40px;
-        left: 50%;
-        width: 5px;
-        background: repeating-linear-gradient(
-            180deg,
-            #3A9D9B 0,
-            #3A9D9B 10px,
-            transparent 10px,
-            transparent 20px
-        );
-        transform: translateX(-50%);
-        z-index: 1;
-    }
-
-    .world-node-position {
-        position: relative !important;
-        left: auto !important;
-        top: auto !important;
-        transform: none !important;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    /* Alternating serpentine offsets on mobile */
-    .world-node-position:nth-child(odd) {
-        transform: translateX(-24px) !important;
-    }
-
-    .world-node-position:nth-child(even) {
-        transform: translateX(24px) !important;
-    }
-
-    .world-environmental-terrain {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .biome-zone {
-        position: relative !important;
-        top: auto !important;
-        height: auto !important;
-        padding: 1.5rem 1rem;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .path-active-trail {
         animation: none;
     }
 }
+

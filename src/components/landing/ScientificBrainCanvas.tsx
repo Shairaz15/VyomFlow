@@ -35,7 +35,7 @@ export function ScientificBrainCanvas() {
             {/* Transparent Brain Image — no background, no border, no card */}
             <div className="relative z-10 w-full flex items-center justify-center">
                 <img
-                    src="/images/transparent-hero-brain.png"
+                    src="/images/transparent-hero-brain.png?v=2"
                     alt="VyomFlow Cognitive Brain Visualization"
                     className="w-full h-auto max-w-[380px] sm:max-w-[460px] md:max-w-[540px] object-contain block"
                     style={{
@@ -45,8 +45,8 @@ export function ScientificBrainCanvas() {
                     loading="eager"
                     onError={e => {
                         const target = e.currentTarget as HTMLImageElement;
-                        if (!target.src.endsWith('/images/hero-brain-visual.png')) {
-                            target.src = '/images/hero-brain-visual.png';
+                        if (!target.src.includes('/images/hero-brain-visual.png')) {
+                            target.src = '/images/hero-brain-visual.png?v=2';
                         }
                     }}
                     onMouseEnter={e => { if (!prefersReducedMotion) (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.012)'; }}
