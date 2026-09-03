@@ -1,245 +1,185 @@
-import { useState, useEffect } from "react";
 import type { MapGraph, NavigationAssessmentResult } from "../../../../types/navigationTypes";
-import { Button, Card } from "../../../common";
-import { MapBoard } from "./MapBoard";
+import { Card, Button } from "../../../common";
+import { RouteReplay } from "./RouteReplay";
 
 interface NavigationResultsProps {
     map: MapGraph;
     result: NavigationAssessmentResult;
+    isLevelUnlocked: boolean;
+    nextLevel?: number;
     onRetake: () => void;
     onBackToTests: () => void;
-    isLevelUnlocked?: boolean;
-    nextLevel?: number;
 }
 
 export function NavigationResults({
     map,
     result,
+    isLevelUnlocked,
+    nextLevel,
     onRetake,
     onBackToTests,
-    isLevelUnlocked = false,
-    nextLevel,
 }: NavigationResultsProps) {
-    const { biomarkers, navigationScore } = result;
+    const { biomarkers, navigationScore, moves, sessionMetadata } = result;
 
-    const [autoAdvanceTimer, setAutoAdvanceTimer] = useState<number>(5);
-    const [isAutoPaused, setIsAutoPaused] = useState<boolean>(false);
-
-    // Auto-advance timer countdown
-    useEffect(() => {
-        if (!isLevelUnlocked || !nextLevel || isAutoPaused) return;
-
-        if (autoAdvanceTimer <= 0) {
-            onRetake();
-            return;
-        }
-
-        const timer = setInterval(() => {
-            setAutoAdvanceTimer((prev) => prev - 1);
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [isLevelUnlocked, nextLevel, isAutoPaused, autoAdvanceTimer, onRetake]);
-
-    // Actual path taken (sequence of node IDs)
-    const actualNodePath: string[] = [];
-    if (result.moves.length > 0) {
-        actualNodePath.push(result.moves[0].fromNode);
-        for (const m of result.moves) {
-            actualNodePath.push(m.toNode);
-        }
-    }
-
-    const correctLandmarkCount = result.landmarkRecallResponses.filter((r) => r.isCorrect).length;
-
-    const getScoreColor = (score: number) => {
-        if (score >= 80) return "#10b981"; // Green
-        if (score >= 60) return "#3b82f6"; // Blue
-        if (score >= 40) return "#f59e0b"; // Orange
-        return "#ef4444"; // Red
-    };
+    const scoreColor =
+        navigationScore >= 85
+            ? "text-emerald-400 border-emerald-500"
+            : navigationScore >= 70
+            ? "text-cyan-400 border-cyan-500"
+            : "text-amber-400 border-amber-500";
 
     return (
-        <div className="navigation-results-container">
-            {/* Level Unlock Banner */}
-            {isLevelUnlocked && nextLevel && (
-                <div className="level-unlock-banner animate-bounce">
-                    <span className="banner-icon">🎉</span>
-                    <div className="banner-text">
-                        <h4>Level {nextLevel} Unlocked!</h4>
-                        <p>
-                            Great job! Score: {navigationScore}/100.
-                            {!isAutoPaused ? (
-                                <span> Auto-starting Level {nextLevel} in <strong>{autoAdvanceTimer}s</strong>...</span>
-                            ) : (
-                                <span> Auto-advance paused.</span>
-                            )}
-                        </p>
+        <div className="navigation-results-wrapper space-y-6 max-w-4xl mx-auto">
+            {/* Header Score Card */}
+            <Card className="score-summary-card p-6 md:p-8 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl text-center relative overflow-hidden">
+                <div className="absolute -top-12 -right-12 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl" />
+
+                <div className="inline-block px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-800 text-cyan-300 font-mono text-xs uppercase tracking-wider mb-4">
+                    3D Spatial Navigation Biomarker Report
+                </div>
+
+                <div className="flex flex-col items-center justify-center my-4">
+                    <div className={`w-36 h-36 rounded-full border-4 flex flex-col items-center justify-center ${scoreColor} bg-slate-950/80 shadow-2xl`}>
+                        <span className="text-4xl font-extrabold font-mono">{navigationScore}</span>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-widest font-sans">Out of 100</span>
                     </div>
 
-                    {!isAutoPaused ? (
-                        <button
-                            type="button"
-                            className="text-xs underline bg-white/20 px-2 py-1 rounded hover:bg-white/30 ml-auto"
-                            onClick={() => setIsAutoPaused(true)}
-                        >
-                            Pause Timer
-                        </button>
+                    <h2 className="text-2xl font-bold text-white mt-4">
+                        Strategy: <span className="text-cyan-400">{biomarkers.navigationStrategy}</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 max-w-md mt-1">
+                        Demographic-normalized evaluation across visuospatial memory, spatial orientation, executive decision stability, and landmark recall.
+                    </p>
+                </div>
+
+                {/* Adaptive Progression Notice (Requirement 2) */}
+                <div className={`p-4 rounded-2xl border text-sm max-w-md mx-auto ${
+                    isLevelUnlocked
+                        ? "bg-emerald-950/50 border-emerald-800/80 text-emerald-300"
+                        : "bg-amber-950/50 border-amber-800/80 text-amber-300"
+                }`}>
+                    {isLevelUnlocked ? (
+                        <div className="flex items-center justify-center gap-2 font-semibold">
+                            <span>🎉</span> Level {nextLevel} Unlocked! (Score ≥ 70)
+                        </div>
                     ) : (
-                        <button
-                            type="button"
-                            className="text-xs underline bg-white/20 px-2 py-1 rounded hover:bg-white/30 ml-auto"
-                            onClick={() => setIsAutoPaused(false)}
-                        >
-                            Resume
-                        </button>
+                        <div className="flex items-center justify-center gap-2 font-semibold">
+                            <span>🔁</span> Practice Level {result.difficulty} again to reach 70+ cutoff.
+                        </div>
                     )}
                 </div>
-            )}
-
-            {/* Score Hero Section */}
-            <Card className="results-hero-card">
-                <div className="hero-grid">
-                    <div className="score-gauge-wrapper">
-                        <svg className="gauge-svg" viewBox="0 0 120 120">
-                            <circle
-                                cx="60"
-                                cy="60"
-                                r="52"
-                                className="gauge-bg"
-                            />
-                            <circle
-                                cx="60"
-                                cy="60"
-                                r="52"
-                                className="gauge-fill"
-                                stroke={getScoreColor(navigationScore)}
-                                strokeDasharray={326.72}
-                                strokeDashoffset={326.72 * (1 - navigationScore / 100)}
-                            />
-                        </svg>
-                        <div className="gauge-center-content">
-                            <span className="gauge-value">{navigationScore}</span>
-                            <span className="gauge-label">NAVIGATION SCORE</span>
-                        </div>
-                    </div>
-
-                    <div className="hero-details">
-                        <h2>Navigation Assessment Complete</h2>
-                        <p className="results-map-title">
-                            Level {result.difficulty} • Map: {map.name}
-                        </p>
-
-                        <div className="quick-stats-grid">
-                            <div className="quick-stat">
-                                <span className="stat-num">{(result.completionTimeMs / 1000).toFixed(1)}s</span>
-                                <span className="stat-title">Completion Time</span>
-                            </div>
-                            <div className="quick-stat">
-                                <span className="stat-num">{biomarkers.wrongTurnCount}</span>
-                                <span className="stat-title">Wrong Turns</span>
-                            </div>
-                            <div className="quick-stat">
-                                <span className="stat-num">{biomarkers.backtrackCount}</span>
-                                <span className="stat-title">Backtracks</span>
-                            </div>
-                            <div className="quick-stat">
-                                <span className="stat-num">{correctLandmarkCount}/3</span>
-                                <span className="stat-title">Landmark Quiz</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </Card>
 
-            {/* Route Replay Card */}
-            <Card className="results-replay-card">
-                <h3>Route Replay & Deviation Map</h3>
-                <p className="replay-subtitle">
-                    Comparison between <span className="text-indigo font-bold">Optimal Route</span> and your{" "}
-                    <span className="text-red font-bold">Actual Path</span>.
-                </p>
+            {/* Biomarker Analytics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. Spatial Memory & Efficiency */}
+                <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl">
+                    <h4 className="text-sm font-mono uppercase text-slate-400 mb-4 flex items-center gap-2">
+                        <span>🧩 Spatial Memory & Path Metrics</span>
+                    </h4>
 
-                <div className="replay-map-wrapper">
-                    <MapBoard
-                        graph={map}
-                        currentNodeId=""
-                        highlightedPath={map.optimalPath}
-                        actualPath={actualNodePath}
-                        phase="results"
-                    />
-                </div>
-            </Card>
-
-            {/* Biomarker Metrics Bar Chart */}
-            <Card className="results-biomarkers-card">
-                <h3>Biomarker Breakdown</h3>
-
-                <div className="biomarker-bars-list">
-                    <div className="biomarker-bar-row">
-                        <div className="bar-info">
-                            <span className="bar-name">Navigation Accuracy</span>
-                            <span className="bar-value">{Math.round(biomarkers.navigationAccuracy * 100)}%</span>
+                    <div className="space-y-4">
+                        <div>
+                            <div className="flex justify-between text-xs font-mono text-slate-300 mb-1">
+                                <span>Path Efficiency</span>
+                                <span>{Math.round(biomarkers.pathEfficiency * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-cyan-400 h-full rounded-full"
+                                    style={{ width: `${Math.min(100, biomarkers.pathEfficiency * 100)}%` }}
+                                />
+                            </div>
                         </div>
-                        <div className="bar-track">
-                            <div
-                                className="bar-fill bg-green"
-                                style={{ width: `${biomarkers.navigationAccuracy * 100}%` }}
-                            />
+
+                        <div>
+                            <div className="flex justify-between text-xs font-mono text-slate-300 mb-1">
+                                <span>Navigation Accuracy</span>
+                                <span>{Math.round(biomarkers.navigationAccuracy * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-emerald-400 h-full rounded-full"
+                                    style={{ width: `${Math.min(100, biomarkers.navigationAccuracy * 100)}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between text-xs font-mono text-slate-300 mb-1">
+                                <span>Landmark Recall Accuracy</span>
+                                <span>{Math.round(biomarkers.landmarkRecallAccuracy * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-indigo-400 h-full rounded-full"
+                                    style={{ width: `${Math.min(100, biomarkers.landmarkRecallAccuracy * 100)}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs font-mono">
+                            <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                                <span className="text-slate-400 block text-[10px]">Exploration Ratio</span>
+                                <span className="text-lg font-bold text-amber-300">{biomarkers.explorationRatio}</span>
+                            </div>
+
+                            <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                                <span className="text-slate-400 block text-[10px]">Wrong Turns</span>
+                                <span className="text-lg font-bold text-rose-400">{biomarkers.wrongTurnCount}</span>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* 2. Expanded Decision Latency Analytics (Requirements 6 & 9) */}
+                <Card className="p-6 bg-slate-900/90 border border-slate-800 rounded-3xl">
+                    <h4 className="text-sm font-mono uppercase text-slate-400 mb-4 flex items-center gap-2">
+                        <span>⚡ Executive Decision Latency Analytics</span>
+                    </h4>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                            <span className="text-slate-400 block text-[10px]">Mean Latency</span>
+                            <span className="text-xl font-bold text-cyan-300">{biomarkers.decisionLatencyMean} ms</span>
+                        </div>
+
+                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                            <span className="text-slate-400 block text-[10px]">Median Latency</span>
+                            <span className="text-xl font-bold text-cyan-300">{biomarkers.decisionLatencyMedian} ms</span>
+                        </div>
+
+                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                            <span className="text-slate-400 block text-[10px]">Max Latency</span>
+                            <span className="text-xl font-bold text-amber-300">{biomarkers.decisionLatencyMax} ms</span>
+                        </div>
+
+                        <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                            <span className="text-slate-400 block text-[10px]">Latency Variance</span>
+                            <span className="text-xl font-bold text-emerald-300">{biomarkers.decisionLatencyVariance}</span>
                         </div>
                     </div>
 
-                    <div className="biomarker-bar-row">
-                        <div className="bar-info">
-                            <span className="bar-name">Path Efficiency</span>
-                            <span className="bar-value">{Math.round(biomarkers.pathEfficiency * 100)}%</span>
-                        </div>
-                        <div className="bar-track">
-                            <div
-                                className="bar-fill bg-indigo"
-                                style={{ width: `${biomarkers.pathEfficiency * 100}%` }}
-                            />
-                        </div>
+                    {/* Session Metadata (Requirement 9) */}
+                    <div className="mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono text-slate-400 flex flex-wrap justify-between gap-2">
+                        <span>Device: {sessionMetadata.deviceType}</span>
+                        <span>FPS: {sessionMetadata.fps}</span>
+                        <span>Input: {sessionMetadata.inputMethod}</span>
                     </div>
+                </Card>
+            </div>
 
-                    <div className="biomarker-bar-row">
-                        <div className="bar-info">
-                            <span className="bar-name">Avg Decision Latency</span>
-                            <span className="bar-value">{biomarkers.decisionLatencyMs} ms</span>
-                        </div>
-                        <div className="bar-track">
-                            <div
-                                className="bar-fill bg-blue"
-                                style={{
-                                    width: `${Math.min(100, (biomarkers.decisionLatencyMs / 3000) * 100)}%`,
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="biomarker-bar-row">
-                        <div className="bar-info">
-                            <span className="bar-name">Landmark Spatial Recall</span>
-                            <span className="bar-value">{Math.round(biomarkers.landmarkRecallAccuracy * 100)}%</span>
-                        </div>
-                        <div className="bar-track">
-                            <div
-                                className="bar-fill bg-purple"
-                                style={{ width: `${biomarkers.landmarkRecallAccuracy * 100}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </Card>
+            {/* Route Replay (Requirement 8) */}
+            <RouteReplay graph={map} moves={moves} />
 
             {/* Action Buttons */}
-            <div className="results-actions">
-                <Button variant="secondary" onClick={onBackToTests}>
-                    ← Back to Tests
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                <Button variant="secondary" size="lg" className="w-full sm:w-auto" onClick={onRetake}>
+                    🔄 {isLevelUnlocked ? `Start Level ${nextLevel}` : "Retake Assessment"}
                 </Button>
 
-                <Button variant="primary" onClick={onRetake}>
-                    {isLevelUnlocked && nextLevel ? `Start Level ${nextLevel} Now →` : "Retake Assessment 🔄"}
+                <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={onBackToTests}>
+                    Back to Assessments Dashboard →
                 </Button>
             </div>
         </div>

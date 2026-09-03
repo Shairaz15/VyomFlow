@@ -1,18 +1,24 @@
 /**
- * Navigation Assessment Types
- * Defines data structures for nodes, edges, map graphs, move tracking,
- * landmark recall quiz, biomarkers, and final results.
+ * 3D Navigation Assessment Types
+ * Defines data structures for MapLibre 3D nodes, street edges, movement logs,
+ * spatial landmark recall, session metadata, biomarkers, and assessment results.
  */
+
+export type NavigationDifficulty = 1 | 2 | 3 | 4;
 
 export interface MapNode {
     id: string;
     label: string;
     emoji: string;
-    x: number; // Grid coordinate X (0..100 or SVG space)
-    y: number; // Grid coordinate Y (0..100 or SVG space)
+    lat: number;
+    lng: number;
+    x: number; // Grid layout X
+    y: number; // Grid layout Y
     isStart?: boolean;
     isDestination?: boolean;
-    landmark?: string;
+    landmark?: string; // Fictional Landmark Name (e.g. "St. Jude Hospital", "Central Park")
+    gridCol?: number;
+    gridRow?: number;
 }
 
 export interface MapEdge {
@@ -20,32 +26,60 @@ export interface MapEdge {
     to: string;
     weight: number;
     direction: "north" | "south" | "east" | "west";
+    streetName?: string; // Fictional street name (e.g. "Astra Way")
 }
 
 export interface MapGraph {
     id: string;
     name: string;
     difficulty: NavigationDifficulty;
+    gridDimensions: { cols: number; rows: number };
+    center: [number, number]; // [lng, lat] for MapLibre initial view
     nodes: MapNode[];
     edges: MapEdge[];
     optimalPath: string[]; // Node IDs in sequence from start to destination
-    encodingTimeSeconds: number; // 15, 12, 10, or 8 seconds
+    patternSequence: ("north" | "south" | "east" | "west")[];
+    encodingTimeSeconds: number; // 15s, 12s, 10s, 8s
 }
 
-export type NavigationDifficulty = 1 | 2 | 3 | 4;
+/**
+ * Single source of truth record logged for every user movement decision.
+ */
+export interface MovementRecord {
+    currentNode: string;
+    previousNode: string | null;
+    availableDirections: ("north" | "south" | "east" | "west")[];
+    chosenDirection: "north" | "south" | "east" | "west";
+    correctDirection: "north" | "south" | "east" | "west";
+    decisionTimestamp: number;
+    decisionLatency: number; // Time elapsed since last move in ms
+    distanceTravelled: number; // Cumulative step count or distance
+    backtrackStatus: boolean; // True if step reverses immediately to previous node
+    hesitationFlag: boolean; // True if decision latency > 2500ms
+    sessionTimestamp: number;
+}
 
-export interface MoveRecord {
+export interface SessionMetadata {
+    browser: string;
+    deviceType: "mobile" | "tablet" | "desktop";
+    screenResolution: string;
+    viewportSize: string;
+    inputMethod: "touch" | "keyboard";
+    fps: number;
     timestamp: number;
-    fromNode: string;
-    toNode: string;
-    direction: "north" | "south" | "east" | "west";
-    decisionTimeMs: number;
-    isCorrectMove: boolean;
-    isBacktrack: boolean;
+    durationMs: number;
 }
+
+export type LandmarkRecallQuestionType =
+    | "sequential"
+    | "spatial"
+    | "exclusion"
+    | "temporal"
+    | "destination";
 
 export interface LandmarkRecallQuestion {
     id: string;
+    type: LandmarkRecallQuestionType;
     questionText: string;
     options: string[];
     correctAnswer: string;
@@ -59,16 +93,33 @@ export interface LandmarkRecallResponse {
 }
 
 export interface NavigationBiomarkers {
+    // Basic navigation accuracy & efficiency
     navigationAccuracy: number; // 0..1 (correct choices / total choices)
-    pathEfficiency: number; // 0..1 (optimal distance / actual distance)
-    wrongTurnCount: number; // number of wrong turns
-    completionTimeMs: number; // total navigation time
-    routeDeviation: number; // extra nodes visited beyond optimal
-    decisionLatencyMs: number; // average decision time per node (ms)
-    hesitationCount: number; // pauses > 2000ms
-    backtrackCount: number; // count of returning to immediate previous node
-    landmarkRecallAccuracy: number; // 0..1 from 3 recall questions
-    planningEfficiency: number; // 0..1 (for Level 4 multiple routes, optimal vs chosen)
+    pathEfficiency: number; // 0..1 (optimal path length / actual moves)
+    wrongTurnCount: number;
+    completionTimeMs: number;
+    routeDeviation: number; // Extra steps beyond optimal path
+
+    // Expanded decision latency analytics
+    decisionLatencyMean: number; // Average latency per decision (ms)
+    decisionLatencyMedian: number; // Median latency (ms)
+    decisionLatencyMax: number; // Maximum single-move latency (ms)
+    decisionLatencyVariance: number; // Latency variance (ms^2)
+
+    // Strategy & behavior metrics
+    hesitationCount: number; // Count of pauses > 2500ms
+    backtrackCount: number; // Count of returning to previous node
+    explorationRatio: number; // Visited unique nodes / Optimal path nodes count
+    landmarkRecallAccuracy: number; // 0..1 accuracy on landmark quiz
+    planningEfficiency: number; // 0..1 optimal vs chosen route cost
+    routeConfidenceIndex: number; // Smoothness & velocity score 0..100
+    navigationStrategy: "Direct Path" | "Trial & Error" | "Systematic Exploration" | "Hesitant Search";
+
+    // Demographic-normalized scores (0..1)
+    normalizedAccuracy: number;
+    normalizedEfficiency: number;
+    normalizedLatency: number;
+    normalizedWrongTurns: number;
 }
 
 export interface NavigationAssessmentResult {
@@ -77,10 +128,11 @@ export interface NavigationAssessmentResult {
     timestamp: Date;
     difficulty: NavigationDifficulty;
     mapId: string;
-    moves: MoveRecord[];
+    moves: MovementRecord[];
+    sessionMetadata: SessionMetadata;
     landmarkRecallResponses: LandmarkRecallResponse[];
     biomarkers: NavigationBiomarkers;
-    navigationScore: number; // 0..100
+    navigationScore: number; // 0..100 composite score
     totalMoves: number;
     optimalMoves: number;
     completionTimeMs: number;

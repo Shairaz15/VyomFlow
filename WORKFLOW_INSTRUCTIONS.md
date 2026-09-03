@@ -6,9 +6,9 @@ This document defines the strict workflow for advancing **VyomFlow** using 5-com
 
 ## 📌 Current Tracking State
 
-- **Current CogniTrack Base Commit:** `06e4fd91428d48a0394c1ae2d444ab0842f0c240` (`06e4fd9`)
+- **Current CogniTrack Base Commit:** `a438da24322de7c0e087256ccfb1c30f9d86e4d8` (`a438da2`)
 - **Date:** `2026-08-04`
-- **Message:** `feat: add automatic level progression with 5-second countdown timer upon score >= 70`
+- **Message:** `fix(navigation): resolve white box map rendering issue with MapLibre CSS, canvas dark background, and ResizeObserver`
 - **Target VyomFlow Remote:** `https://github.com/Shairaz15/VyomFlow.git` (`origin/main`)
 
 ---

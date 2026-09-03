@@ -54,16 +54,40 @@ export function MapBoard({
 
     const currentNode = graph.nodes.find((n) => n.id === currentNodeId);
 
+    // Direction arrow symbol converter
+    const getDirectionArrow = (dir: string) => {
+        switch (dir) {
+            case "north": return "⬆";
+            case "south": return "⬇";
+            case "east": return "➡";
+            case "west": return "⬅";
+            default: return "➡";
+        }
+    };
+
     return (
         <div className="map-board-container">
+            {/* Pattern Sequence Ribbon during Encoding */}
+            {phase === "encoding" && graph.patternSequence && (
+                <div className="pattern-sequence-ribbon">
+                    <span className="ribbon-label">PATTERN SEQUENCE:</span>
+                    <div className="ribbon-arrows">
+                        {graph.patternSequence.map((dir, idx) => (
+                            <span key={`seq_${idx}`} className="sequence-arrow-pill">
+                                {getDirectionArrow(dir)} {dir.toUpperCase()}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <svg
                 viewBox="0 0 400 400"
                 className="map-board-svg"
                 role="img"
-                aria-label={`Navigation Map ${graph.name}`}
+                aria-label={`Maze Labyrinth ${graph.name}`}
             >
                 <defs>
-                    {/* Pulsing glow filter for current position */}
                     <filter id="pulseGlow" x="-50%" y="-50%" width="200%" height="200%">
                         <feGaussianBlur stdDeviation="3" result="blur" />
                         <feComponentTransfer>
@@ -74,9 +98,17 @@ export function MapBoard({
                             <feMergeNode in="SourceGraphic" />
                         </feMerge>
                     </filter>
+
+                    {/* Matrix Background Pattern */}
+                    <pattern id="matrixGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(148, 163, 184, 0.15)" strokeWidth="1" />
+                    </pattern>
                 </defs>
 
-                {/* 1. Render Roads / Edges */}
+                {/* Matrix Grid Background */}
+                <rect width="400" height="400" fill="url(#matrixGrid)" rx="12" />
+
+                {/* 1. Render Maze Corridors / Edges */}
                 <g className="map-edges">
                     {graph.edges.map((edge, idx) => {
                         const fromNode = graph.nodes.find((n) => n.id === edge.from);
@@ -101,7 +133,7 @@ export function MapBoard({
                             strokeColor = "#10b981"; // Green: followed optimal
                             strokeWidth = 10;
                         } else if (isHighlighted) {
-                            strokeColor = "#6366f1"; // Indigo: encoding/optimal route
+                            strokeColor = "#6366f1"; // Indigo: encoding path
                             strokeWidth = 10;
                             strokeDasharray = "8,4";
                         } else if (isActualTraversed) {
@@ -126,20 +158,19 @@ export function MapBoard({
                     })}
                 </g>
 
-                {/* 2. Render Nodes */}
+                {/* 2. Render Maze Junction Nodes */}
                 <g className="map-nodes">
                     {graph.nodes.map((node) => {
                         const isCurrent = node.id === currentNodeId && phase === "navigation";
                         const isVisited = isNodeVisited(node.id);
                         const inFog = isNodeVisibleInFog(node.id);
 
-                        // Mask emojis & labels during navigation phase — even start and destination are masked as plain circles!
+                        // Mask emojis & labels during navigation phase
                         const showEmojiAndLabel =
                             phase !== "navigation" ||
                             isCurrent ||
                             isVisited;
 
-                        // Node fill & stroke styling
                         let fill = "#f1f5f9";
                         let stroke = "#94a3b8";
                         let radius = 18;
@@ -173,7 +204,6 @@ export function MapBoard({
                                 transform={`translate(${node.x}, ${node.y})`}
                                 opacity={inFog ? 1.0 : 0.3}
                             >
-                                {/* Base circle */}
                                 <circle
                                     r={radius}
                                     fill={fill}
@@ -182,7 +212,6 @@ export function MapBoard({
                                     className="node-circle"
                                 />
 
-                                {/* Emoji label inside node (masked as neutral dot during navigation unless visited/current) */}
                                 {showEmojiAndLabel ? (
                                     <text
                                         textAnchor="middle"
@@ -196,7 +225,6 @@ export function MapBoard({
                                     <circle r="4" fill="#64748b" />
                                 )}
 
-                                {/* Label text below node (masked during navigation unless visited/current) */}
                                 {showEmojiAndLabel && (
                                     <text
                                         y={node.isStart || node.isDestination ? 34 : 30}

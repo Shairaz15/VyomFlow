@@ -131,6 +131,7 @@ export function Dashboard() {
             const language = languageResults.filter(l => new Date(l.timestamp).toDateString() === dateStr).pop();
             const vmra = vmraResults.filter(v => new Date(v.timestamp).toDateString() === dateStr).pop();
             const storyRes = storyResults.filter(s => new Date(s.timestamp).toDateString() === dateStr).pop();
+            const navRes = navigationResults.filter(n => new Date(n.timestamp).toDateString() === dateStr).pop();
 
             const patternScore = pattern ? Math.min(pattern.metrics.maxLevelReached * 10, 100) : null;
 
@@ -144,6 +145,7 @@ export function Dashboard() {
                 csi: language ? Math.round(language.derivedFeatures.cognitiveSpeechIndex ?? 85) : null,
                 vmra: vmra ? Math.round(vmra.features.recallAccuracy * 100) : null,
                 storyRecall: storyRes ? storyRes.storyRecallScore : null,
+                navigation: navRes ? navRes.navigationScore : null,
             };
         });
     }, [reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults]);
@@ -372,6 +374,7 @@ export function Dashboard() {
                 {/* Charts Grid */}
                 {hasUserData && (
                     <div className="charts-grid">
+                        {renderChart("3D Spatial Navigation", "Visuospatial memory & spatial orientation index", "navigation", "#06b6d4", [0, 100], "/100")}
                         {renderChart("Story Narration Recall", "Episodic memory & narrative recall index", "storyRecall", "#60a5fa", [0, 100], "/100")}
                         {renderChart(t('dashboard.memoryAccuracy'), t('dashboard.memoryAccuracySub'), "memory", "#34d399", [0, 100], "%")}
                         {renderChart(t('dashboard.visualMemoryVmra'), t('dashboard.visualMemoryVmraSub'), "vmra", "#f472b6", [0, 100], "%")}
@@ -392,6 +395,7 @@ export function Dashboard() {
                                     <thead>
                                         <tr>
                                             <th>{t('dashboard.date')}</th>
+                                            <th>3D Navigation</th>
                                             <th>Story Recall</th>
                                             <th>{t('dashboard.memory')}</th>
                                             <th>{t('dashboard.visual')}</th>
@@ -405,6 +409,7 @@ export function Dashboard() {
                                         {chartData.slice().reverse().map((session, i) => (
                                             <tr key={i}>
                                                 <td>{session.date}</td>
+                                                <td>{session.navigation ? `${session.navigation}/100` : '-'}</td>
                                                 <td>{session.storyRecall ? `${session.storyRecall}/100` : '-'}</td>
                                                 <td>{session.memory ? `${session.memory}%` : '-'}</td>
                                                 <td>{session.vmra ? `${session.vmra}%` : '-'}</td>

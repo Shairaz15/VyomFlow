@@ -25,13 +25,6 @@ export function Tests() {
 
     const TESTS: TestInfo[] = [
         {
-            id: "navigation",
-            title: "Navigation Assessment",
-            description: "Memorize and navigate an Indian-themed map to test visuospatial memory, planning, and spatial orientation.",
-            iconName: "navigation",
-            duration: "4 min",
-        },
-        {
             id: "story",
             title: "Story Narration Recall",
             description: "Listen to a narrated story in your language and retell it to assess episodic memory, listening comprehension, and narrative flow.",
@@ -72,6 +65,13 @@ export function Tests() {
             description: t('tests.sustainedAttentionDesc'),
             iconName: "attention",
             duration: t('landing.duration', { min: '3' }),
+        },
+        {
+            id: "navigation",
+            title: "3D Spatial Navigation Assessment",
+            description: "Navigate through 3D fictional neighborhood environments using MapLibre vector maps to evaluate visuospatial memory, executive planning, decision latency, and landmark recall.",
+            iconName: "navigation",
+            duration: "4 min",
         },
     ];
 

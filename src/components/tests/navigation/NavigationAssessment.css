@@ -1,658 +1,111 @@
-/* ==========================================
-   Navigation Assessment Comprehensive Styles
-   ========================================== */
+/* 3D Navigation Assessment Module Styles */
+@import "maplibre-gl/dist/maplibre-gl.css";
 
 .navigation-assessment-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    font-family: inherit;
 }
 
-/* ------------------------------------------
-   1. Instructions Phase
-   ------------------------------------------ */
-.nav-instructions-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 2rem;
-    gap: 1.25rem;
+/* MapLibre 3D Canvas Container */
+.map-view-container {
+    position: relative;
+    background-color: #020617 !important;
+    border-radius: 1.5rem;
 }
 
-.nav-icon-badge {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.map-view-container canvas {
+    background-color: #020617 !important;
 }
 
-.nav-subtitle {
-    color: var(--text-muted, #64748b);
-    max-width: 600px;
-    font-size: 0.95rem;
-    line-height: 1.5;
+.maplibregl-map {
+    background-color: #020617 !important;
+    font-family: inherit;
 }
 
-.nav-steps-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-    text-align: left;
-    margin: 1rem 0;
+.maplibregl-canvas {
+    background-color: #020617 !important;
 }
 
-.nav-step-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 0.85rem 1rem;
-    background: var(--card-bg-subtle, #f8fafc);
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: 12px;
+.map-overlay-vignette {
+    box-shadow: inset 0 0 80px rgba(2, 6, 23, 0.7);
 }
 
-.step-num {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #6366f1;
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 0.85rem;
+/* 3D Map HTML Node Badges */
+.map-3d-node-marker {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-}
-
-.step-content strong {
-    display: block;
-    font-size: 0.95rem;
-    color: var(--text-color, #1e293b);
-}
-
-.step-content p {
-    margin: 0.25rem 0 0 0;
-    font-size: 0.85rem;
-    color: var(--text-muted, #64748b);
-}
-
-.difficulty-select-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center;
-    width: 100%;
-    margin-top: 0.5rem;
-}
-
-.difficulty-select-wrapper label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-color, #334155);
-}
-
-.difficulty-pills {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.diff-pill {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    border: 1px solid var(--border-color, #cbd5e1);
-    background: var(--bg-color, #ffffff);
-    color: var(--text-color, #475569);
-    font-weight: 600;
-    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.diff-pill.active {
-    background: #6366f1;
-    color: #ffffff;
-    border-color: #6366f1;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+.node-badge {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 9999px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1.5px solid rgba(148, 163, 184, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #f8fafc;
+    font-size: 0.85rem;
 }
 
-/* ------------------------------------------
-   2. Map Board & SVG Component
-   ------------------------------------------ */
-.map-board-container {
-    width: 100%;
-    max-width: 440px;
-    margin: 0 auto;
-    background: var(--map-bg, #f8fafc);
-    border: 2px solid var(--border-color, #e2e8f0);
-    border-radius: 16px;
-    padding: 0.75rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+.node-badge:hover {
+    transform: translateY(-2px) scale(1.05);
 }
 
-.map-board-svg {
-    width: 100%;
-    height: auto;
-    display: block;
+.node-badge.current {
+    border-color: #38bdf8;
+    background: rgba(14, 165, 233, 0.35);
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.7);
+    animation: pulse-border 2s infinite;
 }
 
-/* Node pulse effect */
-@keyframes haloPulse {
-    0% {
-        transform: scale(0.9);
-        opacity: 0.8;
+.node-badge.start {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.35);
+}
+
+.node-badge.destination {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.35);
+}
+
+.node-badge.wrong {
+    border-color: #f43f5e;
+    background: rgba(244, 63, 94, 0.35);
+}
+
+.node-badge.backtrack {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.35);
+}
+
+.landmark-tooltip {
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@keyframes pulse-border {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
     }
     50% {
-        transform: scale(1.25);
-        opacity: 0.3;
-    }
-    100% {
-        transform: scale(0.9);
-        opacity: 0.8;
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.9);
     }
 }
 
-.pulsing-halo {
-    transform-origin: center;
-    animation: haloPulse 1.8s infinite ease-in-out;
-}
-
-/* ------------------------------------------
-   3. Navigation D-pad Controls
-   ------------------------------------------ */
-.navigation-dpad-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.dpad-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 64px);
-    grid-template-rows: repeat(3, 64px);
-    gap: 8px;
-    justify-content: center;
-    align-items: center;
-}
-
-.dpad-btn {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-    border: 1.5px solid var(--border-color, #cbd5e1);
-    background: var(--card-bg, #ffffff);
-    color: var(--text-color, #1e293b);
-    font-size: 1.2rem;
-    font-weight: 700;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-}
-
-.dpad-arrow {
-    line-height: 1;
-}
-
-.dpad-key-badge {
-    font-size: 0.65rem;
-    font-weight: 800;
-    opacity: 0.65;
-    margin-top: 2px;
-}
-
-.dpad-btn.active {
-    background: #6366f1;
-    color: #ffffff;
-    border-color: #6366f1;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.dpad-btn.active:hover {
-    transform: translateY(-2px);
-    background: #4f46e5;
-}
-
-.dpad-btn.pressed,
-.dpad-btn.active:active {
-    transform: translateY(1px);
-    background: #4338ca;
-}
-
-.dpad-btn.disabled {
-    opacity: 0.25;
-    cursor: not-allowed;
-    background: #f1f5f9;
-    border-color: #e2e8f0;
-    box-shadow: none;
-}
-
-.dpad-center {
-    width: 64px;
-    height: 64px;
+/* Timeline scrubber slider */
+input[type="range"].accent-cyan-500::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background: var(--card-bg-subtle, #f8fafc);
-    border: 1.5px solid var(--border-color, #e2e8f0);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.dpad-center-dot {
-    color: #94a3b8;
-    font-size: 0.9rem;
-}
-
-.dpad-hint {
-    font-size: 0.8rem;
-    color: var(--text-muted, #64748b);
-    text-align: center;
-}
-
-/* ------------------------------------------
-   4. Shape Distractor Component
-   ------------------------------------------ */
-.distractor-container {
-    background: var(--card-bg, #ffffff);
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: 16px;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.distractor-header {
-    text-align: center;
-}
-
-.distractor-instruction {
-    font-size: 1.1rem;
-    margin: 0.5rem 0 1rem 0;
-}
-
-.target-badge {
-    color: #6366f1;
-    background: rgba(99, 102, 241, 0.1);
-    padding: 0.2rem 0.6rem;
-    border-radius: 8px;
-}
-
-.distractor-timer-wrapper {
-    height: 8px;
-    background: #e2e8f0;
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-}
-
-.distractor-timer-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #6366f1, #3b82f6);
-    transition: width 1s linear;
-}
-
-.timer-text {
-    font-size: 0.8rem;
-    color: var(--text-muted, #64748b);
-    display: block;
-    margin-top: 0.25rem;
-}
-
-.distractor-field {
-    height: 300px;
-    position: relative;
-    background: var(--card-bg-subtle, #f8fafc);
-    border: 1px dashed var(--border-color, #cbd5e1);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.shape-item {
-    position: absolute;
-    width: 44px;
-    height: 44px;
-    border: none;
+    background: #06b6d4;
     cursor: pointer;
-    transition: transform 0.15s ease;
-}
-
-.shape-item:hover {
-    transform: scale(1.15);
-}
-
-.shape-circle {
-    border-radius: 50%;
-}
-
-.shape-square {
-    border-radius: 8px;
-}
-
-.shape-triangle {
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-}
-
-/* ------------------------------------------
-   5. Navigation HUD
-   ------------------------------------------ */
-.navigation-hud {
-    background: var(--card-bg, #ffffff);
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: 14px;
-    padding: 0.85rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.hud-top-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.hud-badge {
-    display: flex;
-    flex-direction: column;
-}
-
-.badge-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: var(--text-muted, #64748b);
-}
-
-.badge-value {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-color, #1e293b);
-}
-
-.hud-stats-row {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.stat-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.85rem;
-    color: var(--text-muted, #475569);
-}
-
-.stat-val {
-    font-weight: 700;
-    color: var(--text-color, #0f172a);
-}
-
-.hud-progress-container {
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.hud-progress-bar {
-    height: 100%;
-    background: #22c55e;
-    transition: width 0.3s ease;
-}
-
-/* ------------------------------------------
-   6. Landmark Recall Quiz
-   ------------------------------------------ */
-.landmark-recall-card {
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-}
-
-.quiz-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: var(--text-muted, #64748b);
-}
-
-.quiz-tag {
-    font-weight: 600;
-    color: #6366f1;
-}
-
-.quiz-question {
-    font-size: 1.2rem;
-    line-height: 1.4;
-    color: var(--text-color, #1e293b);
-}
-
-.quiz-options-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.quiz-option-btn {
-    width: 100%;
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    border: 1.5px solid var(--border-color, #cbd5e1);
-    background: var(--card-bg, #ffffff);
-    color: var(--text-color, #1e293b);
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: left;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.quiz-option-btn:hover {
-    border-color: #6366f1;
-    background: rgba(99, 102, 241, 0.04);
-}
-
-.quiz-option-btn.selected {
-    border-color: #6366f1;
-    background: rgba(99, 102, 241, 0.12);
-    font-weight: 700;
-}
-
-/* ------------------------------------------
-   7. Results Dashboard
-   ------------------------------------------ */
-.navigation-results-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.level-unlock-banner {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: #ffffff;
-    border-radius: 16px;
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-}
-
-.banner-icon {
-    font-size: 2rem;
-}
-
-.banner-text h4 {
-    margin: 0;
-    font-size: 1.15rem;
-}
-
-.banner-text p {
-    margin: 0.25rem 0 0 0;
-    font-size: 0.85rem;
-    opacity: 0.9;
-}
-
-.hero-grid {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    gap: 1.5rem;
-    align-items: center;
-}
-
-@media (max-width: 600px) {
-    .hero-grid {
-        grid-template-columns: 1fr;
-        justify-items: center;
-        text-align: center;
-    }
-}
-
-.score-gauge-wrapper {
-    position: relative;
-    width: 130px;
-    height: 130px;
-}
-
-.gauge-svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-}
-
-.gauge-bg {
-    fill: none;
-    stroke: #e2e8f0;
-    stroke-width: 10;
-}
-
-.gauge-fill {
-    fill: none;
-    stroke-width: 10;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 1.5s ease-out;
-}
-
-.gauge-center-content {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.gauge-value {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: var(--text-color, #0f172a);
-    line-height: 1;
-}
-
-.gauge-label {
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: var(--text-muted, #64748b);
-    margin-top: 2px;
-}
-
-.quick-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-@media (max-width: 600px) {
-    .quick-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-.quick-stat {
-    background: var(--card-bg-subtle, #f8fafc);
-    border-radius: 10px;
-    padding: 0.5rem 0.75rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.stat-num {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-color, #0f172a);
-}
-
-.stat-title {
-    font-size: 0.7rem;
-    color: var(--text-muted, #64748b);
-}
-
-.replay-map-wrapper {
-    margin-top: 1rem;
-}
-
-.biomarker-bars-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.biomarker-bar-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.bar-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.bar-track {
-    height: 10px;
-    background: #e2e8f0;
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.bar-fill {
-    height: 100%;
-    border-radius: 5px;
-    transition: width 1s ease-out;
-}
-
-.bg-green { background: #10b981; }
-.bg-indigo { background: #6366f1; }
-.bg-blue { background: #3b82f6; }
-.bg-purple { background: #8b5cf6; }
-
-.results-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
 }

@@ -7,134 +7,109 @@ export interface AdjacentNodeInfo {
 }
 
 /**
- * Returns reachable neighbor nodes from a given node ID along with edge direction.
+ * Get all connected adjacent nodes from a specified current node.
  */
-export function getAdjacentNodes(graph: MapGraph, nodeId: string): AdjacentNodeInfo[] {
-    const outgoingEdges = graph.edges.filter((e) => e.from === nodeId);
-    const result: AdjacentNodeInfo[] = [];
+export function getAdjacentNodes(graph: MapGraph, currentNodeId: string): AdjacentNodeInfo[] {
+    const results: AdjacentNodeInfo[] = [];
 
-    for (const edge of outgoingEdges) {
-        const targetNode = graph.nodes.find((n) => n.id === edge.to);
-        if (targetNode) {
-            result.push({
-                node: targetNode,
-                edge,
-                direction: edge.direction,
-            });
+    graph.edges.forEach((edge) => {
+        if (edge.from === currentNodeId) {
+            const targetNode = graph.nodes.find((n) => n.id === edge.to);
+            if (targetNode) {
+                results.push({ node: targetNode, edge, direction: edge.direction });
+            }
         }
-    }
+    });
 
-    return result;
+    return results;
 }
 
 /**
- * Returns which D-pad directions ("north" | "south" | "east" | "west") are valid moves from nodeId.
+ * Returns available cardinal directions ("north" | "south" | "east" | "west") from the current node.
  */
 export function getAvailableDirections(
     graph: MapGraph,
-    nodeId: string
-): Record<"north" | "south" | "east" | "west", boolean> {
-    const adjacent = getAdjacentNodes(graph, nodeId);
-    const available = {
-        north: false,
-        south: false,
-        east: false,
-        west: false,
-    };
-
-    for (const item of adjacent) {
-        available[item.direction] = true;
-    }
-
-    return available;
+    currentNodeId: string
+): ("north" | "south" | "east" | "west")[] {
+    const adj = getAdjacentNodes(graph, currentNodeId);
+    return adj.map((item) => item.direction);
 }
 
 /**
- * Checks if a given node is on the optimal path sequence.
+ * Dijkstra's shortest path algorithm.
+ * Returns array of node IDs from start to destination.
  */
-export function isOnOptimalPath(nodeId: string, optimalPath: string[]): boolean {
-    return optimalPath.includes(nodeId);
-}
-
-/**
- * Compares actual path traversed with optimal path sequence.
- * Returns route deviation (extra steps taken beyond optimal).
- */
-export function comparePaths(
-    optimalPath: string[],
-    actualPath: string[]
-): {
-    optimalLength: number;
-    actualLength: number;
-    extraSteps: number;
-    pathEfficiency: number;
-} {
-    const optimalLength = Math.max(0, optimalPath.length - 1); // number of edges
-    const actualLength = Math.max(0, actualPath.length - 1); // number of edges
-    const extraSteps = Math.max(0, actualLength - optimalLength);
-    const pathEfficiency = actualLength > 0 ? Math.min(1, optimalLength / actualLength) : 1;
-
-    return {
-        optimalLength,
-        actualLength,
-        extraSteps,
-        pathEfficiency,
-    };
-}
-
-/**
- * Dijkstra's shortest path algorithm between startId and endId.
- */
-export function findShortestPath(graph: MapGraph, startId: string, endId: string): string[] {
+export function findShortestPath(
+    graph: MapGraph,
+    startNodeId: string,
+    destNodeId: string
+): string[] {
     const distances: Record<string, number> = {};
     const previous: Record<string, string | null> = {};
     const unvisited = new Set<string>();
 
-    for (const node of graph.nodes) {
+    graph.nodes.forEach((node) => {
         distances[node.id] = Infinity;
         previous[node.id] = null;
         unvisited.add(node.id);
-    }
+    });
 
-    distances[startId] = 0;
+    distances[startNodeId] = 0;
 
     while (unvisited.size > 0) {
-        // Pick node in unvisited with smallest distance
+        // Find unvisited node with smallest distance
         let currentId: string | null = null;
         let smallestDist = Infinity;
 
-        for (const nodeId of unvisited) {
-            if (distances[nodeId] < smallestDist) {
-                smallestDist = distances[nodeId];
-                currentId = nodeId;
+        unvisited.forEach((id) => {
+            if (distances[id] < smallestDist) {
+                smallestDist = distances[id];
+                currentId = id;
             }
-        }
+        });
 
-        if (currentId === null || smallestDist === Infinity || currentId === endId) {
+        if (!currentId || currentId === destNodeId || smallestDist === Infinity) {
             break;
         }
 
         unvisited.delete(currentId);
 
         const neighbors = getAdjacentNodes(graph, currentId);
-        for (const neighbor of neighbors) {
-            if (unvisited.has(neighbor.node.id)) {
-                const alt = distances[currentId] + neighbor.edge.weight;
-                if (alt < distances[neighbor.node.id]) {
-                    distances[neighbor.node.id] = alt;
-                    previous[neighbor.node.id] = currentId;
+        neighbors.forEach(({ node, edge }) => {
+            if (unvisited.has(node.id)) {
+                const alt = distances[currentId!] + edge.weight;
+                if (alt < distances[node.id]) {
+                    distances[node.id] = alt;
+                    previous[node.id] = currentId;
                 }
             }
-        }
+        });
     }
 
     // Reconstruct path
     const path: string[] = [];
-    let curr: string | null = endId;
-    while (curr !== null) {
+    let curr: string | null = destNodeId;
+    while (curr) {
         path.unshift(curr);
         curr = previous[curr];
     }
 
-    return path[0] === startId ? path : [];
+    return path[0] === startNodeId ? path : [];
+}
+
+/**
+ * Calculates direction between two grid points or coordinates.
+ */
+export function getDirectionBetweenNodes(
+    fromNode: MapNode,
+    toNode: MapNode
+): "north" | "south" | "east" | "west" {
+    const dx = toNode.x - fromNode.x;
+    const dy = toNode.y - fromNode.y;
+
+    if (Math.abs(dy) >= Math.abs(dx)) {
+        return dy < 0 ? "north" : "south";
+    } else {
+        return dx > 0 ? "east" : "west";
+    }
 }

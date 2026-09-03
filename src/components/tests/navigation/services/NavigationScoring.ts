@@ -1,88 +1,115 @@
 import type { NavigationBiomarkers, NavigationDifficulty } from "../../../../types/navigationTypes";
 
+export interface DemographicContext {
+    age?: number; // Default: 45
+    yearsOfEducation?: number; // Default: 14
+}
+
 export interface NavigationScoreResult {
-    navigationScore: number; // 0..100
-    subScores: {
-        accuracyScore: number;
-        efficiencyScore: number;
-        wrongTurnScore: number;
-        completionTimeScore: number;
-        routeDeviationScore: number;
-        latencyScore: number;
-        backtrackScore: number;
+    navigationScore: number; // 0..100 composite score
+    nextRecommendedLevel: NavigationDifficulty;
+    isLevelUnlocked: boolean;
+    normalizedMetrics: {
+        accuracy: number;
+        efficiency: number;
+        latency: number;
+        wrongTurns: number;
+        landmarkRecall: number;
     };
 }
 
-const EXPECTED_COMPLETION_TIME_MS: Record<NavigationDifficulty, number> = {
-    1: 30000, // 30s
-    2: 45000, // 45s
-    3: 60000, // 60s
-    4: 75000, // 75s
-};
-
+/**
+ * Normalizes spatial biomarkers considering participant demographic cohort and difficulty level,
+ * then computes the composite 0-100 Navigation Score and adaptive level progression.
+ */
 export function computeNavigationScore(
-    biomarkers: NavigationBiomarkers,
+    rawBiomarkers: NavigationBiomarkers,
     difficulty: NavigationDifficulty,
-    totalMoves: number,
-    optimalMoves: number
+    demographics: DemographicContext = {}
 ): NavigationScoreResult {
-    // 1. Accuracy (30%)
-    const accuracyScore = Math.max(0, Math.min(1, biomarkers.navigationAccuracy));
+    const age = demographics.age ?? 45;
+    const edu = demographics.yearsOfEducation ?? 14;
 
-    // 2. Path Efficiency (20%)
-    const efficiencyScore = Math.max(0, Math.min(1, biomarkers.pathEfficiency));
+    // Age adjustment factor: Older age gets slight adjustment threshold relaxation (+0.05)
+    const ageFactor = age > 60 ? 1.08 : age > 45 ? 1.03 : 1.0;
+    // Education factor
+    const eduFactor = edu >= 16 ? 1.0 : 0.96;
+    // Difficulty factor: Higher levels expect higher spatial memory cognitive load
+    const difficultyFactor = 1 + (difficulty - 1) * 0.05;
 
-    // 3. Wrong Turn Penalty (15%)
-    const safeTotalMoves = Math.max(1, totalMoves);
-    const wrongTurnScore = Math.max(0, 1 - biomarkers.wrongTurnCount / safeTotalMoves);
+    // 1. Normalize Path Efficiency (Target: > 0.8)
+    const normalizedEfficiency = Math.min(
+        1,
+        Math.max(0, (rawBiomarkers.pathEfficiency * ageFactor * eduFactor) / 0.85)
+    );
 
-    // 4. Completion Time Score (15%)
-    const expectedMs = EXPECTED_COMPLETION_TIME_MS[difficulty] || 45000;
-    const timeDiffMs = Math.max(0, biomarkers.completionTimeMs - expectedMs);
-    const completionTimeScore = Math.max(0, 1 - timeDiffMs / expectedMs);
+    // 2. Normalize Accuracy (Target: > 0.9)
+    const normalizedAccuracy = Math.min(
+        1,
+        Math.max(0, rawBiomarkers.navigationAccuracy * ageFactor)
+    );
 
-    // 5. Route Deviation Score (10%)
-    const safeOptimalMoves = Math.max(1, optimalMoves);
-    const routeDeviationScore = Math.max(0, 1 - biomarkers.routeDeviation / safeOptimalMoves);
+    // 3. Normalize Decision Latency (Expected mean latency per node: 800ms - 2500ms)
+    // Penalize latencies > 3500ms or < 300ms (mindless clicking)
+    const targetLatency = 1500 * difficultyFactor;
+    const latencyDev = Math.abs(rawBiomarkers.decisionLatencyMean - targetLatency);
+    const normalizedLatency = Math.min(
+        1,
+        Math.max(0, 1 - latencyDev / (3000 * ageFactor))
+    );
 
-    // 6. Decision Latency Score (5%)
-    // Optimal latency: 800ms - 2500ms
-    let latencyScore = 1;
-    if (biomarkers.decisionLatencyMs < 400) {
-        // Too fast (random guessing)
-        latencyScore = 0.5;
-    } else if (biomarkers.decisionLatencyMs > 2500) {
-        // Too slow
-        const excess = biomarkers.decisionLatencyMs - 2500;
-        latencyScore = Math.max(0, 1 - excess / 3000);
+    // 4. Normalize Wrong Turn Rate
+    const normalizedWrongTurns = Math.min(
+        1,
+        Math.max(0, 1 - (rawBiomarkers.wrongTurnCount * 0.15) / difficultyFactor)
+    );
+
+    // 5. Landmark Recall Score (0..1)
+    const landmarkRecallScore = rawBiomarkers.landmarkRecallAccuracy;
+
+    // Composite Navigation Score Weights:
+    // Path Efficiency: 30%
+    // Navigation Accuracy: 25%
+    // Wrong Turn Control: 20%
+    // Landmark Recall: 15%
+    // Decision Latency Stability: 10%
+    const weightedSum =
+        normalizedEfficiency * 0.30 +
+        normalizedAccuracy * 0.25 +
+        normalizedWrongTurns * 0.20 +
+        landmarkRecallScore * 0.15 +
+        normalizedLatency * 0.10;
+
+    const navigationScore = Math.round(Math.min(100, Math.max(0, weightedSum * 100)));
+
+    // Adaptive Progression Logic (Requirement 2):
+    // Score >= 85 -> Skip to Level 3 (or +2 levels, max 4)
+    // Score 70-84 -> Unlock Level 2 (or +1 level, max 4)
+    // Score < 70 -> Repeat current level
+    let nextRecommendedLevel: NavigationDifficulty = difficulty;
+    let isLevelUnlocked = false;
+
+    if (navigationScore >= 85) {
+        nextRecommendedLevel = Math.min(4, difficulty + 2) as NavigationDifficulty;
+        isLevelUnlocked = difficulty < 4;
+    } else if (navigationScore >= 70) {
+        nextRecommendedLevel = Math.min(4, difficulty + 1) as NavigationDifficulty;
+        isLevelUnlocked = difficulty < 4;
+    } else {
+        nextRecommendedLevel = difficulty;
+        isLevelUnlocked = false;
     }
-
-    // 7. Backtracking Score (5%)
-    const backtrackScore = Math.max(0, 1 - biomarkers.backtrackCount * 0.25);
-
-    // Weighted combination (0..1)
-    const compositeScore =
-        accuracyScore * 0.30 +
-        efficiencyScore * 0.20 +
-        wrongTurnScore * 0.15 +
-        completionTimeScore * 0.15 +
-        routeDeviationScore * 0.10 +
-        latencyScore * 0.05 +
-        backtrackScore * 0.05;
-
-    // Scale to 0..100
-    const navigationScore = Math.round(compositeScore * 100);
 
     return {
         navigationScore,
-        subScores: {
-            accuracyScore: Math.round(accuracyScore * 100),
-            efficiencyScore: Math.round(efficiencyScore * 100),
-            wrongTurnScore: Math.round(wrongTurnScore * 100),
-            completionTimeScore: Math.round(completionTimeScore * 100),
-            routeDeviationScore: Math.round(routeDeviationScore * 100),
-            latencyScore: Math.round(latencyScore * 100),
-            backtrackScore: Math.round(backtrackScore * 100),
+        nextRecommendedLevel,
+        isLevelUnlocked,
+        normalizedMetrics: {
+            accuracy: Math.round(normalizedAccuracy * 100) / 100,
+            efficiency: Math.round(normalizedEfficiency * 100) / 100,
+            latency: Math.round(normalizedLatency * 100) / 100,
+            wrongTurns: Math.round(normalizedWrongTurns * 100) / 100,
+            landmarkRecall: Math.round(landmarkRecallScore * 100) / 100,
         },
     };
 }
