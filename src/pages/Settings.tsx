@@ -12,6 +12,7 @@ import { sendWeeklyReminder, isEmailConfigured, saveEmailPreferences, getEmailPr
 import { INDIAN_LANGUAGES, GENDER_OPTIONS } from '../components/common/OnboardingModal';
 import type { Gender, LanguageCode } from '../components/common/OnboardingModal';
 import { useLanguage } from '../i18n/LanguageContext';
+import { clearAllTestData } from '../hooks/useTestResults';
 import './Settings.css';
 
 interface UserPreferences {
@@ -110,6 +111,14 @@ export function Settings() {
             setMessage({ type: 'error', text: t('settings.profileFailed') });
         } finally {
             setSavingProfile(false);
+        }
+    };
+
+    const handleCleanSlate = async () => {
+        if (window.confirm("Are you sure you want to clear all local browser test data and session cache?")) {
+            await clearAllTestData();
+            localStorage.removeItem('vyomflow_supabase_offline_queue');
+            setMessage({ type: 'success', text: 'Clean slate activated! All local session records cleared.' });
         }
     };
 
@@ -285,6 +294,25 @@ export function Settings() {
                             {t('settings.lastReminderSent', { date: preferences.lastReminderSent.toLocaleDateString() })}
                         </p>
                     )}
+                </section>
+
+                <section className="settings-section">
+                    <h2>Data & Session Storage</h2>
+                    <div className="setting-item">
+                        <div className="setting-info">
+                            <span className="setting-label">Reset Local Session Cache</span>
+                            <span className="setting-description">
+                                Clear temporary browser test cache and start with a fresh slate.
+                            </span>
+                        </div>
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={handleCleanSlate}
+                            style={{ borderColor: 'rgba(239, 68, 68, 0.4)', color: '#ef4444' }}
+                        >
+                            🧹 Clear Local Data
+                        </button>
+                    </div>
                 </section>
 
                 {message && (

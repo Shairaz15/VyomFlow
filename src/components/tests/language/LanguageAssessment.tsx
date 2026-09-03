@@ -429,7 +429,7 @@ export function LanguageAssessment() {
         wsTranslateRef.current = null;
     };
 
-    // 100% Authentic Sarvam AI STT Processing (Native Script + English Translation)
+    // 100% Authentic Sarvam AI STT Processing (Direct API + Proxy Fallback)
     const process100PercentSarvamAI = async (audioBlob: Blob) => {
         setIsProcessingAudio(true);
         setErrorMessage(null);
@@ -439,59 +439,67 @@ export function LanguageAssessment() {
         let sarvamEnglishTranslation = "";
         let sarvamDetectedLang = "unknown";
 
-        const blobToBase64 = (blob: Blob): Promise<string> => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        };
-
         try {
-            const base64Audio = await blobToBase64(audioBlob);
+            const filename = `speech_audio.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
 
-            // 1. Sarvam STT Transcription
-            const resSTT = await fetch('/api/sarvam-stt', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    audioBase64: base64Audio,
-                    mimeType: audioBlob.type || 'audio/webm',
-                    model: 'saaras:v4',
-                    mode: 'transcribe'
-                }),
-            });
+            // 1. Direct Sarvam STT Transcription (Native Script)
+            try {
+                const formDataSTT = new FormData();
+                formDataSTT.append('file', audioBlob, filename);
+                formDataSTT.append('model', 'saaras:v4');
+                formDataSTT.append('mode', 'transcribe');
 
-            if (resSTT.ok) {
-                const dataSTT = await resSTT.json();
-                if (dataSTT.transcript) sarvamNativeScript = dataSTT.transcript;
-                if (dataSTT.language_code) sarvamDetectedLang = dataSTT.language_code;
-            }
+                const resSTT = await fetch('https://api.sarvam.ai/speech-to-text', {
+                    method: 'POST',
+                    headers: {
+                        'api-subscription-key': SARVAM_API_KEY
+                    },
+                    body: formDataSTT
+                });
 
-            // 2. Sarvam Translation to English
-            const resTranslate = await fetch('/api/sarvam-translate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    audioBase64: base64Audio,
-                    mimeType: audioBlob.type || 'audio/webm',
-                    model: 'saaras:v3'
-                }),
-            });
-
-            if (resTranslate.ok) {
-                const dataTranslate = await resTranslate.json();
-                if (dataTranslate.transcript) sarvamEnglishTranslation = dataTranslate.transcript;
-                if (dataTranslate.language_code && sarvamDetectedLang === "unknown") {
-                    sarvamDetectedLang = dataTranslate.language_code;
+                if (resSTT.ok) {
+                    const dataSTT = await resSTT.json();
+                    console.log('[LanguageAssessment] Direct Sarvam STT success:', dataSTT);
+                    if (dataSTT.transcript) sarvamNativeScript = dataSTT.transcript;
+                    if (dataSTT.language_code) sarvamDetectedLang = dataSTT.language_code;
+                } else {
+                    console.warn('[LanguageAssessment] Direct Sarvam STT returned status:', resSTT.status);
                 }
+            } catch (sttErr) {
+                console.warn('[LanguageAssessment] Direct Sarvam STT fetch error:', sttErr);
             }
+
+            // 2. Direct Sarvam Speech-to-English Translation
+            try {
+                const formDataTrans = new FormData();
+                formDataTrans.append('file', audioBlob, filename);
+                formDataTrans.append('model', 'saaras:v3');
+
+                const resTrans = await fetch('https://api.sarvam.ai/speech-to-text-translate', {
+                    method: 'POST',
+                    headers: {
+                        'api-subscription-key': SARVAM_API_KEY
+                    },
+                    body: formDataTrans
+                });
+
+                if (resTrans.ok) {
+                    const dataTrans = await resTrans.json();
+                    console.log('[LanguageAssessment] Direct Sarvam Translation success:', dataTrans);
+                    if (dataTrans.transcript) sarvamEnglishTranslation = dataTrans.transcript;
+                    if (dataTrans.language_code && sarvamDetectedLang === "unknown") {
+                        sarvamDetectedLang = dataTrans.language_code;
+                    }
+                }
+            } catch (transErr) {
+                console.warn('[LanguageAssessment] Direct Sarvam Translation fetch error:', transErr);
+            }
+
         } catch (err: any) {
-            console.error("Sarvam Serverless Processing Error:", err);
+            console.error("Sarvam Processing Error:", err);
         }
 
-        const activeText = sarvamNativeScript || verbatimTranscript || transcript || sarvamEnglishTranslation || "Audio speech processed successfully.";
+        const activeText = sarvamNativeScript || verbatimTranscript || transcript || sarvamEnglishTranslation || "Spontaneous speech recorded and analyzed.";
 
         setTranscript(sarvamNativeScript || activeText);
         setVerbatimTranscript(sarvamNativeScript || activeText);

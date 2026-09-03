@@ -42,6 +42,8 @@ export function SeamlessReverseNavigator({
     const [progress, setProgress] = useState<number>(0);
     const [allResponses, setAllResponses] = useState<IntersectionResponse[]>([]);
     const [hasError, setHasError] = useState<boolean>(false);
+    const [isPlaying, setIsPlaying] = useState<boolean>(false);
+    const [needsUserGesture, setNeedsUserGesture] = useState<boolean>(false);
 
     const decisionStartTimeRef = useRef<number>(0);
     // Track which pause points have already been triggered to avoid re-triggering
@@ -57,11 +59,34 @@ export function SeamlessReverseNavigator({
         if (!video) return;
 
         video.src = SINGLE_VIDEO_URL;
+        video.muted = true;
         video.load();
-        video.play().catch(() => {
-            // Autoplay policy fallback — user may need to interact first
-        });
+        video.play()
+            .then(() => {
+                setIsPlaying(true);
+                setNeedsUserGesture(false);
+            })
+            .catch(() => {
+                setIsPlaying(false);
+                setNeedsUserGesture(true);
+            });
     }, []);
+
+    const handleVideoClick = () => {
+        const video = videoRef.current;
+        if (!video || isAwaitingDecision) return;
+        if (video.paused) {
+            video.play()
+                .then(() => {
+                    setIsPlaying(true);
+                    setNeedsUserGesture(false);
+                })
+                .catch(console.error);
+        } else {
+            video.pause();
+            setIsPlaying(false);
+        }
+    };
 
     // Core timeupdate handler: monitor playback and pause at timestamps
     const handleTimeUpdate = useCallback(() => {
@@ -323,16 +348,36 @@ export function SeamlessReverseNavigator({
                 {/* Single Video Element */}
                 <video
                     ref={videoRef}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+                    autoPlay
+                    muted
                     playsInline
                     preload="auto"
                     disablePictureInPicture
                     controlsList="nodownload nofullscreen noremoteplayback"
                     onContextMenu={(e) => e.preventDefault()}
+                    onClick={handleVideoClick}
                     onTimeUpdate={handleTimeUpdate}
                     onEnded={handleVideoEnded}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
                     onError={() => setHasError(true)}
                 />
+
+                {/* Click to Play Overlay if paused or awaiting gesture */}
+                {((!isPlaying && !isAwaitingDecision) || needsUserGesture) && (
+                    <div 
+                        onClick={handleVideoClick}
+                        className="absolute inset-0 z-25 flex flex-col items-center justify-center bg-slate-950/50 backdrop-blur-[2px] cursor-pointer transition-all"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-cyan-500 text-slate-950 flex items-center justify-center shadow-lg shadow-cyan-500/40 transform hover:scale-110 active:scale-95 transition-all">
+                            <Icon name="play" size={28} />
+                        </div>
+                        <span className="mt-3 text-xs font-bold text-white uppercase tracking-wider bg-slate-900/90 px-3 py-1 rounded-full border border-slate-700">
+                            Click or Tap to Start Route
+                        </span>
+                    </div>
+                )}
 
                 {/* Top Video Overlay Badge */}
                 <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-none">

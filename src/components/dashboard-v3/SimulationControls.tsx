@@ -1,143 +1,200 @@
-import {
-    useReactionResults,
-    useMemoryResults,
-    usePatternResults,
-    useLanguageResults,
-    useVmraResults,
-    useStoryResults,
-    useNavigationResults,
-    useAttentionResults,
-    clearAllTestData,
-    STORAGE_KEYS,
-} from '../../hooks/useTestResults';
-import { generateSimulatedData, getMockBaseline } from '../../utils/simulateUserData';
-import { logger } from '../../utils/logger';
-import { saveResultToFirestore, isUserAuthenticated } from '../../services/firestoreService';
+import type { DashboardDataMode } from '../../hooks/useDashboardV3ViewModel';
 
-export function SimulationControls() {
-    const { results: reactionResults } = useReactionResults();
-    const { results: memoryResults } = useMemoryResults();
-    const { results: patternResults } = usePatternResults();
-    const { results: languageResults } = useLanguageResults();
-    const { results: vmraResults } = useVmraResults();
-    const { results: storyResults } = useStoryResults();
-    const { results: navigationResults } = useNavigationResults();
-    const { results: attentionResults } = useAttentionResults();
+interface Props {
+    dataMode: DashboardDataMode;
+    setDataMode: (mode: DashboardDataMode) => void;
+    seedMockPreset: (preset: 'stable' | 'mci' | 'decline') => Promise<void>;
+    clearMockData: () => Promise<void>;
+    isSeeding: boolean;
+    refreshLive: () => void;
+    hasLiveRecords: boolean;
+}
 
-    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 ||
-        languageResults.length > 0 || vmraResults.length > 0 || storyResults.length > 0 || navigationResults.length > 0 || attentionResults.length > 0;
-
-    const refreshData = () => window.location.reload();
-
-    const handleClearData = async () => {
-        if (window.confirm('Clear all test and simulation data? This cannot be undone.')) {
-            await clearAllTestData();
-            refreshData();
-        }
-    };
-
-    const persistSimulatedData = async (simulated: ReturnType<typeof generateSimulatedData>) => {
-        try {
-            // 1. Direct atomic write to localStorage for instant hydration
-            if (simulated.reaction.length > 0) {
-                localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify(simulated.reaction));
-            }
-            if (simulated.attention.length > 0) {
-                localStorage.setItem(STORAGE_KEYS.attentionResults, JSON.stringify(simulated.attention));
-            }
-            if (simulated.vmra.length > 0) {
-                localStorage.setItem(STORAGE_KEYS.vmraResults, JSON.stringify(simulated.vmra));
-            }
-            if (simulated.story.length > 0) {
-                localStorage.setItem(STORAGE_KEYS.storyResults, JSON.stringify(simulated.story));
-            }
-            if (simulated.language.length > 0) {
-                localStorage.setItem(STORAGE_KEYS.languageResults, JSON.stringify(simulated.language));
-            }
-            if (simulated.pattern.length > 0) {
-                localStorage.setItem(STORAGE_KEYS.patternResults, JSON.stringify(simulated.pattern));
-            }
-            if (simulated.navigation.length > 0) {
-                localStorage.setItem(STORAGE_KEYS.navigationResults, JSON.stringify(simulated.navigation));
-            }
-
-            // 2. Also persist to Firestore if logged in
-            if (isUserAuthenticated()) {
-                const promises: Promise<any>[] = [];
-                simulated.reaction.forEach(r => promises.push(saveResultToFirestore("reaction_results", r)));
-                simulated.attention.forEach(a => promises.push(saveResultToFirestore("attention_results", a)));
-                simulated.vmra.forEach(v => promises.push(saveResultToFirestore("vmra_results", v)));
-                simulated.story.forEach(s => promises.push(saveResultToFirestore("story_results", s)));
-                simulated.language.forEach(l => promises.push(saveResultToFirestore("language_results", l)));
-                simulated.pattern.forEach(p => promises.push(saveResultToFirestore("pattern_results", p)));
-                simulated.navigation.forEach(n => promises.push(saveResultToFirestore("navigation_results", n)));
-                await Promise.allSettled(promises);
-            }
-
-            setTimeout(refreshData, 100);
-        } catch (error) {
-            logger.error('Failed to persist simulated data:', error);
-            alert('Failed to save simulation data.');
-        }
-    };
-
-    const handleMockData = async (pattern: 'stable' | 'declining') => {
-        const baseline = getMockBaseline();
-        const simulated = generateSimulatedData(baseline, pattern);
-        await persistSimulatedData(simulated);
-    };
-
-    const handleSimulateData = async (pattern: 'stable' | 'declining') => {
-        const mockBase = getMockBaseline();
-        const baseline = {
-            reaction: reactionResults.length > 0 ? reactionResults[reactionResults.length - 1] : mockBase.reaction,
-            attention: attentionResults.length > 0 ? attentionResults[attentionResults.length - 1] : mockBase.attention,
-            pattern: patternResults.length > 0 ? patternResults[patternResults.length - 1] : mockBase.pattern,
-            language: languageResults.length > 0 ? languageResults[languageResults.length - 1] : mockBase.language,
-            vmra: vmraResults.length > 0 ? vmraResults[vmraResults.length - 1] : mockBase.vmra,
-            story: storyResults.length > 0 ? storyResults[storyResults.length - 1] : mockBase.story,
-            navigation: navigationResults.length > 0 ? navigationResults[navigationResults.length - 1] : mockBase.navigation,
-        };
-
-        const simulated = generateSimulatedData(baseline, pattern);
-        await persistSimulatedData(simulated);
-    };
-
-    const totalSessions = new Set([
-        ...reactionResults.map(r => new Date(r.timestamp).toDateString()),
-        ...attentionResults.map(r => new Date(r.timestamp).toDateString()),
-        ...memoryResults.map(r => new Date(r.timestamp).toDateString()),
-        ...patternResults.map(r => new Date(r.timestamp).toDateString()),
-        ...languageResults.map(r => new Date(r.timestamp).toDateString()),
-        ...vmraResults.map(r => new Date(r.timestamp).toDateString()),
-        ...storyResults.map(r => new Date(r.timestamp).toDateString()),
-        ...navigationResults.map(r => new Date(r.timestamp).toDateString()),
-    ]).size;
+export function SimulationControls({
+    dataMode,
+    setDataMode,
+    seedMockPreset,
+    clearMockData,
+    isSeeding,
+    refreshLive,
+    hasLiveRecords,
+}: Props) {
+    const isLive = dataMode === 'live';
 
     return (
-        <div className="dv2-card dv2-sim-controls">
-            <div className="dv2-sim-label">🧪 Demo / Simulation Controls</div>
+        <div style={{
+            background: 'rgba(15, 23, 42, 0.75)',
+            border: '1px solid var(--dv2-card-border)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            marginBottom: '1.5rem',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+        }}>
+            {/* Header & Status Indicator */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', borderBottom: '1px solid rgba(51, 65, 85, 0.5)', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                    <span style={{
+                        display: 'inline-block',
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        background: isLive ? '#10b981' : '#38bdf8',
+                        boxShadow: isLive ? '0 0 10px #10b981' : '0 0 10px #38bdf8',
+                    }} />
+                    <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#f8fafc' }}>
+                        Supabase Data Source:
+                    </span>
+                    <span style={{
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        background: isLive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(56, 189, 248, 0.15)',
+                        color: isLive ? '#34d399' : '#38bdf8',
+                        border: isLive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(56, 189, 248, 0.3)',
+                    }}>
+                        {isLive ? '🟢 Live Patient Cloud (Supabase)' : `🧪 Mock Dataset (${dataMode.replace('mock_', '').toUpperCase()})`}
+                    </span>
+                </div>
 
-            <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)', marginBottom: '0.5rem' }}>
-                Based on Your Baseline (uses unbiased defaults for uncompleted tests)
-            </div>
-            <div className="dv2-sim-buttons">
-                <button className="dv2-sim-danger" onClick={handleClearData}>🗑️ Clear All Data</button>
-                <button onClick={() => handleSimulateData('declining')}>📉 Declining (Baseline)</button>
-                <button onClick={() => handleSimulateData('stable')}>📈 Stable (Baseline)</button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button
+                        onClick={refreshLive}
+                        disabled={isSeeding}
+                        style={{
+                            background: 'rgba(30, 41, 59, 0.8)',
+                            color: '#94a3b8',
+                            border: '1px solid #334155',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '8px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        🔄 Refresh
+                    </button>
+                    {!isLive && (
+                        <button
+                            onClick={clearMockData}
+                            disabled={isSeeding}
+                            style={{
+                                background: 'rgba(239, 68, 68, 0.15)',
+                                color: '#f87171',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            🧹 Clear Mock Data
+                        </button>
+                    )}
+                </div>
             </div>
 
-            <div style={{ fontSize: '0.75rem', color: 'var(--dv2-muted)', marginTop: '0.75rem', marginBottom: '0.5rem' }}>
-                Full Synthetic Cohort (Unbiased Normative Baseline)
-            </div>
-            <div className="dv2-sim-buttons">
-                <button onClick={() => handleMockData('declining')}>📉 Mock Declining</button>
-                <button onClick={() => handleMockData('stable')}>📈 Mock Stable</button>
+            {/* Trajectory Selectors */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                {/* 1. Live Data Button */}
+                <button
+                    onClick={() => setDataMode('live')}
+                    disabled={isSeeding}
+                    style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '10px',
+                        background: isLive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(30, 41, 59, 0.6)',
+                        border: isLive ? '1.5px solid #10b981' : '1px solid #334155',
+                        color: '#f8fafc',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                >
+                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: isLive ? '#34d399' : '#e2e8f0' }}>
+                        <span>🟢</span> Live Cloud Mode
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                        {hasLiveRecords ? 'Real verified patient sessions' : 'No tests taken yet (Empty state)'}
+                    </div>
+                </button>
+
+                {/* 2. Mock: Stable */}
+                <button
+                    onClick={() => seedMockPreset('stable')}
+                    disabled={isSeeding}
+                    style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '10px',
+                        background: dataMode === 'mock_stable' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.6)',
+                        border: dataMode === 'mock_stable' ? '1.5px solid #38bdf8' : '1px solid #334155',
+                        color: '#f8fafc',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                >
+                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: dataMode === 'mock_stable' ? '#38bdf8' : '#e2e8f0' }}>
+                        <span>🌟</span> Demo: Stable (Normal)
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                        5 sessions • MoCA 28-29 • Optimal bounds
+                    </div>
+                </button>
+
+                {/* 3. Mock: MCI */}
+                <button
+                    onClick={() => seedMockPreset('mci')}
+                    disabled={isSeeding}
+                    style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '10px',
+                        background: dataMode === 'mock_mci' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(30, 41, 59, 0.6)',
+                        border: dataMode === 'mock_mci' ? '1.5px solid #fbbf24' : '1px solid #334155',
+                        color: '#f8fafc',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                >
+                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: dataMode === 'mock_mci' ? '#fbbf24' : '#e2e8f0' }}>
+                        <span>⚠️</span> Demo: MCI (Decline)
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                        5 sessions • MoCA 26→21 • Memory drift
+                    </div>
+                </button>
+
+                {/* 4. Mock: Rapid Decline */}
+                <button
+                    onClick={() => seedMockPreset('decline')}
+                    disabled={isSeeding}
+                    style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '10px',
+                        background: dataMode === 'mock_decline' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(30, 41, 59, 0.6)',
+                        border: dataMode === 'mock_decline' ? '1.5px solid #ef4444' : '1px solid #334155',
+                        color: '#f8fafc',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                    }}
+                >
+                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: dataMode === 'mock_decline' ? '#f87171' : '#e2e8f0' }}>
+                        <span>🚨</span> Demo: Rapid Decline
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                        5 sessions • MoCA 24→15 • Clinical alert
+                    </div>
+                </button>
             </div>
 
-            <div className="dv2-sim-hint">
-                ℹ️ {hasUserData ? `${totalSessions} session(s) recorded` : 'Currently displaying unbiased default dataset'}
-            </div>
+            {isSeeding && (
+                <div style={{ marginTop: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: '#38bdf8' }}>
+                    ⏳ Generating isolated 75-biomarker longitudinal dataset in Supabase...
+                </div>
+            )}
         </div>
     );
 }

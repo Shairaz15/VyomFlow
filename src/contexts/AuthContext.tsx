@@ -17,6 +17,7 @@ import type { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db, isFirebaseConfigured } from '../lib/firebase';
 import { logger } from '../utils/logger';
+import { syncUserProfileToSupabase } from '../services/supabaseService';
 import type { OnboardingData } from '../components/common/OnboardingModal';
 
 type Role = 'user' | 'admin';
@@ -98,6 +99,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
                             },
                             { merge: true }
                         ).catch(err => logger.warn('Failed to update user profile:', err));
+
+                        // Sync user to Supabase
+                        syncUserProfileToSupabase({
+                            age: userData?.age,
+                            gender: userData?.gender,
+                            educationYears: userData?.educationYears || 16
+                        }).catch(err => logger.warn('Failed to sync user to Supabase:', err));
                     } catch (error) {
                         logger.error('Error loading user data:', error);
                         setRole('user');
@@ -141,6 +149,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             },
             { merge: true }
         );
+        syncUserProfileToSupabase({
+            age: data.age,
+            gender: data.gender,
+            educationYears: data.educationYears || 16
+        }).catch(err => logger.warn('Failed to sync onboarding to Supabase:', err));
         setOnboardingComplete(true);
     };
 

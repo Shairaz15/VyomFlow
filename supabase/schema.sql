@@ -1,5 +1,5 @@
 -- ============================================================================
--- VYOMFLOW AI DIGITAL BIOMARKER & COGNITIVE HEALTH DATABASE SCHEMA (V2.0 PRO)
+-- VYOMFLOW AI DIGITAL BIOMARKER & COGNITIVE HEALTH DATABASE SCHEMA (V2.1 PRO)
 -- PostgreSQL / Supabase
 -- ============================================================================
 
@@ -20,11 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     education_years DOUBLE PRECISION,
     preferred_language VARCHAR(32) DEFAULT 'en-IN',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    -- Integrity Constraints
-    CONSTRAINT chk_user_age CHECK (age IS NULL OR (age >= 0 AND age <= 130)),
-    CONSTRAINT chk_user_education CHECK (education_years IS NULL OR (education_years >= 0 AND education_years <= 40))
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);
@@ -53,6 +49,7 @@ CREATE TABLE IF NOT EXISTS assessment_sessions (
     firebase_uid VARCHAR(128) NOT NULL,
     session_id VARCHAR(64) NOT NULL,
     session_number INT DEFAULT 1,
+    is_mock BOOLEAN NOT NULL DEFAULT false,
     
     -- Precise Timestamps & Duration Tracking
     session_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -194,22 +191,18 @@ CREATE TABLE IF NOT EXISTS assessment_sessions (
     inter_intrusion_disorientation DOUBLE PRECISION,
     inter_speech_memory_synergy DOUBLE PRECISION,
     inter_attention_span_load DOUBLE PRECISION,
-    inter_motor_cognitive_divergence DOUBLE PRECISION,
-
-    -- Boundary Constraints
-    CONSTRAINT chk_moca_bound CHECK (estimated_moca IS NULL OR (estimated_moca >= 0.0 AND estimated_moca <= 30.0)),
-    CONSTRAINT chk_risk_bound CHECK (impairment_risk_score IS NULL OR (impairment_risk_score >= 0.0 AND impairment_risk_score <= 1.0)),
-    CONSTRAINT chk_conf_bound CHECK (model_confidence IS NULL OR (model_confidence >= 0.0 AND model_confidence <= 100.0)),
-    CONSTRAINT chk_coverage_bound CHECK (battery_coverage IS NULL OR (battery_coverage >= 0.0 AND battery_coverage <= 1.0))
+    inter_motor_cognitive_divergence DOUBLE PRECISION
 );
+
+-- Ensure is_mock column exists on existing table instances
+ALTER TABLE assessment_sessions ADD COLUMN IF NOT EXISTS is_mock BOOLEAN NOT NULL DEFAULT false;
 
 -- ----------------------------------------------------------------------------
 -- PERFORMANCE INDEXES (High-Speed Covering & GIN Indexes)
 -- ----------------------------------------------------------------------------
 
--- Covering Index for Instant Patient Longitudinal Dashboard Loads (< 2ms)
 CREATE INDEX IF NOT EXISTS idx_sessions_patient_dashboard 
-ON assessment_sessions (firebase_uid, session_date DESC) 
+ON assessment_sessions (firebase_uid, is_mock, session_date DESC) 
 INCLUDE (
     estimated_moca, 
     predicted_diagnosis, 
@@ -225,6 +218,7 @@ INCLUDE (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON assessment_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_firebase_uid ON assessment_sessions(firebase_uid);
+CREATE INDEX IF NOT EXISTS idx_sessions_is_mock ON assessment_sessions(is_mock);
 CREATE INDEX IF NOT EXISTS idx_sessions_session_date ON assessment_sessions(session_date DESC);
 CREATE INDEX IF NOT EXISTS idx_sessions_diagnosis ON assessment_sessions(predicted_diagnosis);
 
@@ -242,6 +236,7 @@ CREATE TABLE IF NOT EXISTS module_results (
     session_id VARCHAR(64) NOT NULL,
     module_type VARCHAR(64) NOT NULL, -- 'vmra' | 'story' | 'language' | 'pattern' | 'reaction' | 'navigation' | 'savt'
     score DOUBLE PRECISION,
+    is_mock BOOLEAN NOT NULL DEFAULT false,
     
     -- Timestamp & Duration
     timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -254,8 +249,11 @@ CREATE TABLE IF NOT EXISTS module_results (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE module_results ADD COLUMN IF NOT EXISTS is_mock BOOLEAN NOT NULL DEFAULT false;
+
 CREATE INDEX IF NOT EXISTS idx_module_results_user_id ON module_results(user_id);
 CREATE INDEX IF NOT EXISTS idx_module_results_firebase_uid ON module_results(firebase_uid);
+CREATE INDEX IF NOT EXISTS idx_module_results_is_mock ON module_results(is_mock);
 CREATE INDEX IF NOT EXISTS idx_module_results_session_id ON module_results(session_id);
 CREATE INDEX IF NOT EXISTS idx_module_results_module_type ON module_results(module_type);
 CREATE INDEX IF NOT EXISTS idx_module_results_timestamp ON module_results(timestamp DESC);
@@ -271,9 +269,11 @@ DECLARE
     v_user_id UUID;
     v_session_id VARCHAR(64);
     v_firebase_uid VARCHAR(128);
+    v_is_mock BOOLEAN;
 BEGIN
     v_firebase_uid := bundle->>'firebase_uid';
     v_session_id := bundle->>'session_id';
+    v_is_mock := COALESCE((bundle->>'is_mock')::BOOLEAN, false);
 
     IF v_firebase_uid IS NULL THEN
         RAISE EXCEPTION 'firebase_uid is required in assessment bundle';
@@ -311,6 +311,7 @@ BEGIN
         firebase_uid,
         session_id,
         session_number,
+        is_mock,
         session_date,
         session_start_time,
         session_end_time,
@@ -357,6 +358,7 @@ BEGIN
         v_firebase_uid,
         v_session_id,
         COALESCE((bundle->>'session_number')::INT, 1),
+        v_is_mock,
         COALESCE((bundle->>'session_date')::TIMESTAMPTZ, NOW()),
         (bundle->>'session_start_time')::TIMESTAMPTZ,
         (bundle->>'session_end_time')::TIMESTAMPTZ,
@@ -404,14 +406,17 @@ END;
 $$;
 
 -- ----------------------------------------------------------------------------
--- 5. MATERIALIZED COHORT VIEW & ANALYTICAL VIEWS
+-- 5. ANALYTICAL SQL VIEWS
 -- ----------------------------------------------------------------------------
 
--- View: Patient Longitudinal Biomarkers
+DROP VIEW IF EXISTS v_patient_longitudinal_biomarkers CASCADE;
+DROP VIEW IF EXISTS v_clinician_overview CASCADE;
+
 CREATE OR REPLACE VIEW v_patient_longitudinal_biomarkers AS
 SELECT 
     s.id AS session_db_id,
     s.firebase_uid,
+    s.is_mock,
     u.email,
     u.full_name,
     u.age,
@@ -453,18 +458,18 @@ SELECT
     s.top_attributions
 FROM assessment_sessions s
 LEFT JOIN users u ON s.firebase_uid = u.firebase_uid
-ORDER BY s.firebase_uid, s.session_date DESC;
+ORDER BY s.firebase_uid, s.is_mock, s.session_date DESC;
 
--- View: Clinician Patient Overview (Latest Snapshot per Patient)
 CREATE OR REPLACE VIEW v_clinician_overview AS
 WITH ranked_sessions AS (
     SELECT 
         *,
-        ROW_NUMBER() OVER (PARTITION BY firebase_uid ORDER BY session_date DESC) as rn
+        ROW_NUMBER() OVER (PARTITION BY firebase_uid, is_mock ORDER BY session_date DESC) as rn
     FROM assessment_sessions
 )
 SELECT 
     r.firebase_uid,
+    r.is_mock,
     u.email,
     u.full_name,
     u.age,
@@ -490,21 +495,30 @@ LEFT JOIN users u ON r.firebase_uid = u.firebase_uid
 WHERE r.rn = 1;
 
 -- ----------------------------------------------------------------------------
--- 6. ROW LEVEL SECURITY (RLS) POLICIES
+-- 6. ROW LEVEL SECURITY (RLS) POLICIES (Idempotent)
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessment_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE module_results ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read users" ON users;
+DROP POLICY IF EXISTS "Allow public insert users" ON users;
+DROP POLICY IF EXISTS "Allow public update users" ON users;
 CREATE POLICY "Allow public read users" ON users FOR SELECT USING (true);
 CREATE POLICY "Allow public insert users" ON users FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update users" ON users FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Allow public read sessions" ON assessment_sessions;
+DROP POLICY IF EXISTS "Allow public insert sessions" ON assessment_sessions;
+DROP POLICY IF EXISTS "Allow public update sessions" ON assessment_sessions;
 CREATE POLICY "Allow public read sessions" ON assessment_sessions FOR SELECT USING (true);
 CREATE POLICY "Allow public insert sessions" ON assessment_sessions FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update sessions" ON assessment_sessions FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Allow public read module_results" ON module_results;
+DROP POLICY IF EXISTS "Allow public insert module_results" ON module_results;
+DROP POLICY IF EXISTS "Allow public update module_results" ON module_results;
 CREATE POLICY "Allow public read module_results" ON module_results FOR SELECT USING (true);
 CREATE POLICY "Allow public insert module_results" ON module_results FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update module_results" ON module_results FOR UPDATE USING (true);

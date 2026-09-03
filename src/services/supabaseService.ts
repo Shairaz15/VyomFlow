@@ -1,13 +1,14 @@
 /**
- * Supabase Data Service (V2.0 Pro)
+ * Supabase Data Service (V2.1 Pro)
  * ================================
  * High-performance, resilient persistence layer for VyomFlow in Supabase PostgreSQL:
  * 1. Single-Trip Atomic RPC / Direct Fallback Session Saves
  * 2. Offline Write Queue with Automatic Retry & Exponential Backoff
  * 3. Master 75+ Digital Biomarkers Composite Upsert (assessment_sessions)
  * 4. High-Precision Timestamps and Duration Tracking
- * 5. Top 10 Personalized Recommendations Persistence
- * 6. Historical Querying & CSV Export Utilities
+ * 5. Live Real-Time Subscriptions for Instant Dashboard Updates
+ * 6. Multi-Trajectory Mock Dataset Suite in Supabase (Stable, MCI, Rapid Decline)
+ * 7. Isolated `is_mock` flag separating demo data from live clinical records
  */
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -126,7 +127,8 @@ export async function saveModuleResultToSupabase(
     moduleType: string,
     result: any,
     sessionId?: string,
-    durationMs?: number
+    durationMs?: number,
+    isMock = false
 ): Promise<boolean> {
     if (!isSupabaseConfigured()) return false;
     const uid = getCurrentFirebaseUid();
@@ -150,6 +152,7 @@ export async function saveModuleResultToSupabase(
         session_id: currentSessionId,
         module_type: moduleType.toLowerCase(),
         score,
+        is_mock: isMock,
         timestamp,
         duration_ms: durationMs || result?.durationMs || null,
         raw_metrics: result?.rawMetrics || result?.metrics || result?.aggregates || {},
@@ -182,7 +185,8 @@ export async function saveSessionBiomarkersToSupabase(
     _driftMetrics?: DriftMetrics | null,
     sessionDate?: Date,
     sessionStartTime?: Date,
-    sessionEndTime?: Date
+    sessionEndTime?: Date,
+    isMock = false
 ): Promise<boolean> {
     if (!isSupabaseConfigured()) return false;
     const uid = getCurrentFirebaseUid();
@@ -198,72 +202,64 @@ export async function saveSessionBiomarkersToSupabase(
         const startTime = sessionStartTime ? sessionStartTime.toISOString() : null;
         const endTime = sessionEndTime ? sessionEndTime.toISOString() : new Date().toISOString();
         let durationSec: number | null = null;
-        if (sessionStartTime && sessionEndTime) {
-            durationSec = Math.max(1, Math.round((sessionEndTime.getTime() - sessionStartTime.getTime()) / 1000));
+        if (startTime && endTime) {
+            durationSec = Math.max(1, Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000));
         }
 
-        // Generate Top 10 Personalized Recommendations
-        const recommendations = generateTop10Recommendations(
-            prediction,
-            evaluation?.trajectory.tier || 'Stable',
-            prediction?.completedModules
-        );
+        // Top 10 recommendations
+        const topRecs = generateTop10Recommendations(prediction || null, evaluation?.trajectory?.tier || 'Stable');
 
-        // Determine user profile metadata
-        const age = demographics?.age || rawBiomarkers.Age || 65;
-        const gender = rawBiomarkers.Gender === 1.0 ? 'Female' : 'Male';
-        const edu = demographics?.educationYears || rawBiomarkers.Education_Years || 16;
+        // Top attributions
+        const topAttr = prediction?.topAttributions ? prediction.topAttributions.slice(0, 10) : [];
 
-        // Ensure user row exists
-        await syncUserProfileToSupabase({ age, gender, educationYears: edu });
-
-        // Build Master Assessment Session Row with all 75 Biomarker columns
-        const sessionPayload: Record<string, any> = {
+        // Direct session insert
+        const sessionPayload = {
             firebase_uid: uid,
             session_id: sessionId,
             session_number: evaluation?.sessionCount || 1,
+            is_mock: isMock,
             session_date: dateObj.toISOString(),
             session_start_time: startTime,
             session_end_time: endTime,
             duration_seconds: durationSec,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
 
-            // Diagnostic predictions
+            // AI Diagnostic & Severity Predictions
             estimated_moca: prediction?.estimatedMoCA ?? null,
             moca_ci_95: prediction?.mocaConfidenceInterval ?? 0.73,
-            predicted_diagnosis: prediction?.predictedDiagnosis ?? 'Normal',
-            p_normal: prediction?.probabilities.normal ?? null,
-            p_mci: prediction?.probabilities.mci ?? null,
-            p_dementia: prediction?.probabilities.dementia ?? null,
+            predicted_diagnosis: prediction?.predictedDiagnosis ?? null,
+            p_normal: prediction?.probabilities?.normal ?? null,
+            p_mci: prediction?.probabilities?.mci ?? null,
+            p_dementia: prediction?.probabilities?.dementia ?? null,
             impairment_risk_score: prediction?.impairmentRiskScore ?? null,
-            clinical_alert_tier: prediction?.clinicalAlertTier ?? 'STABLE',
+            clinical_alert_tier: prediction?.clinicalAlertTier ?? null,
             model_confidence: prediction?.modelConfidence ?? null,
             battery_coverage: prediction?.batteryCoverage ?? null,
-            completed_modules: prediction?.completedModules ?? [],
+            completed_modules: Object.keys(rawData).filter(k => (rawData as any)[k]?.length > 0),
 
-            // 6 Domain Scores
-            domain_memory: prediction?.domainScores.memory ?? null,
-            domain_language: prediction?.domainScores.language ?? null,
-            domain_executive: prediction?.domainScores.executive ?? null,
-            domain_processing_speed: prediction?.domainScores.processingSpeed ?? null,
-            domain_spatial_orientation: prediction?.domainScores.spatialOrientation ?? null,
-            domain_attention: prediction?.domainScores.attention ?? null,
+            // 6 Domain Breakdown (0-100)
+            domain_memory: prediction?.domainScores?.memory ?? null,
+            domain_language: prediction?.domainScores?.language ?? null,
+            domain_executive: prediction?.domainScores?.executive ?? null,
+            domain_processing_speed: prediction?.domainScores?.processingSpeed ?? null,
+            domain_spatial_orientation: prediction?.domainScores?.spatialOrientation ?? null,
+            domain_attention: prediction?.domainScores?.attention ?? null,
 
-            // Longitudinal Drift
-            trajectory_tier: evaluation?.trajectory.tier ?? 'Stable',
-            rci: evaluation?.trajectory.rci ?? null,
-            theil_sen_slope: evaluation?.trajectory.theilSenSlopePerMonth ?? null,
-            z_drift: evaluation?.trajectory.zDrift ?? null,
-            cv_percent: evaluation?.trajectory.coefficientOfVariationPercent ?? null,
+            // Longitudinal Statistical Drift
+            trajectory_tier: evaluation?.trajectory?.tier ?? null,
+            rci: evaluation?.trajectory?.rci ?? null,
+            theil_sen_slope: evaluation?.trajectory?.theilSenSlopePerMonth ?? null,
+            z_drift: evaluation?.trajectory?.zDrift ?? null,
+            cv_percent: evaluation?.trajectory?.coefficientOfVariationPercent ?? null,
 
-            // Top 10 Recommendations & SHAP
-            top_recommendations: recommendations,
-            top_attributions: prediction?.topAttributions || [],
+            // Recommendations & Attributions JSONB
+            top_recommendations: topRecs,
+            top_attributions: topAttr,
 
-            // Covariates
-            covariate_age: rawBiomarkers.Age,
-            covariate_gender: rawBiomarkers.Gender,
-            covariate_education_years: rawBiomarkers.Education_Years,
+            // Demographics Covariates
+            covariate_age: rawBiomarkers.age,
+            covariate_gender: rawBiomarkers.gender,
+            covariate_education_years: rawBiomarkers.educationYears,
 
             // 1. VMRA (16)
             vmra_recall_accuracy: rawBiomarkers.vmra_recallAccuracy,
@@ -375,10 +371,79 @@ export async function saveSessionBiomarkersToSupabase(
 }
 
 /**
- * Fetches all historical sessions using fast selective field projection (< 2ms).
+ * Fetches all raw module results from Supabase and formats them into `RawDashboardData`.
  */
-export async function fetchUserSessionsFromSupabase(
-    firebaseUid?: string
+export async function fetchLiveModuleResultsFromSupabase(
+    firebaseUid?: string,
+    isMock = false
+): Promise<RawDashboardData> {
+    const rawData: RawDashboardData = {
+        reaction: [],
+        memory: [],
+        pattern: [],
+        language: [],
+        vmra: [],
+        story: [],
+        navigation: [],
+        attention: [],
+    };
+
+    if (!isSupabaseConfigured()) return rawData;
+    const uid = firebaseUid || getCurrentFirebaseUid();
+    if (!uid) return rawData;
+
+    try {
+        const { data, error } = await supabase
+            .from('module_results')
+            .select('*')
+            .eq('firebase_uid', uid)
+            .eq('is_mock', isMock)
+            .order('timestamp', { ascending: true });
+
+        if (error || !data) {
+            logger.error('Failed to fetch module results from Supabase:', error);
+            return rawData;
+        }
+
+        for (const row of data) {
+            const modType = (row.module_type || '').toLowerCase();
+            const resultObj = {
+                id: row.id,
+                timestamp: row.timestamp,
+                score: row.score,
+                durationMs: row.duration_ms,
+                aggregates: row.raw_metrics || {},
+                metrics: row.raw_metrics || {},
+                rawMetrics: row.raw_metrics || {},
+                features: row.derived_features || {},
+                derivedFeatures: row.derived_features || {},
+                biomarkers: row.biomarkers || {},
+                storyRecallScore: row.score,
+                navigationScore: row.score,
+            };
+
+            if (modType === 'reaction') rawData.reaction.push(resultObj as any);
+            else if (modType === 'attention' || modType === 'savt') rawData.attention?.push(resultObj as any);
+            else if (modType === 'vmra') rawData.vmra.push(resultObj as any);
+            else if (modType === 'story') rawData.story.push(resultObj as any);
+            else if (modType === 'language') rawData.language.push(resultObj as any);
+            else if (modType === 'pattern') rawData.pattern.push(resultObj as any);
+            else if (modType === 'navigation') rawData.navigation.push(resultObj as any);
+        }
+
+        return rawData;
+    } catch (err) {
+        logger.error('Error in fetchLiveModuleResultsFromSupabase:', err);
+        return rawData;
+    }
+}
+
+/**
+ * Fetches all master assessment sessions from Supabase.
+ */
+export async function fetchLiveAssessmentSessionsFromSupabase(
+    firebaseUid?: string,
+    isMock = false
 ): Promise<any[]> {
     if (!isSupabaseConfigured()) return [];
     const uid = firebaseUid || getCurrentFirebaseUid();
@@ -389,10 +454,11 @@ export async function fetchUserSessionsFromSupabase(
             .from('assessment_sessions')
             .select('*')
             .eq('firebase_uid', uid)
-            .order('session_date', { ascending: false });
+            .eq('is_mock', isMock)
+            .order('session_date', { ascending: true });
 
         if (error) {
-            logger.error('Failed to fetch user sessions from Supabase:', error);
+            logger.error('Failed to fetch assessment sessions from Supabase:', error);
             return [];
         }
         return data || [];
@@ -403,27 +469,258 @@ export async function fetchUserSessionsFromSupabase(
 }
 
 /**
- * Exports all historical sessions and 75 biomarkers for a patient to a clean CSV file.
+ * Subscribes to Realtime updates on both `module_results` and `assessment_sessions` for the current user.
  */
-export async function exportUserBiomarkersCSV(
-    firebaseUid?: string
-): Promise<string | null> {
-    const sessions = await fetchUserSessionsFromSupabase(firebaseUid);
-    if (!sessions || sessions.length === 0) return null;
+export function subscribeToLiveAssessmentUpdates(
+    firebaseUid: string,
+    onUpdate: () => void
+): () => void {
+    if (!isSupabaseConfigured() || !firebaseUid) return () => {};
 
-    const headers = Object.keys(sessions[0]).filter(k => k !== 'top_recommendations' && k !== 'top_attributions');
-    const csvRows: string[] = [headers.join(',')];
+    const channelName = `realtime-user-assessments-${firebaseUid}`;
+    const channel = supabase
+        .channel(channelName)
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'module_results', filter: `firebase_uid=eq.${firebaseUid}` },
+            () => {
+                logger.info('Supabase Realtime: New module result detected, refreshing dashboard...');
+                onUpdate();
+            }
+        )
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'assessment_sessions', filter: `firebase_uid=eq.${firebaseUid}` },
+            () => {
+                logger.info('Supabase Realtime: New assessment session detected, refreshing dashboard...');
+                onUpdate();
+            }
+        )
+        .subscribe();
 
-    for (const session of sessions) {
-        const row = headers.map(header => {
-            const val = session[header];
-            if (val === null || val === undefined) return '';
-            if (typeof val === 'string' && val.includes(',')) return `"${val}"`;
-            if (Array.isArray(val)) return `"${val.join(';')}"`;
-            return String(val);
-        });
-        csvRows.push(row.join(','));
+    return () => {
+        supabase.removeChannel(channel);
+    };
+}
+
+/**
+ * Seeds a multi-session clinical trajectory into Supabase (`is_mock = true`).
+ */
+export async function seedMockTrajectoryToSupabase(
+    firebaseUid: string,
+    trajectoryType: 'stable' | 'mci' | 'decline' = 'stable'
+): Promise<boolean> {
+    if (!isSupabaseConfigured() || !firebaseUid) return false;
+
+    try {
+        // 1. Purge previous mock rows for this user
+        await clearMockDataFromSupabase(firebaseUid);
+
+        // 2. Base trajectory parameter profiles
+        const now = Date.now();
+        const daysAgo = [90, 60, 35, 14, 0]; // 5 sessions across last 3 months
+
+        const profiles = {
+            stable: {
+                mocas: [28, 29, 28, 29, 29],
+                diagnosis: 'Normal',
+                alert: 'STABLE',
+                tier: 'Stable',
+                rci: 0.12,
+                theilSen: 0.05,
+                reactionRt: [235, 230, 228, 225, 220],
+                csi: [88, 90, 89, 91, 92],
+                vmraAcc: [90, 92, 91, 95, 94],
+                storyAcc: [85, 88, 87, 90, 92],
+                patternLvl: [8, 8, 9, 9, 9],
+                navAcc: [92, 94, 93, 95, 96],
+                attentionScore: [88, 90, 92, 91, 93],
+            },
+            mci: {
+                mocas: [26, 25, 24, 22, 21],
+                diagnosis: 'MCI',
+                alert: 'RECOMMEND_EARLIER_REASSESSMENT',
+                tier: 'Likely Decline',
+                rci: -2.35,
+                theilSen: -1.45,
+                reactionRt: [250, 275, 310, 350, 395],
+                csi: [80, 74, 69, 63, 58],
+                vmraAcc: [82, 75, 68, 59, 52],
+                storyAcc: [78, 71, 64, 55, 48],
+                patternLvl: [7, 6, 5, 4, 4],
+                navAcc: [84, 76, 70, 64, 59],
+                attentionScore: [79, 72, 65, 58, 51],
+            },
+            decline: {
+                mocas: [24, 21, 19, 17, 15],
+                diagnosis: 'Dementia',
+                alert: 'RECOMMEND_CLINICAL_EVALUATION',
+                tier: 'Rapid Decline',
+                rci: -4.18,
+                theilSen: -2.85,
+                reactionRt: [310, 365, 430, 510, 595],
+                csi: [68, 57, 48, 39, 32],
+                vmraAcc: [72, 58, 45, 36, 28],
+                storyAcc: [65, 52, 40, 32, 24],
+                patternLvl: [6, 4, 3, 2, 2],
+                navAcc: [70, 56, 44, 34, 25],
+                attentionScore: [66, 51, 38, 30, 22],
+            },
+        };
+
+        const config = profiles[trajectoryType] || profiles.stable;
+
+        // 3. Insert 5 Module Results for each of the 7 modules + Master Sessions
+        for (let i = 0; i < 5; i++) {
+            const sessionDate = new Date(now - daysAgo[i] * 86400000);
+            const sessionId = `mock_session_${i + 1}`;
+
+            // A. Reaction
+            await supabase.from('module_results').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                module_type: 'reaction',
+                score: config.reactionRt[i],
+                is_mock: true,
+                timestamp: sessionDate.toISOString(),
+                duration_ms: 12000,
+                raw_metrics: { avg: config.reactionRt[i], median: config.reactionRt[i] - 10, std: 24, lapses: trajectoryType === 'decline' ? i + 1 : 0, premature: 0 },
+                derived_features: { meanLatencyMs: config.reactionRt[i] },
+                biomarkers: {},
+            });
+
+            // B. Sustained Attention (SAVT)
+            await supabase.from('module_results').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                module_type: 'attention',
+                score: config.attentionScore[i],
+                is_mock: true,
+                timestamp: sessionDate.toISOString(),
+                duration_ms: 30000,
+                raw_metrics: {},
+                derived_features: { dPrime: Math.max(0.5, (config.attentionScore[i] / 30)), hitRate: config.attentionScore[i] / 100 },
+                biomarkers: {},
+            });
+
+            // C. VMRA
+            await supabase.from('module_results').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                module_type: 'vmra',
+                score: config.vmraAcc[i],
+                is_mock: true,
+                timestamp: sessionDate.toISOString(),
+                duration_ms: 45000,
+                raw_metrics: { accuracy: config.vmraAcc[i] / 100 },
+                derived_features: { recallAccuracy: config.vmraAcc[i] / 100, intrusionErrors: trajectoryType === 'decline' ? i : 0 },
+                biomarkers: {},
+            });
+
+            // D. Story
+            await supabase.from('module_results').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                module_type: 'story',
+                score: config.storyAcc[i],
+                is_mock: true,
+                timestamp: sessionDate.toISOString(),
+                duration_ms: 60000,
+                raw_metrics: {},
+                derived_features: {},
+                biomarkers: { memory: { recallAccuracy: config.storyAcc[i] / 100, infoUnitsRecalled: Math.round(config.storyAcc[i] / 5) } },
+            });
+
+            // E. Language
+            await supabase.from('module_results').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                module_type: 'language',
+                score: config.csi[i],
+                is_mock: true,
+                timestamp: sessionDate.toISOString(),
+                duration_ms: 30000,
+                raw_metrics: {},
+                derived_features: { cognitiveSpeechIndex: config.csi[i], fluencyIndex: config.csi[i] - 2, wpm: 120 - i * 10, hesitationIndex: 0.1 * (i + 1) },
+                biomarkers: {},
+            });
+
+            // F. Pattern
+            await supabase.from('module_results').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                module_type: 'pattern',
+                score: config.patternLvl[i] * 10,
+                is_mock: true,
+                timestamp: sessionDate.toISOString(),
+                duration_ms: 40000,
+                raw_metrics: { maxLevelReached: config.patternLvl[i], correctRounds: config.patternLvl[i], totalRounds: config.patternLvl[i] + 1 },
+                derived_features: { patternStabilityIndex: 85 - i * 8 },
+                biomarkers: {},
+            });
+
+            // G. Navigation
+            await supabase.from('module_results').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                module_type: 'navigation',
+                score: config.navAcc[i],
+                is_mock: true,
+                timestamp: sessionDate.toISOString(),
+                duration_ms: 50000,
+                raw_metrics: {},
+                derived_features: {},
+                biomarkers: { navigationAccuracy: config.navAcc[i] / 100, landmarkRecognitionAccuracy: Math.min(100, config.navAcc[i] + 4) / 100 },
+            });
+
+            // Master Assessment Session
+            await supabase.from('assessment_sessions').insert({
+                firebase_uid: firebaseUid,
+                session_id: sessionId,
+                session_number: i + 1,
+                is_mock: true,
+                session_date: sessionDate.toISOString(),
+                duration_seconds: 240,
+                estimated_moca: config.mocas[i],
+                predicted_diagnosis: config.diagnosis,
+                clinical_alert_tier: config.alert,
+                trajectory_tier: config.tier,
+                rci: config.rci,
+                theil_sen_slope: config.theilSen,
+                domain_memory: config.vmraAcc[i],
+                domain_language: config.csi[i],
+                domain_executive: config.patternLvl[i] * 10,
+                domain_processing_speed: Math.max(20, Math.min(100, Math.round(100 - (config.reactionRt[i] - 200) / 5))),
+                domain_spatial_orientation: config.navAcc[i],
+                domain_attention: config.attentionScore[i],
+                vmra_recall_accuracy: config.vmraAcc[i] / 100,
+                story_recall_accuracy: config.storyAcc[i] / 100,
+                lang_cognitive_speech_index: config.csi[i],
+                reaction_mean_latency_ms: config.reactionRt[i],
+                nav_navigation_accuracy: config.navAcc[i] / 100,
+            });
+        }
+
+        logger.info(`Successfully seeded mock ${trajectoryType} trajectory to Supabase!`);
+        return true;
+    } catch (err) {
+        logger.error('Failed to seed mock trajectory in Supabase:', err);
+        return false;
     }
+}
 
-    return csvRows.join('\n');
+/**
+ * Safely removes only mock assessment records (`is_mock = true`) from Supabase.
+ */
+export async function clearMockDataFromSupabase(firebaseUid: string): Promise<boolean> {
+    if (!isSupabaseConfigured() || !firebaseUid) return false;
+    try {
+        await supabase.from('module_results').delete().eq('firebase_uid', firebaseUid).eq('is_mock', true);
+        await supabase.from('assessment_sessions').delete().eq('firebase_uid', firebaseUid).eq('is_mock', true);
+        logger.info('Cleaned mock data from Supabase.');
+        return true;
+    } catch (err) {
+        logger.error('Failed to clear mock data from Supabase:', err);
+        return false;
+    }
 }
