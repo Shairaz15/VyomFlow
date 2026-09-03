@@ -4,7 +4,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0.25rem;
     position: relative;
 }
 
@@ -12,7 +12,7 @@
     overflow: visible;
     max-width: 100%;
     height: auto;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
 }
 
 .radar-grid-polygon {
@@ -23,16 +23,17 @@
 }
 
 .radar-grid-polygon.outer-ring {
-    stroke: rgba(255, 255, 255, 0.15);
+    stroke: rgba(255, 255, 255, 0.18);
     stroke-dasharray: none;
     stroke-width: 1.5;
 }
 
 .radar-spoke {
-    stroke: rgba(255, 255, 255, 0.07);
+    stroke: rgba(255, 255, 255, 0.08);
     stroke-width: 1;
 }
 
+/* Layer 1: Normative */
 .radar-normative-polygon {
     stroke: #10b981;
     stroke-width: 1.5;
@@ -40,16 +41,32 @@
     transition: all 0.3s ease;
 }
 
+/* Layer 2: Baseline (Amber) */
+.radar-baseline-polygon {
+    stroke: #f59e0b;
+    stroke-width: 2;
+    stroke-dasharray: 5, 3;
+    transition: all 0.4s ease;
+}
+
+.radar-node-baseline {
+    fill: #f59e0b;
+    stroke: #0f172a;
+    stroke-width: 1.5;
+    transition: all 0.3s ease;
+}
+
+/* Layer 3: Current / Scrubbed Patient Envelope */
 .radar-patient-polygon {
     stroke: #06b6d4;
     stroke-width: 2.5;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .radar-node {
     stroke: #0f172a;
     stroke-width: 2;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .radar-node.normal-score {
@@ -62,18 +79,37 @@
     stroke-width: 1.5;
 }
 
+.radar-node.node-hovered {
+    fill: #38bdf8;
+    stroke: #ffffff;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 8px #38bdf8);
+}
+
+/* Axis Labels */
+.radar-label-group {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.radar-label-group.label-highlight .radar-axis-label {
+    fill: #38bdf8;
+    font-weight: 700;
+}
+
 .radar-axis-label {
     fill: #cbd5e1;
     font-size: 10.5px;
     font-weight: 600;
     font-family: inherit;
     letter-spacing: 0.02em;
+    user-select: none;
 }
 
 .radar-axis-score {
     font-size: 9.5px;
     font-weight: 700;
     font-family: monospace;
+    user-select: none;
 }
 
 .radar-axis-score.score-ok {
@@ -84,34 +120,84 @@
     fill: #f87171;
 }
 
-.radar-legend {
+.radar-axis-delta {
+    fill: #94a3b8;
+    font-size: 8.5px;
+    font-weight: 600;
+}
+
+/* Vertex Hover Tooltip */
+.radar-hover-tooltip {
+    position: absolute;
+    bottom: -8px;
+    background: rgba(15, 23, 42, 0.94);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.2);
+    backdrop-filter: blur(12px);
+    border-radius: 10px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8125rem;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    animation: radarTooltipIn 0.2s ease;
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes radarTooltipIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tooltip-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 1.25rem;
-    margin-top: 0.5rem;
-    font-size: 0.78rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.25rem;
+}
+
+.tooltip-score {
+    color: #38bdf8;
+    font-family: monospace;
+    font-size: 0.875rem;
+}
+
+.tooltip-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-size: 0.75rem;
     color: #94a3b8;
 }
 
-.radar-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+.tooltip-row strong {
+    color: #f1f5f9;
 }
 
-.legend-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
+.tooltip-row.norm strong {
+    color: #34d399;
 }
 
-.patient-indicator {
-    background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-    border: 1px solid #38bdf8;
+.tooltip-delta {
+    margin-left: 0.35rem;
+    font-weight: 700;
 }
 
-.norm-indicator {
-    background: rgba(16, 185, 129, 0.25);
-    border: 1px dashed #10b981;
+.tooltip-delta.pos {
+    color: #34d399;
+}
+
+.tooltip-delta.neg {
+    color: #f87171;
 }

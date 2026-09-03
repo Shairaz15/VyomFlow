@@ -13,7 +13,6 @@ import { useWeeklyReminder } from '../hooks/useWeeklyReminder';
 import {
     HeroSummary,
     AIPredictionCard,
-    DomainScoreCards,
     CognitiveRadarSection,
     ModuleTrendCharts,
     ChangesSinceLastVisit,
@@ -164,14 +163,13 @@ export function DashboardV3() {
                             <AIPredictionCard prediction={vm.aiPrediction} />
                         </div>
 
-                        {/* Section 3: Domain Scores */}
+                        {/* Section 3: Radar Chart & Multi-Layer Trajectory Scrubber */}
                         <div className="dv2-section">
-                            <DomainScoreCards domains={vm.domainScores} />
-                        </div>
-
-                        {/* Section 3b: Radar Chart */}
-                        <div className="dv2-section">
-                            <CognitiveRadarSection scores={vm.radarScores} />
+                            <CognitiveRadarSection
+                                scores={vm.radarScores}
+                                baselineScores={vm.baselineRadarScores}
+                                timeline={vm.radarTimeline}
+                            />
                         </div>
 
                         {/* Section 5: Change Since Last Visit */}

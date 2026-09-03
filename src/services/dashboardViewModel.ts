@@ -142,6 +142,23 @@ export interface ClinicianReportViewModel {
 }
 
 // ─── Master ViewModel ───────────────────────────────────────────
+export interface CognitiveRadarDomainScores {
+    memory: number;
+    language: number;
+    executive: number;
+    processingSpeed: number;
+    spatialOrientation: number;
+    attention: number;
+}
+
+export interface RadarTimelinePoint {
+    sessionId: string;
+    date: string;
+    timestamp: number;
+    label: string;
+    scores: CognitiveRadarDomainScores;
+}
+
 export interface DashboardViewModel {
     overview: OverviewViewModel;
     aiPrediction: AIPredictionViewModel;
@@ -153,14 +170,9 @@ export interface DashboardViewModel {
     longitudinal: LongitudinalViewModel;
     recommendation: RecommendationViewModel;
     clinicianReport: ClinicianReportViewModel;
-    radarScores: {
-        memory: number;
-        language: number;
-        executive: number;
-        processingSpeed: number;
-        spatialOrientation: number;
-        attention: number;
-    };
+    radarScores: CognitiveRadarDomainScores;
+    baselineRadarScores: CognitiveRadarDomainScores;
+    radarTimeline: RadarTimelinePoint[];
     hasData: boolean;
     isLoading: boolean;
     sessionCount: number;
@@ -741,6 +753,128 @@ function findLatestTimestamp(rawData: RawDashboardData): string {
     return latest > 0 ? new Date(latest).toLocaleDateString('en-GB') : 'N/A';
 }
 
+function buildRadarTimeline(
+    rawData: RawDashboardData,
+    currentRadarScores: CognitiveRadarDomainScores
+): RadarTimelinePoint[] {
+    const allDates = new Set<string>();
+    const dateToTimestampMap = new Map<string, number>();
+
+    const moduleDataMap: Record<string, any[]> = {
+        reaction: rawData.reaction || [],
+        attention: rawData.attention || [],
+        vmra: rawData.vmra || [],
+        story: rawData.story || [],
+        language: rawData.language || [],
+        pattern: rawData.pattern || [],
+        navigation: rawData.navigation || [],
+        memory: rawData.memory || [],
+    };
+
+    for (const results of Object.values(moduleDataMap)) {
+        for (const r of results) {
+            const d = new Date(r.timestamp);
+            const dateStr = d.toDateString();
+            allDates.add(dateStr);
+            if (!dateToTimestampMap.has(dateStr) || d.getTime() > dateToTimestampMap.get(dateStr)!) {
+                dateToTimestampMap.set(dateStr, d.getTime());
+            }
+        }
+    }
+
+    const sortedDates = Array.from(allDates).sort(
+        (a, b) => (dateToTimestampMap.get(a) || 0) - (dateToTimestampMap.get(b) || 0)
+    );
+
+    if (sortedDates.length === 0) {
+        return [{
+            sessionId: 'current',
+            date: new Date().toLocaleDateString('en-GB'),
+            timestamp: Date.now(),
+            label: 'Current Assessment',
+            scores: { ...currentRadarScores },
+        }];
+    }
+
+    const timeline: RadarTimelinePoint[] = sortedDates.map((dateStr, idx) => {
+        const isLatest = idx === sortedDates.length - 1;
+        const ts = dateToTimestampMap.get(dateStr) || Date.now();
+        const formattedDate = new Date(dateStr).toLocaleDateString('en-GB');
+        const label = idx === 0 ? 'Baseline (First Visit)' : (isLatest ? 'Current (Latest)' : `Session ${idx + 1}`);
+
+        // Extract raw scores for this date
+        const getMatch = (mod: string) => moduleDataMap[mod].filter((r: any) => new Date(r.timestamp).toDateString() === dateStr).pop();
+
+        const vmraMatch = getMatch('vmra');
+        const storyMatch = getMatch('story');
+        const langMatch = getMatch('language');
+        const patMatch = getMatch('pattern');
+        const rxMatch = getMatch('reaction');
+        const navMatch = getMatch('navigation');
+        const attMatch = getMatch('attention');
+        const memMatch = getMatch('memory');
+
+        // Derive scores for this session snapshot
+        let memScore = 80;
+        if (vmraMatch || storyMatch) {
+            const vAcc = vmraMatch ? (((vmraMatch.features?.recallAccuracy ?? vmraMatch.accuracy ?? 0.8)) * 100) : 80;
+            const sAcc = storyMatch ? (storyMatch.storyRecallScore ?? 80) : vAcc;
+            memScore = Math.round((vAcc + sAcc) / 2);
+        } else if (memMatch) {
+            memScore = Math.round((memMatch.accuracy || 0.8) * 100);
+        }
+
+        let langScore = 85;
+        if (langMatch) {
+            langScore = Math.round(langMatch.derivedFeatures?.cognitiveSpeechIndex ?? langMatch.derivedFeatures?.fluencyIndex ?? 85);
+        }
+
+        let speedScore = 82;
+        if (rxMatch) {
+            const meanLat = rxMatch.aggregates?.avg ?? (Array.isArray(rxMatch) ? rxMatch[0]?.aggregates?.avg : 300);
+            speedScore = Math.round(Math.max(10, Math.min(100, 100 - (meanLat - 200) / 7)));
+        }
+
+        let execScore = 84;
+        if (patMatch) {
+            const maxLvl = patMatch.metrics?.maxLevelReached ?? 8;
+            execScore = Math.round(Math.min(100, maxLvl * 10));
+        }
+
+        let spatScore = 85;
+        if (navMatch) {
+            spatScore = Math.round(navMatch.navigationScore ?? (navMatch.biomarkers?.navigationAccuracy ? navMatch.biomarkers.navigationAccuracy * 100 : 85));
+        }
+
+        let attScore = Math.round((speedScore * 0.5 + execScore * 0.5));
+        if (attMatch) {
+            attScore = Math.round(attMatch.profile?.compositeScore ?? (attMatch.features?.hitRate ? attMatch.features.hitRate * 100 : attScore));
+        }
+
+        // If it's the latest and we have multi-task prediction scores, prefer them for exact alignment
+        const sessionScores: CognitiveRadarDomainScores = (isLatest && Object.values(currentRadarScores).some(v => v > 0))
+            ? { ...currentRadarScores }
+            : {
+                memory: Math.min(100, Math.max(0, memScore)),
+                language: Math.min(100, Math.max(0, langScore)),
+                executive: Math.min(100, Math.max(0, execScore)),
+                processingSpeed: Math.min(100, Math.max(0, speedScore)),
+                spatialOrientation: Math.min(100, Math.max(0, spatScore)),
+                attention: Math.min(100, Math.max(0, attScore)),
+            };
+
+        return {
+            sessionId: `session-${idx + 1}`,
+            date: formattedDate,
+            timestamp: ts,
+            label,
+            scores: sessionScores,
+        };
+    });
+
+    return timeline;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // MAIN BUILD FUNCTION
 // ═══════════════════════════════════════════════════════════════════
@@ -838,7 +972,7 @@ export function buildDashboardViewModel(
     };
 
     // Radar Scores
-    const radarScores = prediction
+    const radarScores: CognitiveRadarDomainScores = prediction
         ? { ...prediction.domainScores }
         : {
             memory: 0,
@@ -848,6 +982,11 @@ export function buildDashboardViewModel(
             spatialOrientation: 0,
             attention: 0,
         };
+
+    const radarTimeline = buildRadarTimeline(rawData, radarScores);
+    const baselineRadarScores: CognitiveRadarDomainScores = radarTimeline.length > 0
+        ? { ...radarTimeline[0].scores }
+        : { ...radarScores };
 
     return {
         overview,
@@ -861,6 +1000,8 @@ export function buildDashboardViewModel(
         recommendation,
         clinicianReport,
         radarScores,
+        baselineRadarScores,
+        radarTimeline,
         hasData,
         isLoading,
         sessionCount,

@@ -27,7 +27,7 @@ const PAUSE_TIMESTAMPS_SECONDS: number[] = [
     1 * 60 + 13 + 0 / 100,   // 01:13:00 → 73.00s
 ];
 
-const SINGLE_VIDEO_URL = "/videos/navigation/res.mp4";
+const SINGLE_VIDEO_URL = "https://pkkrxxjinpxctkoxltuy.supabase.co/storage/v1/object/public/navigation-assets/videos/res.mp4";
 
 export function SeamlessReverseNavigator({
     route,
@@ -61,15 +61,19 @@ export function SeamlessReverseNavigator({
         video.src = SINGLE_VIDEO_URL;
         video.muted = true;
         video.load();
-        video.play()
-            .then(() => {
-                setIsPlaying(true);
-                setNeedsUserGesture(false);
-            })
-            .catch(() => {
-                setIsPlaying(false);
-                setNeedsUserGesture(true);
-            });
+        // Delay play to let the browser parse the source
+        const timer = setTimeout(() => {
+            video.play()
+                .then(() => {
+                    setIsPlaying(true);
+                    setNeedsUserGesture(false);
+                })
+                .catch(() => {
+                    setIsPlaying(false);
+                    setNeedsUserGesture(true);
+                });
+        }, 150);
+        return () => clearTimeout(timer);
     }, []);
 
     const handleVideoClick = () => {
@@ -362,13 +366,15 @@ export function SeamlessReverseNavigator({
                     onPlay={() => setIsPlaying(true)}
                     onPause={() => setIsPlaying(false)}
                     onError={() => setHasError(true)}
-                />
+                >
+                    <source src={SINGLE_VIDEO_URL} type="video/mp4" />
+                </video>
 
                 {/* Click to Play Overlay if paused or awaiting gesture */}
                 {((!isPlaying && !isAwaitingDecision) || needsUserGesture) && (
                     <div 
                         onClick={handleVideoClick}
-                        className="absolute inset-0 z-25 flex flex-col items-center justify-center bg-slate-950/50 backdrop-blur-[2px] cursor-pointer transition-all"
+                        className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/50 backdrop-blur-[2px] cursor-pointer transition-all"
                     >
                         <div className="w-16 h-16 rounded-full bg-cyan-500 text-slate-950 flex items-center justify-center shadow-lg shadow-cyan-500/40 transform hover:scale-110 active:scale-95 transition-all">
                             <Icon name="play" size={28} />
