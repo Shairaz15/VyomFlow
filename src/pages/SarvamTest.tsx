@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Mic, MicOff, Upload, Play, Pause, RefreshCw, Key, Volume2, 
-  Sparkles, CheckCircle2, AlertCircle, Code, Copy, Check, Terminal,
-  Radio, FileAudio, Settings, Send, Languages, Globe
+  Mic, MicOff, Upload, RefreshCw, Key, 
+  AlertCircle, Code, Copy, Check, Terminal,
+  FileAudio, Settings, Send, Languages, Globe
 } from 'lucide-react';
 
 export const SarvamTest: React.FC = () => {
@@ -13,9 +13,9 @@ export const SarvamTest: React.FC = () => {
   // Settings - Focused on Translate Mode
   const [model, setModel] = useState('saaras:v4');
   const [languageCode, setLanguageCode] = useState('hi-IN'); // Default to Hindi
-  const [mode, setMode] = useState<'translate' | 'transcribe' | 'verbatim'>('translate'); // Default focus on Translate
-  const [sampleRate, setSampleRate] = useState(16000);
-  const [proxyPort, setProxyPort] = useState(5001);
+  const mode = 'translate';
+  const sampleRate = 16000;
+  const proxyPort = 5001;
 
   // Statuses
   const [isRecording, setIsRecording] = useState(false);
@@ -137,7 +137,7 @@ export const SarvamTest: React.FC = () => {
       setInterimTranscript('');
       setErrorMsg(null);
 
-      const ws = connectWebSocket();
+      connectWebSocket();
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
       addLog('Microphone active. Translating voice to English text live...', 'info');
