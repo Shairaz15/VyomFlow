@@ -28,7 +28,6 @@ import { predictCognitiveProfile, type CognitiveModelPrediction } from '../servi
 import { evaluatePatientTrajectory, evaluateLongitudinalDrift, type LongitudinalEvaluation, type DriftMetrics } from '../services/statisticalDriftEngine';
 import { generateClinicalAlert, type AlertOutput } from '../services/clinicalAlertEngine';
 import { mapToSessionData, type RawDashboardData, type UserDemographics } from '../services/dataMapper';
-import { saveSessionBiomarkersToSupabase } from '../services/supabaseService';
 import { buildDashboardViewModel, type DashboardViewModel } from '../services/dashboardViewModel';
 import { logger } from '../utils/logger';
 
@@ -148,11 +147,6 @@ export function useDashboardViewModel(): DashboardViewModel {
                         history: sessions.length >= 3 ? 100 : (sessions.length === 2 ? 60 : 30),
                     }
                 );
-
-                // Auto-persist full 75+ Biomarkers Session to Supabase in background
-                saveSessionBiomarkersToSupabase(rawData, demographics, pred, eval_, drift).catch(e => {
-                    logger.error('Background Supabase session biomarker sync error:', e);
-                });
 
                 if (mounted) {
                     setPrediction(pred);

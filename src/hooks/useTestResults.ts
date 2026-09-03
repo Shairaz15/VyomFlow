@@ -119,6 +119,9 @@ export async function clearAllTestData(): Promise<void> {
     localStorage.removeItem(STORAGE_KEYS.storyResults);
     localStorage.removeItem(STORAGE_KEYS.navigationResults);
     localStorage.removeItem(STORAGE_KEYS.lastSession);
+    localStorage.removeItem("last_completed_journey_day");
+    localStorage.removeItem("vyomflow_daily_streak");
+    localStorage.removeItem("vyomflow_journey_streak");
 
     // Also clear Firestore if user is logged in
     if (isUserAuthenticated()) {
@@ -128,6 +131,10 @@ export async function clearAllTestData(): Promise<void> {
         } catch (error) {
             logger.error("Failed to clear Firestore data:", error);
         }
+    }
+
+    if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("vyomflow_test_results_cleared"));
     }
 }
 
@@ -153,19 +160,23 @@ export function useLanguageResults() {
                 const firestoreResults = await loadResultsFromFirestore<LanguageAssessmentResult>(
                     "language_results"
                 );
-                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.languageResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                if (mounted.current) {
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.languageResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.languageResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<LanguageAssessmentResult[]>(
                     localStorage.getItem(STORAGE_KEYS.languageResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -185,6 +196,11 @@ export function useLanguageResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -195,6 +211,7 @@ export function useLanguageResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 
@@ -263,19 +280,23 @@ export function useReactionResults() {
                 const firestoreResults = await loadResultsFromFirestore<ReactionTestResult>(
                     "reaction_results"
                 );
-                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.reactionResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                if (mounted.current) {
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.reactionResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.reactionResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<ReactionTestResult[]>(
                     localStorage.getItem(STORAGE_KEYS.reactionResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -295,6 +316,11 @@ export function useReactionResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -305,6 +331,7 @@ export function useReactionResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 
@@ -405,18 +432,22 @@ export function useMemoryResults() {
                     "memory_results"
                 );
                 if (mounted.current) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.memoryResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.memoryResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.memoryResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<MemoryTestResult[]>(
                     localStorage.getItem(STORAGE_KEYS.memoryResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -436,6 +467,11 @@ export function useMemoryResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -446,6 +482,7 @@ export function useMemoryResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 
@@ -517,19 +554,23 @@ export function usePatternResults() {
                 const firestoreResults = await loadResultsFromFirestore<PatternAssessmentResult>(
                     "pattern_results"
                 );
-                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.patternResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                if (mounted.current) {
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.patternResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.patternResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<PatternAssessmentResult[]>(
                     localStorage.getItem(STORAGE_KEYS.patternResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -549,6 +590,11 @@ export function usePatternResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -559,6 +605,7 @@ export function usePatternResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 
@@ -615,19 +662,23 @@ export function useVmraResults() {
                 const firestoreResults = await loadResultsFromFirestore<VmraAssessmentResult>(
                     "vmra_results"
                 );
-                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.vmraResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                if (mounted.current) {
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.vmraResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.vmraResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<VmraAssessmentResult[]>(
                     localStorage.getItem(STORAGE_KEYS.vmraResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -646,6 +697,11 @@ export function useVmraResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -656,6 +712,7 @@ export function useVmraResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 
@@ -737,19 +794,23 @@ export function useAttentionResults() {
                 const firestoreResults = await loadResultsFromFirestore<SavtAssessmentResult>(
                     "attention_results"
                 );
-                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.attentionResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                if (mounted.current) {
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.attentionResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.attentionResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<SavtAssessmentResult[]>(
                     localStorage.getItem(STORAGE_KEYS.attentionResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -768,6 +829,11 @@ export function useAttentionResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -778,6 +844,7 @@ export function useAttentionResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 
@@ -848,19 +915,23 @@ export function useStoryResults() {
                 const firestoreResults = await loadResultsFromFirestore<StoryAssessmentResult>(
                     "story_results"
                 );
-                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.storyResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                if (mounted.current) {
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.storyResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.storyResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<StoryAssessmentResult[]>(
                     localStorage.getItem(STORAGE_KEYS.storyResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -879,6 +950,11 @@ export function useStoryResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -889,6 +965,7 @@ export function useStoryResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 
@@ -944,19 +1021,23 @@ export function useNavigationResults() {
                 const firestoreResults = await loadResultsFromFirestore<ImmersiveNavigationResult>(
                     "navigation_results"
                 );
-                if (mounted.current && firestoreResults && firestoreResults.length > 0) {
-                    setResults(firestoreResults);
-                    localStorage.setItem(
-                        STORAGE_KEYS.navigationResults,
-                        JSON.stringify(trimResults(firestoreResults))
-                    );
+                if (mounted.current) {
+                    setResults(firestoreResults || []);
+                    if (firestoreResults && firestoreResults.length > 0) {
+                        localStorage.setItem(
+                            STORAGE_KEYS.navigationResults,
+                            JSON.stringify(trimResults(firestoreResults))
+                        );
+                    } else {
+                        localStorage.removeItem(STORAGE_KEYS.navigationResults);
+                    }
                 }
             } else {
                 const parsed = safeJsonParse<ImmersiveNavigationResult[]>(
                     localStorage.getItem(STORAGE_KEYS.navigationResults),
                     []
                 );
-                if (mounted.current && parsed.length > 0) {
+                if (mounted.current) {
                     const withDates = parsed.map((r) => ({
                         ...r,
                         timestamp: new Date(r.timestamp),
@@ -975,6 +1056,11 @@ export function useNavigationResults() {
         const mounted = { current: true };
         loadResults(mounted);
 
+        const handleClear = () => {
+            if (mounted.current) setResults([]);
+        };
+        window.addEventListener("vyomflow_test_results_cleared", handleClear);
+
         const unsubscribe = onAuthStateChanged(auth, () => {
             if (mounted.current) {
                 setIsLoading(true);
@@ -985,6 +1071,7 @@ export function useNavigationResults() {
         return () => {
             mounted.current = false;
             unsubscribe();
+            window.removeEventListener("vyomflow_test_results_cleared", handleClear);
         };
     }, [loadResults]);
 

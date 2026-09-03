@@ -15,9 +15,7 @@ import {
     AIPredictionCard,
     CognitiveRadarSection,
     ModuleTrendCharts,
-    ChangesSinceLastVisit,
     AssessmentModuleCards,
-    ExplainabilitySection,
     LongitudinalSummary,
     RecommendationCard,
     BiomarkerDrawer,
@@ -136,6 +134,7 @@ export function DashboardV3() {
                             setDataMode={vm.setDataMode}
                             seedMockPreset={vm.seedMockPreset}
                             clearMockData={vm.clearMockData}
+                            deleteAllData={vm.deleteAllData}
                             isSeeding={vm.isSeeding}
                             refreshLive={vm.refreshLive}
                             hasLiveRecords={vm.sessionCount > 0}
@@ -191,12 +190,14 @@ export function DashboardV3() {
                             />
                         </div>
 
-                        {/* Section 5: Change Since Last Visit */}
+                        {/* Section 4: Trend Analysis */}
                         <div className="dv2-section">
-                            <ChangesSinceLastVisit changes={vm.changes} />
+                            <LongitudinalSummary
+                                longitudinal={vm.longitudinal}
+                            />
                         </div>
 
-                        {/* Section 4: Module Trend Charts (All 7 Modules) */}
+                        {/* Section 5: Module Trend Charts (All 7 Modules) */}
                         <div className="dv2-section">
                             <ModuleTrendCharts
                                 trends={vm.moduleTrends}
@@ -207,18 +208,6 @@ export function DashboardV3() {
                         {/* Section 6: Assessment Modules Grid */}
                         <div className="dv2-section">
                             <AssessmentModuleCards modules={vm.assessmentModules} />
-                        </div>
-
-                        {/* Section 7: Explainability (SHAP attributions) */}
-                        <div className="dv2-section">
-                            <ExplainabilitySection explainability={vm.explainability} />
-                        </div>
-
-                        {/* Section 8: Longitudinal Summary */}
-                        <div className="dv2-section">
-                            <LongitudinalSummary
-                                longitudinal={vm.longitudinal}
-                            />
                         </div>
 
                         {/* Section 9: Recommendation Card */}

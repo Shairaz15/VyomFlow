@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Compass, LayoutDashboard, Settings, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import './UserMenu.css';
@@ -74,28 +75,30 @@ export function UserMenu() {
                     </div>
                     <div className="menu-divider" />
                     <Link to="/tests" className="menu-item" onClick={() => setIsOpen(false)}>
-                        🧭 Cognitive Journey
+                        <Compass className="menu-item-icon" size={16} strokeWidth={1.75} />
+                        <span>Cognitive Journey</span>
                     </Link>
                     <Link to="/dashboard" className="menu-item" onClick={() => setIsOpen(false)}>
-                        📊 {t('common.dashboard')}
-                    </Link>
-                    <Link to="/progress" className="menu-item" onClick={() => setIsOpen(false)}>
-                        🌱 Progress & Growth
+                        <LayoutDashboard className="menu-item-icon" size={16} strokeWidth={1.75} />
+                        <span>{t('common.dashboard')}</span>
                     </Link>
                     <Link to="/settings" className="menu-item" onClick={() => setIsOpen(false)}>
-                        ⚙️ {t('common.settings')}
+                        <Settings className="menu-item-icon" size={16} strokeWidth={1.75} />
+                        <span>{t('common.settings')}</span>
                     </Link>
                     {isAdmin && (
                         <>
                             <div className="menu-divider" />
                             <Link to="/admin" className="menu-item admin-link" onClick={() => setIsOpen(false)}>
-                                🛡️ {t('common.adminPanel')}
+                                <Shield className="menu-item-icon" size={16} strokeWidth={1.75} />
+                                <span>{t('common.adminPanel')}</span>
                             </Link>
                         </>
                     )}
                     <div className="menu-divider" />
                     <button className="menu-item signout-button" onClick={handleSignOut}>
-                        {t('common.signOut')}
+                        <LogOut className="menu-item-icon" size={16} strokeWidth={1.75} />
+                        <span>{t('common.signOut')}</span>
                     </button>
                 </div>
             )}

@@ -259,4 +259,114 @@ describe('VyomFlow v2 Multi-Task Clinical Cognitive Engine', () => {
         const sum = probs[0] + probs[1] + probs[2];
         expect(sum).toBeCloseTo(1.0, 2);
     });
+
+    it('should resist extreme telemetry noise (e.g. raw ms slopes) via robust Winsorization and never crash MoCA to 0', async () => {
+        const noisyData: RawDashboardData = {
+            reaction: [{
+                timestamp: new Date().toISOString(),
+                aggregates: { avg: 260, min: 210, max: 320, std: 25, lapses: 0, premature: 0 },
+                rounds: []
+            } as any],
+            memory: [],
+            pattern: [{
+                sessionId: 'p-noisy',
+                timestamp: new Date(),
+                metrics: { correctRounds: 6, totalRounds: 7, maxLevelReached: 7, averageResponseLatency: 750 } as any,
+                // Simulate an unscaled outlier learning rate before fix
+                features: { learningRate: -4802.62, memoryLoadTolerance: 85, patternStabilityIndex: 85 } as any,
+                explainability: { keyFactors: [] }
+            }],
+            language: [{
+                id: 'l-noisy',
+                sessionId: 's-noisy',
+                timestamp: new Date(),
+                transcript: 'A clean and fluent audio description of the image.',
+                rawMetrics: { wordCount: 120, speechDuration: 55000, pauseDurationAvg: 280, pauseCount: 3, fillerWordCount: 2, repetitions: 0 } as any,
+                derivedFeatures: {
+                    wpm: 130,
+                    lexicalDiversity: 0.72,
+                    rootTTR: 0.80,
+                    hesitationIndex: 0.03,
+                    fluencyIndex: 88,
+                    speechStability: 90,
+                    semanticCoherence: 88,
+                    syntacticComplexity: 85,
+                    ideaDensity: 0.65,
+                    cognitiveSpeechIndex: 88,
+                    coherenceProxy: 88
+                },
+                explainability: { keyFactors: [] }
+            }],
+            vmra: [{
+                sessionId: 'v-noisy',
+                timestamp: new Date(),
+                config: {} as any,
+                rawMetrics: {} as any,
+                features: {
+                    recallAccuracy: 0.90,
+                    falsePositiveRate: 0.04,
+                    precision: 0.92,
+                    f1Score: 0.90,
+                    netRecallScore: 10.0,
+                    meanSelectionLatencyMs: 1050,
+                    gridCoverage: 0.90,
+                    primacyBias: 0.90,
+                    recencyBias: 0.85,
+                    midListDeficit: 0.08,
+                    intrusionErrors: 1
+                } as any,
+                profile: {} as any,
+                explainability: { keyFactors: [] }
+            }],
+            story: [{
+                id: 's-noisy',
+                sessionId: 'sess-noisy',
+                timestamp: new Date(),
+                storyId: 'story-1',
+                difficulty: 'medium',
+                selectedLanguage: 'en-IN',
+                nativeTranscript: 'Story text',
+                englishTranslation: 'Story translation',
+                comprehensionResponses: [],
+                matchResult: {} as any,
+                biomarkers: {
+                    memory: { recallAccuracy: 0.88, infoUnitsRecalled: 13, totalInfoUnits: 15, omissionCount: 2, falseRecallCount: 0 },
+                    comprehension: { mcqAccuracy: 0.90, correctCount: 9, totalQuestions: 10, avgResponseTimeMs: 1250 },
+                    narrative: { storySequenceScore: 0.90, narrativeCompleteness: 0.88, similarityScore: 0.88 },
+                    speech: { speechRateWPM: 135, lexicalDiversity: 0.72, hesitationRate: 0.03, pauseFrequency: 3 }
+                },
+                storyRecallScore: 88
+            }],
+            navigation: [{
+                sessionId: 'n-noisy',
+                timestamp: new Date(),
+                scenarioId: 'city-1',
+                difficulty: 'medium',
+                routeChoices: [],
+                biomarkers: {
+                    navigationAccuracy: 0.88,
+                    landmarkRecognitionAccuracy: 0.86,
+                    spatialMemoryIndex: 90,
+                    wayfindingEfficiency: 0.88,
+                    headingErrorDegrees: 10,
+                    stopsAndPausesCount: 1,
+                    backtrackingCount: 0,
+                    timeToCompleteSeconds: 45
+                },
+                navigationScore: 90,
+                explainability: { keyFactors: [] }
+            }]
+        };
+
+        const pred = await predictCognitiveProfile(noisyData, { age: 65, educationYears: 16 });
+
+        // Estimated MoCA must be in normal range (> 24.0) and NOT 0.0
+        expect(pred.estimatedMoCA).toBeGreaterThan(24.0);
+        // Probability of Normal must be dominant (> 60%) and Dementia < 20%
+        expect(pred.probabilities.normal).toBeGreaterThan(0.60);
+        expect(pred.probabilities.dementia).toBeLessThan(0.20);
+        expect(pred.predictedDiagnosis).toBe('Normal');
+        expect(pred.impairmentRiskScore).toBeLessThan(0.40);
+    });
 });
+

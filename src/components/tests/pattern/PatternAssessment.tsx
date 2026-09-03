@@ -201,14 +201,19 @@ export function PatternAssessment() {
     useEffect(() => {
         if (phase === 'complete') {
             const features = extractPatternFeatures(rounds);
-            const result: PatternAssessmentResult = {
+            const correctCount = rounds.filter(r => r.isCorrect).length;
+            const totalCount = rounds.length;
+            const accuracyScore = Math.round((correctCount / Math.max(1, totalCount)) * 100);
+
+            const result: PatternAssessmentResult & { score?: number } = {
                 id: crypto.randomUUID(),
                 sessionId: crypto.randomUUID(),
                 timestamp: new Date(),
+                score: accuracyScore,
                 metrics: {
                     maxLevelReached: Math.max(...rounds.filter(r => r.isCorrect).map(r => r.level), 0),
-                    totalRounds: rounds.length,
-                    correctRounds: rounds.filter(r => r.isCorrect).length,
+                    totalRounds: totalCount,
+                    correctRounds: correctCount,
                     averageResponseLatency: rounds.reduce((a, b) => a + b.responseLatency, 0) / (rounds.length || 1),
                     averageCompletionTime: rounds.reduce((a, b) => a + b.completionTime, 0) / (rounds.length || 1),
                     inputErrors: rounds.filter(r => !r.isCorrect).length,
@@ -218,7 +223,8 @@ export function PatternAssessment() {
                 derivedFeatures: features,
                 rawSequenceData: rounds
             };
-            saveResult(result);
+            sessionStorage.setItem("lastPatternResult", JSON.stringify(result));
+            saveResult(result as any);
         }
     }, [phase]);
 

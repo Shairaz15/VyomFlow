@@ -269,10 +269,23 @@ export function useJourneyState(): JourneyState {
         const extractNumericValue = (item: any, type: ActivityId): number => {
             if (!item) return 0;
             if (type === 'story') {
-                return Number(item.storyRecallScore ?? item.score ?? item.features?.recallAccuracy ?? 0);
+                const recallAcc = item.features?.recallAccuracy != null
+                    ? item.features.recallAccuracy * 100
+                    : (item.biomarkers?.memory?.recallAccuracy != null ? item.biomarkers.memory.recallAccuracy * 100 : undefined);
+                return Number(
+                    item.storyRecallScore ??
+                    item.score ??
+                    recallAcc ??
+                    0
+                );
             }
             if (type === 'memory') {
-                let val = Number(item.features?.recallAccuracy ?? item.score ?? 0);
+                let val = Number(
+                    item.features?.recallAccuracy ??
+                    item.accuracy ??
+                    item.score ??
+                    0
+                );
                 if (val <= 1 && val > 0) val = val * 100;
                 return val;
             }
@@ -294,18 +307,41 @@ export function useJourneyState(): JourneyState {
                 );
             }
             if (type === 'pattern') {
-                let val = Number(item.score ?? (item.accuracy ? item.accuracy * 100 : 0));
-                if (val <= 1 && val > 0) val = val * 100;
-                return val;
+                const correct = item.metrics?.correctRounds ?? item.rawMetrics?.correctRounds;
+                const total = item.metrics?.totalRounds ?? item.rawMetrics?.totalRounds;
+                if (correct != null && total != null && total > 0) {
+                    return Math.round((correct / total) * 100);
+                }
+                if (item.accuracy != null) {
+                    return item.accuracy <= 1 ? Math.round(item.accuracy * 100) : Math.round(item.accuracy);
+                }
+                if (typeof item.score === 'number' && item.score > 0) {
+                    return item.score <= 10 ? Math.round(item.score * 10) : Math.round(item.score);
+                }
+                const maxLvl = item.metrics?.maxLevelReached ?? item.rawMetrics?.maxLevelReached;
+                if (maxLvl != null && maxLvl > 0) {
+                    return Math.min(100, Math.round(maxLvl * 10));
+                }
+                return 0;
             }
             if (type === 'attention') {
-                return Number(item.score ?? (item.features?.dPrime ? item.features.dPrime * 20 : 0));
+                return Number(
+                    item.profile?.compositeScore ??
+                    (item.features?.hitRate != null ? item.features.hitRate * 100 : (item.features?.dPrime != null ? Math.round(item.features.dPrime * 20) : (item.score ?? 0)))
+                );
             }
             if (type === 'navigation') {
-                return Number(item.navigationScore ?? item.score ?? 0);
+                return Number(
+                    item.navigationScore ??
+                    (item.biomarkers?.navigationAccuracy != null ? item.biomarkers.navigationAccuracy * 100 : (item.score ?? 0))
+                );
             }
             if (type === 'language') {
-                return Number(item.score ?? (item.features?.fluencyIndex ? item.features.fluencyIndex * 10 : 0));
+                return Number(
+                    item.derivedFeatures?.cognitiveSpeechIndex ??
+                    item.derivedFeatures?.fluencyIndex ??
+                    (item.features?.fluencyIndex != null ? item.features.fluencyIndex * 10 : (item.score ?? 0))
+                );
             }
             return 0;
         };
@@ -410,29 +446,6 @@ export function useJourneyState(): JourneyState {
                 trend,
                 previousScore,
             };
-        };
-
-        const isCompletedToday = (timestamp: Date | string | undefined | null) => {
-            if (!timestamp) return false;
-            try {
-                const dateObj = timestamp instanceof Date ? timestamp : new Date(timestamp);
-                if (isNaN(dateObj.getTime())) return false;
-                const now = new Date();
-                
-                // 1. Same local calendar date
-                const isSameLocalDate = dateObj.getFullYear() === now.getFullYear() &&
-                                        dateObj.getMonth() === now.getMonth() &&
-                                        dateObj.getDate() === now.getDate();
-                // 2. Same UTC calendar date
-                const isSameUtcDate = dateObj.toISOString().split('T')[0] === now.toISOString().split('T')[0];
-                // 3. Within the last 24 hours
-                const diffHours = (now.getTime() - dateObj.getTime()) / (1000 * 60 * 60);
-                const isRecent = diffHours >= 0 && diffHours < 24;
-
-                return isSameLocalDate || isSameUtcDate || isRecent;
-            } catch {
-                return false;
-            }
         };
 
         const getLocalFallback = (key: string): any[] => {

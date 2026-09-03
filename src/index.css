@@ -42,7 +42,12 @@
     /* Theme Variable Aliases */
     --color-text: var(--color-text-primary);
     --color-muted: var(--color-text-muted);
+    --text-primary: var(--color-text-primary);
     --text-secondary: var(--color-text-secondary);
+    --text-muted: var(--color-text-muted);
+    --card-bg: var(--bg-surface);
+    --card-border: var(--glass-border);
+    --border-color: var(--glass-border);
     --primary: var(--color-accent);
     --accent: var(--color-accent-secondary);
     --color-primary: var(--color-accent);
@@ -170,7 +175,12 @@ html:not(.dark),
     /* Theme Variable Aliases */
     --color-text: var(--color-text-primary);
     --color-muted: var(--color-text-muted);
-    --text-secondary: var(--color-text-secondary);
+    --text-primary: #17324D;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --card-bg: #ffffff;
+    --card-border: rgba(23, 50, 77, 0.12);
+    --border-color: rgba(23, 50, 77, 0.12);
     --primary: var(--color-accent);
     --accent: var(--color-accent-secondary);
     --color-primary: var(--color-accent);

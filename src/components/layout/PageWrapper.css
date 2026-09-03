@@ -1,12 +1,53 @@
-/* ===== Page Wrapper Layout ===== */
-/* Antigravity-themed site-wide layout components */
-
 .page-wrapper {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--bg-deep);
+    background: linear-gradient(180deg, #FFFFFF 0%, #F5F8FA 15%, #DCE9F4 38%, #B2D1E7 62%, #86B2D4 80%, #2A4D6F 92%, #17324D 100%);
+    position: relative;
 }
+
+/* Landing Page Scroll-Responsive Continuous Gradient (Light Blue/Teal -> Dark Navy -> Black) */
+[data-theme="dark"] .page-wrapper,
+html.dark .page-wrapper,
+.dark .page-wrapper,
+[data-theme="dark"] .page-wrapper.is-test-mode,
+html.dark .page-wrapper.is-test-mode,
+.dark .page-wrapper.is-test-mode {
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(94, 234, 212, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 40%, rgba(129, 140, 248, 0.12) 0%, transparent 40%),
+        linear-gradient(180deg, #4F7C78 0%, #17324D 33%, #0A0A0A 66%, #000000 100%) !important;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+[data-theme="dark"] .journey-page,
+html.dark .journey-page,
+.dark .journey-page,
+[data-theme="dark"] .story-assessment-container,
+html.dark .story-assessment-container,
+.dark .story-assessment-container,
+[data-theme="dark"] .reaction-test-page,
+html.dark .reaction-test-page,
+.dark .reaction-test-page,
+[data-theme="dark"] .pattern-test-page,
+html.dark .pattern-test-page,
+.dark .pattern-test-page,
+[data-theme="dark"] .language-assessment-page,
+html.dark .language-assessment-page,
+.dark .language-assessment-page,
+[data-theme="dark"] .navigation-assessment-page,
+html.dark .navigation-assessment-page,
+.dark .navigation-assessment-page,
+[data-theme="dark"] .savt-test-page,
+html.dark .savt-test-page,
+.dark .savt-test-page,
+[data-theme="dark"] .vmra-container,
+html.dark .vmra-container,
+.dark .vmra-container {
+    background: transparent !important;
+}
+
 
 /* ===== Header ===== */
 .page-header {

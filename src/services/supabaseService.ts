@@ -757,3 +757,26 @@ export async function clearMockDataFromSupabase(firebaseUid: string): Promise<bo
         return false;
     }
 }
+
+/**
+ * Permanently deletes ALL user records (live assessment results, mock data, sessions) from Supabase.
+ */
+export async function deleteAllUserDataFromSupabase(firebaseUid: string): Promise<boolean> {
+    if (!isSupabaseConfigured() || !firebaseUid) return false;
+    try {
+        await supabase.from('module_results').delete().eq('firebase_uid', firebaseUid);
+        await supabase.from('assessment_sessions').delete().eq('firebase_uid', firebaseUid);
+        try {
+            await supabase.from('clinical_alerts').delete().eq('firebase_uid', firebaseUid);
+        } catch {
+            // Optional table fallback
+        }
+        localStorage.removeItem(OFFLINE_QUEUE_KEY);
+        logger.info(`Completely wiped all live and mock Supabase data for UID: ${firebaseUid}`);
+        return true;
+    } catch (err) {
+        logger.error('Failed to wipe user data from Supabase:', err);
+        return false;
+    }
+}
+

@@ -826,6 +826,146 @@ html.dark .dv2-container {
     font-weight: 600;
 }
 
+/* ─── Responsive Module Trends (Mobile Sliding Pill Switcher vs Desktop Grid) ─── */
+.dv2-trends-mobile-view {
+    display: none;
+}
+
+.dv2-trends-desktop-view {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .dv2-trends-mobile-view {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .dv2-trends-desktop-view {
+        display: none;
+    }
+}
+
+.dv2-trends-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0 0.15rem;
+}
+
+.dv2-trends-active-indicator {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--dv2-teal);
+    background: rgba(79, 124, 120, 0.12);
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+
+:root.dark .dv2-trends-active-indicator,
+.dark .dv2-trends-active-indicator {
+    color: var(--dv2-sage);
+    background: rgba(143, 175, 139, 0.15);
+}
+
+.dv2-trends-slider-container {
+    background: rgba(23, 50, 77, 0.03);
+    border: 1px solid var(--dv2-card-border);
+    border-radius: 16px;
+    padding: 0.35rem;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+:root.dark .dv2-trends-slider-container,
+.dark .dv2-trends-slider-container {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.dv2-trends-chips-scroll {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding: 0.1rem;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.dv2-trends-chips-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.dv2-trends-pill {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    scroll-snap-align: center;
+    user-select: none;
+}
+
+.dv2-trends-pill:active {
+    transform: scale(0.96);
+}
+
+.dv2-trends-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.dv2-trends-pill.active .dv2-trends-pill-dot {
+    transform: scale(1.2);
+}
+
+.dv2-trends-pill-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.dv2-trends-pill-name {
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.dv2-trends-pill-count {
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 9999px;
+    line-height: 1.2;
+}
+
+.dv2-animate-fade {
+    animation: dv2Fade 0.2s ease-out forwards;
+}
+
+@keyframes dv2Fade {
+    from {
+        opacity: 0.4;
+        transform: translateY(3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ─── Print Styles ───────────────────────────────────────────── */
 @media print {
     .dv2-container,
@@ -838,3 +978,4 @@ html.dark .dv2-container {
         display: block !important;
     }
 }
+

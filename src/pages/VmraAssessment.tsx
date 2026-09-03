@@ -147,7 +147,6 @@ export function VmraAssessment() {
     const [delayedTapEvents, setDelayedTapEvents] = useState<TapEvent[]>([]);
     const delayedRecallStartTime = useRef<number>(0);
     const immediateRecallEndTime = useRef<number>(0);
-    const [delayedCompleted, setDelayedCompleted] = useState(false);
 
     // ─── Start Encoding ───────────────────────────────────────────
 
@@ -324,24 +323,7 @@ export function VmraAssessment() {
         }, 1500);
     }, [targetImages, distractorImages, gridImages, selectedIds, tapEvents, config, retentionCorrect, retentionTotal, saveResult, getPreviousAccuracies]);
 
-    // ─── Start Delayed Recall ─────────────────────────────────────
 
-    const startDelayedRecall = useCallback(() => {
-        // Build a new grid with different distractors
-        const newDistractors = selectDistractors(
-            targetImages,
-            config.distractorCount,
-            config.similarityLevel
-        );
-        setDelayedDistractors(newDistractors);
-        const grid = buildGrid(targetImages, newDistractors);
-        setDelayedGridImages(grid);
-        setDelayedSelectedIds(new Set());
-        setDelayedTapEvents([]);
-        delayedRecallStartTime.current = Date.now();
-        lastTapTime.current = new Map();
-        setPhase('delayed-recall');
-    }, [targetImages, config]);
 
     // ─── Handle delayed recall tap ────────────────────────────────
 
@@ -427,10 +409,15 @@ export function VmraAssessment() {
         };
 
         setSessionResult(updatedResult);
-        setDelayedCompleted(true);
         saveResult(updatedResult); // Overwrite with delayed data
         setPhase('results');
     }, [sessionResult, targetImages, delayedDistractors, delayedGridImages, delayedSelectedIds, delayedTapEvents, config, saveResult, getPreviousAccuracies]);
+
+    // Keep delayed recall helpers available for future protocol extensions
+    void setDelayedGridImages;
+    void setDelayedDistractors;
+    void handleDelayedTap;
+    void submitDelayedRecall;
 
     // ─── Render SVG icon for an image ─────────────────────────────
 
@@ -697,11 +684,6 @@ export function VmraAssessment() {
                         </p>
 
                         <div className="vmra-actions">
-                            {!delayedCompleted && (
-                                <Button variant="secondary" onClick={startDelayedRecall}>
-                                    Try Delayed Recall
-                                </Button>
-                            )}
                             <Button variant="primary" onClick={() => navigate('/dashboard')}>
                                 View Dashboard
                             </Button>

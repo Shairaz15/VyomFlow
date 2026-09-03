@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { DashboardDataMode } from '../../hooks/useDashboardV3ViewModel';
 
 interface Props {
@@ -5,6 +6,7 @@ interface Props {
     setDataMode: (mode: DashboardDataMode) => void;
     seedMockPreset: (preset: 'stable' | 'mci' | 'decline') => Promise<void>;
     clearMockData: () => Promise<void>;
+    deleteAllData: () => Promise<void>;
     isSeeding: boolean;
     refreshLive: () => void;
     hasLiveRecords: boolean;
@@ -15,11 +17,27 @@ export function SimulationControls({
     setDataMode,
     seedMockPreset,
     clearMockData,
+    deleteAllData,
     isSeeding,
     refreshLive,
     hasLiveRecords,
 }: Props) {
     const isLive = dataMode === 'live';
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deletedMessage, setDeletedMessage] = useState<string | null>(null);
+
+    const handleDeleteAll = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteAllData();
+            setShowDeleteModal(false);
+            setDeletedMessage('All live and demo assessment data has been completely erased from Supabase and local cache.');
+            setTimeout(() => setDeletedMessage(null), 5000);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <div style={{
@@ -30,6 +48,7 @@ export function SimulationControls({
             marginBottom: '1.5rem',
             backdropFilter: 'blur(12px)',
             boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+            position: 'relative',
         }}>
             {/* Header & Status Indicator */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', borderBottom: '1px solid rgba(51, 65, 85, 0.5)', paddingBottom: '0.75rem' }}>
@@ -58,10 +77,10 @@ export function SimulationControls({
                     </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button
                         onClick={refreshLive}
-                        disabled={isSeeding}
+                        disabled={isSeeding || isDeleting}
                         style={{
                             background: 'rgba(30, 41, 59, 0.8)',
                             color: '#94a3b8',
@@ -77,7 +96,7 @@ export function SimulationControls({
                     {!isLive && (
                         <button
                             onClick={clearMockData}
-                            disabled={isSeeding}
+                            disabled={isSeeding || isDeleting}
                             style={{
                                 background: 'rgba(239, 68, 68, 0.15)',
                                 color: '#f87171',
@@ -92,15 +111,54 @@ export function SimulationControls({
                             🧹 Clear Mock Data
                         </button>
                     )}
+                    <button
+                        onClick={() => setShowDeleteModal(true)}
+                        disabled={isSeeding || isDeleting}
+                        style={{
+                            background: 'rgba(225, 29, 72, 0.15)',
+                            color: '#fb7185',
+                            border: '1px solid rgba(225, 29, 72, 0.35)',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            transition: 'all 0.15s ease',
+                        }}
+                    >
+                        <span>🗑️</span> Delete All Data (Clean Slate)
+                    </button>
                 </div>
             </div>
+
+            {/* Notification alert after deletion */}
+            {deletedMessage && (
+                <div style={{
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    color: '#34d399',
+                    borderRadius: '8px',
+                    padding: '0.6rem 0.85rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                }}>
+                    <span>✅</span> {deletedMessage}
+                </div>
+            )}
 
             {/* Trajectory Selectors */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
                 {/* 1. Live Data Button */}
                 <button
                     onClick={() => setDataMode('live')}
-                    disabled={isSeeding}
+                    disabled={isSeeding || isDeleting}
                     style={{
                         padding: '0.75rem 1rem',
                         borderRadius: '10px',
@@ -123,7 +181,7 @@ export function SimulationControls({
                 {/* 2. Mock: Stable */}
                 <button
                     onClick={() => seedMockPreset('stable')}
-                    disabled={isSeeding}
+                    disabled={isSeeding || isDeleting}
                     style={{
                         padding: '0.75rem 1rem',
                         borderRadius: '10px',
@@ -146,7 +204,7 @@ export function SimulationControls({
                 {/* 3. Mock: MCI */}
                 <button
                     onClick={() => seedMockPreset('mci')}
-                    disabled={isSeeding}
+                    disabled={isSeeding || isDeleting}
                     style={{
                         padding: '0.75rem 1rem',
                         borderRadius: '10px',
@@ -169,7 +227,7 @@ export function SimulationControls({
                 {/* 4. Mock: Rapid Decline */}
                 <button
                     onClick={() => seedMockPreset('decline')}
-                    disabled={isSeeding}
+                    disabled={isSeeding || isDeleting}
                     style={{
                         padding: '0.75rem 1rem',
                         borderRadius: '10px',
@@ -195,6 +253,98 @@ export function SimulationControls({
                     ⏳ Generating isolated 75-biomarker longitudinal dataset in Supabase...
                 </div>
             )}
+
+            {/* Confirmation Modal */}
+            {showDeleteModal && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '1rem',
+                }}>
+                    <div style={{
+                        background: '#0f172a',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        borderRadius: '16px',
+                        padding: '1.5rem',
+                        maxWidth: '440px',
+                        width: '100%',
+                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
+                        textAlign: 'center',
+                    }}>
+                        <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            color: '#ef4444',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.5rem',
+                            margin: '0 auto 1rem',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                        }}>
+                            🗑️
+                        </div>
+
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#f8fafc', margin: '0 0 0.5rem' }}>
+                            Delete All Assessment Data?
+                        </h3>
+
+                        <p style={{ fontSize: '0.8125rem', color: '#94a3b8', lineHeight: '1.5', margin: '0 0 1.25rem' }}>
+                            This will permanently delete all your assessment results from <strong style={{ color: '#f8fafc' }}>Supabase cloud</strong> and your local browser cache, returning your account to a <strong style={{ color: '#34d399' }}>fresh clean slate</strong>.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteModal(false)}
+                                disabled={isDeleting}
+                                style={{
+                                    padding: '0.55rem 1.1rem',
+                                    borderRadius: '10px',
+                                    background: 'rgba(30, 41, 59, 0.8)',
+                                    color: '#cbd5e1',
+                                    border: '1px solid #334155',
+                                    fontSize: '0.8125rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteAll}
+                                disabled={isDeleting}
+                                style={{
+                                    padding: '0.55rem 1.1rem',
+                                    borderRadius: '10px',
+                                    background: '#ef4444',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    fontSize: '0.8125rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.35)',
+                                }}
+                            >
+                                {isDeleting ? 'Erasing Cloud & Local Data...' : 'Yes, Delete Everything'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+

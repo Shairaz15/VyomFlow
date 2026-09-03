@@ -505,20 +505,27 @@ ALTER TABLE module_results ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow public read users" ON users;
 DROP POLICY IF EXISTS "Allow public insert users" ON users;
 DROP POLICY IF EXISTS "Allow public update users" ON users;
+DROP POLICY IF EXISTS "Allow public delete users" ON users;
 CREATE POLICY "Allow public read users" ON users FOR SELECT USING (true);
 CREATE POLICY "Allow public insert users" ON users FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update users" ON users FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete users" ON users FOR DELETE USING (true);
 
 DROP POLICY IF EXISTS "Allow public read sessions" ON assessment_sessions;
 DROP POLICY IF EXISTS "Allow public insert sessions" ON assessment_sessions;
 DROP POLICY IF EXISTS "Allow public update sessions" ON assessment_sessions;
+DROP POLICY IF EXISTS "Allow public delete sessions" ON assessment_sessions;
 CREATE POLICY "Allow public read sessions" ON assessment_sessions FOR SELECT USING (true);
 CREATE POLICY "Allow public insert sessions" ON assessment_sessions FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update sessions" ON assessment_sessions FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete sessions" ON assessment_sessions FOR DELETE USING (true);
 
 DROP POLICY IF EXISTS "Allow public read module_results" ON module_results;
 DROP POLICY IF EXISTS "Allow public insert module_results" ON module_results;
 DROP POLICY IF EXISTS "Allow public update module_results" ON module_results;
+DROP POLICY IF EXISTS "Allow public delete module_results" ON module_results;
 CREATE POLICY "Allow public read module_results" ON module_results FOR SELECT USING (true);
 CREATE POLICY "Allow public insert module_results" ON module_results FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update module_results" ON module_results FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete module_results" ON module_results FOR DELETE USING (true);
+

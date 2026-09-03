@@ -145,20 +145,40 @@ html.dark .vyom-sarvam-landing {
 }
 
 .dark .vyom-floating-navbar,
-[data-theme="dark"] .vyom-floating-navbar {
-  background: rgba(247, 244, 236, 0.96) !important;
-  border: 1px solid rgba(23, 50, 77, 0.18) !important;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 2px 12px rgba(79, 124, 120, 0.12) !important;
+[data-theme="dark"] .vyom-floating-navbar,
+html.dark .vyom-floating-navbar {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), 0 2px 12px rgba(79, 124, 120, 0.15) !important;
 }
 
 .dark .vyom-floating-navbar .vyom-nav-link,
-[data-theme="dark"] .vyom-floating-navbar .vyom-nav-link {
+[data-theme="dark"] .vyom-floating-navbar .vyom-nav-link,
+html.dark .vyom-floating-navbar .vyom-nav-link {
+  color: #E2E8F0 !important;
+}
+
+.dark .vyom-floating-navbar .vyom-nav-link:hover,
+[data-theme="dark"] .vyom-floating-navbar .vyom-nav-link:hover,
+html.dark .vyom-floating-navbar .vyom-nav-link:hover {
+  color: #5eead4 !important;
+}
+
+.vyom-floating-navbar .vyom-serif,
+.vyom-floating-navbar span.vyom-serif {
   color: #17324D !important;
+  font-weight: 700;
 }
 
 .dark .vyom-floating-navbar .vyom-serif,
-[data-theme="dark"] .vyom-floating-navbar .vyom-serif {
-  color: #17324D !important;
+[data-theme="dark"] .vyom-floating-navbar .vyom-serif,
+html.dark .vyom-floating-navbar .vyom-serif,
+.dark .vyom-floating-navbar span.vyom-serif,
+[data-theme="dark"] .vyom-floating-navbar span.vyom-serif,
+html.dark .vyom-floating-navbar span.vyom-serif {
+  color: #F7F4EC !important;
 }
 
 
@@ -672,8 +692,18 @@ html.dark .vyom-sarvam-landing {
   color: #B0C4DE !important;
 }
 
+.vyom-central-core .vyom-serif,
+.vyom-central-core div.vyom-serif {
+  color: #17324D !important;
+  font-weight: 700;
+}
+
 .dark .vyom-central-core .vyom-serif,
-[data-theme="dark"] .vyom-central-core .vyom-serif {
+[data-theme="dark"] .vyom-central-core .vyom-serif,
+html.dark .vyom-central-core .vyom-serif,
+.dark .vyom-central-core div.vyom-serif,
+[data-theme="dark"] .vyom-central-core div.vyom-serif,
+html.dark .vyom-central-core div.vyom-serif {
   color: #F7F4EC !important;
 }
 
@@ -714,7 +744,8 @@ html.dark .vyom-sarvam-landing {
   gap: 0.85rem;
   box-shadow: 0 8px 24px -6px rgba(23, 50, 77, 0.10), 0 2px 8px rgba(79, 124, 120, 0.06);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
+  cursor: default;
+  user-select: none;
   width: 230px;
   z-index: 30;
   text-align: center;
@@ -732,8 +763,7 @@ html.dark .vyom-sarvam-landing {
 .vyom-orbital-card:hover {
   background: #FFFFFF;
   border-color: var(--vyom-teal);
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 14px 32px -8px rgba(23, 50, 77, 0.18), 0 4px 12px rgba(79, 124, 120, 0.12);
+  box-shadow: 0 10px 28px -6px rgba(23, 50, 77, 0.14), 0 3px 10px rgba(79, 124, 120, 0.08);
 }
 
 .vyom-orbital-card h4,
@@ -1196,10 +1226,19 @@ html.dark .vyom-mobile-header,
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
 }
 
+.vyom-mobile-header .vyom-serif,
+.vyom-mobile-header span.vyom-serif {
+  color: #17324D !important;
+  font-weight: 700;
+}
+
 html.dark .vyom-mobile-header .vyom-serif,
 .dark .vyom-mobile-header .vyom-serif,
-[data-theme="dark"] .vyom-mobile-header .vyom-serif {
-  color: #17324D !important;
+[data-theme="dark"] .vyom-mobile-header .vyom-serif,
+html.dark .vyom-mobile-header span.vyom-serif,
+.dark .vyom-mobile-header span.vyom-serif,
+[data-theme="dark"] .vyom-mobile-header span.vyom-serif {
+  color: #F7F4EC !important;
 }
 
 html.dark .vyom-mobile-header .vyom-header-btn,
@@ -1402,8 +1441,7 @@ html.dark .vyom-mobile-drawer,
   background: #FBFAF6;
   border: 1.5px solid rgba(79, 124, 120, 0.22);
   box-shadow: 0 3px 12px rgba(23, 50, 77, 0.04);
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
   user-select: none;
   width: 100%;
 }
@@ -1411,12 +1449,6 @@ html.dark .vyom-mobile-drawer,
 .dark .vyom-mobile-journey-node {
   background: #14283C;
   border-color: rgba(255, 255, 255, 0.14);
-}
-
-.vyom-mobile-journey-node:active {
-  transform: scale(0.98);
-  border-color: var(--vyom-teal);
-  box-shadow: 0 6px 18px rgba(79, 124, 120, 0.12);
 }
 
 .vyom-mobile-node-badge {

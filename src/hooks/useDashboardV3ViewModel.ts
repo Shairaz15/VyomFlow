@@ -22,6 +22,7 @@ import {
     useNavigationResults,
     useAttentionResults,
     deduplicateModuleResults,
+    clearAllTestData,
 } from './useTestResults';
 import { predictCognitiveProfile, type CognitiveModelPrediction } from '../services/clinicalModelEngine';
 import { evaluatePatientTrajectory, evaluateLongitudinalDrift, type LongitudinalEvaluation, type DriftMetrics } from '../services/statisticalDriftEngine';
@@ -32,10 +33,12 @@ import {
     subscribeToLiveAssessmentUpdates,
     seedMockTrajectoryToSupabase,
     clearMockDataFromSupabase,
+    deleteAllUserDataFromSupabase,
     getCurrentFirebaseUid,
-    saveSessionBiomarkersToSupabase,
 } from '../services/supabaseService';
 import { buildDashboardViewModel, type DashboardViewModel } from '../services/dashboardViewModel';
+import { auth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { logger } from '../utils/logger';
 
 export type DashboardDataMode = 'live' | 'mock_stable' | 'mock_mci' | 'mock_decline';
@@ -45,6 +48,7 @@ export interface DashboardV3HookReturn extends DashboardViewModel {
     setDataMode: (mode: DashboardDataMode) => void;
     seedMockPreset: (preset: 'stable' | 'mci' | 'decline') => Promise<void>;
     clearMockData: () => Promise<void>;
+    deleteAllData: () => Promise<void>;
     isSeeding: boolean;
     refreshLive: () => void;
 }
@@ -77,19 +81,23 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
         setRefreshTrigger(prev => prev + 1);
     }, []);
 
-    // ─── 3. Fetch from Supabase based on Mode ────────────────────
+    // ─── 3. Fetch from Supabase based on Mode & Auth State ────────
     useEffect(() => {
         let mounted = true;
-        const uid = getCurrentFirebaseUid();
+        let unsubscribeRealtime = () => {};
 
-        async function loadSupabaseData() {
-            if (!uid) {
-                if (mounted) setSupabaseRawData(null);
+        async function loadSupabaseData(targetUid: string | null) {
+            if (!targetUid) {
+                if (mounted) {
+                    setSupabaseRawData(null);
+                    setIsLoading(false);
+                }
                 return;
             }
 
             const isMock = dataMode !== 'live';
-            const data = await fetchLiveModuleResultsFromSupabase(uid, isMock);
+            setIsLoading(true);
+            const data = await fetchLiveModuleResultsFromSupabase(targetUid, isMock);
 
             if (mounted) {
                 // If in mock mode but no mock records exist, auto-seed the selected trajectory
@@ -97,35 +105,49 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
                 if (isMock && totalMockCount === 0) {
                     const trajectory = dataMode.replace('mock_', '') as 'stable' | 'mci' | 'decline';
                     setIsSeeding(true);
-                    await seedMockTrajectoryToSupabase(uid, trajectory);
-                    const freshData = await fetchLiveModuleResultsFromSupabase(uid, true);
+                    await seedMockTrajectoryToSupabase(targetUid, trajectory);
+                    const freshData = await fetchLiveModuleResultsFromSupabase(targetUid, true);
                     setIsSeeding(false);
                     if (mounted) setSupabaseRawData(freshData);
                 } else {
                     setSupabaseRawData(data);
                 }
+                setIsLoading(false);
             }
         }
 
-        loadSupabaseData();
+        const initialUid = auth.currentUser?.uid || getCurrentFirebaseUid();
+        loadSupabaseData(initialUid);
 
-        // Setup Realtime WebSocket subscription for live mode
-        let unsubscribe = () => {};
-        if (dataMode === 'live' && uid) {
-            unsubscribe = subscribeToLiveAssessmentUpdates(uid, () => {
-                loadSupabaseData();
+        if (dataMode === 'live' && initialUid) {
+            unsubscribeRealtime = subscribeToLiveAssessmentUpdates(initialUid, () => {
+                loadSupabaseData(initialUid);
             });
         }
 
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+            if (mounted) {
+                const uid = user?.uid || null;
+                loadSupabaseData(uid);
+                if (dataMode === 'live' && uid) {
+                    unsubscribeRealtime();
+                    unsubscribeRealtime = subscribeToLiveAssessmentUpdates(uid, () => {
+                        loadSupabaseData(uid);
+                    });
+                }
+            }
+        });
+
         return () => {
             mounted = false;
-            unsubscribe();
+            unsubscribeAuth();
+            unsubscribeRealtime();
         };
     }, [dataMode, refreshTrigger]);
 
     // ─── 4. Mock Seeding Helpers ─────────────────────────────────
     const seedMockPreset = useCallback(async (preset: 'stable' | 'mci' | 'decline') => {
-        const uid = getCurrentFirebaseUid();
+        const uid = auth.currentUser?.uid || getCurrentFirebaseUid();
         if (!uid) return;
         setIsSeeding(true);
         await seedMockTrajectoryToSupabase(uid, preset);
@@ -136,7 +158,7 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
     }, []);
 
     const clearMockData = useCallback(async () => {
-        const uid = getCurrentFirebaseUid();
+        const uid = auth.currentUser?.uid || getCurrentFirebaseUid();
         if (!uid) return;
         setIsSeeding(true);
         await clearMockDataFromSupabase(uid);
@@ -145,6 +167,39 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
         setSupabaseRawData(data);
         setIsSeeding(false);
     }, []);
+
+    const deleteAllData = useCallback(async () => {
+        const uid = auth.currentUser?.uid || getCurrentFirebaseUid();
+        setIsSeeding(true);
+        if (uid) {
+            await deleteAllUserDataFromSupabase(uid);
+        }
+        await clearAllTestData();
+        try {
+            sessionStorage.clear();
+        } catch {
+            // Ignore
+        }
+        setDataMode('live');
+        setSupabaseRawData({
+            reaction: [],
+            memory: [],
+            pattern: [],
+            language: [],
+            vmra: [],
+            story: [],
+            navigation: [],
+            attention: [],
+        });
+        setPrediction(null);
+        setEvaluation(null);
+        setAlertOutput(null);
+        setDriftMetrics(null);
+        setIsSeeding(false);
+        setRefreshTrigger(prev => prev + 1);
+    }, []);
+
+
 
     // ─── 5. Resolve Effective Raw Data ───────────────────────────
     const effectiveRawData: RawDashboardData = useMemo(() => {
@@ -161,17 +216,31 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
             };
         }
 
-        // Live mode: Prioritize Supabase live results, merge with local cache, and deduplicate
+        // Live mode: When Supabase data has loaded (even if empty after clean slate), use it as definitive source
         const sb = supabaseRawData;
+        if (sb !== null) {
+            return {
+                reaction: deduplicateModuleResults(sb.reaction || []),
+                memory: deduplicateModuleResults(sb.memory || []),
+                pattern: deduplicateModuleResults(sb.pattern || []),
+                language: deduplicateModuleResults(sb.language || []),
+                vmra: deduplicateModuleResults(sb.vmra || []),
+                story: deduplicateModuleResults(sb.story || []),
+                navigation: deduplicateModuleResults(sb.navigation || []),
+                attention: deduplicateModuleResults(sb.attention || []),
+            };
+        }
+
+        // Unauthenticated or offline fallback to local hook results
         return {
-            reaction: deduplicateModuleResults((sb?.reaction && sb.reaction.length > 0) ? sb.reaction : reactionResults),
-            memory: deduplicateModuleResults((sb?.memory && sb.memory.length > 0) ? sb.memory : memoryResults),
-            pattern: deduplicateModuleResults((sb?.pattern && sb.pattern.length > 0) ? sb.pattern : patternResults),
-            language: deduplicateModuleResults((sb?.language && sb.language.length > 0) ? sb.language : languageResults),
-            vmra: deduplicateModuleResults((sb?.vmra && sb.vmra.length > 0) ? sb.vmra : vmraResults),
-            story: deduplicateModuleResults((sb?.story && sb.story.length > 0) ? sb.story : storyResults),
-            navigation: deduplicateModuleResults((sb?.navigation && sb.navigation.length > 0) ? sb.navigation : navigationResults),
-            attention: deduplicateModuleResults((sb?.attention && sb.attention.length > 0) ? sb.attention : attentionResults),
+            reaction: deduplicateModuleResults(reactionResults),
+            memory: deduplicateModuleResults(memoryResults),
+            pattern: deduplicateModuleResults(patternResults),
+            language: deduplicateModuleResults(languageResults),
+            vmra: deduplicateModuleResults(vmraResults),
+            story: deduplicateModuleResults(storyResults),
+            navigation: deduplicateModuleResults(navigationResults),
+            attention: deduplicateModuleResults(attentionResults),
         };
     }, [dataMode, supabaseRawData, reactionResults, memoryResults, patternResults, languageResults, vmraResults, storyResults, navigationResults, attentionResults]);
 
@@ -269,23 +338,6 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
                     setDriftMetrics(drift);
                     setIsLoading(false);
                 }
-
-                // In live mode, sync composite session biomarkers to Supabase
-                if (dataMode === 'live') {
-                    saveSessionBiomarkersToSupabase(
-                        effectiveRawData,
-                        demographics,
-                        pred,
-                        eval_,
-                        drift,
-                        new Date(),
-                        undefined,
-                        undefined,
-                        false
-                    ).catch(err => {
-                        logger.error('Failed to sync master session biomarkers to Supabase:', err);
-                    });
-                }
             } catch (err) {
                 logger.error('Error computing dashboard V3 data:', err);
                 if (mounted) setIsLoading(false);
@@ -318,7 +370,9 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
         setDataMode,
         seedMockPreset,
         clearMockData,
+        deleteAllData,
         isSeeding,
         refreshLive,
     };
 }
+

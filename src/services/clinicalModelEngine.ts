@@ -137,23 +137,28 @@ export function extract75Biomarkers(
     if (data.vmra && data.vmra.length > 0) {
         const v = data.vmra[data.vmra.length - 1];
         const feat = v.features as any;
-        vmraAcc = feat?.recallAccuracy ?? feat?.accuracy ?? vmraAcc;
-        vmraFpr = feat?.falsePositiveRate ?? vmraFpr;
-        vmraPrec = feat?.precision ?? vmraPrec;
-        vmraF1 = feat?.f1Score ?? vmraF1;
-        vmraNet = feat?.netRecallScore ?? vmraNet;
-        vmraMeanLat = feat?.meanSelectionLatencyMs ?? vmraMeanLat;
-        vmraFirstTap = feat?.firstTapLatencyMs ?? vmraFirstTap;
-        vmraInterTap = feat?.meanInterTapIntervalMs ?? vmraInterTap;
-        vmraLatVar = feat?.latencyVariance ?? vmraLatVar;
-        vmraPrim = feat?.primacyBias ?? vmraPrim;
-        vmraRec = feat?.recencyBias ?? vmraRec;
-        vmraMidDef = feat?.midListDeficit ?? vmraMidDef;
-        vmraIntrusions = feat?.intrusionErrors ?? vmraIntrusions;
-        vmraGridCov = feat?.gridCoverage ?? vmraGridCov;
+        const rawAcc = feat?.recallAccuracy ?? feat?.accuracy ?? (v as any).accuracy;
+        if (rawAcc != null) vmraAcc = rawAcc > 1 ? rawAcc / 100 : rawAcc;
+        const rawFpr = feat?.falsePositiveRate;
+        if (rawFpr != null) vmraFpr = rawFpr > 1 ? rawFpr / 100 : rawFpr;
+        const rawPrec = feat?.precision;
+        if (rawPrec != null) vmraPrec = rawPrec > 1 ? rawPrec / 100 : rawPrec;
+        const rawF1 = feat?.f1Score;
+        if (rawF1 != null) vmraF1 = rawF1 > 1 ? rawF1 / 100 : rawF1;
+        vmraNet = clamp(feat?.netRecallScore ?? vmraNet, 0, 16);
+        vmraMeanLat = clamp(feat?.meanSelectionLatencyMs ?? vmraMeanLat, 300, 8000);
+        vmraFirstTap = clamp(feat?.firstTapLatencyMs ?? vmraFirstTap, 100, 5000);
+        vmraInterTap = clamp(feat?.meanInterTapIntervalMs ?? vmraInterTap, 50, 3000);
+        vmraLatVar = clamp(feat?.latencyVariance ?? vmraLatVar, 0, 50000);
+        vmraPrim = clamp(feat?.primacyBias ?? vmraPrim, 0, 1);
+        vmraRec = clamp(feat?.recencyBias ?? vmraRec, 0, 1);
+        vmraMidDef = clamp(feat?.midListDeficit ?? vmraMidDef, 0, 1);
+        vmraIntrusions = clamp(feat?.intrusionErrors ?? vmraIntrusions, 0, 15);
+        vmraGridCov = clamp(feat?.gridCoverage ?? vmraGridCov, 0, 1);
         if (v.delayedRecall?.delayedFeatures) {
-            vmraDelAcc = (v.delayedRecall.delayedFeatures as any).recallAccuracy ?? (vmraAcc * 0.85);
-            vmraDecaySlope = v.delayedRecall.forgettingCurveSlope ?? vmraDecaySlope;
+            const rawDel = (v.delayedRecall.delayedFeatures as any).recallAccuracy;
+            vmraDelAcc = rawDel != null ? (rawDel > 1 ? rawDel / 100 : rawDel) : (vmraAcc * 0.85);
+            vmraDecaySlope = clamp(v.delayedRecall.forgettingCurveSlope ?? vmraDecaySlope, 0, 1);
         } else {
             vmraDelAcc = vmraAcc * 0.85;
         }
@@ -177,19 +182,26 @@ export function extract75Biomarkers(
     if (data.story && data.story.length > 0) {
         const s = data.story[data.story.length - 1];
         const bio = s.biomarkers;
-        storyAcc = bio?.memory?.recallAccuracy ?? storyAcc;
-        storyUnits = bio?.memory?.infoUnitsRecalled ?? storyUnits;
-        storyOmissions = bio?.memory?.omissionCount ?? storyOmissions;
-        storyFalse = bio?.memory?.falseRecallCount ?? storyFalse;
-        storyMcq = bio?.comprehension?.mcqAccuracy ?? storyMcq;
-        storyComprRt = bio?.comprehension?.avgResponseTimeMs ?? storyComprRt;
-        storySeq = bio?.narrative?.storySequenceScore ?? storySeq;
-        storyComp = bio?.narrative?.narrativeCompleteness ?? storyComp;
-        storySim = bio?.narrative?.similarityScore ?? storySim;
-        storyWpm = bio?.speech?.speechRateWPM ?? storyWpm;
-        storyLexDiv = bio?.speech?.lexicalDiversity ?? storyLexDiv;
-        storyHesRate = bio?.speech?.hesitationRate ?? storyHesRate;
-        storyPauseFreq = bio?.speech?.pauseFrequency ?? storyPauseFreq;
+        const rawStoryAcc = bio?.memory?.recallAccuracy ?? (s as any).score ?? s.storyRecallScore;
+        if (rawStoryAcc != null) storyAcc = rawStoryAcc > 1 ? rawStoryAcc / 100 : rawStoryAcc;
+        storyUnits = clamp(bio?.memory?.infoUnitsRecalled ?? storyUnits, 0, 30);
+        storyOmissions = clamp(bio?.memory?.omissionCount ?? storyOmissions, 0, 30);
+        storyFalse = clamp(bio?.memory?.falseRecallCount ?? storyFalse, 0, 30);
+        const rawMcq = bio?.comprehension?.mcqAccuracy;
+        if (rawMcq != null) storyMcq = rawMcq > 1 ? rawMcq / 100 : rawMcq;
+        storyComprRt = clamp(bio?.comprehension?.avgResponseTimeMs ?? storyComprRt, 300, 8000);
+        const rawSeq = bio?.narrative?.storySequenceScore;
+        if (rawSeq != null) storySeq = rawSeq > 1 ? rawSeq / 100 : rawSeq;
+        const rawComp = bio?.narrative?.narrativeCompleteness;
+        if (rawComp != null) storyComp = rawComp > 1 ? rawComp / 100 : rawComp;
+        const rawSim = bio?.narrative?.similarityScore;
+        if (rawSim != null) storySim = rawSim > 1 ? rawSim / 100 : rawSim;
+        storyWpm = clamp(bio?.speech?.speechRateWPM ?? storyWpm, 30, 260);
+        const rawLex = bio?.speech?.lexicalDiversity;
+        if (rawLex != null) storyLexDiv = rawLex > 1 ? rawLex / 100 : rawLex;
+        const rawHes = bio?.speech?.hesitationRate;
+        if (rawHes != null) storyHesRate = rawHes > 1 ? rawHes / 100 : rawHes;
+        storyPauseFreq = clamp(bio?.speech?.pauseFrequency ?? storyPauseFreq, 0, 30);
     }
 
     // 3. Language
@@ -214,28 +226,38 @@ export function extract75Biomarkers(
         const l = data.language[data.language.length - 1];
         const raw = l.rawMetrics;
         const der = l.derivedFeatures;
-        langWpm = der?.wpm ?? raw?.wordCount ?? langWpm;
-        langArtRate = der?.articulationRate ?? (langWpm * 1.15);
-        langPhonation = der?.phonationRatio ?? langPhonation;
-        langPauses = raw?.pauseCount ?? langPauses;
-        langPauseDur = raw?.pauseDurationAvg ?? langPauseDur;
-        langFillers = raw?.fillerWordCount ?? langFillers;
-        langReps = raw?.repetitions ?? langReps;
-        langLexDiv = der?.lexicalDiversity ?? langLexDiv;
-        langRootTtr = der?.rootTTR ?? langRootTtr;
-        langHes = der?.hesitationIndex ?? langHes;
-        langFluency = der?.fluencyIndex ?? langFluency;
-        langStab = der?.speechStability ?? langStab;
-        langSemCoh = der?.semanticCoherence ?? langSemCoh;
-        langSyntax = der?.syntacticComplexity ?? langSyntax;
-        langIdeaDen = der?.ideaDensity ?? langIdeaDen;
-        langCsi = der?.cognitiveSpeechIndex ?? langCsi;
+        langWpm = clamp(der?.wpm ?? raw?.wordCount ?? langWpm, 30, 260);
+        langArtRate = clamp(der?.articulationRate ?? (langWpm * 1.15), 30, 300);
+        const rawPhon = der?.phonationRatio;
+        if (rawPhon != null) langPhonation = rawPhon > 1 ? rawPhon / 100 : rawPhon;
+        langPauses = clamp(raw?.pauseCount ?? langPauses, 0, 40);
+        langPauseDur = clamp(raw?.pauseDurationAvg ?? langPauseDur, 50, 4000);
+        langFillers = clamp(raw?.fillerWordCount ?? langFillers, 0, 40);
+        langReps = clamp(raw?.repetitions ?? langReps, 0, 25);
+        const rawLex = der?.lexicalDiversity;
+        if (rawLex != null) langLexDiv = rawLex > 1 ? rawLex / 100 : rawLex;
+        const rawTtr = der?.rootTTR;
+        if (rawTtr != null) langRootTtr = rawTtr > 1 ? rawTtr / 100 : rawTtr;
+        const rawHes = der?.hesitationIndex;
+        if (rawHes != null) langHes = rawHes > 1 ? rawHes / 100 : rawHes;
+        const rawFlu = der?.fluencyIndex;
+        if (rawFlu != null) langFluency = rawFlu <= 1 ? rawFlu * 100 : rawFlu;
+        const rawStab = der?.speechStability;
+        if (rawStab != null) langStab = rawStab <= 1 ? rawStab * 100 : rawStab;
+        const rawSem = der?.semanticCoherence;
+        if (rawSem != null) langSemCoh = rawSem <= 1 ? rawSem * 100 : rawSem;
+        const rawSyn = der?.syntacticComplexity;
+        if (rawSyn != null) langSyntax = rawSyn <= 1 ? rawSyn * 100 : rawSyn;
+        const rawIdea = der?.ideaDensity;
+        if (rawIdea != null) langIdeaDen = rawIdea > 1 ? rawIdea / 100 : rawIdea;
+        const rawCsi = der?.cognitiveSpeechIndex;
+        if (rawCsi != null) langCsi = rawCsi <= 1 ? rawCsi * 100 : rawCsi;
     }
 
     // 4. Pattern
     let patAcc = 0.80;
     let patMaxLevel = 8;
-    let patLearnRate = 22.0;
+    let patLearnRate = 23.3;
     let patErrGrowth = 0.05;
     let patLoadTol = 82.0;
     let patStabIdx = 85.0;
@@ -246,14 +268,25 @@ export function extract75Biomarkers(
     if (data.pattern && data.pattern.length > 0) {
         const p = data.pattern[data.pattern.length - 1] as any;
         const met = p.metrics;
-        const feat = p.features;
-        patAcc = met ? (met.correctRounds / Math.max(1, met.totalRounds || 1)) : patAcc;
-        patMaxLevel = met?.maxLevelReached ?? patMaxLevel;
-        patAvgLat = met?.averageResponseLatency ?? patAvgLat;
-        patLearnRate = feat?.learningRate ?? patLearnRate;
-        patErrGrowth = feat?.errorGrowthRate ?? patErrGrowth;
-        patLoadTol = feat?.memoryLoadTolerance ?? patLoadTol;
-        patStabIdx = feat?.patternStabilityIndex ?? patStabIdx;
+        const feat = p.features || p.derivedFeatures;
+        if (met) {
+            patAcc = (met.correctRounds / Math.max(1, met.totalRounds || 1));
+        } else if ((p as any).accuracy != null) {
+            patAcc = (p as any).accuracy > 1 ? (p as any).accuracy / 100 : (p as any).accuracy;
+        }
+        patMaxLevel = clamp(met?.maxLevelReached ?? patMaxLevel, 1, 15);
+        patAvgLat = clamp(met?.averageResponseLatency ?? patAvgLat, 200, 5000);
+        const rawLearn = feat?.learningRate;
+        if (rawLearn != null) {
+            // Defensively guard against unscaled thousands or huge negative rates
+            patLearnRate = clamp(rawLearn, 5.0, 45.0);
+        }
+        const rawErr = feat?.errorGrowthRate;
+        if (rawErr != null) patErrGrowth = rawErr > 1 ? rawErr / 100 : rawErr;
+        const rawLoad = feat?.memoryLoadTolerance;
+        if (rawLoad != null) patLoadTol = rawLoad <= 1 ? rawLoad * 100 : rawLoad;
+        const rawStab = feat?.patternStabilityIndex;
+        if (rawStab != null) patStabIdx = rawStab <= 1 ? rawStab * 100 : rawStab;
         patSpanFwd = Math.min(12, Math.max(3, patMaxLevel + 1));
         patSpanBwd = Math.min(10, Math.max(2, Math.round((patMaxLevel - 1) * 0.85)));
     }
@@ -272,13 +305,13 @@ export function extract75Biomarkers(
     if (data.reaction && data.reaction.length > 0) {
         const r = data.reaction[data.reaction.length - 1];
         const agg = (r as any).aggregates;
-        rxMeanLat = agg?.avg ?? rxMeanLat;
-        rxMedianLat = agg?.median ?? (rxMeanLat - 10);
-        rxLatStd = agg?.std ?? rxLatStd;
-        rxFastest = agg?.min ?? (rxMeanLat - 2 * rxLatStd);
-        rxSlowest = agg?.max ?? (rxMeanLat + 2.5 * rxLatStd);
-        rxLapses = agg?.lapses ?? rxLapses;
-        rxPremature = agg?.premature ?? rxPremature;
+        rxMeanLat = clamp(agg?.avg ?? agg?.mean ?? rxMeanLat, 150, 2000);
+        rxMedianLat = clamp(agg?.median ?? (rxMeanLat - 10), 150, 2000);
+        rxLatStd = clamp(agg?.std ?? rxLatStd, 5, 400);
+        rxFastest = clamp(agg?.min ?? (rxMeanLat - 2 * rxLatStd), 100, 1500);
+        rxSlowest = clamp(agg?.max ?? (rxMeanLat + 2.5 * rxLatStd), 200, 3500);
+        rxLapses = clamp(agg?.lapses ?? rxLapses, 0, 25);
+        rxPremature = clamp(agg?.premature ?? rxPremature, 0, 25);
         rxWaisScore = Math.max(10, Math.min(95, 110 - (rxMeanLat / 5.5)));
     }
 
@@ -296,16 +329,21 @@ export function extract75Biomarkers(
     if (data.navigation && data.navigation.length > 0) {
         const n = data.navigation[data.navigation.length - 1];
         const bio = n.biomarkers as any;
-        navAcc = bio?.navigationAccuracy ?? navAcc;
-        navLandmarkAcc = bio?.landmarkRecognitionAccuracy ?? navLandmarkAcc;
-        navSpatialMem = bio?.spatialMemoryIndex ?? navSpatialMem;
-        navWayfindingEff = bio?.wayfindingEfficiency ?? navWayfindingEff;
-        navHeadingErr = bio?.headingErrorDegrees ?? navHeadingErr;
-        navStops = bio?.stopsAndPausesCount ?? navStops;
-        navBacktrack = bio?.backtrackingCount ?? navBacktrack;
-        navTimeSecs = bio?.timeToCompleteSeconds ?? navTimeSecs;
+        const rawNavAcc = bio?.navigationAccuracy ?? (n as any).score ?? n.navigationScore;
+        if (rawNavAcc != null) navAcc = rawNavAcc > 1 ? rawNavAcc / 100 : rawNavAcc;
+        const rawLand = bio?.landmarkRecognitionAccuracy;
+        if (rawLand != null) navLandmarkAcc = rawLand > 1 ? rawLand / 100 : rawLand;
+        const rawSpat = bio?.spatialMemoryIndex;
+        if (rawSpat != null) navSpatialMem = rawSpat <= 1 ? rawSpat * 100 : rawSpat;
+        const rawEff = bio?.wayfindingEfficiency;
+        if (rawEff != null) navWayfindingEff = rawEff > 1 ? rawEff / 100 : rawEff;
+        navHeadingErr = clamp(bio?.headingErrorDegrees ?? navHeadingErr, 0, 180);
+        navStops = clamp(bio?.stopsAndPausesCount ?? navStops, 0, 25);
+        navBacktrack = clamp(bio?.backtrackingCount ?? navBacktrack, 0, 25);
+        navTimeSecs = clamp(bio?.timeToCompleteSeconds ?? navTimeSecs, 10, 300);
         navDisorient = Math.max(0, Math.min(3.0, (1 - navAcc) * 2.5));
     }
+
 
     return {
         Age: age,
@@ -409,16 +447,17 @@ export async function predictCognitiveProfile(
     const bundle = await loadModelBundle();
     const rawMap = extract75Biomarkers(data, demographics);
 
-    // Track completed test battery modules
+    // Track completed test battery modules across all 7 assessment modules
     const completedModules: string[] = [];
     if (data.vmra && data.vmra.length > 0) completedModules.push('Visual Memory (VMRA)');
     if (data.story && data.story.length > 0) completedModules.push('Story Recall');
     if (data.language && data.language.length > 0) completedModules.push('Language & Speech');
     if (data.pattern && data.pattern.length > 0) completedModules.push('Pattern Working Memory');
-    if (data.reaction && data.reaction.length > 0) completedModules.push('Reaction Time & SAVT');
+    if (data.reaction && data.reaction.length > 0) completedModules.push('Reaction Time');
+    if (data.attention && data.attention.length > 0) completedModules.push('Sustained Attention');
     if (data.navigation && data.navigation.length > 0) completedModules.push('Video Navigation');
 
-    const batteryCoverage = Math.max(1, completedModules.length) / 6.0;
+    const batteryCoverage = Math.max(1, completedModules.length) / 7.0;
 
     if (!bundle) {
         // Safe heuristic fallback if bundle fetch failed
@@ -457,12 +496,15 @@ export async function predictCognitiveProfile(
         };
     }
 
-    // Scale input feature vector
+    // Scale input feature vector with robust z-score clipping (Winsorizing)
     const scaledVector = bundle.feature_names.map((name, idx) => {
-        const val = rawMap[name] ?? bundle.feature_means[idx];
+        const rawVal = rawMap[name];
         const mean = bundle.feature_means[idx];
         const std = bundle.feature_stds[idx];
-        return (val - mean) / (std > 1e-6 ? std : 1.0);
+        const val = (rawVal != null && !isNaN(rawVal) && isFinite(rawVal)) ? rawVal : mean;
+        const z = (val - mean) / (std > 1e-6 ? std : 1.0);
+        // Robust statistical clamping: prevents noisy outlier or single feature variance from distorting multi-task prediction
+        return clamp(z, -3.0, 3.0);
     });
 
     // 1. Head 1: Multi-Class Softmax Classifier

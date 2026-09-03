@@ -1,11 +1,12 @@
 /**
  * Settings Page Styles
+ * High-contrast, clean typography with full light and dark mode support.
  */
 
 .settings-page {
-    max-width: 600px;
+    max-width: 640px;
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: 2.5rem 1.25rem 4rem;
 }
 
 .settings-header {
@@ -13,41 +14,76 @@
 }
 
 .settings-header h1 {
-    font-size: 1.75rem;
-    font-weight: 600;
+    font-size: 2rem;
+    font-weight: 700;
     margin: 0 0 0.5rem;
-    color: var(--text-primary, #fff);
+    color: var(--text-primary, #17324D);
+    letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .settings-header h1,
+.dark .settings-header h1,
+html.dark .settings-header h1 {
+    color: #f8fafc !important;
 }
 
 .settings-header p {
-    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+    color: var(--text-secondary, #475569);
+    font-size: 1rem;
     margin: 0;
 }
 
+[data-theme="dark"] .settings-header p,
+.dark .settings-header p,
+html.dark .settings-header p {
+    color: #94a3b8 !important;
+}
+
 .settings-section {
-    background: var(--card-bg, rgba(255, 255, 255, 0.03));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    border-radius: 12px;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, rgba(23, 50, 77, 0.12));
+    border-radius: 16px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px -2px rgba(23, 50, 77, 0.05);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .settings-section,
+.dark .settings-section,
+html.dark .settings-section {
+    background: rgba(19, 27, 46, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
 }
 
 .settings-section h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 1rem;
-    color: var(--text-primary, #fff);
+    font-size: 0.875rem;
+    font-weight: 700;
+    margin: 0 0 1.25rem;
+    color: var(--color-accent, #4F7C78);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.8;
+    letter-spacing: 0.06em;
+}
+
+[data-theme="dark"] .settings-section h2,
+.dark .settings-section h2,
+html.dark .settings-section h2 {
+    color: #5eead4 !important;
 }
 
 .setting-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+    padding: 0.875rem 0;
+    border-bottom: 1px solid rgba(23, 50, 77, 0.08);
+}
+
+[data-theme="dark"] .setting-item,
+.dark .setting-item,
+html.dark .setting-item {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .setting-item:last-child {
@@ -58,23 +94,44 @@
 .setting-info {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.3rem;
 }
 
 .setting-label {
-    font-weight: 500;
-    color: var(--text-primary, #fff);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary, #17324D);
+}
+
+[data-theme="dark"] .setting-label,
+.dark .setting-label,
+html.dark .setting-label {
+    color: #f1f5f9 !important;
 }
 
 .setting-value {
-    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+    color: var(--text-secondary, #475569);
     font-size: 0.9rem;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .setting-value,
+.dark .setting-value,
+html.dark .setting-value {
+    color: #94a3b8 !important;
 }
 
 .setting-description {
-    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    color: var(--text-muted, #64748b);
     font-size: 0.85rem;
-    max-width: 300px;
+    line-height: 1.4;
+    max-width: 320px;
+}
+
+[data-theme="dark"] .setting-description,
+.dark .setting-description,
+html.dark .setting-description {
+    color: #94a3b8 !important;
 }
 
 /* Toggle Switch */
@@ -83,6 +140,7 @@
     width: 48px;
     height: 26px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .toggle-switch input {
@@ -94,9 +152,15 @@
 .toggle-slider {
     position: absolute;
     inset: 0;
-    background: var(--border-color, rgba(255, 255, 255, 0.15));
+    background: #cbd5e1;
     border-radius: 26px;
     transition: background 0.2s ease;
+}
+
+[data-theme="dark"] .toggle-slider,
+.dark .toggle-slider,
+html.dark .toggle-slider {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .toggle-slider::before {
@@ -108,25 +172,26 @@
     bottom: 3px;
     background: #fff;
     border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease;
 }
 
-.toggle-switch input:checked+.toggle-slider {
+.toggle-switch input:checked + .toggle-slider {
     background: #10b981;
 }
 
-.toggle-switch input:checked+.toggle-slider::before {
+.toggle-switch input:checked + .toggle-slider::before {
     transform: translateX(22px);
 }
 
-.toggle-switch input:disabled+.toggle-slider {
+.toggle-switch input:disabled + .toggle-slider {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 .last-reminder-info {
     font-size: 0.8rem;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    color: var(--text-secondary, #64748b);
     margin: 0.5rem 0 0;
 }
 
@@ -134,24 +199,43 @@
     padding: 0.75rem 1rem;
     border-radius: 8px;
     font-size: 0.9rem;
+    font-weight: 500;
 }
 
 .settings-message.success {
-    background: rgba(16, 185, 129, 0.15);
-    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    color: #065f46;
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+[data-theme="dark"] .settings-message.success,
+.dark .settings-message.success,
+html.dark .settings-message.success {
+    color: #34d399;
+}
+
 .settings-message.error {
-    background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    color: #991b1b;
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+[data-theme="dark"] .settings-message.error,
+.dark .settings-message.error,
+html.dark .settings-message.error {
+    color: #f87171;
+}
+
 .settings-message.info {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.12);
+    color: #1e40af;
     border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .settings-message.info,
+.dark .settings-message.info,
+html.dark .settings-message.info {
+    color: #60a5fa;
 }
 
 .setting-notice {
@@ -160,11 +244,18 @@
     gap: 0.5rem;
     padding: 0.75rem 1rem;
     margin: 0.5rem 0;
-    background: rgba(251, 191, 36, 0.1);
-    border: 1px solid rgba(251, 191, 36, 0.2);
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
     border-radius: 8px;
-    color: #fbbf24;
+    color: #92400e;
     font-size: 0.85rem;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .setting-notice,
+.dark .setting-notice,
+html.dark .setting-notice {
+    color: #fbbf24;
 }
 
 .notice-icon {
@@ -174,20 +265,21 @@
 .settings-loading {
     text-align: center;
     padding: 4rem 1rem;
-    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+    color: var(--text-secondary, #64748b);
 }
 
 /* Profile inputs */
 .settings-input,
 .settings-select {
     width: 100%;
-    padding: 0.65rem 0.85rem;
+    padding: 0.75rem 1rem;
     font-family: var(--font-body, 'Inter', sans-serif);
     font-size: var(--font-size-sm, 0.875rem);
-    color: var(--color-text-primary, #f1f5f9);
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
-    border-radius: var(--radius-md, 10px);
+    font-weight: 500;
+    color: #17324D;
+    background-color: #ffffff;
+    border: 1px solid rgba(23, 50, 77, 0.2);
+    border-radius: 10px;
     outline: none;
     transition:
         border-color 0.15s ease,
@@ -196,26 +288,64 @@
     -webkit-appearance: none;
 }
 
+[data-theme="dark"] .settings-input,
+.dark .settings-input,
+html.dark .settings-input,
+[data-theme="dark"] .settings-select,
+.dark .settings-select,
+html.dark .settings-select {
+    color: #f1f5f9 !important;
+    background-color: rgba(15, 23, 42, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
 .settings-input::placeholder {
-    color: var(--color-text-muted, #64748b);
+    color: #94a3b8;
 }
 
 .settings-input:focus,
 .settings-select:focus {
-    border-color: var(--color-accent, #5eead4);
-    box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.12);
+    border-color: var(--color-accent, #4F7C78);
+    box-shadow: 0 0 0 3px rgba(79, 124, 120, 0.15);
+}
+
+[data-theme="dark"] .settings-input:focus,
+.dark .settings-input:focus,
+html.dark .settings-input:focus,
+[data-theme="dark"] .settings-select:focus,
+.dark .settings-select:focus,
+html.dark .settings-select:focus {
+    border-color: #5eead4 !important;
+    box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.2) !important;
 }
 
 .settings-select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.85rem center;
-    padding-right: 2.25rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat !important;
+    background-position: right 1rem center !important;
+    background-size: 12px 12px !important;
+    padding-right: 2.5rem;
+}
+
+[data-theme="dark"] .settings-select,
+.dark .settings-select,
+html.dark .settings-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 1rem center !important;
+    background-size: 12px 12px !important;
 }
 
 .settings-select option {
-    background: #16161d;
-    color: #f1f5f9;
+    background-color: #ffffff;
+    color: #17324D;
+}
+
+[data-theme="dark"] .settings-select option,
+.dark .settings-select option,
+html.dark .settings-select option {
+    background-color: #131b2e !important;
+    color: #f1f5f9 !important;
 }
 
 .setting-item-vertical {
@@ -225,8 +355,10 @@
 }
 
 .settings-save-btn {
-    margin-top: 0.75rem;
+    margin-top: 0.875rem;
     width: 100%;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
 }
 
 /* Number input — hide arrows */
@@ -245,11 +377,11 @@
 /* ===== Responsive ===== */
 @media (max-width: 640px) {
     .settings-page {
-        padding: 1.5rem 0.75rem;
+        padding: 1.5rem 0.75rem 3rem;
     }
 
     .settings-section {
-        padding: 1rem;
+        padding: 1.125rem;
     }
 
     .setting-item {
@@ -267,6 +399,6 @@
     }
 
     .settings-header h1 {
-        font-size: 1.5rem;
+        font-size: 1.625rem;
     }
 }

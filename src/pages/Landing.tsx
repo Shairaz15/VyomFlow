@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
+import { useAuth } from "../contexts/AuthContext";
 import { ThemeToggle } from "../components/common/ThemeToggle";
+import { GoogleSignInModal, UserMenu } from "../components/common";
 import { ScientificBrainCanvas } from "../components/landing/ScientificBrainCanvas";
 import { VyomFlowVideoBrand } from "../components/landing/VyomFlowVideoBrand";
 import { VyomFlowLogo } from "../components/common/VyomFlowLogo";
@@ -10,7 +12,13 @@ import "./VyomFlowLanding.css";
 export function Landing() {
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const { user, isAuthenticated, signOut } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+
+    const handleSignIn = () => {
+        setShowAuthModal(true);
+    };
 
     const handleBeginJourney = () => {
         navigate("/tests");
@@ -41,12 +49,8 @@ export function Landing() {
                 <header className="vyom-floating-navbar flex items-center justify-between gap-4">
                     {/* Brand Logo & Name */}
                     <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/")}>
-                        <div className="w-8 h-8 rounded-full bg-[#4F7C78]/10 flex items-center justify-center text-[#4F7C78]">
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V10m0 0C10.5 7.5 7 6 4 7c0 4 2.5 7.5 8 9m0-6c1.5-2.5 5-4 8-3 0 4-2.5 7.5-8 9" />
-                            </svg>
-                        </div>
-                        <span className="vyom-serif text-xl sm:text-2xl font-semibold tracking-tight text-[#17324D]">
+                        <VyomFlowLogo size="sm" variant="icon" />
+                        <span className="vyom-serif text-xl sm:text-2xl font-semibold tracking-tight text-[#17324D] dark:text-[#F7F4EC]">
                             VyomFlow
                         </span>
                     </div>
@@ -57,25 +61,45 @@ export function Landing() {
                             {t("landing.howItWorks") || "HOW IT WORKS"}
                         </button>
                         <button onClick={() => handleScrollTo("platform")} className="vyom-nav-link">
-                            PLATFORM
+                            TEST MODULES
                         </button>
                         <button onClick={() => handleScrollTo("privacy")} className="vyom-nav-link">
                             PRIVACY
                         </button>
-                        <button onClick={() => handleScrollTo("about")} className="vyom-nav-link">
-                            ABOUT
-                        </button>
                     </nav>
 
                     {/* Right Action Controls */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <ThemeToggle />
-                        <button
-                            onClick={handleBeginJourney}
-                            className="vyom-pill-btn-dark !py-2.5 !px-5 text-xs font-semibold"
-                        >
-                            Sign Up
-                        </button>
+                        {isAuthenticated ? (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handleBeginJourney}
+                                    className="vyom-pill-btn-dark !py-2.5 !px-5 text-xs font-semibold cursor-pointer"
+                                >
+                                    Continue Journey
+                                </button>
+                                <UserMenu />
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handleSignIn}
+                                    className="vyom-nav-link text-xs font-semibold !px-3 !py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+                                >
+                                    Sign In
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleBeginJourney}
+                                    className="vyom-pill-btn-dark !py-2.5 !px-5 text-xs font-semibold cursor-pointer"
+                                >
+                                    Get Started
+                                </button>
+                            </>
+                        )}
                     </div>
                 </header>
             </div>
@@ -88,11 +112,7 @@ export function Landing() {
                     className="flex items-center gap-2.5 cursor-pointer select-none" 
                     onClick={() => { setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 >
-                    <div className="vyom-leaf-logo w-8 h-8 rounded-full bg-[#8FAF8B]/20 flex items-center justify-center text-[#8FAF8B] transition-colors">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V10m0 0C10.5 7.5 7 6 4 7c0 4 2.5 7.5 8 9m0-6c1.5-2.5 5-4 8-3 0 4-2.5 7.5-8 9" />
-                        </svg>
-                    </div>
+                    <VyomFlowLogo size="xs" variant="icon" />
                     <span className="vyom-serif text-xl font-bold tracking-tight text-inherit transition-colors">
                         VyomFlow
                     </span>
@@ -100,12 +120,23 @@ export function Landing() {
 
                 <div className="flex items-center gap-2">
                     <ThemeToggle />
+                    {isAuthenticated && user && (
+                        <div 
+                            className="w-8 h-8 rounded-full overflow-hidden border border-[#4F7C78]/30 dark:border-[#8FAF8B]/30 flex items-center justify-center bg-[#4F7C78]/10 text-xs font-semibold select-none"
+                            title={user.displayName || user.email || "Profile"}
+                        >
+                            {user.photoURL ? (
+                                <img src={user.photoURL} alt={user.displayName || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                                <span>{(user.displayName || user.email || "U").charAt(0).toUpperCase()}</span>
+                            )}
+                        </div>
+                    )}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle navigation menu"
                         className="vyom-header-btn w-11 h-11 flex items-center justify-center text-inherit rounded-full hover:bg-black/5 active:scale-95 transition-all"
                     >
-
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {mobileMenuOpen ? (
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
@@ -120,6 +151,26 @@ export function Landing() {
             {/* Mobile Navigation Panel Drawer */}
             {mobileMenuOpen && (
                 <div className="vyom-mobile-drawer animate-fadeIn">
+                    {isAuthenticated && user && (
+                        <div className="flex items-center gap-3 p-3.5 mb-2 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10">
+                            {user.photoURL ? (
+                                <img src={user.photoURL} alt={user.displayName || "User"} className="w-10 h-10 rounded-full object-cover shrink-0" referrerPolicy="no-referrer" />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-[#4F7C78] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                    {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="flex flex-col text-left overflow-hidden">
+                                <span className="text-sm font-semibold truncate text-inherit">
+                                    {user.displayName || "User"}
+                                </span>
+                                <span className="text-xs opacity-70 truncate">
+                                    {user.email}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     <nav className="flex flex-col gap-2.5">
                         <button onClick={() => { setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="vyom-mobile-nav-item">
                             <span>Home</span>
@@ -131,15 +182,11 @@ export function Landing() {
                         </button>
 
                         <button onClick={() => handleScrollTo("platform")} className="vyom-mobile-nav-item">
-                            <span>Platform</span>
+                            <span>Test Modules</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
                         <button onClick={() => handleScrollTo("privacy")} className="vyom-mobile-nav-item">
                             <span>Privacy</span>
-                            <span className="text-[#8FAF8B]">→</span>
-                        </button>
-                        <button onClick={() => handleScrollTo("about")} className="vyom-mobile-nav-item">
-                            <span>About</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
                         <button onClick={() => { setMobileMenuOpen(false); navigate("/demo"); }} className="vyom-mobile-nav-item">
@@ -149,13 +196,27 @@ export function Landing() {
                     </nav>
 
                     <div className="flex flex-col gap-3 pt-6 border-t border-white/10 dark:border-[#17324D]/15 mt-auto pb-safe">
-                        <button
-                            onClick={() => { setMobileMenuOpen(false); handleBeginJourney(); }}
-                            className="w-full h-[54px] rounded-[28px] bg-[#4F7C78] hover:bg-[#3D6360] text-[#F7F4EC] text-base font-semibold shadow-lg justify-center flex items-center gap-2 active:scale-[0.98] transition-all"
-                        >
-                            <span>Begin Your Journey</span>
-                            <span className="text-lg">→</span>
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#4F7C78]/10 text-xs font-medium text-[#4F7C78] dark:text-[#8FAF8B] text-center">
+                            <span>💻</span>
+                            <span>Assessment battery accessible on Desktop</span>
+                        </div>
+                        {isAuthenticated ? (
+                            <button
+                                onClick={async () => { setMobileMenuOpen(false); await signOut(); }}
+                                className="w-full py-2.5 rounded-2xl bg-black/5 dark:bg-white/5 text-xs font-medium text-red-500/80 hover:text-red-500 transition-colors"
+                            >
+                                Sign Out
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={async () => { setMobileMenuOpen(false); await handleSignIn(); }}
+                                className="w-full h-[48px] rounded-[24px] bg-[#4F7C78] hover:bg-[#3D6360] text-[#F7F4EC] text-sm font-semibold shadow-md justify-center flex items-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
+                            >
+                                <span>Sign In</span>
+                                <span className="text-base">→</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -167,6 +228,14 @@ export function Landing() {
                    ========================================================================= */}
                 <section id="hero" className="hidden md:flex vyom-hero-section w-full flex-col items-center justify-center text-center px-4 sm:px-6">
                     <div className="max-w-4xl mx-auto flex flex-col items-center justify-center flex-1 py-12 w-full h-full">
+                        {/* Authenticated Welcome Badge */}
+                        {isAuthenticated && user && (
+                            <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#4F7C78]/10 dark:bg-[#8FAF8B]/15 border border-[#4F7C78]/25 dark:border-[#8FAF8B]/30 text-xs sm:text-sm font-medium text-[#4F7C78] dark:text-[#8FAF8B] animate-fadeIn">
+                                <span className="w-2 h-2 rounded-full bg-[#4F7C78] dark:bg-[#8FAF8B] animate-pulse"></span>
+                                <span>Welcome back, <strong>{user.displayName?.split(' ')[0] || 'Explorer'}</strong></span>
+                            </div>
+                        )}
+
                         {/* Hero Text Block */}
                         <div className="flex flex-col items-center justify-center my-auto">
                             <h1 className="vyom-hero-main-title">
@@ -186,7 +255,7 @@ export function Landing() {
                                 onClick={handleBeginJourney}
                                 className="vyom-pill-btn-dark w-full sm:w-auto"
                             >
-                                <span>Begin Your Journey</span>
+                                <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
                                 <span className="text-lg leading-none">→</span>
                             </button>
                             <button
@@ -204,6 +273,13 @@ export function Landing() {
                    ========================================================================= */}
                 <section className="md:hidden vyom-mobile-hero-section">
                     <div className="flex flex-col items-center justify-center py-6 w-full">
+                        {isAuthenticated && user && (
+                            <div className="mb-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#4F7C78]/10 dark:bg-[#8FAF8B]/15 border border-[#4F7C78]/25 dark:border-[#8FAF8B]/30 text-xs font-medium text-[#4F7C78] dark:text-[#8FAF8B] animate-fadeIn">
+                                <span className="w-2 h-2 rounded-full bg-[#4F7C78] dark:bg-[#8FAF8B] animate-pulse"></span>
+                                <span>Welcome back, <strong>{user.displayName?.split(' ')[0] || 'Explorer'}</strong></span>
+                            </div>
+                        )}
+
                         <h1 className="vyom-hero-main-title">
                             VyomFlow
                         </h1>
@@ -217,18 +293,22 @@ export function Landing() {
                         {/* Primary & Secondary Action Buttons (Stacked, 54px height, 28px radius) */}
                         <div className="flex flex-col gap-3 w-full max-w-[340px] mx-auto vyom-hero-cta-container mb-7">
                             <button
-                                onClick={handleBeginJourney}
+                                onClick={() => handleScrollTo("how-it-works")}
                                 className="w-full h-[54px] rounded-[28px] bg-[#17324D] hover:bg-[#102031] text-[#F7F4EC] text-[16px] font-semibold shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                             >
-                                <span>Begin Your Journey</span>
-                                <span className="text-lg leading-none">→</span>
+                                <span>Explore How It Works</span>
+                                <span className="text-lg leading-none">↓</span>
                             </button>
                             <button
-                                onClick={() => handleScrollTo("how-it-works")}
+                                onClick={() => handleScrollTo("platform")}
                                 className="w-full h-[54px] rounded-[28px] vyom-mobile-btn-secondary text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
                             >
-                                Know How It Works
+                                View Cognitive Domains
                             </button>
+                            <div className="flex items-center justify-center gap-1.5 text-xs text-[#4F7C78] dark:text-[#8FAF8B] font-medium pt-1">
+                                <span>🖥️</span>
+                                <span>Assessment battery is accessible on Desktop</span>
+                            </div>
                         </div>
 
                         {/* Centered Mobile Brain Visual with Subtle Ambient Radial Glow */}
@@ -261,12 +341,10 @@ export function Landing() {
                         <div className="vyom-orbit-stage">
                             {/* MATHEMATICALLY CENTERED FIXED VYOMFLOW CORE NODE */}
                             <div className="vyom-central-core">
-                                <div className="w-8 h-8 rounded-full bg-[#4F7C78]/15 text-[#4F7C78] flex items-center justify-center mb-1">
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V10m0 0C10.5 7.5 7 6 4 7c0 4 2.5 7.5 8 9m0-6c1.5-2.5 5-4 8-3 0 4-2.5 7.5-8 9" />
-                                    </svg>
+                                <div className="w-9 h-9 flex items-center justify-center mb-1">
+                                    <VyomFlowLogo size="sm" variant="icon" />
                                 </div>
-                                <div className="vyom-serif text-lg font-bold text-[#17324D] tracking-tight leading-tight">
+                                <div className="vyom-serif text-lg font-bold text-[#17324D] dark:text-[#F7F4EC] tracking-tight leading-tight">
                                     VyomFlow
                                 </div>
                             </div>
@@ -404,87 +482,66 @@ export function Landing() {
                             <ScientificBrainCanvas />
                         </div>
 
-                        {/* 1. Story Grove (Top Center) */}
-                        <div
-                            onClick={() => navigate("/test/story")}
-                            className="vyom-orbital-card absolute top-[2%] left-1/2 -translate-x-1/2"
-                        >
-                            <div className="vyom-orbital-icon">🌳</div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">STORY GROVE</h4>
-                                <p className="text-xs text-[#66757A] text-center">Story Narration Recall</p>
-                            </div>
-                        </div>
-
-                        {/* 2. Memory Garden (Top Left) */}
-                        <div
-                            onClick={() => navigate("/test/vmra")}
-                            className="vyom-orbital-card absolute top-[16%] left-[4%]"
-                        >
-                            <div className="vyom-orbital-icon">🌷</div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">MEMORY GARDEN</h4>
-                                <p className="text-xs text-[#66757A] text-center">Visual Memory</p>
-                            </div>
-                        </div>
-
-                        {/* 3. Firefly Trail (Top Right) */}
-                        <div
-                            onClick={() => navigate("/test/reaction")}
-                            className="vyom-orbital-card absolute top-[16%] right-[4%]"
-                        >
-                            <div className="vyom-orbital-icon">✨</div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">FIREFLY TRAIL</h4>
-                                <p className="text-xs text-[#66757A] text-center">Reaction Time</p>
-                            </div>
-                        </div>
-
-                        {/* 4. Pattern Pond (Mid Left) */}
-                        <div
-                            onClick={() => navigate("/tests/pattern")}
-                            className="vyom-orbital-card absolute top-[50%] left-[1%]"
-                        >
-                            <div className="vyom-orbital-icon">🌊</div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">PATTERN POND</h4>
-                                <p className="text-xs text-[#66757A] text-center">Pattern Recognition</p>
-                            </div>
-                        </div>
-
-                        {/* 5. Focus Meadow (Mid Right) */}
-                        <div
-                            onClick={() => navigate("/test/attention")}
-                            className="vyom-orbital-card absolute top-[50%] right-[1%]"
-                        >
-                            <div className="vyom-orbital-icon">🎯</div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">FOCUS MEADOW</h4>
-                                <p className="text-xs text-[#66757A] text-center">Sustained Attention</p>
-                            </div>
-                        </div>
-
-                        {/* 6. Discovery Trail (Bottom Left) */}
-                        <div
-                            onClick={() => navigate("/test/navigation")}
-                            className="vyom-orbital-card absolute bottom-[4%] left-[12%]"
-                        >
-                            <div className="vyom-orbital-icon">🧭</div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">DISCOVERY TRAIL</h4>
-                                <p className="text-xs text-[#66757A] text-center">Immersive Navigation</p>
-                            </div>
-                        </div>
-
-                        {/* 7. Story Corner (Bottom Right) */}
-                        <div
-                            onClick={() => navigate("/test/language")}
-                            className="vyom-orbital-card absolute bottom-[4%] right-[12%]"
-                        >
+                        {/* 1. Story Narration Recall (Top Center) */}
+                        <div className="vyom-orbital-card absolute top-[2%] left-1/2 -translate-x-1/2 select-none">
                             <div className="vyom-orbital-icon">📖</div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">STORY CORNER</h4>
-                                <p className="text-xs text-[#66757A] text-center">Language Assessment</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Story Narration Recall</h4>
+                                <p className="text-xs text-[#66757A] text-center">Episodic & Verbal Memory</p>
+                            </div>
+                        </div>
+
+                        {/* 2. Visual Memory (VMRA) (Top Left) */}
+                        <div className="vyom-orbital-card absolute top-[16%] left-[4%] select-none">
+                            <div className="vyom-orbital-icon">🧠</div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Visual Memory (VMRA)</h4>
+                                <p className="text-xs text-[#66757A] text-center">Visual Recognition & Recall</p>
+                            </div>
+                        </div>
+
+                        {/* 3. Reaction Time (Top Right) */}
+                        <div className="vyom-orbital-card absolute top-[16%] right-[4%] select-none">
+                            <div className="vyom-orbital-icon">⚡</div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Reaction Time</h4>
+                                <p className="text-xs text-[#66757A] text-center">Motor & Processing Latency</p>
+                            </div>
+                        </div>
+
+                        {/* 4. Pattern Recognition (Mid Left) */}
+                        <div className="vyom-orbital-card absolute top-[50%] left-[1%] select-none">
+                            <div className="vyom-orbital-icon">🧩</div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Pattern Recognition</h4>
+                                <p className="text-xs text-[#66757A] text-center">Abstract & Fluid Reasoning</p>
+                            </div>
+                        </div>
+
+                        {/* 5. Sustained Attention (Mid Right) */}
+                        <div className="vyom-orbital-card absolute top-[50%] right-[1%] select-none">
+                            <div className="vyom-orbital-icon">🎯</div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Sustained Attention</h4>
+                                <p className="text-xs text-[#66757A] text-center">Vigilance & Focus Control</p>
+                            </div>
+                        </div>
+
+                        {/* 6. Immersive Navigation (Bottom Left) */}
+                        <div className="vyom-orbital-card absolute bottom-[4%] left-[12%] select-none">
+                            <div className="vyom-orbital-icon">🧭</div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Immersive Navigation</h4>
+                                <p className="text-xs text-[#66757A] text-center">Spatial & Route Memory</p>
+                            </div>
+                        </div>
+
+                        {/* 7. Language & Speech (Bottom Right) */}
+                        <div className="vyom-orbital-card absolute bottom-[4%] right-[12%] select-none">
+                            <div className="vyom-orbital-icon">🗣️</div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Language & Speech</h4>
+                                <p className="text-xs text-[#66757A] text-center">Acoustic & Semantic Fluency</p>
                             </div>
                         </div>
                     </div>
@@ -495,115 +552,87 @@ export function Landing() {
                             {/* Connecting Path Track */}
                             <div className="absolute left-[26px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-[#8FAF8B]/60 via-[#4F7C78]/60 to-[#D8B878]/60 z-0" />
 
-                            {/* 01 Story Grove */}
-                            <div
-                                onClick={() => navigate("/test/story")}
-                                className="vyom-mobile-journey-node z-10"
-                            >
+                            {/* 01 Story Narration Recall */}
+                            <div className="vyom-mobile-journey-node z-10 select-none">
                                 <div className="vyom-mobile-node-badge border-[#8FAF8B] text-[#8FAF8B]">
-                                    <span className="text-lg">🌳</span>
+                                    <span className="text-lg">📖</span>
                                     <span className="vyom-mobile-node-num">01</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">STORY GROVE</h4>
-                                    <span className="vyom-node-status-pill mt-1">Start →</span>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-1.5 truncate">Story Narration Recall</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Story Narration Recall</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Episodic & Verbal Memory</p>
                                 </div>
                             </div>
 
-                            {/* 02 Memory Garden */}
-                            <div
-                                onClick={() => navigate("/test/vmra")}
-                                className="vyom-mobile-journey-node z-10"
-                            >
+                            {/* 02 Visual Memory (VMRA) */}
+                            <div className="vyom-mobile-journey-node z-10 select-none">
                                 <div className="vyom-mobile-node-badge border-[#4F7C78] text-[#4F7C78]">
-                                    <span className="text-lg">🌷</span>
+                                    <span className="text-lg">🧠</span>
                                     <span className="vyom-mobile-node-num">02</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">MEMORY GARDEN</h4>
-                                    <span className="vyom-node-status-pill mt-1">Start →</span>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-1.5 truncate">Visual Memory</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Visual Memory (VMRA)</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Visual Recognition & Recall</p>
                                 </div>
                             </div>
 
-                            {/* 03 Firefly Trail */}
-                            <div
-                                onClick={() => navigate("/test/reaction")}
-                                className="vyom-mobile-journey-node z-10"
-                            >
+                            {/* 03 Reaction Time */}
+                            <div className="vyom-mobile-journey-node z-10 select-none">
                                 <div className="vyom-mobile-node-badge border-[#D8B878] text-[#D8B878]">
-                                    <span className="text-lg">✨</span>
+                                    <span className="text-lg">⚡</span>
                                     <span className="vyom-mobile-node-num">03</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">FIREFLY TRAIL</h4>
-                                    <span className="vyom-node-status-pill mt-1">Start →</span>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-1.5 truncate">Reaction Time</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Reaction Time</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Motor Speed & Processing Latency</p>
                                 </div>
                             </div>
 
-                            {/* 04 Pattern Pond */}
-                            <div
-                                onClick={() => navigate("/tests/pattern")}
-                                className="vyom-mobile-journey-node z-10"
-                            >
+                            {/* 04 Pattern Recognition */}
+                            <div className="vyom-mobile-journey-node z-10 select-none">
                                 <div className="vyom-mobile-node-badge border-[#4F7C78] text-[#4F7C78]">
-                                    <span className="text-lg">🌊</span>
+                                    <span className="text-lg">🧩</span>
                                     <span className="vyom-mobile-node-num">04</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">PATTERN POND</h4>
-                                    <span className="vyom-node-status-pill mt-1">Start →</span>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-1.5 truncate">Pattern Recognition</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Pattern Recognition</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Abstract & Fluid Reasoning</p>
                                 </div>
                             </div>
 
-                            {/* 05 Focus Meadow */}
-                            <div
-                                onClick={() => navigate("/test/attention")}
-                                className="vyom-mobile-journey-node z-10"
-                            >
+                            {/* 05 Sustained Attention */}
+                            <div className="vyom-mobile-journey-node z-10 select-none">
                                 <div className="vyom-mobile-node-badge border-[#8FAF8B] text-[#8FAF8B]">
                                     <span className="text-lg">🎯</span>
                                     <span className="vyom-mobile-node-num">05</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">FOCUS MEADOW</h4>
-                                    <span className="vyom-node-status-pill mt-1">Start →</span>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-1.5 truncate">Sustained Attention</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Sustained Attention</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Vigilance & Focus Control</p>
                                 </div>
                             </div>
 
-                            {/* 06 Discovery Trail */}
-                            <div
-                                onClick={() => navigate("/test/navigation")}
-                                className="vyom-mobile-journey-node z-10"
-                            >
+                            {/* 06 Immersive Navigation */}
+                            <div className="vyom-mobile-journey-node z-10 select-none">
                                 <div className="vyom-mobile-node-badge border-[#4F7C78] text-[#4F7C78]">
                                     <span className="text-lg">🧭</span>
                                     <span className="vyom-mobile-node-num">06</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">DISCOVERY TRAIL</h4>
-                                    <span className="vyom-node-status-pill mt-1">Start →</span>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-1.5 truncate">Immersive Navigation</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Immersive Navigation</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Spatial & Route Memory</p>
                                 </div>
                             </div>
 
-                            {/* 07 Story Corner */}
-                            <div
-                                onClick={() => navigate("/test/language")}
-                                className="vyom-mobile-journey-node z-10"
-                            >
+                            {/* 07 Language & Speech */}
+                            <div className="vyom-mobile-journey-node z-10 select-none">
                                 <div className="vyom-mobile-node-badge border-[#D8B878] text-[#D8B878]">
-                                    <span className="text-lg">📖</span>
+                                    <span className="text-lg">🗣️</span>
                                     <span className="vyom-mobile-node-num">07</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">STORY CORNER</h4>
-                                    <span className="vyom-node-status-pill mt-1">Start →</span>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-1.5 truncate">Language Assessment</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Language & Speech</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Acoustic & Semantic Fluency</p>
                                 </div>
                             </div>
                         </div>
@@ -737,11 +766,23 @@ export function Landing() {
 
                                 <button
                                     onClick={handleBeginJourney}
-                                    className="vyom-pill-btn-light !bg-white/90 hover:!bg-white !text-[#182338] !border-white/60 !py-3.5 !px-8 sm:!px-10 text-sm sm:text-base font-semibold shadow-xl backdrop-blur-md transition-all duration-300 transform active:scale-95"
+                                    className="hidden md:inline-flex vyom-pill-btn-light !bg-white/90 hover:!bg-white !text-[#182338] !border-white/60 !py-3.5 !px-8 sm:!px-10 text-sm sm:text-base font-semibold shadow-xl backdrop-blur-md transition-all duration-300 transform active:scale-95 items-center gap-2"
                                 >
-                                    <span>Begin Your Journey</span>
+                                    <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
                                     <span className="text-lg leading-none">→</span>
                                 </button>
+                                <div className="md:hidden flex flex-col items-center gap-2.5">
+                                    <button
+                                        onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                        className="vyom-pill-btn-light !bg-white/90 hover:!bg-white !text-[#182338] !border-white/60 !py-3 !px-8 text-sm font-semibold shadow-lg backdrop-blur-md flex items-center gap-2"
+                                    >
+                                        <span>Back to Top</span>
+                                        <span className="text-base leading-none">↑</span>
+                                    </button>
+                                    <p className="text-xs text-[#DCE9F4] font-medium opacity-90 text-center">
+                                        Clinical assessments are available on Desktop & Tablet
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -776,10 +817,10 @@ export function Landing() {
                                     How It Works
                                 </button>
                                 <button onClick={() => handleScrollTo("platform")} className="vyom-footer-link text-center">
-                                    Platform
+                                    Test Modules
                                 </button>
-                                <button onClick={() => handleScrollTo("about")} className="vyom-footer-link text-center">
-                                    About
+                                <button onClick={() => handleScrollTo("privacy")} className="vyom-footer-link text-center">
+                                    Privacy
                                 </button>
                             </div>
                         </div>
@@ -791,20 +832,9 @@ export function Landing() {
                     </div>
 
                     {/* Bottom Legal Bar */}
-                    <div className="pt-4 border-t border-[#F7F4EC]/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#F7F4EC]/50">
+                    <div className="pt-4 border-t border-[#F7F4EC]/10 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-[#F7F4EC]/50 text-center">
                         <div>
                             © {new Date().getFullYear()} VyomFlow. All rights reserved.
-                        </div>
-                        <div className="flex items-center gap-4 sm:gap-6">
-                            <button onClick={() => handleScrollTo("privacy")} className="hover:text-[#F7F4EC] transition-colors">
-                                Privacy
-                            </button>
-                            <button onClick={() => handleScrollTo("privacy")} className="hover:text-[#F7F4EC] transition-colors">
-                                Terms
-                            </button>
-                            <button onClick={() => handleScrollTo("privacy")} className="hover:text-[#F7F4EC] transition-colors">
-                                Disclaimer
-                            </button>
                         </div>
                     </div>
 
@@ -815,6 +845,12 @@ export function Landing() {
 
                 </div>
             </footer>
+
+            {/* Google Sign-In Prompt Modal */}
+            <GoogleSignInModal 
+                isOpen={showAuthModal} 
+                onClose={() => setShowAuthModal(false)} 
+            />
         </div>
     );
 }
