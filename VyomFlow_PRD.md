@@ -1,410 +1,306 @@
-﻿# VyomFlow â€” Product Requirements Document
+# VyomFlow — Product Requirements Document (PRD)
 
-**AI-Powered Cognitive Assessment Platform**
-Version: 1.0 | Date: March 25, 2026
-
----
-
-## 1. Product Overview
-
-VyomFlow is a browser-based cognitive screening platform that delivers **4 scientifically-grounded assessment modules** designed for inclusive, longitudinal cognitive tracking. Built as a React/TypeScript PWA with Firebase backend, it targets early detection of cognitive changes through repeated, low-burden sessions.
-
-**Target Users**: Adults 40+, caregivers, primary care clinics, population-level screening programs.
-**Design Philosophy**: Language-free where possible, culturally inclusive (Indian context), offline-capable, ethical & non-diagnostic.
+**Production Platform Specification: Multi-Modal Cognitive Assessment, In-Browser Clinical AI & Longitudinal Surveillance**  
+**Version:** 3.0 | **Date:** September 2026 | **Author:** VyomFlow Engineering & Clinical AI Team  
 
 ---
 
-## 2. Platform Architecture (Shared)
+## 1. Product Overview & Executive Summary
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18 + TypeScript, Vite |
-| Auth | Firebase Auth (Google Sign-In) |
-| Storage | Firestore (cloud) / localStorage (demo) |
-| AI/ML | Client-side feature extraction, anomaly scoring |
-| Routing | React Router v6, protected routes |
+VyomFlow is a browser-based, clinically-aligned cognitive screening and longitudinal surveillance platform. Designed specifically for low-burden, repeated digital administration across diverse populations, VyomFlow replaces high-friction clinical battery appointments with **7 culturally inclusive, scientifically grounded digital assessment modules**.
 
-**Common Patterns Across All Modules:**
-- Session ID (`session-{timestamp}`) assigned per test
-- Result objects stored via `firestoreService` â†’ `testResults/{userId}/{testType}`
-- Normative comparison via `normativeStats.ts` (age-referenced thresholds)
-- Explainability: each result carries `keyFactors: string[]`
-- Dashboard integration: composite scores + trend tracking
+Built as a high-performance Progressive Web Application (PWA) with client-side ML inference and resilient cloud storage (Supabase PostgreSQL + Firebase), VyomFlow enables early detection of subtle cognitive decline, mild cognitive impairment (MCI), and dementia indicators years before overt clinical manifestations.
+
+### Core Value Propositions
+- **Culture & Language Equity:** Eliminates Western-centric literacy and educational biases through language-free visual tests, 22+ Indic languages (with dynamic RTL support), and authentic Sarvam AI speech models.
+- **Zero-Latency In-Browser AI:** Pure client-side ONNX Runtime Web and v2 Multi-Task model evaluation with zero patient data transmission required for inference.
+- **Ecological & Immersive Validity:** First-person real-world PoV video navigation assessing spatial egocentric/allocentric memory.
+- **Ethical & Non-Diagnostic Architecture:** Strict explainability guardrails, supportive non-stigmatizing risk communication, and automated clinician PDF report generation.
 
 ---
 
-## 3. Module 1 â€” Visual Memory Recall Assessment (VMRA)
+## 2. System Architecture & Tech Stack
 
-**Route**: `/test/memory`, `/test/vmra`
-**Duration**: ~2 minutes
-**Cognitive Domain**: Episodic Memory, Visual Recognition
+```mermaid
+graph TD
+    Client[VyomFlow React 19 + Vite PWA] --> Modules[7 Assessment Modules]
+    Client --> Journey[Candy Crush Journey & Mobile Adventure Map]
+    Client --> Radar[60fps Spline Cognitive Radar Chart]
+    Client --> ML[Client-Side AI Engine / ONNX Web / v2 Multi-Task]
+    
+    Modules --> Extractor[Biomarker Feature Extractor - 75+ Metrics]
+    Extractor --> Drift[Statistical Drift & Anomaly Engine]
+    Drift --> Alerts[Clinical Alert Layer]
+    
+    Client --> Supabase[(Supabase PostgreSQL - Primary Store)]
+    Client --> Firebase[(Firebase Auth & Firestore - Fallback)]
+    Client --> Serverless[Vercel Serverless Functions /api/sarvam-*]
+    Serverless --> Sarvam[Sarvam AI Multilingual Speech APIs]
+```
 
-### 3.1 Purpose
-A language-free, image-based episodic memory test using familiar Indian-context illustrations. Replaces traditional word-list recall to eliminate literacy/language bias.
-
-### 3.2 Test Flow
-
-| Phase | Duration | Description |
+| Layer | Technologies & Libraries | Responsibilities |
 |---|---|---|
-| 0: Onboarding | ~15s | Animated walkthrough (no text). Multi-language audio toggle. Skip for returning users. |
-| 1: Encoding | ~25s | 6 target images shown ONE AT A TIME (3s each + 1s fade). Progress dots below. |
-| 2: Retention Gap | 15s | Distractor mini-game ("tap the odd one out" Ã— 3 rounds). Prevents rehearsal. |
-| 3: Immediate Recall | Untimed | 4Ã—3 grid (6 targets + 6 distractors). Tap to select/deselect. Submit when done. |
-| 4: Delayed Recall | After 5 min | Re-prompted with DIFFERENT grid arrangement. Same targets + 6 NEW distractors. |
-| 5: Results | ~10s | Green (correct), amber (missed), red (false positive). Star rating 1â€“5. No raw scores shown. |
+| **Frontend Framework** | React 19, TypeScript, Vite 7 | High-performance SPA with sub-second page transitions and PWA offline capability. |
+| **Styling & UI Tokens** | Vanilla CSS Design System, Glassmorphism, CSS Modules | Responsive dark/light theme switching, WCAG AAA contrast, fluid typography. |
+| **Cloud Database** | Supabase (PostgreSQL 15), Covering Indexes, Atomic RPCs | Primary high-throughput relational store for 75+ clinical biomarkers, offline retry queue. |
+| **Authentication & Sync**| Firebase Auth (Google OAuth), Firestore SDK | User session identity, cross-device authorization, resilient offline-first syncing. |
+| **In-Browser ML/AI** | ONNX Runtime Web, TF.js, Custom Kernel v2.1 | Instant inference of NACC-trained multi-task classifiers, SHAP explainability, radar projections. |
+| **Speech & Audio AI** | Sarvam AI REST / WebSocket Streaming APIs | Multilingual Indian speech-to-text (Devanagari Hindi, Marathi, Tamil, etc.) and low-latency TTS. |
+| **Cloud Functions** | Vercel Serverless TypeScript Functions (`@vercel/node`) | CORS-free proxies for Sarvam STT (`/api/sarvam-stt`) and translation (`/api/sarvam-translate`). |
+| **Spatial Interaction** | MapLibre GL JS, `@dnd-kit/core`, `@dnd-kit/sortable` | 3D tile rendering, tactile landmark sequencing, multi-touch swipe / WASD / D-pad controls. |
 
-### 3.3 Image Design
+---
 
-- **Style**: Flat vector SVG, thick outlines, solid fills, no gradients
-- **Categories** (60+ objects across 8): Fruits, Kitchen, Transport, Animals, Household, Nature, Cultural, Tools
-- **Cultural constraints**: Pan-India objects only; avoid region-exclusive, brand-specific, or sensitive items
-- **Recognition rule**: Identifiable in <1 second; 70%+ frame fill; max 2 colors
+## 3. The 7 Clinical Assessment Modules
 
-### 3.4 Distractor Strategy
+```mermaid
+mindmap
+  root((VyomFlow Suite))
+    Episodic & Recognition Memory
+      VMRA Visual Recall
+      Story Narration Recall
+    Executive Function & Speed
+      SRT Simple Reaction Time
+      SAVT Sustained Attention
+    Spatial & Working Memory
+      Corsi Pattern Recognition
+      Immersive PoV Navigation
+    Language & Speech Biomarkers
+      Language Fluency Analysis
+```
 
-| Sessions | Targets | Distractors | Grid | Similarity |
-|---|---|---|---|---|
-| 1â€“3 | 5 | 5 | 3Ã—4 | Lowâ€“Medium |
-| 4â€“8 | 6 | 6 | 4Ã—3 | Medium |
-| 9â€“15 | 7 | 7 | 4Ã—4 | Mediumâ€“High |
-| 16+ | 8 | 8 | 4Ã—4 | High |
+---
 
-Distractors are from the **same category** as targets (e.g., mango â†’ orange). Pools rotated to prevent rote learning.
+### Module 1 — Visual Memory Recall Assessment (VMRA)
+- **Route:** `/test/memory`, `/test/vmra` | **Duration:** ~2 minutes
+- **Cognitive Domain:** Visual Recognition, Episodic Memory, Information Encoding.
+- **Scientific Foundation:** Replaces culturally biased word-list recall (e.g., Rey Auditory Verbal Learning Test) with standardized Pan-Indian vector illustrations identifiable across all literacy levels.
+- **Test Flow:**
+  1. *Encoding Phase (25s):* 6 target illustrations presented sequentially (3s display + 1s inter-stimulus interval).
+  2. *Retention Distractor (15s):* Odd-one-out shape matching to prevent phonological rehearsal.
+  3. *Immediate Recall (Untimed):* 4×3 matrix containing 6 targets + 6 semantic distractors.
+  4. *Delayed Recall (5 min interval):* Re-tested with altered grid matrix and novel distractor pool.
+- **Biomarkers & Telemetry:**
+  - `recallAccuracy` (Hits / Targets), `falsePositiveRate` (False Alarms / Distractors), `f1Score`.
+  - `meanSelectionLatencyMs`, `firstTapLatencyMs`, `latencyVariance`.
+  - `primacyBias`, `recencyBias`, `midListDeficit` positional serialization.
+  - Spatial quadrant selection bias and random-tapping heuristics (`possibleRandomTapping` flag if latency < 300ms).
 
-### 3.5 Metrics & Biomarkers
+---
 
-**Primary Accuracy:**
-| Metric | Formula |
-|---|---|
-| Recall Accuracy | correctHits / targetCount |
-| False Positive Rate | falsePositives / distractorCount |
-| Precision | correctHits / (correctHits + falsePositives) |
-| F1 Score | Harmonic mean of precision & recall |
-| Net Recall Score | correctHits âˆ’ falsePositives |
+### Module 2 — Simple Reaction Time (SRT)
+- **Route:** `/test/reaction` | **Duration:** ~1 minute
+- **Cognitive Domain:** Psychomotor Processing Speed, Baseline Alertness, Neuro-Muscular Response.
+- **Test Flow:**
+  - 1 practice calibration round followed by 5 scored rounds.
+  - Variable randomized pre-stimulus interval (2000ms – 5000ms) to eliminate anticipatory conditioning.
+  - Instant visual trigger; tactile tap or spacebar response.
+- **Biomarkers & Telemetry:**
+  - `meanRT`, `medianRT`, `minRT`, `maxRT`, `rtVariance`.
+  - `fatigueSlope` (Ordinary least-squares regression across rounds showing vigilance decay).
+  - `stabilityIndex` ($1 - \text{CoV}$), `falseStartCount`, `timeoutCount` (>3000ms).
 
-**Temporal Biomarkers:**
-- Mean Selection Latency, First-Tap Latency, Inter-Tap Interval, Latency Variance
+---
 
-**Error Analysis:**
-- Primacy Bias, Recency Bias, Mid-List Deficit
-- Confusion Pairs (which target â†” distractor confusions)
-- Intrusion Errors (unrelated distractor picks)
+### Module 3 — Corsi Pattern Recognition (Visual Sequence Memory)
+- **Route:** `/test/pattern` | **Duration:** ~2 minutes
+- **Cognitive Domain:** Visuo-Spatial Working Memory Span, Executive Sequencing.
+- **Scientific Foundation:** Standardized computerized adaptation of the Corsi Block Tapping Task.
+- **Difficulty Scaling Matrix:**
+  | Difficulty Level | Grid Dimensions | Sequence Span | Inter-Tap Timeout |
+  |---|---|---|---|
+  | Level 1–2 | 3×3 (9 blocks) | 3 items | 5000ms |
+  | Level 3–4 | 3×3 (9 blocks) | 4 items | 4500ms |
+  | Level 5–6 | 4×4 (16 blocks) | 5 items | 4000ms |
+  | Level 7–8 | 4×4 (16 blocks) | 6 items | 3500ms |
+  | Level 9+ | 5×5 (25 blocks) | 7+ items | 3000ms |
+- **Biomarkers & Telemetry:**
+  - `maxSpanLevelReached`, `totalRoundsPassed`, `responseLatencyToFirstBlock`.
+  - `sequenceAccuracyTrend`, `learningRate`, `errorGrowthRate`, `workingMemorySpanIndex`.
 
-**Spatial Analysis:**
-- Spatial Selection Bias (top/bottom/left/right dominant quadrant)
-- Grid Coverage (% of grid interacted with)
+---
 
-**Session Quality Flags:**
-- `possibleGuessing` (>80% grid selected or accuracy â‰ˆ 50% + high FPR)
-- `possibleRandomTapping` (mean latency < 300ms)
+### Module 4 — Spontaneous Speech & Language Fluency
+- **Route:** `/test/language` | **Duration:** ~2 minutes
+- **Cognitive Domain:** Verbal Fluency, Semantic Retrieval, Syntactic Structure, Acoustic Coherence.
+- **Architecture & Pipeline:**
+  - Microphone capture with client-side Web Audio API RMS volume analysis.
+  - Dual pipeline: Sarvam AI WebSocket speech streaming + Vercel serverless REST fallback (`/api/sarvam-stt`).
+  - Automatic language identification supporting 22+ Indic languages + English.
+- **Biomarkers & Telemetry (12 Core Biomarkers):**
+  - `wordCount`, `speechDurationSec`, `wordsPerMinute` (WPM).
+  - `lexicalDiversity` (Type-Token Ratio: Unique Words / Total Words).
+  - `pauseCount`, `averagePauseDurationMs`, `pauseToSpeechRatio`.
+  - `hesitationIndex` ($\frac{\text{Pauses} + \text{Fillers}}{\text{Total Words}}$), `fillerWordCount` ("um", "uh", "like", "matlab", etc.).
+  - `phonemicFluencyScore`, `acousticStabilityScore`, `coherenceIndex`.
 
-**Longitudinal:**
-- Forgetting Curve Slope (immediate vs. delayed ratio over sessions)
-- Session-over-Session Trend (rolling 5-session average)
-- Consistency Score (CoV of accuracy)
-- Performance Deviation from Baseline (>2 SD = alert)
+---
 
-### 3.6 Decline Signals
+### Module 5 — Sustained Attention & Vigilance Test (SAVT)
+- **Route:** `/test/attention`, `/test/savt` | **Duration:** ~3 minutes
+- **Cognitive Domain:** Sustained Attention, Inhibitory Control, Vigilance Decrement.
+- **Scientific Foundation:** Continuous Performance Test (CPT) with Go/No-Go paradigms.
+- **Test Flow:**
+  - Rapid sequence of visual stimuli presented at 800ms intervals (500ms display + 300ms mask).
+  - High-frequency "Go" targets (80%) vs low-frequency "No-Go" distractors (20%).
+  - Multi-block design across 3 sequential phases to measure time-on-task deterioration.
+- **Biomarkers & Signal Detection Theory Metrics:**
+  - **Hit Rate (HR):** $\frac{\text{Correct Target Presses}}{\text{Total Targets}}$.
+  - **False Alarm Rate (FAR):** $\frac{\text{Incorrect Distractor Presses}}{\text{Total Distractors}}$.
+  - **Sensitivity Index ($d'$):** $Z(\text{HR}) - Z(\text{FAR})$ (measures perceptual discrimination accuracy).
+  - **Response Bias ($\beta$ / $c$):** Criterion placement (conservative vs. impulsive response strategy).
+  - **Commission Errors:** Failure to inhibit response on No-Go trials (fronto-executive inhibition marker).
+  - **Omission Errors:** Failure to press on Go trials (inattention lapse marker).
+  - **Vigilance Decrement Slope:** Linear decay rate of $d'$ across consecutive blocks.
 
-| Signal | Threshold |
-|---|---|
-| Accuracy drop | >2 SD below personal baseline |
-| Forgetting curve steepening | Slope increase >30% over 4 sessions |
-| False positive spike | FPR increasing >15% over 3 sessions |
-| Delayed recall collapse | Delayed/Immediate ratio < 0.5 |
-| Consistency breakdown | CoV > 0.3 over last 5 sessions |
+---
 
-### 3.7 Risk Messaging (Ethical)
+### Module 6 — Story Narration Recall Assessment
+- **Route:** `/test/story` | **Duration:** ~3 minutes
+- **Cognitive Domain:** Auditory Immediate Memory, Narrative Coherence, Delayed Verbal Recall.
+- **Test Flow:**
+  1. *Auditory Story Presentation:* Culturally tailored narrative synthesized via Sarvam AI TTS (pace: 0.85).
+  2. *Retelling Phase:* Patient retells the story aloud; real-time audio captured and transcribed via Sarvam AI saaras:v4.
+  3. *Comprehension Quiz:* 5 targeted multilingual multiple-choice questions assessing core story elements (characters, settings, sequence of events).
+- **Biomarkers & Matching Engine:**
+  - Dual-text keyword extraction and semantic matching against canonical reference scripts.
+  - `verbatimElementRecallRate`, `thematicGistRecallScore`, `mcqComprehensionAccuracy`.
+  - `narrativeCoherenceScore`, `chronologicalSequenceScore`, `confabulationIndex`.
 
-| Level | Icon | Message |
+---
+
+### Module 7 — Immersive Real-World PoV Video Navigation
+- **Route:** `/test/navigation` | **Duration:** ~3–4 minutes
+- **Cognitive Domain:** Egocentric/Allocentric Spatial Orientation, Topographical Memory, Wayfinding.
+- **Scientific Foundation:** Spatial disorientation and entorhinal cortex degradation are among the earliest hallmarks of preclinical Alzheimer's disease. VyomFlow utilizes first-person PoV continuous video traversal through realistic Indian environments.
+- **Test Architecture:**
+  1. *Encoding Video Traversal:* Patient watches a smooth first-person walk along an environmental route with distinctive cultural landmarks (markets, temples, transit junctions).
+  2. *Waypoint Decision Trials:* Traversal pauses at intersections; user selects forward directions via arrowpad, WASD, numpad, or mobile touch swipes.
+  3. *Reverse Route Navigation:* Continuous backward traversal testing mental rotation and path reconstruction.
+  4. *Landmark Drag-and-Drop Sequencing:* Accessible `@dnd-kit` interface where users re-order 6 randomly presented landmarks in the chronological order encountered.
+- **Biomarkers & Telemetry:**
+  - `waypointAccuracy` (Correct turns / Total decision junctions).
+  - `decisionLatencyMs` (Time-to-decision at intersections).
+  - `landmarkOrderDistance` (Kendall tau / Spearman distance from ground-truth order).
+  - `reverseNavigationScore`, `spatialDisorientationEvents`, `allocentricIntegrationIndex`.
+
+---
+
+## 4. Comprehensive Digital Biomarker Catalog (75+ Metrics)
+
+VyomFlow extracts **83 raw biomarkers** that synthesize into **75 validated clinical indices** structured across 5 cognitive domains:
+
+```mermaid
+pie title Biomarker Distribution Across Cognitive Domains
+    "Memory (Episodic, Verbal, Visual)" : 24
+    "Executive Function & Attention" : 18
+    "Language & Speech Production" : 14
+    "Spatial Navigation & Orientation" : 11
+    "Psychomotor Speed & Reaction" : 8
+```
+
+| Domain | Key Clinical Biomarkers | Standard Normative Reference | Clinical Alert Threshold |
+|---|---|---|---|
+| **Episodic Memory** | VMRA Hits, F1 Score, Retention Ratio | $\ge 85\%$ accuracy | $< 65\%$ or $> 2$ SD drop from baseline |
+| **Working Memory** | Corsi Span, Sequence Accuracy Slope | Span $\ge 5.5$ (young), $\ge 3.8$ (65+) | Span $\le 2$ or steep error growth |
+| **Processing Speed** | Simple RT Mean, RT Variance | $240\text{ms} - 320\text{ms}$ | $> 410\text{ms}$ or CoV $> 0.35$ |
+| **Sustained Attention**| $d'$ Sensitivity, Commission Errors, Vig. Slope | $d' \ge 2.8$, Commission $< 5\%$ | $d' < 1.6$ or Vigilance Slope $< -0.25$ |
+| **Language & Fluency**| WPM, Lexical Diversity (TTR), Hesitation Index| WPM $130-160$, Hesitation $< 0.04$ | WPM $< 95$ or Hesitation $> 0.08$ |
+| **Verbal Narrative** | Gist Recall, Chronological Sequence Score | Gist $\ge 80\%$, MCQ $\ge 4/5$ | Gist $< 50\%$ or MCQ $\le 2/5$ |
+| **Spatial Navigation**| Waypoint Accuracy, Landmark Kendall's $\tau$ | Accuracy $\ge 85\%$, $\tau \ge 0.75$ | Accuracy $< 60\%$, $\tau < 0.35$ |
+
+---
+
+## 5. In-Browser Machine Learning & Clinical Decision Support
+
+### 5.1 NACC Cohort & Dataset Foundation
+- **Dataset:** 83,461 clinical participant records from the **National Alzheimer's Coordinating Center (NACC)** Uniform Data Set (UDS).
+- **Clinical Target:** Montreal Cognitive Assessment (MoCA) score prediction and 3-tier clinical categorization:
+  1. *Normal Cognition (NC):* MoCA $26 - 30$.
+  2. *Mild Cognitive Impairment (MCI):* MoCA $18 - 25$.
+  3. *Dementia / Severe Decline:* MoCA $< 18$.
+
+### 5.2 VyomFlow v2 Multi-Task Model
+- **Model Architecture:** Multi-output gradient-boosted tree ensemble and lightweight feed-forward neural kernel (`public/models/vyomflow_v2/model_bundle.json`).
+- **Input Features (19 Standardized Clinical Inputs):**
+  Demographics (Age, Sex, Education Level), VMRA Accuracy, Delayed Recall Ratio, SRT Mean Latency, SRT Variance, SAVT $d'$, SAVT Commission Error Rate, Corsi Max Span, Corsi Latency, Speech WPM, Lexical Diversity, Hesitation Index, Story Gist Recall, Waypoint Navigation Accuracy, Landmark Kendall's Tau.
+- **Inference Execution:** Pure client-side via JavaScript engine and `onnxruntime-web` WebAssembly execution. **Zero raw assessment telemetry leaves the client browser for inference.**
+
+### 5.3 Statistical Drift & Anomaly Engine
+- Tracks participant's personal longitudinal rolling baseline ($N \ge 3$ sessions).
+- Computes **Z-score performance drift** across each domain:
+  $$Z_i = \frac{x_{i,\text{current}} - \mu_{i,\text{baseline}}}{\sigma_{i,\text{baseline}}}$$
+- Triggers tiered clinical alert flags:
+  - **Tier 1 (Green / Stable):** $|Z| < 1.5$ on all domains.
+  - **Tier 2 (Amber / Observation):** $1.5 \le |Z| < 2.5$ on 1 or 2 domains across consecutive sessions.
+  - **Tier 3 (Red / Urgent Clinical Review):** $|Z| \ge 2.5$ or concurrent drops across 3+ domains.
+
+---
+
+## 6. Dashboard V3 Architecture & Clinician Reporting
+
+VyomFlow Dashboard V3 (`/dashboard`) provides a responsive, multi-perspective clinical control room:
+
+```mermaid
+graph LR
+    subgraph Dashboard V3 Components
+        Hero[Hero Summary & Battery Completion Meter]
+        Radar[60fps Spline Cognitive Radar Chart]
+        Cards[7 Assessment Module Cards]
+        DriftCard[Changes Since Last Visit]
+        Recs[Top 10 Personalized Recommendations]
+        Drawer[Biomarker Exploration Drawer]
+        Modal[Clinician Export Report Modal]
+    end
+```
+
+### Key UI Capabilities:
+1. **60fps Continuous Spline Cognitive Radar Chart:** Visualizes the 5 cognitive pillars with animated time-lapse scrubber across past historical assessments.
+2. **Biomarker Drawer (`BiomarkerDrawer.tsx`):** Deep drill-down inspecting all raw metrics with normative age-matched bell curve visualizations.
+3. **Automated Clinician Report Modal:** Single-click generation of structured clinical summaries including domain breakdown, longitudinal trajectory, anomaly flags, and print-ready PDF export.
+4. **Gamified Candy Crush Journey Map:** Visual milestone roadmap with organic winding nodes, tactile level unlocking, and rolling 7-day battery protocol windows.
+
+---
+
+## 7. Cloud Storage, Database & Offline Resilience
+
+### 7.1 Supabase Cloud PostgreSQL Schema
+VyomFlow utilizes a normalized PostgreSQL relational database (`supabase/schema.sql`):
+- `profiles`: User demographics, education tier, language preferences, clinical study ID.
+- `assessment_sessions`: Session metadata, completion status, client device telemetry, battery duration.
+- `biomarker_records`: Granular 75+ metrics per test module with JSONB structured payloads.
+- `clinical_alerts`: Automated anomaly flags, severity levels, review acknowledgments.
+- **Covering Indexes:** B-tree and GIN indexes on `(user_id, test_type, created_at DESC)` for instant query response.
+- **Stored Procedures:** Atomic RPC `submit_full_assessment_battery()` ensuring all-or-nothing transactional integrity.
+
+### 7.2 Offline Write Queue
+- Local queue managed in `localStorage` / `IndexedDB`.
+- If connectivity drops during an assessment, results are queued and tagged with a client UUID.
+- Exponential backoff background worker automatically syncs results upon reconnection without user intervention.
+
+---
+
+## 8. Internationalization (i18n), Accessibility & Ethical Guardrails
+
+### 8.1 22+ Indic Languages & RTL Support
+- Full localization across 22 Scheduled Indian Languages + English:
+  *Hindi, Bengali, Telugu, Marathi, Tamil, Urdu, Gujarati, Kannada, Odia, Malayalam, Punjabi, Assamese, Maithili, Santali, Kashmiri, Nepali, Konkani, Dogri, Sindhi, Bodo, Sanskrit, Manipuri.*
+- **Dynamic RTL DOM Re-alignment:** Bidirectional text rendering engine that automatically flips flex containers, padding, and iconography when Urdu, Kashmiri, or Sindhi is selected.
+
+### 8.2 Ethical & Supportive Clinical Communication
+1. **Strict Non-Diagnostic Stance:** VyomFlow never provides a diagnosis of Alzheimer's or dementia. All user-facing copy uses constructive, non-alarmist terminology (e.g., *"Cognitive Vitality Steady"*, *"Changes Observed — Share with your Physician"*).
+2. **Obfuscation of Raw Stressful Numbers:** Users see intuitive 5-star ratings, colored vitality rings, and percentile bands. Raw milliseconds and complex Z-scores are reserved for the Clinician Portal.
+3. **Random Guessing Filtering:** Sessions flagged with `possibleRandomTapping` or extreme false starts are quarantined from the longitudinal trendline to prevent inaccurate decline alerts.
+4. **Zero-Knowledge Inference Option:** Patients can operate VyomFlow completely anonymously in Guest Mode with local-only browser storage.
+
+---
+
+## 9. Verification & Quality Assurance Standards
+
+| Component | Automated Testing Suite | Pass Criteria |
 |---|---|---|
-| Stable | ðŸŸ¢ Shield | "Your memory performance is steady." |
-| Watch | ðŸŸ¡ Eye | "Some changes noticed. Keep tracking." |
-| Attention | ðŸŸ  Alert | "Consider discussing with a healthcare provider." |
-
-> **Never** says "decline detected" or mentions specific diagnoses.
-
----
-
-## 4. Module 2 â€” Reaction Time Test
-
-**Route**: `/test/reaction`
-**Duration**: ~1 minute
-**Cognitive Domain**: Processing Speed, Sustained Attention
-
-### 4.1 Purpose
-Measures simple reaction time (SRT) â€” a fundamental cognitive biomarker for processing speed and alertness. Detects slowing, fatigue, and attention lapses.
-
-### 4.2 Test Flow
-
-| Phase | Description |
-|---|---|
-| Idle | "Ready to begin" â€” start button |
-| Instructions | Brief visual guide: "Click when the screen changes color" |
-| Calibration | 1 practice round (not scored) |
-| Wait â†’ Stimulus | Screen shows waiting color; random delay (2000â€“5000ms); then stimulus color appears |
-| Response | User clicks/taps as fast as possible |
-| Round Complete | Brief pause (1500ms), then next round |
-| Test Complete | Results shown after 6 total rounds (1 calibration + 5 scored) |
-
-### 4.3 Configuration
-
-| Parameter | Default |
-|---|---|
-| Total Rounds | 6 |
-| Calibration Rounds | 1 |
-| Wait Duration | 2000â€“5000ms (random) |
-| Timeout | 3000ms |
-| Inter-Round Delay | 1500ms |
-
-### 4.4 State Machine
-
-```
-idle â†’ instructions â†’ wait â‡„ false_start
-                        â†“
-                    stimulus â†’ response
-                        â†“         â†“
-                    timeout   round_complete â†’ (next round or test_complete)
-```
-
-**Edge Cases:**
-- **False Start**: Click during wait phase â†’ flagged, round continues
-- **Timeout**: No response in 3000ms â†’ flagged as missed stimulus
-- **Keyboard support**: Spacebar/Enter triggers response (accessibility)
-
-### 4.5 Metrics
-
-**Raw (per round):**
-- `reactionTime` (ms or null), `isFalseStart`, `isTimeout`, `roundIndex`
-
-**Aggregates:**
-| Metric | Description |
-|---|---|
-| Average RT | Mean of valid reaction times |
-| Median RT | Median (robust to outliers) |
-| Min / Max RT | Range of responses |
-| Variance | Consistency measure |
-| Fatigue Slope | Linear regression slope across rounds (positive = slowing) |
-
-**Derived ML Features:**
-| Feature | Description |
-|---|---|
-| Stability Index | 1 âˆ’ coefficient of variation (0 = unstable, 1 = stable) |
-| Fatigue Slope | Rate of slowing over rounds |
-| Attention Variability | Error rate + half CV |
-| Baseline Deviation | % change from user's historical average |
-| Anomaly Score | Composite 0â€“1 (>0.5 = clinically notable) |
-
-### 4.6 Normative Comparison
-
-| Threshold (ms) | Category |
-|---|---|
-| â‰¤ 220 | Exceptional |
-| â‰¤ 270 | Above Average |
-| â‰¤ 330 | Average |
-| â‰¤ 380 | Below Average |
-| > 380 | Needs Attention |
-
-Reference: Young adult mean ~245ms, Older adult mean ~330ms.
-
----
-
-## 5. Module 3 â€” Pattern Recognition (Visual Sequence Memory)
-
-**Route**: `/tests/pattern`
-**Duration**: ~2 minutes
-**Cognitive Domain**: Visual Working Memory, Sequential Processing
-
-### 5.1 Purpose
-Corsi Block Tappingâ€“inspired digital assessment. Measures visual-spatial working memory span and learning capacity by requiring users to reproduce sequences of increasing length on a grid.
-
-### 5.2 Test Flow
-
-| Phase | Description |
-|---|---|
-| Instructions | Visual guide showing grid and sequence demo |
-| Display | System highlights tiles in sequence (one at a time) |
-| Input | User taps tiles in the same order |
-| Feedback | Correct (advance) / Incorrect (retry or end) |
-| Difficulty Scaling | Grid size and sequence length increase with level |
-| Results | Max level reached, accuracy trend, learning curve |
-
-### 5.3 Difficulty Scaling
-
-| Level | Grid Size | Sequence Length |
-|---|---|---|
-| 1 | 3Ã—3 | 3 |
-| 3 | 3Ã—3 | 4 |
-| 5 | 4Ã—4 | 5 |
-| 7 | 4Ã—4 | 6 |
-| 9+ | 5Ã—5 | 7+ |
-
-Grid size computed via `getGridSize(lvl)`, sequence via `getSequenceLength(lvl)`.
-
-### 5.4 Metrics
-
-**Raw (per round):**
-| Field | Description |
-|---|---|
-| `level` | Current difficulty |
-| `gridSize` | Grid dimensions |
-| `sequenceLength` | Number of tiles in sequence |
-| `targetSequence` | Correct tile order |
-| `userInput` | User's actual taps |
-| `isCorrect` | Round success |
-| `responseLatency` | Time to first click (ms) |
-| `completionTime` | Total round time (ms) |
-
-**Session Aggregates:**
-| Metric | Description |
-|---|---|
-| Max Level Reached | Highest level completed correctly |
-| Correct Rounds | Total rounds passed |
-| Average Response Latency | Mean first-click time |
-| Input Errors | Wrong tiles clicked |
-| Retries | Failed attempts at same level |
-
-**Derived ML Features:**
-| Feature | Description |
-|---|---|
-| Sequence Accuracy Trend | Slope of accuracy as difficulty increases |
-| Learning Rate | Improvement metric over rounds |
-| Error Growth Rate | How errors scale with difficulty |
-| Memory Load Tolerance | Performance at maximum sequence length |
-| Pattern Stability Index | Variance consistency across attempts |
-
-### 5.5 Normative Comparison
-
-| Span (Level) | Category |
-|---|---|
-| â‰¥ 6 | Exceptional |
-| â‰¥ 5 | Above Average |
-| â‰¥ 3 | Average |
-| â‰¥ 2 | Below Average |
-| < 2 | Needs Attention |
-
-Reference: Young adult mean span ~5.5, Older adult mean ~3.6.
-
----
-
-## 6. Module 4 â€” Language Assessment (Speech Fluency)
-
-**Route**: `/test/language`
-**Duration**: ~2 minutes
-**Cognitive Domain**: Language Production, Verbal Fluency, Executive Function
-
-### 6.1 Purpose
-Assesses spontaneous speech production using the Web Speech API. User responds to a narrative prompt, and the system analyzes fluency, lexical diversity, and coherence â€” key markers for language-related cognitive changes.
-
-### 6.2 Test Flow
-
-| Phase | Description |
-|---|---|
-| Instructions | Prompt displayed (e.g., "Describe what you did yesterday in as much detail as possible.") |
-| Recording | Microphone active; live transcript displayed; timer running |
-| Processing | Speech analysis computed client-side |
-| Results | WPM, fluency, vocabulary metrics shown with normative comparisons |
-
-### 6.3 Prompt Pool (10 prompts, randomly selected)
-
-1. "Describe what you did yesterday in as much detail as possible."
-2. "Describe a place you visit often and why you like it."
-3. "Talk about a normal day for you, from morning to night."
-4. "Tell me about your favorite meal and how it is prepared."
-5. "Describe an important festival or celebration you enjoy."
-6. "What do you see when you look out your window?"
-7. "Describe your favorite season and why you like it."
-8. "Explain the rules of a game or sport you know."
-9. "Talk about a memorable trip you have taken."
-10. "Describe a person who has influenced your life."
-
-### 6.4 Metrics
-
-**Raw Metrics:**
-| Metric | Description |
-|---|---|
-| Word Count | Total words spoken |
-| Speech Duration | Recording length (seconds) |
-| Pause Count | Number of detected pauses |
-| Pause Duration Avg | Mean pause length |
-| Filler Word Count | "um", "uh", "like", etc. |
-| Repetitions | Repeated words/phrases |
-| Unique Word Count | Distinct words used |
-
-**Derived ML Features:**
-| Feature | Formula / Description |
-|---|---|
-| WPM | Words per minute |
-| Lexical Diversity | uniqueWords / totalWords |
-| Fluency Index | Composite of WPM âˆ’ pauses âˆ’ fillers |
-| Hesitation Index | (pauses + fillers) / totalWords |
-| Speech Stability | Consistency of speech segments |
-| Coherence Proxy | Heuristic based on vocabulary & structure |
-
-### 6.5 Normative Comparison
-
-**WPM Thresholds:**
-| Range | Category |
-|---|---|
-| â‰¥ 160 | Fast |
-| â‰¥ 130 | Average |
-| â‰¥ 100 | Below Average |
-| < 100 | Needs Attention |
-
-**Hesitation Index Thresholds (lower = better):**
-| Range | Category |
-|---|---|
-| â‰¤ 0.02 | Exceptional (highly fluent) |
-| â‰¤ 0.04 | Average |
-| â‰¤ 0.07 | Below Average |
-| > 0.07 | Needs Attention (disrupted fluency) |
-
-Fluency (hesitation) is prioritized over speed as a stronger cognitive biomarker.
-
----
-
-## 7. Cross-Module Dashboard Integration
-
-All 4 modules feed into a unified **Dashboard** (`/dashboard`) that provides:
-
-- **Per-module scores** with normative color coding
-- **Trend charts** (session-over-session for each domain)
-- **Composite cognitive score** (weighted across modules)
-- **AI risk engine** with anomaly detection across all domains
-- **Explainability** â€” each session reports `keyFactors` explaining the score
-
-### Data Flow
-
-```
-Module Result â†’ firestoreService.saveTestResult()
-                         â†“
-              Firestore: testResults/{userId}/{testType}/sessions[]
-                         â†“
-              Dashboard: useTestResults() hook â†’ trend engine â†’ risk alerts
-```
-
----
-
-## 8. Accessibility & Inclusivity
-
-| Feature | Implementation |
-|---|---|
-| Language-free UI | Icon-based navigation, no-text instructions for VMRA |
-| Multi-language audio | Hindi, Tamil, Telugu, Kannada, Bengali, Marathi, English |
-| Touch targets | Minimum 60Ã—60px (WCAG AAA) |
-| High contrast | Bold outlines, clear borders, 12px spacing |
-| Screen readers | Hidden alt-text labels on all images |
-| Offline support | SVGs bundled (<500KB total), Service Worker cached |
-| Low-end devices | Tested for 1GB RAM Android, 320px min screen width |
-| Keyboard support | Space/Enter for reaction test, Tab navigation |
-
----
-
-## 9. Ethical Guidelines
-
-1. **Non-diagnostic**: The app never states "decline detected" or names conditions
-2. **Supportive language**: Risk messaging uses encouraging, non-alarming phrasing
-3. **No anxiety triggers**: Raw numerical scores hidden from users; star ratings used
-4. **Guessing detection**: Sessions flagged for random behavior are excluded from trend analysis
-5. **Data privacy**: Assessment data stored per-user; Google Auth for identity; no data sharing
-6. **Informed consent**: Clear disclaimers via `ethics/disclaimer.ts` and `messagingRules.ts`
+| **Clinical Model Engine** | `src/services/__tests__/clinicalModelEngine.test.ts` | 100% test pass on all 19 NACC feature mappings & edge cases. |
+| **Statistical Drift** | `src/services/__tests__/statisticalDriftEngine.test.ts` | Correct Z-score drift alerts across simulated normal vs. declining cohorts. |
+| **Clinical Alerts** | `src/services/__tests__/clinicalAlertService.test.ts` | Verifies Tier 1/2/3 alert escalation logic and boundary conditions. |
+| **Production Build** | `npm run build` (Vite 7 + TypeScript 5.9) | Clean compile with 0 type errors, 0 unused variables, and bundle size optimization. |
+| **PWA & Offline** | Chrome DevTools Lighthouse / Network Throttling | Service worker asset caching, offline assessment execution, seamless auto-sync. |
