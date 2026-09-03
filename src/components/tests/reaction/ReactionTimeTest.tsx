@@ -11,6 +11,7 @@ import {
     STATE_MESSAGES,
 } from "./reactionLogic";
 import { createReactionTestResult } from "./reactionFeatures";
+import { useReactionResults } from "../../../hooks/useTestResults";
 import { getReactionFeedback } from "../../../utils/normativeStats";
 import "./ReactionTimeTest.css";
 
@@ -19,6 +20,7 @@ import { PageWrapper } from "../../layout";
 export function ReactionTimeTest() {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const { saveResult } = useReactionResults();
     const [state, setState] = useState<ReactionState>("idle");
     const [roundIndex, setRoundIndex] = useState(0);
     const [rounds, setRounds] = useState<RoundResult[]>([]);
@@ -180,15 +182,8 @@ export function ReactionTimeTest() {
         // Store in sessionStorage for immediate access
         sessionStorage.setItem("lastReactionResult", JSON.stringify(result));
 
-        // Also persist to localStorage for dashboard
-        try {
-            const existingStr = localStorage.getItem("vyomflow_reaction_results");
-            const existing = existingStr ? JSON.parse(existingStr) : [];
-            const updated = [...existing, result];
-            localStorage.setItem("vyomflow_reaction_results", JSON.stringify(updated));
-        } catch (error) {
-            console.error("Failed to persist result:", error);
-        }
+        // Persist via hook
+        saveResult(result);
 
         navigate("/dashboard");
     };

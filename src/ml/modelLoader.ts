@@ -1,31 +1,50 @@
 /**
- * Model Loader for Trend Analysis
- * Handles loading of the TFJS model with singleton pattern.
+ * Model Loader for VyomFlow Multi-Task ML Model and Trend Analysis
+ * Handles loading and caching of the JSON model bundle.
  */
 
-import * as tf from '@tensorflow/tfjs';
+import type { VyomFlowMLModelBundle } from './types';
 
-let modelInstance: tf.LayersModel | null = null;
-let loadError: Error | null = null;
+let mlBundleInstance: VyomFlowMLModelBundle | null = null;
+let mlBundleLoadPromise: Promise<VyomFlowMLModelBundle | null> | null = null;
 
-const MODEL_PATH = '/models/trend-cnn/model.json';
+const ML_BUNDLE_PATH = '/models/vyomflow_ml_bundle.json';
 
-export async function loadTrendModel(): Promise<tf.LayersModel | null> {
-    if (modelInstance) return modelInstance;
-    if (loadError) return null; // Don't retry if failed once
+/**
+ * Loads the VyomFlow JSON Multi-Task Model Bundle
+ */
+export async function loadVyomFlowMLModel(): Promise<VyomFlowMLModelBundle | null> {
+    if (mlBundleInstance) return mlBundleInstance;
+    if (mlBundleLoadPromise) return mlBundleLoadPromise;
 
-    try {
-        console.log('[ML Debug] Loading Trend Model from:', MODEL_PATH);
-        modelInstance = await tf.loadLayersModel(MODEL_PATH);
-        console.log('[ML Debug] Trend Model Loaded Successfully');
-        return modelInstance;
-    } catch (error) {
-        console.error('[ML Debug] Failed to load Trend Model:', error);
-        loadError = error as Error;
-        return null;
-    }
+    mlBundleLoadPromise = (async () => {
+        try {
+            // Check if running in browser with fetch
+            if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+                const response = await fetch(ML_BUNDLE_PATH);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status} loading ${ML_BUNDLE_PATH}`);
+                }
+                mlBundleInstance = (await response.json()) as VyomFlowMLModelBundle;
+                return mlBundleInstance;
+            }
+
+            return null;
+        } catch (error) {
+            console.error('[ML Loader] Failed to load VyomFlow ML Bundle:', error);
+            return null;
+        } finally {
+            mlBundleLoadPromise = null;
+        }
+    })();
+
+    return mlBundleLoadPromise;
 }
 
-export function isModelLoaded(): boolean {
-    return !!modelInstance;
+export function setVyomFlowMLModel(bundle: VyomFlowMLModelBundle): void {
+    mlBundleInstance = bundle;
+}
+
+export function isVyomFlowMLModelLoaded(): boolean {
+    return !!mlBundleInstance;
 }

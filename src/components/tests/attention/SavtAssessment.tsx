@@ -32,6 +32,7 @@ import {
     type SessionTarget,
 } from './savtLogic';
 import { createSavtResult } from './savtFeatures';
+import { useAttentionResults } from '../../../hooks/useTestResults';
 import { getAttentionFeedback } from '../../../utils/normativeStats';
 import './SavtAssessment.css';
 
@@ -46,6 +47,7 @@ const COLOR_TINTS: Record<string, { bg: string; border: string }> = {
 export function SavtAssessment() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { saveResult } = useAttentionResults();
     const config = DEFAULT_SAVT_CONFIG;
 
     // ─── State ────────────────────────────────────────────────────
@@ -233,9 +235,10 @@ export function SavtAssessment() {
                 user?.uid ? `${user.uid}-savt-${Date.now()}` : undefined
             );
             setResult(assessmentResult);
+            saveResult(assessmentResult);
             setPhase('results');
         }, 2000);
-    }, [config, user, clearAllTimers]);
+    }, [config, user, clearAllTimers, saveResult]);
 
     const runTestTrial = useCallback((seq: StimulusType[], idx: number, target: SessionTarget) => {
         if (idx >= seq.length) {

@@ -1,10 +1,8 @@
 /**
- * VyomFlow Client-Side Multi-Task Machine Learning Predictor
- * ==========================================================
- * Performs 100% client-side, zero-latency inference using the pre-trained
- * VyomFlow JSON Model Bundle. Provides diagnostic classification, continuous
- * MoCA score estimation, cognitive domain breakdown, multi-factor confidence,
- * and SHAP-aligned local biomarker attributions.
+ * Multi-Task Cognitive Estimator Predictor Engine
+ * Performs feature normalization, multi-class diagnosis prediction,
+ * continuous MoCA score regression, domain score estimation, confidence scoring,
+ * and SHAP feature attribution on the client.
  */
 
 import { loadVyomFlowMLModel } from './modelLoader';
@@ -33,14 +31,13 @@ export function buildNormalizedFeatureVector(
 
     for (let i = 0; i < feature_names.length; i++) {
         const featName = feature_names[i];
-        let val = inputs[featName];
+        const val = inputs[featName];
 
         let numVal = 0;
 
         if (typeof val === 'number') {
             numVal = isNaN(val) ? feature_means[i] : val;
         } else if (typeof val === 'string') {
-            // Check categorical mapping
             const catMap = categorical_mappings[featName];
             if (catMap && catMap[val] !== undefined) {
                 numVal = catMap[val];
@@ -51,7 +48,6 @@ export function buildNormalizedFeatureVector(
         } else if (typeof val === 'boolean') {
             numVal = val ? 1 : 0;
         } else {
-            // Default to mean if missing
             numVal = feature_means[i];
         }
 
@@ -101,7 +97,7 @@ function determineClinicalAlertTier(
 function computeLocalBiomarkerAttributions(
     normalizedVector: number[],
     bundle: VyomFlowMLModelBundle,
-    targetClassIdx: number = 1 // default to MCI risk vector
+    targetClassIdx: number = 1
 ): BiomarkerAttribution[] {
     const { feature_names, feature_domains, classifier, global_feature_importance } = bundle;
     const weights = classifier.coefficients[targetClassIdx] || classifier.coefficients[0];
@@ -114,10 +110,8 @@ function computeLocalBiomarkerAttributions(
         const weight = weights[i] ?? 0;
         const globalImp = global_feature_importance[featName] ?? 0;
 
-        // Local additive impact
         const impact = weight * normVal;
 
-        // Skip negligible impacts
         if (Math.abs(impact) < 0.005 && globalImp < 0.01) continue;
 
         attributions.push({
@@ -129,7 +123,6 @@ function computeLocalBiomarkerAttributions(
         });
     }
 
-    // Sort by absolute impact magnitude
     attributions.sort((a, b) => Math.abs(b.impactValue) - Math.abs(a.impactValue));
     return attributions.slice(0, 8);
 }

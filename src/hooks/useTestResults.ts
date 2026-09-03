@@ -20,6 +20,7 @@ import {
     clearFirestoreResults,
     isUserAuthenticated,
 } from "../services/firestoreService";
+import { saveModuleResultToSupabase } from "../services/supabaseService";
 import { auth } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -161,6 +162,9 @@ export function useLanguageResults() {
                     saveResultToFirestore("language_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
                     );
+                    saveModuleResultToSupabase("language", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
+                    );
                 }
             } catch (error) {
                 logger.error("Failed to save language result:", error);
@@ -277,6 +281,9 @@ export function useReactionResults() {
                 if (isUserAuthenticated()) {
                     saveResultToFirestore("reaction_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
+                    );
+                    saveModuleResultToSupabase("reaction", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
                     );
                 }
             } catch (error) {
@@ -415,6 +422,9 @@ export function useMemoryResults() {
                     saveResultToFirestore("memory_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
                     );
+                    saveModuleResultToSupabase("memory", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
+                    );
                 }
             } catch (error) {
                 logger.error("Failed to save memory result:", error);
@@ -505,6 +515,9 @@ export function usePatternResults() {
                 if (isUserAuthenticated()) {
                     saveResultToFirestore("pattern_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
+                    );
+                    saveModuleResultToSupabase("pattern", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
                     );
                 }
             } catch (error) {
@@ -608,6 +621,9 @@ export function useVmraResults() {
                 if (isUserAuthenticated()) {
                     saveResultToFirestore("vmra_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
+                    );
+                    saveModuleResultToSupabase("vmra", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
                     );
                 }
             } catch (error) {
@@ -723,6 +739,9 @@ export function useAttentionResults() {
                     saveResultToFirestore("attention_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
                     );
+                    saveModuleResultToSupabase("attention", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
+                    );
                 }
             } catch (error) {
                 logger.error("Failed to save attention result:", error);
@@ -811,6 +830,9 @@ export function useStoryResults() {
                     saveResultToFirestore("story_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
                     );
+                    saveModuleResultToSupabase("story", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
+                    );
                 }
             } catch (error) {
                 logger.error("Failed to save story result:", error);
@@ -898,6 +920,9 @@ export function useNavigationResults() {
                 if (isUserAuthenticated()) {
                     saveResultToFirestore("navigation_results", result).catch((e) =>
                         logger.error("Firestore save failed", e)
+                    );
+                    saveModuleResultToSupabase("navigation", result).catch((e) =>
+                        logger.error("Supabase save failed", e)
                     );
                 }
             } catch (error) {

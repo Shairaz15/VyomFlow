@@ -5,7 +5,6 @@ import { VerifiedLanguageSwitcher } from "../components/common/VerifiedLanguageS
 import { ThemeToggle } from "../components/common/ThemeToggle";
 import { ScientificBrainCanvas } from "../components/landing/ScientificBrainCanvas";
 import { VyomFlowVideoBrand } from "../components/landing/VyomFlowVideoBrand";
-import { NeuralFlowBrandVisual } from "../components/landing/NeuralFlowBrandVisual";
 import "./VyomFlowLanding.css";
 
 export function Landing() {
@@ -85,17 +84,17 @@ export function Landing() {
             {/* =========================================================================
                2. DEDICATED STICKY MOBILE HEADER (< 768px - Compact & Touch-Friendly)
                ========================================================================= */}
-            <header className="md:hidden fixed top-0 left-0 right-0 z-50 w-full bg-[#17324D]/98 dark:bg-[#102031]/98 backdrop-blur-md border-b border-white/10 px-4 h-16 flex items-center justify-between transition-colors shadow-md">
+            <header className="vyom-mobile-header">
                 <div 
                     className="flex items-center gap-2.5 cursor-pointer select-none" 
                     onClick={() => { setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 >
-                    <div className="w-8 h-8 rounded-full bg-[#8FAF8B]/20 flex items-center justify-center text-[#8FAF8B]">
+                    <div className="vyom-leaf-logo w-8 h-8 rounded-full bg-[#8FAF8B]/20 flex items-center justify-center text-[#8FAF8B] transition-colors">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V10m0 0C10.5 7.5 7 6 4 7c0 4 2.5 7.5 8 9m0-6c1.5-2.5 5-4 8-3 0 4-2.5 7.5-8 9" />
                         </svg>
                     </div>
-                    <span className="vyom-serif text-xl font-bold tracking-tight text-[#F7F4EC]">
+                    <span className="vyom-serif text-xl font-bold tracking-tight text-inherit transition-colors">
                         VyomFlow
                     </span>
                 </div>
@@ -105,8 +104,9 @@ export function Landing() {
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle navigation menu"
-                        className="w-11 h-11 flex items-center justify-center text-[#F7F4EC] rounded-full hover:bg-white/10 active:scale-95 transition-all"
+                        className="vyom-header-btn w-11 h-11 flex items-center justify-center text-inherit rounded-full hover:bg-black/5 active:scale-95 transition-all"
                     >
+
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {mobileMenuOpen ? (
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
@@ -120,7 +120,7 @@ export function Landing() {
 
             {/* Mobile Navigation Panel Drawer */}
             {mobileMenuOpen && (
-                <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-40 bg-[#102A43] px-6 py-6 flex flex-col justify-between overflow-y-auto animate-fadeIn">
+                <div className="vyom-mobile-drawer animate-fadeIn">
                     <nav className="flex flex-col gap-2.5">
                         <button onClick={() => { setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="vyom-mobile-nav-item">
                             <span>Home</span>
@@ -130,6 +130,7 @@ export function Landing() {
                             <span>How It Works</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
+
                         <button onClick={() => handleScrollTo("platform")} className="vyom-mobile-nav-item">
                             <span>Platform</span>
                             <span className="text-[#8FAF8B]">→</span>
@@ -148,7 +149,7 @@ export function Landing() {
                         </button>
                     </nav>
 
-                    <div className="flex flex-col gap-3 pt-6 border-t border-white/10 mt-auto pb-safe">
+                    <div className="flex flex-col gap-3 pt-6 border-t border-white/10 dark:border-[#17324D]/15 mt-auto pb-safe">
                         <button
                             onClick={() => { setMobileMenuOpen(false); handleBeginJourney(); }}
                             className="w-full h-[54px] rounded-[28px] bg-[#4F7C78] hover:bg-[#3D6360] text-[#F7F4EC] text-base font-semibold shadow-lg justify-center flex items-center gap-2 active:scale-[0.98] transition-all"
@@ -158,17 +159,18 @@ export function Landing() {
                         </button>
                         <button
                             onClick={() => { setMobileMenuOpen(false); navigate("/login"); }}
-                            className="w-full h-[54px] rounded-[28px] bg-[#F7F4EC] hover:bg-[#EDE8DC] text-[#17324D] text-sm font-semibold justify-center flex items-center active:scale-[0.98] transition-all"
+                            className="w-full h-[54px] rounded-[28px] bg-[#F7F4EC] dark:bg-[#17324D] hover:bg-[#EDE8DC] dark:hover:bg-[#102031] text-[#17324D] dark:text-[#F7F4EC] text-sm font-semibold justify-center flex items-center active:scale-[0.98] transition-all"
                         >
                             Contact Us
                         </button>
                         <div className="flex items-center justify-between pt-2">
-                            <span className="text-xs text-[#BFD0D7]">Language:</span>
+                            <span className="text-xs text-[#BFD0D7] dark:text-[#334E68]">Language:</span>
                             <VerifiedLanguageSwitcher />
                         </div>
                     </div>
                 </div>
             )}
+
 
             <main className="flex-1 w-full flex flex-col items-center pt-16 md:pt-0">
                 {/* =========================================================================
@@ -220,7 +222,7 @@ export function Landing() {
                 {/* =========================================================================
                    4. DEDICATED MOBILE HERO SECTION (< 768px - Focused, Calm, Guided)
                    ========================================================================= */}
-                <section className="md:hidden w-full flex flex-col items-center text-center px-5 pt-8 pb-8">
+                <section className="md:hidden vyom-mobile-hero-section">
                     {/* Small Eyebrow */}
                     <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4F7C78]/12 text-[#4F7C78] dark:text-[#8FAF8B] text-[11px] font-bold tracking-[0.18em] uppercase mb-4">
                         <span>AI-FIRST COGNITIVE HEALTH PLATFORM</span>
@@ -228,11 +230,11 @@ export function Landing() {
 
                     {/* Large Mobile Heading (42–48px Editorial Hierarchy) */}
                     <h1 className="vyom-mobile-hero-heading text-[42px] leading-[1.04] tracking-tight mb-3 text-center">
-                        <span className="text-[#17324D] dark:text-[#F7F4EC] font-normal">Understand your </span>
-                        <span className="vyom-serif italic text-[#4F7C78] font-normal">mind.</span>
+                        <span className="vyom-mobile-title-navy">Understand your </span>
+                        <span className="vyom-mobile-title-teal">mind.</span>
                         <br />
-                        <span className="text-[#17324D] dark:text-[#F7F4EC] font-normal">Journey with </span>
-                        <span className="vyom-serif italic text-[#4F7C78] font-normal">confidence.</span>
+                        <span className="vyom-mobile-title-navy">Journey with </span>
+                        <span className="vyom-mobile-title-teal">confidence.</span>
                     </h1>
 
                     {/* Subtitle (16px dark slate readable contrast) */}
@@ -251,7 +253,7 @@ export function Landing() {
                         </button>
                         <button
                             onClick={() => handleScrollTo("how-it-works")}
-                            className="w-full h-[54px] rounded-[28px] bg-transparent hover:bg-[#F7F4EC] border border-[#8FAF8B] text-[#17324D] dark:text-[#F7F4EC] text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
+                            className="w-full h-[54px] rounded-[28px] vyom-mobile-btn-secondary text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
                         >
                             Learn How It Works
                         </button>
@@ -798,7 +800,7 @@ export function Landing() {
                                     Every mind has a story.
                                 </h2>
 
-                                <p className="text-xs sm:text-base text-white/85 max-w-md mx-auto mb-6 font-normal">
+                                <p className="text-sm sm:text-base text-white font-medium max-w-md mx-auto mb-6 drop-shadow-sm">
                                     Begin your cognitive journey with VyomFlow.
                                 </p>
 
@@ -923,15 +925,11 @@ export function Landing() {
                         </div>
                     </div>
 
-                    {/* DEDICATED MOBILE NEURAL FLOW FOOTER ARTWORK (< 768px) */}
-                    <div className="md:hidden w-full overflow-hidden mt-4">
-                        <NeuralFlowBrandVisual />
-                    </div>
-
-                    {/* DESKTOP BRAND VISUAL (>= 768px - Preserved & Intact) */}
-                    <div className="hidden md:block w-full overflow-hidden mt-4">
+                    {/* Scaled Video-Masked Brand Typography */}
+                    <div className="w-full overflow-hidden mt-4">
                         <VyomFlowVideoBrand />
                     </div>
+
                 </div>
             </footer>
         </div>

@@ -11,6 +11,7 @@ import type { LanguageAssessmentResult } from "../types/languageTypes";
 import type { VmraAssessmentResult } from "../types/vmraTypes";
 import type { StoryAssessmentResult } from "../types/storyTypes";
 import type { ImmersiveNavigationResult } from "../types/navigationTypes";
+import type { SavtAssessmentResult } from "../types/savtTypes";
 
 type SimulationPattern = "stable" | "declining";
 
@@ -22,6 +23,7 @@ interface BaselineData {
     vmra?: VmraAssessmentResult;
     story?: StoryAssessmentResult;
     navigation?: ImmersiveNavigationResult;
+    attention?: SavtAssessmentResult;
 }
 
 /**
@@ -386,24 +388,38 @@ export interface SimulatedData {
     vmra: VmraAssessmentResult[];
     story: StoryAssessmentResult[];
     navigation: ImmersiveNavigationResult[];
+    attention: SavtAssessmentResult[];
 }
 
 /**
  * Main function to generate all simulated data based on user's baseline.
- * Only generates data for test types where baseline exists.
+ * Falls back to unbiased mock baseline for any unobserved modules.
  */
 export function generateSimulatedData(
     baseline: BaselineData,
     pattern: SimulationPattern
 ): SimulatedData {
+    const mockBase = getMockBaseline();
+    const effectiveBaseline: BaselineData = {
+        reaction: baseline.reaction || mockBase.reaction,
+        memory: baseline.memory || mockBase.memory,
+        pattern: baseline.pattern || mockBase.pattern,
+        language: baseline.language || mockBase.language,
+        vmra: baseline.vmra || mockBase.vmra,
+        story: baseline.story || mockBase.story,
+        navigation: baseline.navigation || mockBase.navigation,
+        attention: baseline.attention || mockBase.attention,
+    };
+
     return {
-        reaction: baseline.reaction ? simulateReactionResults(baseline.reaction, pattern) : [],
-        memory: baseline.memory ? simulateMemoryResults(baseline.memory, pattern) : [],
-        pattern: baseline.pattern ? simulatePatternResults(baseline.pattern, pattern) : [],
-        language: baseline.language ? simulateLanguageResults(baseline.language, pattern) : [],
-        vmra: baseline.vmra ? simulateVmraResults(baseline.vmra, pattern) : [],
-        story: baseline.story ? simulateStoryResults(baseline.story, pattern) : [],
-        navigation: baseline.navigation ? simulateNavigationResults(baseline.navigation, pattern) : [],
+        reaction: effectiveBaseline.reaction ? simulateReactionResults(effectiveBaseline.reaction, pattern) : [],
+        memory: effectiveBaseline.memory ? simulateMemoryResults(effectiveBaseline.memory, pattern) : [],
+        pattern: effectiveBaseline.pattern ? simulatePatternResults(effectiveBaseline.pattern, pattern) : [],
+        language: effectiveBaseline.language ? simulateLanguageResults(effectiveBaseline.language, pattern) : [],
+        vmra: effectiveBaseline.vmra ? simulateVmraResults(effectiveBaseline.vmra, pattern) : [],
+        story: effectiveBaseline.story ? simulateStoryResults(effectiveBaseline.story, pattern) : [],
+        navigation: effectiveBaseline.navigation ? simulateNavigationResults(effectiveBaseline.navigation, pattern) : [],
+        attention: effectiveBaseline.attention ? simulateAttentionResults(effectiveBaseline.attention, pattern) : [],
     };
 }
 
@@ -411,7 +427,16 @@ export function generateSimulatedData(
  * Checks if user has any baseline data.
  */
 export function hasBaseline(baseline: BaselineData): boolean {
-    return !!(baseline.reaction || baseline.memory || baseline.pattern || baseline.language || baseline.vmra);
+    return !!(
+        baseline.reaction ||
+        baseline.memory ||
+        baseline.pattern ||
+        baseline.language ||
+        baseline.vmra ||
+        baseline.attention ||
+        baseline.story ||
+        baseline.navigation
+    );
 }
 
 /**
@@ -545,6 +570,62 @@ export function getMockBaseline(): BaselineData {
                 routeMemoryScore: 0.9, visualAttentionScore: 0.9, episodicMemoryScore: 0.9, navigationScore: 90
             },
             navigationScore: 90
+        },
+        attention: {
+            sessionId: "mock-base-attn",
+            timestamp: now,
+            config: { totalTrials: 40, practiceTrials: 5, goRatio: 0.7, stimulusDurationMs: 500, responseWindowMs: 1500, minIsiMs: 1000, maxIsiMs: 2000, maxConsecutiveNogo: 3, blocksCount: 4 },
+            rawMetrics: { hits: 25, misses: 3, falseAlarms: 2, correctRejections: 10, totalGoTrials: 28, totalNogoTrials: 12, responseTimesMs: [], totalTestDurationMs: 60000, blockHitRates: [0.9, 0.9, 0.85, 0.8], blockFalseAlarmRates: [0.1, 0.1, 0.2, 0.2], blockMeanRtMs: [400, 420, 450, 480] },
+            features: { hitRate: 0.89, falseAlarmRate: 0.16, dPrime: 2.2, responseBias: 0, commissionErrorRate: 0.16, omissionErrorRate: 0.11, meanResponseTimeMs: 430, medianResponseTimeMs: 420, rtVariability: 50, rtCoefficientOfVariation: 0.11, vigilanceDecrement: -0.05, vigilanceStability: 0.85, possibleGuessing: false, possibleInattention: false },
+            profile: { attention: 85, inhibition: 80, vigilance: 82, compositeScore: 82, starRating: 5 },
+            trials: [],
+            explainability: { keyFactors: ["Strong sustained attention"] }
         }
     };
+}
+
+// ============= ATTENTION TEST SIMULATION =============
+
+export function simulateAttentionResults(
+    baseline: SavtAssessmentResult,
+    pattern: SimulationPattern
+): SavtAssessmentResult[] {
+    const results: SavtAssessmentResult[] = [];
+    for (let i = 0; i < 5; i++) {
+        const modifier = getTrendModifier(i + 1, pattern);
+        const compositeScore = Math.max(0, Math.min(100, Math.round(baseline.profile.compositeScore + (modifier * 100))));
+        const hitRate = Math.max(0.1, Math.min(1, baseline.features.hitRate + modifier));
+        const falseAlarmRate = Math.max(0, Math.min(1, baseline.features.falseAlarmRate - modifier));
+        
+        results.push({
+            ...baseline,
+            sessionId: `sim-attention-${Date.now()}-${i}`,
+            timestamp: daysFromNow(7, i * 7),
+            rawMetrics: {
+                ...baseline.rawMetrics,
+                hits: Math.round(hitRate * baseline.rawMetrics.totalGoTrials),
+                falseAlarms: Math.round(falseAlarmRate * baseline.rawMetrics.totalNogoTrials),
+            },
+            features: {
+                ...baseline.features,
+                hitRate,
+                falseAlarmRate,
+                vigilanceDecrement: pattern === "declining" ? baseline.features.vigilanceDecrement - i * 0.05 : baseline.features.vigilanceDecrement,
+            },
+            profile: {
+                ...baseline.profile,
+                attention: compositeScore,
+                inhibition: compositeScore,
+                vigilance: compositeScore,
+                compositeScore,
+                starRating: compositeScore > 80 ? 5 : compositeScore > 60 ? 4 : compositeScore > 40 ? 3 : compositeScore > 20 ? 2 : 1,
+            },
+            explainability: {
+                keyFactors: pattern === "declining"
+                    ? ["Increased commission errors", "Decline in sustained attention"]
+                    : ["Stable attention", "Consistent inhibition"],
+            },
+        });
+    }
+    return results;
 }

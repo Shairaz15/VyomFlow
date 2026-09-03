@@ -19,6 +19,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emailjs/browser": "^4.4.1",
     "@paper-design/shaders-react": "^0.0.71",
+    "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.1.18",
     "@tensorflow/tfjs": "^4.22.0",
     "autoprefixer": "^10.4.23",

@@ -5,6 +5,7 @@ import type { LanguageAssessmentResult } from '../types/languageTypes';
 import type { VmraAssessmentResult } from '../types/vmraTypes';
 import type { StoryAssessmentResult } from '../types/storyTypes';
 import type { ImmersiveNavigationResult } from '../types/navigationTypes';
+import type { SavtAssessmentResult } from '../types/savtTypes';
 
 export interface UserDemographics {
     age?: number;
@@ -20,6 +21,7 @@ export interface RawDashboardData {
     vmra: VmraAssessmentResult[];
     story: StoryAssessmentResult[];
     navigation: ImmersiveNavigationResult[];
+    attention?: SavtAssessmentResult[];
 }
 
 /**
@@ -61,39 +63,44 @@ export function mapToSessionData(data: RawDashboardData): SessionData[] {
         });
     };
 
-    // Map Reaction/SAVT 
-    processResults(data.reaction || [], 'SAVT', (r) => {
+    // Map Reaction
+    processResults(data.reaction || [], 'reaction', (r) => {
         return Math.max(0, 100 - ((r as any).aggregates?.avg || 300) / 20); 
     });
 
     // Map Pattern
-    processResults(data.pattern || [], 'PATTERN', (p) => {
+    processResults(data.pattern || [], 'pattern', (p) => {
         return Math.min(100, ((p as any).metrics?.maxLevelReached || 1) * 10);
     });
 
-    // Map Memory
-    processResults(data.memory || [], 'MEMORY', (m) => {
+    // Map Memory (legacy fallback)
+    processResults(data.memory || [], 'memory', (m) => {
         return (m.accuracy || 0.5) * 100;
     });
 
-    // Map Language
-    processResults(data.language || [], 'LANGUAGE', (l) => {
-        return l.derivedFeatures?.fluencyIndex ?? 80;
+    // Map Language — use CSI as primary, fluencyIndex as fallback, null for missing
+    processResults(data.language || [], 'language', (l) => {
+        return l.derivedFeatures?.cognitiveSpeechIndex ?? l.derivedFeatures?.fluencyIndex ?? null as unknown as number;
     });
 
     // Map VMRA
-    processResults(data.vmra || [], 'VMRA', (v) => {
+    processResults(data.vmra || [], 'vmra', (v) => {
         return (((v.features as any)?.recallAccuracy ?? (v.features as any)?.accuracy ?? 0.8)) * 100;
     });
 
-    // Map Story
-    processResults(data.story || [], 'STORY', (s) => {
-        return (s.biomarkers?.memory?.recallAccuracy ?? 0.8) * 100;
+    // Map Story — use direct storyRecallScore (0-100)
+    processResults(data.story || [], 'story', (s) => {
+        return s.storyRecallScore ?? null as unknown as number;
     });
 
-    // Map Navigation
-    processResults(data.navigation || [], 'NAVIGATION', (n) => {
-        return (n.biomarkers?.navigationAccuracy ?? 0.8) * 100;
+    // Map Navigation — use direct navigationScore (0-100)
+    processResults(data.navigation || [], 'navigation', (n) => {
+        return n.navigationScore ?? null as unknown as number;
+    });
+
+    // Map Attention / SAVT
+    processResults(data.attention || [], 'savt', (a) => {
+        return a.profile?.compositeScore ?? (a.features?.hitRate != null ? Math.round(a.features.hitRate * 100) : null) as unknown as number;
     });
 
     // Sort by timestamp ascending
