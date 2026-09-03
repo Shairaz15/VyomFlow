@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { LayoutDashboard, ShieldCheck, ArrowRight } from "lucide-react";
 import { Button, Icon } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { PageWrapper } from "../components/layout";
@@ -209,13 +210,17 @@ export function Tests() {
                     />
                 </main>
 
-                {/* Small Supporting Text Links */}
+                {/* Supporting Action Links */}
                 <div className="journey-bottom-links">
-                    <button className="link-chip" onClick={() => navigate("/dashboard")}>
-                        <Icon name="chart-line-up" size={13} /> View Clinical Dashboard →
+                    <button className="link-chip group" onClick={() => navigate("/dashboard")}>
+                        <LayoutDashboard className="w-4 h-4 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
+                        <span>View Clinical Dashboard</span>
+                        <ArrowRight className="w-3.5 h-3.5 opacity-50 ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
                     </button>
-                    <button className="link-chip" onClick={() => navigate("/privacy")}>
-                        Privacy & Data Safeguards →
+                    <button className="link-chip group" onClick={() => navigate("/privacy")}>
+                        <ShieldCheck className="w-4 h-4 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
+                        <span>Privacy & Data Safeguards</span>
+                        <ArrowRight className="w-3.5 h-3.5 opacity-50 ml-auto shrink-0 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
                     </button>
                 </div>
 

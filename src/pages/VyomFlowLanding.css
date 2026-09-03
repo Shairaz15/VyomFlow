@@ -1306,12 +1306,12 @@ html.dark .vyom-orbital-card:hover .vyom-orbital-icon {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(23, 50, 77, 0.98);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #F7F4EC;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(247, 244, 236, 0.95);
+  border-bottom: 1px solid rgba(23, 50, 77, 0.12);
+  color: #17324D;
+  box-shadow: 0 2px 10px rgba(23, 50, 77, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
@@ -1321,21 +1321,25 @@ html.dark .vyom-orbital-card:hover .vyom-orbital-icon {
   }
 }
 
-/* Light Navbar in Dark Mode */
-html.dark .vyom-mobile-header,
-.dark .vyom-mobile-header,
-[data-theme="dark"] .vyom-mobile-header {
-  background: #F7F4EC !important;
-  background-color: #F7F4EC !important;
-  border-bottom: 1px solid rgba(23, 50, 77, 0.15) !important;
-  color: #17324D !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
-}
-
 .vyom-mobile-header .vyom-serif,
 .vyom-mobile-header span.vyom-serif {
   color: #17324D !important;
   font-weight: 700;
+}
+
+.vyom-mobile-header .vyom-header-btn {
+  color: #17324D !important;
+}
+
+/* Dark Mode Mobile Header */
+html.dark .vyom-mobile-header,
+.dark .vyom-mobile-header,
+[data-theme="dark"] .vyom-mobile-header {
+  background: rgba(15, 23, 42, 0.95) !important;
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #F7F4EC !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
 }
 
 html.dark .vyom-mobile-header .vyom-serif,
@@ -1350,7 +1354,7 @@ html.dark .vyom-mobile-header span.vyom-serif,
 html.dark .vyom-mobile-header .vyom-header-btn,
 .dark .vyom-mobile-header .vyom-header-btn,
 [data-theme="dark"] .vyom-mobile-header .vyom-header-btn {
-  color: #17324D !important;
+  color: #F7F4EC !important;
 }
 
 html.dark .vyom-mobile-header .vyom-leaf-logo,
@@ -1367,12 +1371,14 @@ html.dark .vyom-mobile-header .vyom-leaf-logo,
   top: 4rem;
   bottom: 0;
   z-index: 40;
-  background: #102A43;
+  background: rgba(247, 244, 236, 0.98);
+  color: #17324D;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 768px) {
@@ -1384,8 +1390,8 @@ html.dark .vyom-mobile-header .vyom-leaf-logo,
 html.dark .vyom-mobile-drawer,
 .dark .vyom-mobile-drawer,
 [data-theme="dark"] .vyom-mobile-drawer {
-  background: #F7F4EC !important;
-  color: #17324D !important;
+  background: rgba(15, 23, 42, 0.98) !important;
+  color: #F7F4EC !important;
 }
 
 
@@ -1468,10 +1474,10 @@ html.dark .vyom-mobile-drawer,
   width: 100%;
   padding: 1rem 1.25rem;
   min-height: 56px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(23, 50, 77, 0.04);
+  border: 1px solid rgba(23, 50, 77, 0.10);
   border-radius: 1.15rem;
-  color: #F7F4EC;
+  color: #17324D;
   font-size: 1.05rem;
   font-weight: 600;
   text-align: left;
@@ -1481,21 +1487,21 @@ html.dark .vyom-mobile-drawer,
 
 .vyom-mobile-nav-item:active {
   transform: scale(0.98);
-  background: rgba(79, 124, 120, 0.28);
-  border-color: rgba(143, 175, 139, 0.4);
+  background: rgba(79, 124, 120, 0.15);
+  border-color: rgba(79, 124, 120, 0.3);
 }
 
 .dark .vyom-mobile-nav-item,
 [data-theme="dark"] .vyom-mobile-nav-item {
-  background: rgba(23, 50, 77, 0.06) !important;
-  border-color: rgba(23, 50, 77, 0.12) !important;
-  color: #17324D !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #F7F4EC !important;
 }
 
 .dark .vyom-mobile-nav-item:active,
 [data-theme="dark"] .vyom-mobile-nav-item:active {
-  background: rgba(79, 124, 120, 0.18) !important;
-  border-color: rgba(79, 124, 120, 0.3) !important;
+  background: rgba(79, 124, 120, 0.28) !important;
+  border-color: rgba(143, 175, 139, 0.4) !important;
 }
 
 

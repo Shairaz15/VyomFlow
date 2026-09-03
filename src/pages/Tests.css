@@ -231,29 +231,79 @@ html.dark .hero-top-row,
 .journey-bottom-links {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 1rem;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
     flex-wrap: wrap;
+    width: 100%;
 }
 
 .link-chip {
-    padding: 0.65rem 1.35rem;
-    border-radius: 20px;
-    background: var(--bg-surface);
-    border: 1px solid var(--glass-border);
-    color: var(--color-text-primary);
-    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1.35rem;
+    border-radius: 9999px;
+    background: rgba(247, 244, 236, 0.88);
+    border: 1.5px solid rgba(23, 50, 77, 0.14);
+    color: #17324D;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(23, 50, 77, 0.05);
+}
+
+.dark .link-chip,
+[data-theme="dark"] .link-chip,
+html.dark .link-chip {
+    background: rgba(22, 22, 29, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    color: #F7F4EC;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .link-chip:hover {
-    background: var(--color-accent-soft);
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    background: rgba(79, 124, 120, 0.12);
+    border-color: #4F7C78;
+    color: #4F7C78;
     transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 124, 120, 0.12);
+}
+
+.dark .link-chip:hover,
+[data-theme="dark"] .link-chip:hover,
+html.dark .link-chip:hover {
+    background: rgba(143, 175, 139, 0.16);
+    border-color: #8FAF8B;
+    color: #8FAF8B;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.link-chip:active {
+    transform: scale(0.98);
+}
+
+@media (max-width: 640px) {
+    .journey-bottom-links {
+        flex-direction: column;
+        width: 100%;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+        gap: 0.75rem;
+        padding: 0 1rem;
+    }
+
+    .link-chip {
+        width: 100%;
+        height: 48px;
+        padding: 0 1.25rem;
+        justify-content: flex-start;
+        font-size: 0.875rem;
+    }
 }
 
 /* Responsive */

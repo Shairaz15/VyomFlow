@@ -1,63 +1,75 @@
-/* ActivityIntroModal styling */
+/* ActivityIntroModal styling — Responsive, Scroll-Safe & Full Dark Mode */
 
 .activity-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(6px);
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    padding: 16px;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
 }
 
 .activity-modal-card {
     background: #ffffff;
     width: 100%;
     max-width: 480px;
+    max-height: min(92vh, 92dvh);
     border-radius: 24px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
     border: 1px solid #DCE3DF;
 }
 
 .modal-header-biome {
     position: relative;
-    padding: 32px 24px 24px;
+    padding: 24px 20px 18px;
     color: #ffffff;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .modal-close-btn {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    background: rgba(255, 255, 255, 0.2);
+    top: 14px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.22);
     border: none;
     color: #ffffff;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.15s;
 }
 
 .modal-close-btn:hover {
     background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.05);
+}
+
+.modal-close-btn:active {
+    transform: scale(0.95);
 }
 
 .modal-biome-icon-wrapper {
-    font-size: 2.8rem;
+    font-size: 2.6rem;
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
@@ -70,7 +82,7 @@
 }
 
 .modal-activity-title {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 700;
     margin: 4px 0 2px;
 }
@@ -82,10 +94,13 @@
 }
 
 .modal-body {
-    padding: 24px;
+    padding: 20px 20px 24px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
 }
 
 .modal-duration-tag {
@@ -169,15 +184,18 @@
     display: flex;
     gap: 12px;
     justify-content: flex-end;
-    margin-top: 8px;
+    margin-top: auto;
+    padding-top: 8px;
 }
 
 .start-btn {
     flex: 1;
+    min-height: 44px;
 }
 
 .practice-btn {
     flex: 1;
+    min-height: 44px;
 }
 
 /* ===== Light Theme "Velora" Moss & Sage Styling Overrides ===== */
@@ -221,4 +239,58 @@ html:not(.dark) .modal-practice-box p {
 html:not(.dark) .modal-completed-notice {
     background: #E2EBE5 !important;
     color: #4F7C78 !important;
+}
+
+/* ===== Dark Mode Theme Styling Overrides ===== */
+.dark .activity-modal-card,
+[data-theme="dark"] .activity-modal-card {
+    background: #14283C !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+}
+
+.dark .modal-activity-title,
+[data-theme="dark"] .modal-activity-title {
+    color: #F7F4EC !important;
+}
+
+.dark .modal-user-prompt,
+[data-theme="dark"] .modal-user-prompt {
+    background: rgba(0, 201, 183, 0.12) !important;
+    border-left-color: #00C9B7 !important;
+    color: #F7F4EC !important;
+}
+
+.dark .modal-duration-tag,
+[data-theme="dark"] .modal-duration-tag {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    color: #D2DDE2 !important;
+}
+
+.dark .modal-description,
+[data-theme="dark"] .modal-description {
+    color: #D2DDE2 !important;
+}
+
+.dark .modal-practice-box,
+[data-theme="dark"] .modal-practice-box {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+.dark .practice-box-header,
+[data-theme="dark"] .practice-box-header {
+    color: #00C9B7 !important;
+}
+
+.dark .modal-practice-box p,
+[data-theme="dark"] .modal-practice-box p {
+    color: #A0B0BA !important;
+}
+
+.dark .modal-completed-notice,
+[data-theme="dark"] .modal-completed-notice {
+    background: rgba(34, 197, 94, 0.15) !important;
+    color: #4ade80 !important;
 }

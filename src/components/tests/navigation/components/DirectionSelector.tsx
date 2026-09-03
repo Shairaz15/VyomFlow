@@ -173,7 +173,7 @@ export function DirectionSelector({
                                 e.preventDefault();
                                 handleChooseDirection("straight");
                             }}
-                            className={`min-w-[140px] min-h-[64px] px-6 py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("straight")}`}
+                            className={`w-32 sm:w-36 min-h-[58px] sm:min-h-[64px] px-3 sm:px-6 py-2.5 sm:py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("straight")}`}
                         >
                             <div className="flex items-center gap-1.5">
                                 <span className="text-xl leading-none font-bold">↑</span>
@@ -186,7 +186,7 @@ export function DirectionSelector({
                     </div>
 
                     {/* Middle: Left, Compass Icon, Right */}
-                    <div className="flex items-center gap-4 sm:gap-6">
+                    <div className="flex items-center justify-center gap-2 sm:gap-4 w-full max-w-sm">
                         {/* Left */}
                         <button
                             type="button"
@@ -196,7 +196,7 @@ export function DirectionSelector({
                                 e.preventDefault();
                                 handleChooseDirection("left");
                             }}
-                            className={`min-w-[140px] min-h-[64px] px-6 py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("left")}`}
+                            className={`flex-1 sm:w-36 min-h-[58px] sm:min-h-[64px] px-2 sm:px-6 py-2.5 sm:py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("left")}`}
                         >
                             <div className="flex items-center gap-1.5">
                                 <span className="text-xl leading-none font-bold">←</span>
@@ -204,12 +204,12 @@ export function DirectionSelector({
                                     ← / A
                                 </span>
                             </div>
-                            <span className="mt-0.5">Turn Left</span>
+                            <span className="mt-0.5 whitespace-nowrap">Turn Left</span>
                         </button>
 
                         {/* Center Orientation Badge */}
-                        <div className="w-12 h-12 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-cyan-400/70 shadow-inner">
-                            <Icon name="navigation" size={20} />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-cyan-400/70 shadow-inner flex-shrink-0">
+                            <Icon name="navigation" size={18} />
                         </div>
 
                         {/* Right */}
@@ -221,7 +221,7 @@ export function DirectionSelector({
                                 e.preventDefault();
                                 handleChooseDirection("right");
                             }}
-                            className={`min-w-[140px] min-h-[64px] px-6 py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("right")}`}
+                            className={`flex-1 sm:w-36 min-h-[58px] sm:min-h-[64px] px-2 sm:px-6 py-2.5 sm:py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("right")}`}
                         >
                             <div className="flex items-center gap-1.5">
                                 <span className="text-xl leading-none font-bold">→</span>
@@ -229,7 +229,7 @@ export function DirectionSelector({
                                     → / D
                                 </span>
                             </div>
-                            <span className="mt-0.5">Turn Right</span>
+                            <span className="mt-0.5 whitespace-nowrap">Turn Right</span>
                         </button>
                     </div>
 
@@ -243,7 +243,7 @@ export function DirectionSelector({
                                 e.preventDefault();
                                 handleChooseDirection("back");
                             }}
-                            className={`min-w-[140px] min-h-[64px] px-6 py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("back")}`}
+                            className={`w-32 sm:w-36 min-h-[58px] sm:min-h-[64px] px-3 sm:px-6 py-2.5 sm:py-3 rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shadow-md font-semibold text-sm active:scale-95 touch-manipulation ${getButtonClass("back")}`}
                         >
                             <div className="flex items-center gap-1.5">
                                 <span className="text-xl leading-none font-bold">↓</span>

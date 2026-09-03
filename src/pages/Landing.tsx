@@ -116,20 +116,20 @@ export function Landing() {
                ========================================================================= */}
             <header className="vyom-mobile-header">
                 <div 
-                    className="flex items-center gap-2.5 cursor-pointer select-none" 
+                    className="flex items-center gap-2 cursor-pointer select-none shrink-0" 
                     onClick={() => { setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 >
                     <VyomFlowLogo size="xs" variant="icon" />
-                    <span className="vyom-serif text-xl font-bold tracking-tight text-inherit transition-colors">
+                    <span className="vyom-serif text-lg sm:text-xl font-bold tracking-tight text-inherit transition-colors">
                         VyomFlow
                     </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                     <ThemeToggle />
                     {isAuthenticated && user && (
                         <div 
-                            className="w-8 h-8 rounded-full overflow-hidden border border-[#4F7C78]/30 dark:border-[#8FAF8B]/30 flex items-center justify-center bg-[#4F7C78]/10 text-xs font-semibold select-none"
+                            className="w-7 h-7 rounded-full overflow-hidden border border-[#4F7C78]/30 dark:border-[#8FAF8B]/30 flex items-center justify-center bg-[#4F7C78]/10 text-xs font-semibold select-none shrink-0"
                             title={user.displayName || user.email || "Profile"}
                         >
                             {user.photoURL ? (
@@ -142,9 +142,9 @@ export function Landing() {
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle navigation menu"
-                        className="vyom-header-btn w-11 h-11 flex items-center justify-center text-inherit rounded-full hover:bg-black/5 active:scale-95 transition-all"
+                        className="vyom-header-btn w-9 h-9 flex items-center justify-center text-inherit rounded-full hover:bg-black/5 active:scale-95 transition-all"
                     >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {mobileMenuOpen ? (
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
                             ) : (
@@ -194,10 +194,6 @@ export function Landing() {
                         </button>
                         <button onClick={() => handleScrollTo("privacy")} className="vyom-mobile-nav-item">
                             <span>Privacy</span>
-                            <span className="text-[#8FAF8B]">→</span>
-                        </button>
-                        <button onClick={() => { setMobileMenuOpen(false); navigate("/demo"); }} className="vyom-mobile-nav-item">
-                            <span>Help & FAQ</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
                     </nav>
@@ -285,17 +281,17 @@ export function Landing() {
                         {/* Primary & Secondary Action Buttons (Stacked, 54px height, 28px radius) */}
                         <div className="flex flex-col gap-3 w-full max-w-[340px] mx-auto vyom-hero-cta-container mb-7">
                             <button
-                                onClick={() => handleScrollTo("how-it-works")}
+                                onClick={handleBeginJourney}
                                 className="w-full h-[54px] rounded-[28px] bg-[#17324D] hover:bg-[#102031] text-[#F7F4EC] text-[16px] font-semibold shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                             >
-                                <span>Explore How It Works</span>
-                                <span className="text-lg leading-none">↓</span>
+                                <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
+                                <span className="text-lg leading-none">→</span>
                             </button>
                             <button
-                                onClick={() => handleScrollTo("platform")}
+                                onClick={() => handleScrollTo("how-it-works")}
                                 className="w-full h-[54px] rounded-[28px] vyom-mobile-btn-secondary text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
                             >
-                                View Cognitive Domains
+                                Know How It Works
                             </button>
                             <div className="flex items-center justify-center gap-1.5 text-xs text-[#4F7C78] dark:text-[#8FAF8B] font-medium pt-1">
                                 <Monitor className="w-3.5 h-3.5 text-[#4F7C78] dark:text-[#8FAF8B] shrink-0" strokeWidth={1.8} />
@@ -755,7 +751,7 @@ export function Landing() {
                             </svg>
 
                             {/* Card Content */}
-                            <div className="relative z-10 flex flex-col items-center text-center max-w-xl mx-auto px-2">
+                            <div className="relative z-10 flex flex-col items-center text-center max-w-xl mx-auto px-2 py-3 sm:py-0">
                                 <h2 
                                     className="vyom-serif text-2xl sm:text-4xl md:text-5xl font-normal mb-3 tracking-tight drop-shadow-sm"
                                     style={{ color: '#F7F4EC', textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)' }}
@@ -764,34 +760,51 @@ export function Landing() {
                                 </h2>
 
                                 <p 
-                                    className="text-sm sm:text-base font-medium max-w-md mx-auto mb-6 drop-shadow-sm"
+                                    className="text-sm sm:text-base font-medium max-w-md mx-auto mb-4 sm:mb-6 drop-shadow-sm"
                                     style={{ color: '#DCE9F4', textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)' }}
                                 >
                                     Begin your cognitive journey with VyomFlow.
                                 </p>
 
-                                <div className="mb-6 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.75)]">
-                                    <svg className="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 24 24" fill="currentColor">
+                                <div className="mb-4 sm:mb-6 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.75)]">
+                                    <svg className="w-7 h-7 sm:w-10 sm:h-10" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" />
                                     </svg>
                                 </div>
 
+                                {/* Desktop CTA Button (>= 768px) */}
                                 <button
                                     onClick={handleBeginJourney}
-                                    className="hidden md:inline-flex vyom-pill-btn-light !bg-white/90 hover:!bg-white !text-[#182338] !border-white/60 !py-3.5 !px-8 sm:!px-10 text-sm sm:text-base font-semibold shadow-xl backdrop-blur-md transition-all duration-300 transform active:scale-95 items-center gap-2"
+                                    className="!hidden md:!inline-flex vyom-pill-btn-light !bg-white/90 hover:!bg-white !text-[#182338] !border-white/60 !py-3.5 !px-8 sm:!px-10 text-sm sm:text-base font-semibold shadow-xl backdrop-blur-md transition-all duration-300 transform active:scale-95 items-center gap-2"
                                 >
                                     <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
                                     <span className="text-lg leading-none">→</span>
                                 </button>
-                                <div className="md:hidden flex flex-col items-center gap-2.5">
+
+                                {/* Dedicated Mobile Stacked CTA Buttons (< 768px) */}
+                                <div className="md:hidden flex flex-col items-center w-full max-w-[320px] mx-auto gap-3.5">
+                                    {/* Primary CTA: Begin Your Journey */}
                                     <button
+                                        type="button"
+                                        onClick={handleBeginJourney}
+                                        className="w-full max-w-[280px] h-[48px] rounded-full bg-white hover:bg-[#F7F4EC] text-[#17324D] text-sm font-semibold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                    >
+                                        <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
+                                        <span className="text-base leading-none">→</span>
+                                    </button>
+
+                                    {/* Secondary CTA: Back to Top */}
+                                    <button
+                                        type="button"
                                         onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                                        className="vyom-pill-btn-light !bg-white/90 hover:!bg-white !text-[#182338] !border-white/60 !py-3 !px-8 text-sm font-semibold shadow-lg backdrop-blur-md flex items-center gap-2"
+                                        className="w-full max-w-[210px] h-[42px] rounded-full bg-white/10 hover:bg-white/20 border border-white/25 text-[#F7F4EC] text-xs font-semibold backdrop-blur-md active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                     >
                                         <span>Back to Top</span>
-                                        <span className="text-base leading-none">↑</span>
+                                        <span className="text-sm leading-none">↑</span>
                                     </button>
-                                    <p className="text-xs text-[#DCE9F4] font-medium opacity-90 text-center">
+
+                                    {/* Disclaimer */}
+                                    <p className="text-[11px] sm:text-xs text-[#DCE9F4] font-medium opacity-85 text-center mt-1 px-2 leading-relaxed">
                                         Clinical assessments are available on Desktop & Tablet
                                     </p>
                                 </div>

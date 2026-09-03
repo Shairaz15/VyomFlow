@@ -399,3 +399,16 @@
     border-color: #00C9B7;
     color: #00C9B7;
 }
+
+@media (max-width: 768px) {
+    .pattern-arena-card {
+        padding: 1.15rem 0.85rem;
+        border-radius: 18px;
+    }
+
+    .pattern-grid-box {
+        max-width: 260px;
+        gap: 6px;
+        padding: 8px;
+    }
+}

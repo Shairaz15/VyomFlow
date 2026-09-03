@@ -277,9 +277,9 @@ export function SynapseBeamTrail({
                                     {isActive && <div className="orb-halo-pulse" />}
                                 </div>
 
-                                {/* 100% Solid Opaque Card */}
+                                {/* 100% Solid Opaque Card with Sazzad Aurora Glassmorphism for Up Next */}
                                 <div
-                                    className="synapse-card"
+                                    className={`synapse-card ${isActive ? "sazzad-card" : ""}`}
                                     onClick={() => handleNodeClick(node)}
                                     role="button"
                                     tabIndex={0}
@@ -291,8 +291,19 @@ export function SynapseBeamTrail({
                                     }}
                                     aria-label={`${node.title}, ${isCompleted ? "Completed" : isActive ? "Current test" : "Upcoming test"}`}
                                 >
-                                    {/* 1. Card Top Metadata Row (Streamlined) */}
-                                    <div className="synapse-card-top">
+                                    {/* Up Next: Animated Sazzad Aurora Blobs (Behind Content Layer) */}
+                                    {isActive && (
+                                        <>
+                                            <div className="sazzad-aurora sazzad-aurora-primary" aria-hidden="true" />
+                                            <div className="sazzad-aurora sazzad-aurora-secondary" aria-hidden="true" />
+                                            <div className="sazzad-bg" aria-hidden="true" />
+                                        </>
+                                    )}
+
+                                    {/* Card Content Layer */}
+                                    <div className="synapse-card-content">
+                                        {/* 1. Card Top Metadata Row (Streamlined) */}
+                                        <div className="synapse-card-top">
                                         <div className="top-meta-left">
                                             <span className="synapse-index-chip">0{originalIndex + 1}</span>
                                             <span className="synapse-domain-badge">{meta.domain}</span>
@@ -422,10 +433,11 @@ export function SynapseBeamTrail({
                                     </div>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
-    );
+    </div>
+);
 }

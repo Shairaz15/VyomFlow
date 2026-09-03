@@ -27,6 +27,15 @@
   cursor: pointer;
 }
 
+@media (max-width: 768px) {
+  .theme-switch {
+    --toggle-size: 6px;
+    padding: 6px 2px;
+    min-height: 36px;
+    align-items: center;
+  }
+}
+
 .theme-switch, .theme-switch *, .theme-switch *::before, .theme-switch *::after {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;

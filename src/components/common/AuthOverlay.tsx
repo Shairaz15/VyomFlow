@@ -33,10 +33,13 @@ export function AuthOverlay({ children }: AuthOverlayProps) {
         try {
             await signInWithGoogle();
         } catch (err: unknown) {
-            const error = err as Error;
+            const error = err as { code?: string; message?: string };
             const msg = error?.message || '';
-            if (msg.includes('popup')) {
-                setSignInError(t('auth.popupBlocked') || 'Sign-in popup was blocked. Please allow popups.');
+            const code = error?.code || '';
+            if (code === 'auth/popup-blocked' || (msg.toLowerCase().includes('popup') && !msg.toLowerCase().includes('closed-by-user'))) {
+                setSignInError(t('auth.popupBlocked') || 'Sign-in popup was blocked. Please allow popups for this site and try again.');
+            } else if (code === 'auth/popup-closed-by-user' || msg.includes('closed-by-user')) {
+                // User closed popup
             } else {
                 setSignInError(t('auth.signInFailed') || 'Unable to sign in with Google. Please try again.');
             }

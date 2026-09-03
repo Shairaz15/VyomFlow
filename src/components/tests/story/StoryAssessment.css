@@ -156,10 +156,11 @@
 }
 
 .instruction-step-item {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    align-items: start;
     gap: 0.75rem;
-    padding: 0.5rem 0.85rem;
+    padding: 0.55rem 0.85rem;
     background: rgba(247, 244, 236, 0.6);
     border: 1px solid rgba(23, 50, 77, 0.06);
     border-radius: 12px;
@@ -178,16 +179,14 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    margin-top: 1px;
 }
 
 .step-content {
-    display: flex;
-    align-items: baseline;
-    gap: 0.4rem;
+    display: block;
     font-size: 0.85rem;
     color: #40566B;
-    line-height: 1.35;
-    flex-wrap: wrap;
+    line-height: 1.4;
 }
 
 .step-content strong {
@@ -533,8 +532,15 @@
     text-align: left;
     margin: 0.75rem 0 1rem;
     min-height: 80px;
-    max-height: 120px;
+    max-height: 130px;
     overflow-y: auto;
+}
+
+.live-transcript-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
 }
 
 .live-label {
@@ -544,7 +550,61 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 0.35rem;
+}
+
+.live-pulse-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #DC2626;
+    background: rgba(220, 38, 38, 0.12);
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+    animation: vyomPulse 1.5s infinite;
+}
+
+.live-text-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.live-native-text {
+    font-size: 0.875rem;
+    color: #17324D;
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.live-english-translation {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed rgba(79, 124, 120, 0.25);
+    margin-top: 0.2rem;
+}
+
+.lang-tag-en {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #4F7C78;
+    background: rgba(79, 124, 120, 0.12);
+    border: 1px solid rgba(79, 124, 120, 0.25);
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.live-english-text {
+    font-size: 0.825rem;
+    color: #4F7C78;
+    font-style: italic;
+    line-height: 1.45;
+    margin: 0;
 }
 
 .live-text {
@@ -976,7 +1036,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
+    padding: calc(1.5rem + env(safe-area-inset-top)) 1.25rem calc(1.5rem + env(safe-area-inset-bottom));
 }
 
 .story-exit-modal {
@@ -1351,8 +1411,27 @@
 }
 
 .dark .live-text,
-[data-theme="dark"] .live-text {
+.dark .live-native-text,
+[data-theme="dark"] .live-text,
+[data-theme="dark"] .live-native-text {
     color: #F7F4EC;
+}
+
+.dark .live-english-translation,
+[data-theme="dark"] .live-english-translation {
+    border-top-color: rgba(0, 201, 183, 0.25) !important;
+}
+
+.dark .lang-tag-en,
+[data-theme="dark"] .lang-tag-en {
+    color: #00C9B7 !important;
+    background: rgba(0, 201, 183, 0.15) !important;
+    border-color: rgba(0, 201, 183, 0.35) !important;
+}
+
+.dark .live-english-text,
+[data-theme="dark"] .live-english-text {
+    color: #8FAF8B !important;
 }
 
 .dark .radar-title,
@@ -1405,7 +1484,7 @@
 
 @media (max-width: 767px) {
     .story-assessment-container {
-        padding: 1rem 0.75rem 3.5rem;
+        padding: 1rem 0.75rem calc(3.5rem + env(safe-area-inset-bottom));
     }
 
     .instructions-card,
@@ -1415,7 +1494,7 @@
     .story-recorder-card,
     .processing-card,
     .results-overview-card {
-        padding: 1.5rem 1rem;
+        padding: 1.25rem 0.85rem;
         border-radius: 18px;
     }
 
@@ -1432,8 +1511,30 @@
         grid-template-columns: 1fr;
     }
 
-    .story-primary-start-btn,
+    .results-actions {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .results-actions .story-retake-btn,
+    .results-actions .story-back-assessments-btn,
+    .story-retake-btn,
     .story-back-assessments-btn {
+        width: 100%;
+        max-width: 100%;
+        min-height: 48px;
+    }
+
+    .radar-chart-card.full-width-radar {
+        padding: 0.4rem 0.25rem 0.2rem;
+    }
+
+    .radar-axis-tick {
+        font-size: 9px;
+    }
+
+    .story-primary-start-btn {
         max-width: 100%;
         min-height: 48px;
     }

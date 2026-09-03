@@ -6,10 +6,13 @@ import {
 } from "../data/motivationalQuotes";
 
 describe("Motivational Quotes Module", () => {
-    it("should contain curated quotes with non-empty text and author", () => {
-        expect(MOTIVATIONAL_QUOTES.length).toBeGreaterThan(0);
+    it("should contain exactly 100 curated quotes from real people with non-empty text, author, and unique IDs", () => {
+        expect(MOTIVATIONAL_QUOTES.length).toBe(100);
+        const seenIds = new Set<string>();
         for (const q of MOTIVATIONAL_QUOTES) {
             expect(q.id).toBeTruthy();
+            expect(seenIds.has(q.id)).toBe(false);
+            seenIds.add(q.id);
             expect(q.text.length).toBeGreaterThan(10);
             expect(q.author.length).toBeGreaterThan(0);
         }

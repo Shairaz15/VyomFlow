@@ -138,8 +138,11 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
             const verbatimUrl = isLocalDev
                 ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000`
                 : `${import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com'}?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
+            const translateUrl = isLocalDev
+                ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000`
+                : `${import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com'}?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
 
-            console.log('[StoryRecorder][Sarvam] Connecting to WebSocket proxy:', verbatimUrl);
+            console.log('[StoryRecorder][Sarvam] Connecting to WebSocket proxies:', verbatimUrl);
             const wsVerbatim = new WebSocket(verbatimUrl);
 
             wsVerbatim.onmessage = (event) => {
@@ -171,11 +174,68 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
             };
 
             wsVerbatimRef.current = wsVerbatim;
+
+            // Connect simultaneous English translation socket
+            try {
+                const wsTranslate = new WebSocket(translateUrl);
+                wsTranslate.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        if (msg.type === 'data') {
+                            const text = msg.data?.transcript?.trim() || '';
+                            if (text) {
+                                setEnglishTranslation(prev => (prev ? `${prev} ${text}` : text));
+                            }
+                        } else if (msg.type === 'transcript' && msg.text) {
+                            const text = msg.text.trim();
+                            if (text) {
+                                setEnglishTranslation(prev => (prev ? `${prev} ${text}` : text));
+                            }
+                        }
+                    } catch {}
+                };
+                wsTranslateRef.current = wsTranslate;
+            } catch (wsTrErr) {
+                console.warn('[StoryRecorder] Translate WebSocket connection skipped:', wsTrErr);
+            }
         } catch (e: any) {
             console.log('[StoryRecorder][Sarvam] WebSocket proxy error:', e?.message);
             setDiagnosticStatus("REST API Direct Mode");
         }
     };
+
+    // Real-time debounced English translation fallback
+    useEffect(() => {
+        if (!isRecording) return;
+        const textToTranslate = (verbatimTranscript || transcript).trim();
+        if (!textToTranslate || textToTranslate.length < 4) return;
+
+        const debounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch('/api/sarvam-translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input: textToTranslate,
+                        source_language_code: detectedLanguage && detectedLanguage !== 'unknown' && detectedLanguage !== 'Auto-detecting...' && detectedLanguage !== 'Listening...' ? detectedLanguage : 'hi-IN',
+                        target_language_code: 'en-IN',
+                        model: 'sarvam-translate:v1',
+                        mode: 'formal'
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.translated_text && data.translated_text.trim()) {
+                        setEnglishTranslation(data.translated_text.trim());
+                    }
+                }
+            } catch {
+                // Non-critical background live translation
+            }
+        }, 1200);
+
+        return () => clearTimeout(debounceTimer);
+    }, [verbatimTranscript, transcript, isRecording, detectedLanguage]);
 
     // Universal Recording Handler with Live Preview + Real-Time Acoustic Tracker
     const startRecording = async () => {
@@ -290,17 +350,21 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                         pauseTrackerRef.current.lastStateChangeTime = now;
                     }
 
-                    // 2. Stream real-time WAV payload to WebSocket if open
+                    // 2. Stream real-time WAV payload to WebSockets if open
+                    const wavBase64 = convertFloat32ToWavBase64(inputData, 16000);
+                    const payload = JSON.stringify({
+                        audio: {
+                            data: wavBase64,
+                            sample_rate: '16000',
+                            encoding: 'audio/wav',
+                        },
+                    });
+
                     if (wsVerbatimRef.current?.readyState === WebSocket.OPEN) {
-                        const wavBase64 = convertFloat32ToWavBase64(inputData, 16000);
-                        const payload = JSON.stringify({
-                            audio: {
-                                data: wavBase64,
-                                sample_rate: '16000',
-                                encoding: 'audio/wav',
-                            },
-                        });
                         wsVerbatimRef.current.send(payload);
+                    }
+                    if (wsTranslateRef.current?.readyState === WebSocket.OPEN) {
+                        wsTranslateRef.current.send(payload);
                     }
                 };
 
@@ -470,7 +534,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
 
         setTranscript(sarvamNativeScript || activeText);
         setVerbatimTranscript(sarvamNativeScript || activeText);
-        setEnglishTranslation(sarvamEnglishTranslation);
+        setEnglishTranslation(sarvamEnglishTranslation || englishTranslation);
         
         let displayLang: string = sarvamDetectedLang;
         if (sarvamDetectedLang === 'hi-IN') displayLang = 'Hindi (Devanagari 🇮🇳)';
@@ -491,7 +555,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         onComplete({
             transcript: activeText,
             verbatimTranscript: sarvamNativeScript || activeText,
-            englishTranslation: sarvamEnglishTranslation || activeText,
+            englishTranslation: sarvamEnglishTranslation || englishTranslation || activeText,
             durationMs: duration,
             pauseCount: pauseTrackerRef.current.pauseCount,
             pauseDurationMs: pauseTrackerRef.current.totalPauseDurationMs
@@ -554,7 +618,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 </div>
             </div>
 
-            {/* Audio Waveform / Visualizer */}
+            {/* Audio Waveform / Visualizer / Central Mic Icon Button */}
             <div className="visualizer-wrapper my-2">
                 {isRecording ? (
                     <div className="waveform-visualizer active">
@@ -570,45 +634,51 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                         <span>Processing Audio with Sarvam AI...</span>
                     </div>
                 ) : (
-                    <div 
+                    <button 
+                        type="button"
                         className="mic-circle" 
                         onClick={startRecording}
+                        aria-label="Start recording"
                         title="Click to start recording"
                     >
                         <Icon name="mic" size={28} />
-                    </div>
+                    </button>
                 )}
                 {!isProcessingAudio && (
                     <p className="player-state-label mt-1 text-xs">
-                        {isRecording ? "Listening to your retelling..." : "Ready to record"}
+                        {isRecording ? "Listening to your retelling..." : "Tap microphone to begin"}
                     </p>
                 )}
             </div>
 
-            {/* Live Speech Transcript Box */}
+            {/* Live Speech Transcript Box with Simultaneous English Translation */}
             <div 
                 className="live-transcript-box"
                 role="log"
                 aria-live="polite"
                 aria-label="Speech transcript"
             >
-                <span className="live-label">LIVE TRANSCRIPT</span>
+                <div className="live-transcript-header">
+                    <span className="live-label">LIVE TRANSCRIPT</span>
+                    {isRecording && <span className="live-pulse-badge">LIVE</span>}
+                </div>
                 {transcript || verbatimTranscript ? (
-                    <div className="live-text">
-                        <p className="m-0 text-sm leading-relaxed">{verbatimTranscript || transcript}</p>
-                        {englishTranslation && (
-                            <p className="text-xs text-[#4F7C78] dark:text-[#8FAF8B] mt-2 border-t border-[#4F7C78]/20 dark:border-white/10 pt-1.5 italic m-0">
-                                Translation: {englishTranslation}
-                            </p>
+                    <div className="live-text-container">
+                        <p className="live-native-text">{verbatimTranscript || transcript}</p>
+                        {englishTranslation && englishTranslation.trim().toLowerCase() !== (verbatimTranscript || transcript).trim().toLowerCase() && (
+                            <div className="live-english-translation">
+                                <span className="lang-tag-en">EN</span>
+                                <p className="live-english-text">{englishTranslation}</p>
+                            </div>
                         )}
                     </div>
                 ) : (
-                    <p className="text-xs text-[#63788A] dark:text-[#A0B0BC] italic m-0">
+                    <p className="transcript-idle-hint">
                         {isRecording 
-                            ? "🎙️ Listening... Speak naturally in your chosen language." 
+                            ? "🎙️ Listening... Speak naturally in your chosen language. Live transcription and English subtitles will appear simultaneously." 
                             : isProcessingAudio
                             ? "⏳ Analyzing speech audio..."
-                            : "Click Start Recording to begin retelling the story..."}
+                            : "Tap the microphone icon above to begin retelling the story..."}
                     </p>
                 )}
                 <div ref={transcriptEndRef} />
@@ -625,20 +695,9 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="story-action-controls flex flex-col items-center justify-center gap-2 mt-3">
-                {!isRecording ? (
-                    <button 
-                        type="button"
-                        onClick={startRecording} 
-                        className="story-primary-start-btn"
-                        disabled={isProcessingAudio}
-                        aria-label="Start recording"
-                    >
-                        <Icon name="mic" size={18} className="mr-2" />
-                        {isProcessingAudio ? "Processing..." : "Start Recording"}
-                    </button>
-                ) : (
+            {/* Action Buttons: Only shown while recording */}
+            {isRecording && (
+                <div className="story-action-controls flex flex-col items-center justify-center gap-2 mt-3">
                     <button 
                         type="button"
                         onClick={stopRecording} 
@@ -648,13 +707,13 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                         <span className="stop-square" />
                         Finish Recording
                     </button>
-                )}
-                {isRecording && timer < 15 && (
-                    <p className="text-xs text-[#63788A] dark:text-[#A0B0BC] m-0">
-                        Try to speak for at least 15 seconds for robust story recall analysis
-                    </p>
-                )}
-            </div>
+                    {timer < 15 && (
+                        <p className="text-xs text-[#63788A] dark:text-[#A0B0BC] m-0">
+                            Try to speak for at least 15 seconds for robust story recall analysis
+                        </p>
+                    )}
+                </div>
+            )}
         </Card>
     );
 }

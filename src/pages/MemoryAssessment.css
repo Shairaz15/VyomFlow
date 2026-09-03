@@ -377,20 +377,58 @@
 /* Responsive */
 @media (max-width: 640px) {
     .memory-assessment {
-        padding: 1rem;
+        padding: 1rem 0.75rem calc(2rem + env(safe-area-inset-bottom));
+        min-height: 100dvh;
     }
     
     .word-display {
-        font-size: 2.5rem;
+        font-size: clamp(2.2rem, 8vw, 3rem);
     }
     
+    .number-grid {
+        max-width: 240px;
+        gap: 10px;
+    }
+
     .number-button {
-        width: 60px;
-        height: 60px;
+        width: 64px;
+        height: 64px;
         font-size: 1.4rem;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .recall-form {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .recall-input {
+        font-size: 1rem;
+        padding: 0.75rem 0.85rem;
+        min-height: 48px;
+    }
+
+    .recalled-words {
+        max-width: 100%;
+        gap: 0.4rem;
+    }
+
+    .recalled-word {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.875rem;
     }
     
     .completion-actions {
         flex-direction: column;
+        width: 100%;
+    }
+
+    .completion-actions button {
+        width: 100%;
+        min-height: 48px;
     }
 }

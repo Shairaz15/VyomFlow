@@ -28,6 +28,21 @@ const PROMPTS = [
 
 const SARVAM_API_KEY = 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
 
+const formatDetectedLanguage = (code: string): string => {
+    if (!code || code === 'Auto-detecting...' || code === 'Listening...') return code;
+    if (code === 'hi-IN') return 'Hindi (Devanagari 🇮🇳)';
+    if (code === 'en-IN' || code === 'en-US') return 'English 🇬🇧';
+    if (code === 'ta-IN') return 'Tamil 🇮🇳';
+    if (code === 'te-IN') return 'Telugu 🇮🇳';
+    if (code === 'mr-IN') return 'Marathi 🇮🇳';
+    if (code === 'bn-IN') return 'Bengali 🇮🇳';
+    if (code === 'gu-IN') return 'Gujarati 🇮🇳';
+    if (code === 'kn-IN') return 'Kannada 🇮🇳';
+    if (code === 'ml-IN') return 'Malayalam 🇮🇳';
+    if (code === 'pa-IN') return 'Punjabi 🇮🇳';
+    return code;
+};
+
 export function LanguageAssessment() {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
@@ -38,10 +53,12 @@ export function LanguageAssessment() {
     // State
     const [phase, setPhase] = useState<Phase>("instructions");
     const [isRecording, setIsRecording] = useState(false);
+    const [warmupTranscript, setWarmupTranscript] = useState("");
     const [transcript, setTranscript] = useState("");
     const [verbatimTranscript, setVerbatimTranscript] = useState("");
     const [englishTranslation, setEnglishTranslation] = useState("");
     const [detectedLanguage, setDetectedLanguage] = useState<string>("Auto-detecting...");
+    const [diagnosticStatus, setDiagnosticStatus] = useState<string>("Ready");
 
     const [prompt, setPrompt] = useState("");
     const [timer, setTimer] = useState(0);
@@ -60,6 +77,7 @@ export function LanguageAssessment() {
     const audioContextRef = useRef<AudioContext | null>(null);
     const processorRef = useRef<ScriptProcessorNode | null>(null);
     const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const phaseRef = useRef<Phase>(phase);
 
     // Real-Time Acoustic & Voice Activity Detection (VAD) Tracker
     const pauseTrackerRef = useRef<{
@@ -81,10 +99,16 @@ export function LanguageAssessment() {
     const transcriptEndRef = useRef<HTMLDivElement>(null);
     const isRecordingRef = useRef<boolean>(false);
 
+    // Keep phaseRef in sync with phase state
+    useEffect(() => {
+        phaseRef.current = phase;
+    }, [phase]);
+
     // Cleanup audio on unmount
     useEffect(() => {
         return () => {
             isRecordingRef.current = false;
+            cleanupAudioResources();
             if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
                 try {
                     mediaRecorderRef.current.stop();
@@ -125,7 +149,7 @@ export function LanguageAssessment() {
         if (transcriptEndRef.current) {
             transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [transcript, verbatimTranscript]);
+    }, [transcript, verbatimTranscript, warmupTranscript]);
 
     // Select random prompt on mount
     useEffect(() => {
@@ -191,6 +215,9 @@ export function LanguageAssessment() {
             const verbatimUrl = isLocalDev
                 ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000`
                 : `${import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com'}?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
+            const translateUrl = isLocalDev
+                ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000`
+                : `${import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com'}?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
 
             console.log("[LanguageAssessment] Connecting to Sarvam WebSocket:", verbatimUrl);
             const wsVerbatim = new WebSocket(verbatimUrl);
@@ -198,6 +225,7 @@ export function LanguageAssessment() {
 
             wsVerbatim.onopen = () => {
                 console.log("[LanguageAssessment] ✅ Sarvam AI WebSocket connected successfully!");
+                setDiagnosticStatus("WebSocket Live Stream: Connected");
             };
 
             wsVerbatim.onmessage = (event) => {
@@ -206,15 +234,23 @@ export function LanguageAssessment() {
                     if (data.type === 'data' && data.data?.transcript) {
                         const newText = data.data.transcript.trim();
                         if (newText) {
-                            setVerbatimTranscript(prev => (prev ? `${prev} ${newText}` : newText));
-                            setTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            if (phaseRef.current === 'warmup') {
+                                setWarmupTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            } else {
+                                setVerbatimTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                                setTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            }
                         }
                         if (data.data?.language_code) setDetectedLanguage(data.data.language_code);
                     } else if (data.type === 'transcript' && data.text) {
                         const newText = data.text.trim();
                         if (newText) {
-                            setVerbatimTranscript(prev => (prev ? `${prev} ${newText}` : newText));
-                            setTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            if (phaseRef.current === 'warmup') {
+                                setWarmupTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            } else {
+                                setVerbatimTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                                setTranscript(prev => (prev ? `${prev} ${newText}` : newText));
+                            }
                         }
                         if (data.language_code) setDetectedLanguage(data.language_code);
                     }
@@ -224,23 +260,132 @@ export function LanguageAssessment() {
             };
 
             wsVerbatim.onerror = (err) => {
-                console.warn("[LanguageAssessment] Sarvam WebSocket event:", err);
+                console.warn("[LanguageAssessment] Sarvam WebSocket event (fallback to direct):", err);
+                setDiagnosticStatus("REST API Mode");
             };
+
+            // Connect simultaneous English translation stream
+            try {
+                const wsTranslate = new WebSocket(translateUrl);
+                wsTranslate.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'data' && data.data?.transcript) {
+                            const newText = data.data.transcript.trim();
+                            if (newText) {
+                                setEnglishTranslation(prev => (prev ? `${prev} ${newText}` : newText));
+                            }
+                        } else if (data.type === 'transcript' && data.text) {
+                            const newText = data.text.trim();
+                            if (newText) {
+                                setEnglishTranslation(prev => (prev ? `${prev} ${newText}` : newText));
+                            }
+                        }
+                    } catch {}
+                };
+                wsTranslateRef.current = wsTranslate;
+            } catch (trErr) {
+                console.warn("[LanguageAssessment] Translate WebSocket connection skipped:", trErr);
+            }
         } catch {
             console.warn("WebSocket proxy connection failed. Will use Sarvam REST live polling.");
+            setDiagnosticStatus("REST API Mode");
         }
+    };
+
+    // Real-time debounced English translation fallback
+    useEffect(() => {
+        if (!isRecording) return;
+        const textToTranslate = (verbatimTranscript || transcript).trim();
+        if (!textToTranslate || textToTranslate.length < 4) return;
+
+        const debounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch('/api/sarvam-translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input: textToTranslate,
+                        source_language_code: detectedLanguage && detectedLanguage !== 'unknown' && detectedLanguage !== 'Auto-detecting...' ? detectedLanguage : 'hi-IN',
+                        target_language_code: 'en-IN',
+                        model: 'sarvam-translate:v1',
+                        mode: 'formal'
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.translated_text && data.translated_text.trim()) {
+                        setEnglishTranslation(data.translated_text.trim());
+                    }
+                }
+            } catch {
+                // Non-critical background live translation
+            }
+        }, 1200);
+
+        return () => clearTimeout(debounceTimer);
+    }, [verbatimTranscript, transcript, isRecording, detectedLanguage]);
+
+    // Cleanup Audio Resources
+    const cleanupAudioResources = () => {
+        if (processorRef.current && audioContextRef.current) {
+            try {
+                processorRef.current.disconnect();
+                sourceRef.current?.disconnect();
+                audioContextRef.current.close();
+            } catch {}
+        }
+
+        const flushMsg = JSON.stringify({ type: 'flush' });
+        [wsVerbatimRef.current, wsTranslateRef.current].forEach(ws => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try {
+                    ws.send(flushMsg);
+                    ws.close();
+                } catch {}
+            }
+        });
+
+        wsVerbatimRef.current = null;
+        wsTranslateRef.current = null;
+    };
+
+    // Reset Assessment State completely (ensures trial warmup text never leaks)
+    const resetAssessmentState = () => {
+        setTranscript("");
+        setVerbatimTranscript("");
+        setEnglishTranslation("");
+        setDetectedLanguage("Auto-detecting...");
+        setTimer(0);
+        setDiagnosticStatus("Ready");
+        setErrorMessage(null);
+        audioChunksRef.current = [];
+        pauseTrackerRef.current = {
+            isSilent: false,
+            lastStateChangeTime: 0,
+            pauseCount: 0,
+            totalPauseDurationMs: 0,
+            totalSpeechDurationMs: 0
+        };
     };
 
     const startRecording = async () => {
         try {
             setErrorMessage(null);
-            setTranscript("");
-            setVerbatimTranscript("");
-            setEnglishTranslation("");
-            setDetectedLanguage("Auto-detecting...");
             setTimer(0);
             audioChunksRef.current = [];
             isRecordingRef.current = true;
+
+            if (phaseRef.current === 'warmup') {
+                setWarmupTranscript("");
+                setDiagnosticStatus("Listening to sound check...");
+            } else {
+                setTranscript("");
+                setVerbatimTranscript("");
+                setEnglishTranslation("");
+                setDetectedLanguage("Auto-detecting...");
+                setDiagnosticStatus("Recording active...");
+            }
 
             // Reset Acoustic VAD Tracker
             pauseTrackerRef.current = {
@@ -265,6 +410,8 @@ export function LanguageAssessment() {
                 mimeType = 'audio/webm;codecs=opus';
             } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
                 mimeType = 'audio/mp4';
+            } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+                mimeType = 'audio/aac';
             }
 
             const recorder = new MediaRecorder(stream, { mimeType });
@@ -285,6 +432,9 @@ export function LanguageAssessment() {
             try {
                 const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
                 const audioCtx = new AudioContextClass({ sampleRate: 16000 });
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
                 audioContextRef.current = audioCtx;
 
                 const sourceNode = audioCtx.createMediaStreamSource(stream);
@@ -323,17 +473,21 @@ export function LanguageAssessment() {
                         tracker.lastStateChangeTime = now;
                     }
 
-                    // Forward real-time 16kHz WAV payload to streaming Sarvam WebSocket
+                    // Forward real-time 16kHz WAV payload to streaming Sarvam WebSockets
+                    const wavBase64 = convertFloat32ToWavBase64(inputData, 16000);
+                    const payload = JSON.stringify({
+                        audio: {
+                            data: wavBase64,
+                            sample_rate: '16000',
+                            encoding: 'audio/wav'
+                        }
+                    });
+
                     if (wsVerbatimRef.current?.readyState === WebSocket.OPEN) {
-                        const wavBase64 = convertFloat32ToWavBase64(inputData, 16000);
-                        const payload = JSON.stringify({
-                            audio: {
-                                data: wavBase64,
-                                sample_rate: '16000',
-                                encoding: 'audio/wav'
-                            }
-                        });
                         wsVerbatimRef.current.send(payload);
+                    }
+                    if (wsTranslateRef.current?.readyState === WebSocket.OPEN) {
+                        wsTranslateRef.current.send(payload);
                     }
                 };
 
@@ -343,9 +497,14 @@ export function LanguageAssessment() {
                 console.warn("Real-time Web Audio VAD initialization skipped:", err);
             }
 
-        } catch (err) {
+        } catch (err: any) {
             console.error("Microphone access failed:", err);
-            setErrorMessage("Could not access microphone. Please ensure microphone permissions are granted.");
+            const isDenied = err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError';
+            const customMsg = isDenied
+                ? "Microphone permission was denied. Please allow microphone access in your browser URL bar."
+                : `Could not access microphone (${err.name || 'Error'}): ${err.message}`;
+            setErrorMessage(customMsg);
+            setDiagnosticStatus("Microphone Error");
             isRecordingRef.current = false;
             setIsRecording(false);
         }
@@ -367,42 +526,62 @@ export function LanguageAssessment() {
             tracker.totalSpeechDurationMs += durationInFinalState;
         }
 
-        // Close WebSockets
-        try {
-            wsVerbatimRef.current?.close();
-            wsVerbatimRef.current = null;
-        } catch {}
-        try {
-            wsTranslateRef.current?.close();
-            wsTranslateRef.current = null;
-        } catch {}
+        const recorderWasActive = mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive';
 
-        // Stop Audio Processing
-        try {
-            processorRef.current?.disconnect();
-            sourceRef.current?.disconnect();
-            audioContextRef.current?.close();
-        } catch {}
+        if (recorderWasActive && mediaRecorderRef.current) {
+            try {
+                mediaRecorderRef.current.requestData();
+            } catch {}
 
-        // Stop MediaRecorder and trigger biomarker extraction
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.onstop = async () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+                const blobType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+                const audioBlob = new Blob(audioChunksRef.current, { type: blobType });
 
-                if (phase === 'warmup') {
+                cleanupAudioResources();
+
+                try {
+                    mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+                } catch {}
+
+                if (phaseRef.current === 'warmup') {
+                    // Clean slate for the actual assessment: trial text from fox jumps warmup NEVER leaks!
+                    resetAssessmentState();
                     setPhase('assessment');
-                } else if (phase === 'assessment') {
-                    await processAssessmentResults(audioBlob);
+                } else if (phaseRef.current === 'assessment') {
+                    if (audioBlob.size > 100) {
+                        await processAssessmentResults(audioBlob);
+                    } else {
+                        processFallbackResults();
+                    }
                 }
             };
+
             mediaRecorderRef.current.stop();
+        } else {
+            cleanupAudioResources();
+            if (phaseRef.current === 'warmup') {
+                resetAssessmentState();
+                setPhase('assessment');
+            } else if (phaseRef.current === 'assessment') {
+                processFallbackResults();
+            }
         }
     };
+
+    // Fallback if audio blob was empty
+    const processFallbackResults = () => {
+        const activeText = verbatimTranscript || transcript || englishTranslation || "Spoken response by user.";
+        setTranscript(activeText);
+        setVerbatimTranscript(activeText);
+        setPhase('processing');
+        processAssessmentResults();
+    };
+
     // Process audio with Sarvam AI Live Streaming Transcript + Acoustic Biomarkers
     const processAssessmentResults = async (_audioBlob?: Blob) => {
         setPhase('processing');
         setIsProcessingAudio(true);
+        setDiagnosticStatus("Analyzing Speech Biomarkers...");
 
         const duration = Date.now() - startTimeRef.current;
         const liveCaptured = verbatimTranscript.trim() || transcript.trim();
@@ -412,7 +591,7 @@ export function LanguageAssessment() {
 
         try {
             // If non-English detected, translate to English for semantic scoring
-            if (detectedLang && detectedLang !== 'en-IN' && detectedLang !== 'en-US' && detectedLang !== 'unknown') {
+            if (detectedLang && detectedLang !== 'en-IN' && detectedLang !== 'en-US' && detectedLang !== 'unknown' && detectedLang !== 'Auto-detecting...') {
                 try {
                     const translatePayload = JSON.stringify({
                         input: sarvamTranscript,
@@ -455,6 +634,7 @@ export function LanguageAssessment() {
         }
 
         setIsProcessingAudio(false);
+        setDiagnosticStatus("Processed Successfully");
 
         // Fallback demo text if speech was totally silent
         const vad = pauseTrackerRef.current;
@@ -527,6 +707,7 @@ export function LanguageAssessment() {
             try {
                 mediaRecorderRef.current?.stop();
                 mediaRecorderRef.current?.stream.getTracks().forEach(t => t.stop());
+                cleanupAudioResources();
             } catch {
                 // Ignore cleanup errors
             }
@@ -542,10 +723,8 @@ export function LanguageAssessment() {
     const handleRetake = () => {
         setPhase("instructions");
         setResult(null);
-        setTranscript("");
-        setVerbatimTranscript("");
-        setEnglishTranslation("");
-        setTimer(0);
+        setWarmupTranscript("");
+        resetAssessmentState();
         setIsRecording(false);
         setPrompt(PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
     };
@@ -746,7 +925,11 @@ export function LanguageAssessment() {
                                     <Button 
                                         variant="primary" 
                                         className="story-primary-start-btn"
-                                        onClick={() => setPhase('warmup')}
+                                        onClick={() => {
+                                            resetAssessmentState();
+                                            setWarmupTranscript("");
+                                            setPhase('warmup');
+                                        }}
                                     >
                                         Enable Microphone & Continue
                                     </Button>
@@ -757,137 +940,251 @@ export function LanguageAssessment() {
 
                     {/* ── Phase 3: Warmup Sound Check ── */}
                     {phase === 'warmup' && (
-                        <div className="lang-step-container animate-fadeIn">
-                            <Card className="lang-phase-card">
-                                <div className="lang-phase-tag">Sound Check</div>
-                                <h2 className="lang-phase-title vyom-serif">Microphone Sound Check</h2>
-                                <p className="lang-phase-subtitle">
-                                    Read aloud: <em>"The quick brown fox jumps over the lazy dog."</em>
+                        <div className="story-stage-viewport lang-step-container animate-fadeIn">
+                            <Card className="story-recorder-card lang-phase-card">
+                                <div className="narration-badge">
+                                    <Icon name="mic" size={16} />
+                                    <span>Sound Check Phase</span>
+                                </div>
+                                
+                                <h2 className="select-card-title text-xl font-semibold text-[#17324D] dark:text-[#F7F4EC] mt-1 mb-1 vyom-serif">
+                                    Microphone Sound Check
+                                </h2>
+                                <p className="recorder-sub">
+                                    Let's verify your microphone and speech detection before starting the assessment.
                                 </p>
 
-                                <div className="lang-live-transcript-box">
-                                    {transcript ? (
-                                        transcript
-                                    ) : isRecording ? (
-                                        <span style={{ opacity: 0.8, fontStyle: 'italic' }}>
-                                            🎙️ Listening... Speak aloud: "The quick brown fox jumps over the lazy dog."
-                                        </span>
-                                    ) : (
-                                        "Click Start Warmup to test your microphone."
-                                    )}
-                                </div>
-
-                                <div className="instructions-action-row" style={{ marginTop: '1rem', gap: '0.75rem' }}>
-                                    {!isRecording ? (
-                                        <Button 
-                                            variant="primary" 
-                                            className="story-primary-start-btn lang-record-btn"
-                                            onClick={startRecording}
-                                        >
-                                            Start Warmup 🎙️
-                                        </Button>
-                                    ) : (
-                                        <Button 
-                                            variant="secondary" 
-                                            className="lang-stop-btn"
-                                            onClick={stopRecording}
-                                        >
-                                            Stop & Continue →
-                                        </Button>
-                                    )}
-                                </div>
-                            </Card>
-                        </div>
-                    )}
-
-                    {/* ── Phase 4: Active Assessment Recording Phase ── */}
-                    {phase === 'assessment' && (
-                        <div className="lang-active-container animate-fadeIn">
-                            <Card className="lang-recording-card">
-                                {/* Header with Language & Timer */}
-                                <div className="lang-recording-header">
-                                    <div className="lang-timer-badge">
-                                        <span className="timer-dot"></span>
-                                        <span>⏱️ {timer}s</span>
-                                    </div>
-                                    <div className="lang-detected-badge">
-                                        <span>🌐 {detectedLanguage}</span>
-                                    </div>
-                                </div>
-
-                                {/* Prompt Box */}
                                 <div className="lang-prompt-box">
-                                    <span className="lang-prompt-label">Your Speaking Prompt</span>
-                                    <h2 className="lang-prompt-text vyom-serif">{prompt}</h2>
+                                    <span className="lang-prompt-label">Please Read Aloud</span>
+                                    <h3 className="lang-prompt-text vyom-serif">
+                                        "The quick brown fox jumps over the lazy dog."
+                                    </h3>
                                 </div>
 
-                                {/* Audio Wave Visualizer */}
-                                <div className="lang-visualizer-container">
+                                {/* Audio Waveform / Visualizer / Central Mic Icon Button */}
+                                <div className="visualizer-wrapper my-2">
                                     {isRecording ? (
-                                        <div className="lang-visualizer-bars">
-                                            <span className="v-bar"></span>
-                                            <span className="v-bar"></span>
-                                            <span className="v-bar"></span>
-                                            <span className="v-bar"></span>
-                                            <span className="v-bar"></span>
+                                        <div className="waveform-visualizer active">
+                                            <span className="bar bar1"></span>
+                                            <span className="bar bar2"></span>
+                                            <span className="bar bar3"></span>
+                                            <span className="bar bar4"></span>
+                                            <span className="bar bar5"></span>
                                         </div>
                                     ) : (
-                                        <div className="lang-ready-status">Click Start Recording to begin</div>
+                                        <button 
+                                            type="button"
+                                            className="mic-circle" 
+                                            onClick={startRecording}
+                                            aria-label="Start sound check"
+                                            title="Click to test microphone"
+                                        >
+                                            <Icon name="mic" size={28} />
+                                        </button>
                                     )}
+                                    <p className="player-state-label mt-1 text-xs">
+                                        {isRecording ? "Listening to your voice..." : "Tap microphone to test"}
+                                    </p>
                                 </div>
 
-                                {/* Speech Transcript Preview */}
-                                <div className="lang-transcript-preview-box">
-                                    {verbatimTranscript || transcript ? (
-                                        <div className="transcript-body">
-                                            <p className="transcript-native">{verbatimTranscript || transcript}</p>
-                                            {englishTranslation && (
-                                                <p className="transcript-translation">
-                                                    🇬🇧 English: {englishTranslation}
-                                                </p>
-                                            )}
+                                {/* Live Speech Transcript Box with Simultaneous English */}
+                                <div 
+                                    className="live-transcript-box"
+                                    role="log"
+                                    aria-live="polite"
+                                    aria-label="Warmup speech transcript"
+                                >
+                                    <div className="live-transcript-header">
+                                        <span className="live-label">LIVE TRANSCRIPT PREVIEW</span>
+                                        {isRecording && <span className="live-pulse-badge">LIVE</span>}
+                                    </div>
+                                    {warmupTranscript ? (
+                                        <div className="live-text-container">
+                                            <p className="live-native-text">{warmupTranscript}</p>
                                         </div>
                                     ) : (
                                         <p className="transcript-idle-hint">
                                             {isRecording 
-                                                ? "🎙️ Listening to your voice... Speak naturally. Transcribed text will appear here as you speak."
-                                                : "Your spoken response will appear here as you speak."}
+                                                ? "🎙️ Listening... Read the sentence above aloud." 
+                                                : "Tap the microphone icon above to test your microphone."}
                                         </p>
                                     )}
                                     <div ref={transcriptEndRef} />
                                 </div>
 
-                                {errorMessage && (
-                                    <div className="lang-error-alert">
-                                        ⚠️ {errorMessage}
+                                {/* Action Buttons: Only show stop or continue when ready */}
+                                <div className="story-action-controls flex flex-col items-center justify-center gap-2 mt-3">
+                                    {isRecording ? (
+                                        <button 
+                                            type="button" 
+                                            className="story-finish-record-btn"
+                                            onClick={stopRecording}
+                                        >
+                                            <span className="stop-square" />
+                                            Stop & Continue to Test →
+                                        </button>
+                                    ) : warmupTranscript ? (
+                                        <button
+                                            type="button"
+                                            className="story-primary-start-btn"
+                                            style={{ background: '#059669' }}
+                                            onClick={() => {
+                                                cleanupAudioResources();
+                                                resetAssessmentState();
+                                                setPhase('assessment');
+                                            }}
+                                        >
+                                            Continue to Test →
+                                        </button>
+                                    ) : null}
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+
+                    {/* ── Phase 4: Active Assessment Recording Phase (Matching Story Recall Retell Exactly) ── */}
+                    {phase === 'assessment' && (
+                        <div className="story-stage-viewport lang-active-container animate-fadeIn">
+                            <Card className="story-recorder-card animate-fadeIn">
+                                {/* Top Phase Badge */}
+                                {!isRecording ? (
+                                    <div className="narration-badge">
+                                        <Icon name="mic" size={16} />
+                                        <span>Spoken Response Phase</span>
+                                    </div>
+                                ) : (
+                                    <div className="recording-indicator">
+                                        <span className="pulsing-red-dot" />
+                                        <span>Recording in Progress</span>
                                     </div>
                                 )}
 
-                                {/* Action Controls */}
-                                <div className="lang-controls-row">
-                                    {!isRecording ? (
-                                        <Button 
-                                            variant="primary" 
-                                            className="story-primary-start-btn lang-start-record-cta"
-                                            onClick={startRecording}
-                                        >
-                                            Start Recording 🎙️
-                                        </Button>
+                                <h3 className="select-card-title text-xl font-semibold text-[#17324D] dark:text-[#F7F4EC] mt-1 mb-1 vyom-serif">
+                                    Spoken Response Phase
+                                </h3>
+                                <p className="recorder-sub">
+                                    Speak naturally and in detail about the prompt below in your chosen language.
+                                </p>
+
+                                {/* Speaking Prompt Box */}
+                                <div className="lang-prompt-box">
+                                    <span className="lang-prompt-label">Your Speaking Prompt</span>
+                                    <h2 className="lang-prompt-text vyom-serif">{prompt}</h2>
+                                </div>
+
+                                {/* Timer, Language & Status Meta Bar */}
+                                <div className="story-meta-bar">
+                                    <div className="story-meta-pill" role="timer" aria-live="polite">
+                                        <span>⏱️</span>
+                                        <span>{timer}s</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="story-meta-pill">
+                                            <span>🌐</span>
+                                            <span>{formatDetectedLanguage(detectedLanguage)}</span>
+                                        </div>
+                                        <div className="story-meta-pill story-meta-status">
+                                            <span className={`status-dot ${isRecording ? 'animate-ping' : ''}`} />
+                                            <span>{diagnosticStatus}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Audio Waveform / Visualizer / Central Mic Icon Button */}
+                                <div className="visualizer-wrapper my-2">
+                                    {isRecording ? (
+                                        <div className="waveform-visualizer active">
+                                            <span className="bar bar1"></span>
+                                            <span className="bar bar2"></span>
+                                            <span className="bar bar3"></span>
+                                            <span className="bar bar4"></span>
+                                            <span className="bar bar5"></span>
+                                        </div>
+                                    ) : isProcessingAudio ? (
+                                        <div className="flex items-center justify-center gap-2 py-3 text-sm text-[#4F7C78] dark:text-[#00C9B7]">
+                                            <div className="spinner !w-5 !h-5 !border-2 m-0" />
+                                            <span>Processing Audio with Sarvam AI...</span>
+                                        </div>
                                     ) : (
-                                        <Button 
-                                            variant="secondary" 
-                                            className="lang-finish-record-cta"
-                                            onClick={stopRecording}
+                                        <button 
+                                            type="button"
+                                            className="mic-circle" 
+                                            onClick={startRecording}
+                                            aria-label="Start recording"
+                                            title="Click to start recording"
                                         >
-                                            Finish Recording ✓
-                                        </Button>
+                                            <Icon name="mic" size={28} />
+                                        </button>
+                                    )}
+                                    {!isProcessingAudio && (
+                                        <p className="player-state-label mt-1 text-xs">
+                                            {isRecording ? "Listening to your response..." : "Tap microphone to begin"}
+                                        </p>
                                     )}
                                 </div>
 
-                                {isRecording && timer < 15 && (
-                                    <span className="lang-min-timer-hint">
-                                        Aim for at least 15 seconds of speech for robust biomarker calculation.
-                                    </span>
+                                {/* Live Speech Transcript Box with Simultaneous English */}
+                                <div 
+                                    className="live-transcript-box"
+                                    role="log"
+                                    aria-live="polite"
+                                    aria-label="Speech transcript"
+                                >
+                                    <div className="live-transcript-header">
+                                        <span className="live-label">LIVE TRANSCRIPT</span>
+                                        {isRecording && <span className="live-pulse-badge">LIVE</span>}
+                                    </div>
+                                    {transcript || verbatimTranscript ? (
+                                        <div className="live-text-container">
+                                            <p className="live-native-text">{verbatimTranscript || transcript}</p>
+                                            {englishTranslation && englishTranslation.trim().toLowerCase() !== (verbatimTranscript || transcript).trim().toLowerCase() && (
+                                                <div className="live-english-translation">
+                                                    <span className="lang-tag-en">EN</span>
+                                                    <p className="live-english-text">{englishTranslation}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="transcript-idle-hint">
+                                            {isRecording 
+                                                ? "🎙️ Listening... Speak naturally. Transcribed text and English translation will appear here simultaneously." 
+                                                : isProcessingAudio
+                                                ? "⏳ Analyzing speech audio..."
+                                                : "Tap the microphone icon above to begin speaking."}
+                                        </p>
+                                    )}
+                                    <div ref={transcriptEndRef} />
+                                </div>
+
+                                {/* Diagnostic Error Banner */}
+                                {errorMessage && (
+                                    <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-200 text-xs my-3 flex items-start gap-2 text-left shadow-sm">
+                                        <span className="text-base leading-none">⚠️</span>
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-rose-800 dark:text-rose-300">Notice:</p>
+                                            <p className="mt-0.5">{errorMessage}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Action Buttons: Only shown while recording */}
+                                {isRecording && (
+                                    <div className="story-action-controls flex flex-col items-center justify-center gap-2 mt-3">
+                                        <button 
+                                            type="button"
+                                            onClick={stopRecording} 
+                                            className="story-finish-record-btn"
+                                            aria-label="Finish recording and process results"
+                                        >
+                                            <span className="stop-square" />
+                                            Finish Recording
+                                        </button>
+                                        {timer < 15 && (
+                                            <p className="text-xs text-[#63788A] dark:text-[#A0B0BC] m-0">
+                                                Try to speak for at least 15 seconds for robust speech analysis
+                                            </p>
+                                        )}
+                                    </div>
                                 )}
                             </Card>
                         </div>

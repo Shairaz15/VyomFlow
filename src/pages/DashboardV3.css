@@ -480,7 +480,8 @@ html.dark .dv2-container {
     cursor: pointer;
     background: none;
     border: none;
-    padding: 0.5rem 0;
+    padding: 0.5rem 0.25rem;
+    min-height: 44px;
     font-weight: 600;
     transition: color 0.2s ease;
 }
@@ -710,7 +711,17 @@ html.dark .dv2-container {
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
     transition: right 0.3s ease;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 2rem;
+}
+
+@media (max-width: 640px) {
+    .dv2-drawer {
+        width: 100vw;
+        max-width: 100vw;
+        right: -100vw;
+        padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+    }
 }
 
 .dv2-drawer.open {
@@ -720,20 +731,25 @@ html.dark .dv2-container {
 .dv2-drawer-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
     border-bottom: 1px solid var(--dv2-card-border);
 }
 
 .dv2-drawer-close {
     background: none;
     border: none;
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     cursor: pointer;
     color: var(--dv2-muted);
     padding: 0.25rem;
-    border-radius: 6px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
     transition: all 0.2s ease;
 }
 
@@ -923,11 +939,13 @@ html.dark .dv2-container {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.45rem 0.85rem;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    min-height: 40px;
     border-radius: 12px;
     border: 1px solid transparent;
     font-size: 0.8125rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     scroll-snap-align: center;

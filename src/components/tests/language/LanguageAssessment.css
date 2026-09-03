@@ -15,7 +15,7 @@
 /* ── 2. Permission & Sound Check ── */
 .lang-step-container {
     width: 100%;
-    max-width: 560px;
+    max-width: 640px;
     margin: 0 auto;
 }
 
@@ -26,6 +26,7 @@
     padding: 1.75rem 1.5rem;
     text-align: center;
     box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
+    color: #17324D;
 }
 
 .lang-card-icon-badge {
@@ -54,25 +55,30 @@
 }
 
 .lang-phase-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: #40566B;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.45;
+}
+
+.lang-phase-subtitle em {
+    font-weight: 600;
+    color: #17324D;
 }
 
 .lang-live-transcript-box {
     background: #F7F4EC;
-    border: 1px solid rgba(23, 50, 77, 0.10);
-    border-radius: 12px;
-    padding: 0.85rem;
+    border: 1.5px solid rgba(79, 124, 120, 0.25);
+    border-radius: 14px;
+    padding: 0.85rem 1.15rem;
     font-size: 0.875rem;
     color: #17324D;
-    min-height: 52px;
+    min-height: 60px;
     margin: 1rem 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-style: italic;
+    text-align: center;
 }
 
 .lang-record-btn {
@@ -86,75 +92,28 @@
 /* ── 3. Active Recording Phase ── */
 .lang-active-container {
     width: 100%;
-    max-width: 680px;
+    max-width: 640px;
     margin: 0 auto;
-}
-
-.lang-recording-card {
-    background: #FFFFFF;
-    border: 1px solid rgba(23, 50, 77, 0.10);
-    border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: 0 16px 40px -12px rgba(23, 50, 77, 0.08);
-}
-
-.lang-recording-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.85rem;
-}
-
-.lang-timer-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #17324D;
-    font-family: monospace;
-}
-
-.lang-timer-badge .timer-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #DC2626;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(1.2); }
-}
-
-.lang-detected-badge {
-    font-size: 0.725rem;
-    font-weight: 600;
-    background: rgba(79, 124, 120, 0.1);
-    color: #4F7C78;
-    border: 1px solid rgba(79, 124, 120, 0.25);
-    padding: 0.2rem 0.65rem;
-    border-radius: 9999px;
 }
 
 .lang-prompt-box {
     background: #F7F4EC;
-    border: 1px solid rgba(23, 50, 77, 0.08);
+    border: 1.5px solid rgba(79, 124, 120, 0.25);
     border-radius: 14px;
-    padding: 1rem 1.15rem;
+    padding: 1rem 1.25rem;
     text-align: center;
-    margin-bottom: 0.85rem;
+    margin: 0.75rem 0 1rem;
+    box-shadow: 0 4px 16px -4px rgba(79, 124, 120, 0.08);
 }
 
 .lang-prompt-label {
-    font-size: 0.675rem;
+    font-size: 0.685rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #63788A;
+    letter-spacing: 0.08em;
+    color: #4F7C78;
     display: block;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.35rem;
 }
 
 .lang-prompt-text {
@@ -162,65 +121,28 @@
     font-weight: 600;
     color: #17324D;
     margin: 0;
-    line-height: 1.35;
-}
-
-.lang-visualizer-container {
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0.85rem;
-}
-
-.lang-visualizer-bars {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 30px;
-}
-
-.v-bar {
-    width: 5px;
-    height: 100%;
-    background: #4F7C78;
-    border-radius: 9999px;
-    animation: waveBar 1.2s ease-in-out infinite alternate;
-}
-
-.v-bar:nth-child(1) { animation-delay: 0.1s; height: 40%; }
-.v-bar:nth-child(2) { animation-delay: 0.3s; height: 85%; }
-.v-bar:nth-child(3) { animation-delay: 0.2s; height: 100%; }
-.v-bar:nth-child(4) { animation-delay: 0.4s; height: 70%; }
-.v-bar:nth-child(5) { animation-delay: 0.15s; height: 50%; }
-
-@keyframes waveBar {
-    0% { transform: scaleY(0.3); }
-    100% { transform: scaleY(1); }
-}
-
-.lang-ready-status {
-    font-size: 0.8rem;
-    color: #63788A;
+    line-height: 1.4;
 }
 
 .lang-transcript-preview-box {
-    background: #FAFAF9;
-    border: 1px solid rgba(23, 50, 77, 0.10);
-    border-radius: 12px;
-    padding: 0.85rem 1rem;
-    min-height: 70px;
-    max-height: 120px;
+    background: #F7F4EC;
+    border: 1.5px solid rgba(79, 124, 120, 0.25);
+    box-shadow: 0 4px 16px -4px rgba(79, 124, 120, 0.08);
+    border-radius: 14px;
+    padding: 0.85rem 1.15rem;
+    min-height: 80px;
+    max-height: 130px;
     overflow-y: auto;
     text-align: left;
-    margin-bottom: 1rem;
+    margin: 0.75rem 0 1rem;
 }
 
 .transcript-native {
     font-size: 0.875rem;
     color: #17324D;
-    line-height: 1.4;
+    line-height: 1.5;
     margin: 0;
+    white-space: pre-wrap;
 }
 
 .transcript-translation {
@@ -234,9 +156,10 @@
 
 .transcript-idle-hint {
     font-size: 0.8rem;
-    color: #94A3B8;
+    color: #63788A;
     margin: 0;
     text-align: center;
+    font-style: italic;
 }
 
 .lang-controls-row {
@@ -417,14 +340,13 @@
    ========================================================================== */
 
 .dark .lang-phase-card,
-.dark .lang-recording-card,
-[data-theme="dark"] .lang-phase-card,
-[data-theme="dark"] .lang-recording-card {
+[data-theme="dark"] .lang-phase-card {
     background: rgba(20, 37, 56, 0.9) !important;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
+    color: #F7F4EC !important;
 }
 
 .dark .lang-phase-title,
@@ -450,32 +372,34 @@
 [data-theme="dark"] .lang-live-transcript-box,
 [data-theme="dark"] .lang-prompt-box,
 [data-theme="dark"] .transcript-bubble-box {
-    background: rgba(255, 255, 255, 0.04) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(11, 25, 41, 0.90) !important;
+    border-color: rgba(0, 201, 183, 0.35) !important;
+    color: #F7F4EC !important;
 }
 
 .dark .lang-transcript-preview-box,
 [data-theme="dark"] .lang-transcript-preview-box {
-    background: rgba(15, 23, 42, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.dark .lang-timer-badge,
-[data-theme="dark"] .lang-timer-badge {
+    background: rgba(11, 25, 41, 0.90) !important;
+    border-color: rgba(0, 201, 183, 0.35) !important;
     color: #F7F4EC !important;
 }
 
 .dark .lang-phase-subtitle,
-.dark .lang-ready-status,
 .dark .prompt-label,
 .dark .transcript-text-label,
 .dark .transcript-meta-badge,
+.dark .transcript-idle-hint,
 [data-theme="dark"] .lang-phase-subtitle,
-[data-theme="dark"] .lang-ready-status,
 [data-theme="dark"] .prompt-label,
 [data-theme="dark"] .transcript-text-label,
-[data-theme="dark"] .transcript-meta-badge {
+[data-theme="dark"] .transcript-meta-badge,
+[data-theme="dark"] .transcript-idle-hint {
     color: #D2DDE2 !important;
+}
+
+.dark .lang-phase-subtitle em,
+[data-theme="dark"] .lang-phase-subtitle em {
+    color: #F7F4EC !important;
 }
 
 .dark .transcript-meta-badge,
@@ -488,11 +412,6 @@
     border-top-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.dark .v-bar,
-[data-theme="dark"] .v-bar {
-    background: #00C9B7 !important;
-}
-
 .dark .transcript-translation,
 .dark .transcript-translation-line,
 [data-theme="dark"] .transcript-translation,
@@ -502,10 +421,33 @@
 }
 
 .dark .lang-phase-tag,
-.dark .lang-detected-badge,
+.dark .lang-prompt-label,
 [data-theme="dark"] .lang-phase-tag,
-[data-theme="dark"] .lang-detected-badge {
+[data-theme="dark"] .lang-prompt-label {
     background: rgba(0, 201, 183, 0.12) !important;
     color: #00C9B7 !important;
     border-color: rgba(0, 201, 183, 0.25) !important;
+}
+
+/* ── 5. Mobile Responsive Tuning (<= 768px) ── */
+@media (max-width: 768px) {
+    .lang-phase-card,
+    .lang-recording-card {
+        padding: 1.25rem 0.85rem;
+        border-radius: 18px;
+    }
+
+    .lang-phase-title {
+        font-size: 1.15rem;
+    }
+
+    .lang-prompt-text {
+        font-size: 1.05rem;
+    }
+
+    .lang-record-btn,
+    .lang-stop-btn {
+        width: 100%;
+        min-height: 48px;
+    }
 }

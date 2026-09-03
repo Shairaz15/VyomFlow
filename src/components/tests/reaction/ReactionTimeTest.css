@@ -474,3 +474,11 @@
     background: rgba(0, 201, 183, 0.10);
     border-color: rgba(0, 201, 183, 0.25);
 }
+
+@media (max-width: 768px) {
+    .reaction-interactive-card {
+        min-height: 280px;
+        padding: 1.5rem 1rem;
+        border-radius: 20px;
+    }
+}

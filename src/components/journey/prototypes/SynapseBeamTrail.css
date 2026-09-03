@@ -248,8 +248,8 @@
     100% { transform: scale(0.9); opacity: 0; }
 }
 
-/* 100% Solid Opaque Card (Covers the trail beneath with zero transparency bleed) */
-.synapse-card {
+/* 100% Solid Opaque Card Base for Default (Non-active) Cards */
+.synapse-card:not(.sazzad-card) {
     position: relative;
     z-index: 10;
     width: 100%;
@@ -260,20 +260,156 @@
     border: 1.5px solid rgba(23, 50, 77, 0.10);
     box-shadow: 0 10px 30px -8px rgba(23, 50, 77, 0.08);
     cursor: pointer;
-    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
     text-align: left;
+    overflow: hidden;
 }
 
-.synapse-card:hover {
+.synapse-card:not(.sazzad-card):hover {
     border-color: rgba(79, 124, 120, 0.35);
     transform: translateY(-4px);
     box-shadow: 0 18px 42px -10px rgba(23, 50, 77, 0.14);
 }
 
-/* Active Focus Mode */
-.is-active .synapse-card {
-    border: 1.5px solid #4F7C78;
-    box-shadow: 0 0 32px rgba(79, 124, 120, 0.20), 0 14px 36px -8px rgba(23, 50, 77, 0.12);
+/* ==========================================================================
+   Sazzad Aurora Glassmorphic Card (Next-Up Active Test Module)
+   Direct Uiverse.io ali-sazzad implementation with multi-chromatic fluid aurora
+   ========================================================================== */
+.synapse-card.sazzad-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 440px;
+    padding: 1.35rem 1.5rem;
+    border-radius: var(--radius-xl, 22px);
+    cursor: pointer;
+    text-align: left;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255, 255, 255, 0.22) !important;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1.5px solid rgba(255, 255, 255, 0.55) !important;
+
+    box-shadow:
+        25px 25px 60px rgba(0, 0, 0, 0.12),
+        -20px -20px 50px rgba(255, 255, 255, 0.55),
+        0 0 35px rgba(16, 185, 129, 0.25),
+        0 0 30px rgba(0, 201, 183, 0.25) !important;
+
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.synapse-card.sazzad-card:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        25px 35px 65px rgba(0, 0, 0, 0.22),
+        -20px -20px 50px rgba(255, 255, 255, 0.75),
+        0 0 45px rgba(16, 185, 129, 0.35),
+        0 0 40px rgba(0, 201, 183, 0.35) !important;
+}
+
+/* Inner Glow Panel */
+.sazzad-card .sazzad-bg {
+    position: absolute;
+    inset: 6px;
+    background: linear-gradient(
+        145deg,
+        rgba(255, 255, 255, 0.72),
+        rgba(245, 248, 247, 0.40)
+    ) !important;
+    border-radius: calc(var(--radius-xl, 22px) - 5px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.75) !important;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Animated Aurora Blobs */
+.sazzad-aurora {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    filter: blur(28px);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.sazzad-aurora-primary {
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(
+        circle,
+        rgba(16, 185, 129, 0.95),
+        rgba(79, 124, 120, 0.75),
+        rgba(0, 201, 183, 0.45),
+        transparent 70%
+    );
+    animation: sazzad-aurora-move 6.5s infinite ease-in-out;
+    opacity: 0.92;
+}
+
+.sazzad-aurora-secondary {
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(
+        circle,
+        rgba(0, 201, 183, 0.90),
+        rgba(52, 211, 153, 0.75),
+        rgba(139, 174, 154, 0.40),
+        transparent 70%
+    );
+    animation: sazzad-aurora-move-reverse 7.5s infinite ease-in-out;
+    opacity: 0.85;
+}
+
+/* Content layer positioned on top of inner panel */
+.synapse-card-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+}
+
+/* Aurora Movement Animations */
+@keyframes sazzad-aurora-move {
+    0% {
+        transform: translate(-60%, -60%) scale(1);
+    }
+    30% {
+        transform: translate(10%, -40%) scale(1.15);
+    }
+    60% {
+        transform: translate(20%, 20%) scale(1.05);
+    }
+    80% {
+        transform: translate(-40%, 10%) scale(1.2);
+    }
+    100% {
+        transform: translate(-60%, -60%) scale(1);
+    }
+}
+
+@keyframes sazzad-aurora-move-reverse {
+    0% {
+        transform: translate(20%, 20%) scale(1.1);
+    }
+    30% {
+        transform: translate(-30%, 10%) scale(0.95);
+    }
+    60% {
+        transform: translate(-50%, -40%) scale(1.18);
+    }
+    80% {
+        transform: translate(10%, -20%) scale(1.05);
+    }
+    100% {
+        transform: translate(20%, 20%) scale(1.1);
+    }
 }
 
 /* Completed Calm State */
@@ -606,9 +742,9 @@
    ========================================================================== */
 
 .dark .synapse-header-strip,
-.dark .synapse-card,
+.dark .synapse-card:not(.sazzad-card),
 [data-theme="dark"] .synapse-header-strip,
-[data-theme="dark"] .synapse-card {
+[data-theme="dark"] .synapse-card:not(.sazzad-card) {
     background: #142538 !important;
     border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
@@ -819,3 +955,64 @@
     background: #8BAE9A !important;
     color: #0E1E2E !important;
 }
+
+/* ==========================================================================
+   Dark Theme Adaptation: Sazzad Aurora Glassmorphic Next-Up Card
+   ========================================================================== */
+.dark .synapse-card.sazzad-card,
+[data-theme="dark"] .synapse-card.sazzad-card {
+    background: rgba(14, 30, 46, 0.30) !important;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow:
+        25px 25px 60px rgba(0, 0, 0, 0.65),
+        -15px -15px 45px rgba(255, 255, 255, 0.04),
+        0 0 35px rgba(16, 185, 129, 0.35),
+        0 0 35px rgba(0, 201, 183, 0.35) !important;
+}
+
+.dark .synapse-card.sazzad-card:hover,
+[data-theme="dark"] .synapse-card.sazzad-card:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        25px 35px 65px rgba(0, 0, 0, 0.85),
+        -20px -20px 50px rgba(255, 255, 255, 0.08),
+        0 0 50px rgba(16, 185, 129, 0.50),
+        0 0 50px rgba(0, 201, 183, 0.50) !important;
+}
+
+.dark .sazzad-card .sazzad-bg,
+[data-theme="dark"] .sazzad-card .sazzad-bg {
+    background: linear-gradient(
+        145deg,
+        rgba(18, 38, 58, 0.72),
+        rgba(11, 25, 40, 0.45)
+    ) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+
+.dark .sazzad-aurora-primary,
+[data-theme="dark"] .sazzad-aurora-primary {
+    background: radial-gradient(
+        circle,
+        rgba(16, 185, 129, 0.95),
+        rgba(5, 150, 105, 0.80),
+        rgba(79, 124, 120, 0.50),
+        transparent 70%
+    ) !important;
+    opacity: 0.95 !important;
+}
+
+.dark .sazzad-aurora-secondary,
+[data-theme="dark"] .sazzad-aurora-secondary {
+    background: radial-gradient(
+        circle,
+        rgba(0, 229, 255, 0.95),
+        rgba(0, 201, 183, 0.85),
+        rgba(52, 211, 153, 0.60),
+        transparent 70%
+    ) !important;
+    opacity: 0.90 !important;
+}
+

@@ -9,6 +9,9 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import {
     signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail,
     signOut as firebaseSignOut,
     onAuthStateChanged,
     getIdTokenResult,
@@ -30,6 +33,9 @@ interface AuthContextType {
     isAdmin: boolean;
     onboardingComplete: boolean;
     signInWithGoogle: () => Promise<void>;
+    signInWithEmail: (email: string, password: string) => Promise<void>;
+    signUpWithEmail: (email: string, password: string) => Promise<void>;
+    sendPasswordReset: (email: string) => Promise<void>;
     signOut: () => Promise<void>;
     refreshToken: () => Promise<void>;
     completeOnboarding: (data: OnboardingData) => Promise<void>;
@@ -130,6 +136,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await signInWithPopup(auth, googleProvider);
     };
 
+    const signInWithEmail = async (email: string, password: string) => {
+        if (!isFirebaseConfigured()) {
+            logger.warn('Firebase not configured. Sign-in disabled.');
+            throw new Error('Firebase authentication is not configured.');
+        }
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+    };
+
+    const signUpWithEmail = async (email: string, password: string) => {
+        if (!isFirebaseConfigured()) {
+            logger.warn('Firebase not configured. Sign-up disabled.');
+            throw new Error('Firebase authentication is not configured.');
+        }
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
+    };
+
+    const sendPasswordReset = async (email: string) => {
+        if (!isFirebaseConfigured()) {
+            logger.warn('Firebase not configured. Password reset disabled.');
+            throw new Error('Firebase authentication is not configured.');
+        }
+        await sendPasswordResetEmail(auth, email.trim());
+    };
+
     const signOut = async () => {
         await firebaseSignOut(auth);
         setRole('user');
@@ -176,6 +206,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 isAdmin: role === 'admin',
                 onboardingComplete,
                 signInWithGoogle,
+                signInWithEmail,
+                signUpWithEmail,
+                sendPasswordReset,
                 signOut,
                 refreshToken,
                 completeOnboarding,

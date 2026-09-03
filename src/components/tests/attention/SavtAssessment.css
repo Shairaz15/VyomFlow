@@ -576,3 +576,19 @@
 [data-theme="dark"] .feedback-text {
     color: #D2DDE2;
 }
+
+@media (max-width: 768px) {
+    .savt-arena-card {
+        padding: 1.25rem 0.85rem;
+        border-radius: 18px;
+    }
+
+    .savt-stimulus-stage {
+        min-height: 160px;
+    }
+
+    .savt-stimulus.savt-stimulus-large {
+        width: 110px;
+        height: 110px;
+    }
+}
