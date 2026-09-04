@@ -1,29 +1,29 @@
-import "./TutorialVideoPlaceholder.css";
+/**
+ * ==========================================================================
+ * TutorialVideoPlaceholder.tsx (Upgraded to Multilingual TutorialVideoPlayer)
+ * ==========================================================================
+ * Seamlessly backwards-compatible: provides the live interactive video player
+ * with 11 localized language tracks for any component that imports
+ * TutorialVideoPlaceholder or TutorialVideoPlayer.
+ */
 
-interface TutorialVideoPlaceholderProps {
+import React from "react";
+import { TutorialVideoPlayer } from "./TutorialVideoPlayer";
+import type { AssessmentModuleType } from "./TutorialVideoPlayer";
+
+export interface TutorialVideoPlaceholderProps {
+    module?: AssessmentModuleType;
     title?: string;
     subtitle?: string;
     className?: string;
 }
 
-export function TutorialVideoPlaceholder({
-    title = "Tutorial Video",
-    subtitle = "Video coming soon",
+export const TutorialVideoPlaceholder: React.FC<TutorialVideoPlaceholderProps> = ({
+    module,
+    title,
     className = "",
-}: TutorialVideoPlaceholderProps) {
-    return (
-        <div className={`tutorial-video-container ${className}`}>
-            <div className="tutorial-video-card">
-                <div className="tutorial-video-placeholder">
-                    <div className="tutorial-play-icon-wrap" aria-hidden="true">
-                        <span className="tutorial-play-icon">▶</span>
-                    </div>
-                    <div className="tutorial-meta">
-                        <span className="tutorial-title">{title}</span>
-                        <span className="tutorial-subtitle">{subtitle}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+}) => {
+    return <TutorialVideoPlayer module={module} title={title} className={className} />;
+};
+
+export default TutorialVideoPlaceholder;

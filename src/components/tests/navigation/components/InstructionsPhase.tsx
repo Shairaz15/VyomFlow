@@ -64,8 +64,8 @@ export function InstructionsPhase({ onStart }: InstructionsPhaseProps) {
                 </div>
             </Card>
 
-            {/* Tutorial Video Placeholder */}
-            <TutorialVideoPlaceholder />
+            {/* Multilingual Tutorial Video */}
+            <TutorialVideoPlaceholder module="navigation" />
         </div>
     );
 }

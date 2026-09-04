@@ -12,10 +12,18 @@ import type { LanguageCode } from '../components/common/OnboardingModal';
 import {
     createAshaBeneficiary,
     getAshaBeneficiaries,
+    updateAshaBeneficiary,
+    deleteAshaBeneficiary,
     flushOfflineQueue,
     type AshaBeneficiary,
     type AshaBeneficiaryInput
 } from '../services/supabaseService';
+import {
+    isAshaMockCaseloadActive,
+    seedAshaMockCaseload,
+    clearAshaMockCaseload,
+    getLocalMockBeneficiaries
+} from '../services/ashaMockService';
 import { logger } from '../utils/logger';
 
 interface AshaContextType {
@@ -24,7 +32,12 @@ interface AshaContextType {
     isFieldAssessmentActive: boolean;
     loading: boolean;
     pendingSyncCount: number;
+    isMockMode: boolean;
+    seedMockCaseload: () => Promise<void>;
+    clearMockCaseload: () => Promise<void>;
     registerBeneficiary: (input: Omit<AshaBeneficiaryInput, 'asha_worker_id'>) => Promise<AshaBeneficiary>;
+    updateBeneficiary: (firebaseUid: string, updates: Partial<AshaBeneficiary>) => Promise<AshaBeneficiary | null>;
+    deleteBeneficiary: (firebaseUid: string) => Promise<boolean>;
     startBeneficiarySession: (beneficiary: AshaBeneficiary) => void;
     endBeneficiarySession: () => void;
     syncPendingRecords: () => Promise<void>;
@@ -50,6 +63,7 @@ export function AshaProvider({ children }: { children: ReactNode }) {
     });
     const [loading, setLoading] = useState<boolean>(false);
     const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
+    const [isMockMode, setIsMockMode] = useState<boolean>(() => isAshaMockCaseloadActive());
 
     const workerId = user?.uid || 'field_worker_demo';
 
@@ -65,19 +79,57 @@ export function AshaProvider({ children }: { children: ReactNode }) {
         }
     }, [beneficiaries]);
 
-    // Fetch beneficiaries whenever the worker changes
+    // Fetch beneficiaries whenever the worker changes or mock data changes
     const refreshBeneficiaries = useCallback(async () => {
         if (!workerId) return;
         setLoading(true);
         try {
             const list = await getAshaBeneficiaries(workerId);
-            setBeneficiaries(list);
+            const mockActive = isAshaMockCaseloadActive();
+            setIsMockMode(mockActive);
+
+            if (mockActive) {
+                const mockList = getLocalMockBeneficiaries();
+                const map = new Map<string, AshaBeneficiary>();
+                // Add mock beneficiaries
+                mockList.forEach(b => map.set(b.firebase_uid, b));
+                // Add any non-mock live beneficiaries
+                list.filter(b => !b.firebase_uid.startsWith('asha_mock_')).forEach(b => map.set(b.firebase_uid, b));
+                setBeneficiaries(Array.from(map.values()));
+            } else {
+                // Live mode only - exclude mock beneficiaries
+                setBeneficiaries(list.filter(b => !b.firebase_uid.startsWith('asha_mock_')));
+            }
         } catch (err) {
             logger.error('Failed to load ASHA beneficiaries:', err);
         } finally {
             setLoading(false);
         }
     }, [workerId]);
+
+    // Seed mock village caseload
+    const seedMockCaseload = useCallback(async () => {
+        setLoading(true);
+        try {
+            await seedAshaMockCaseload(workerId);
+            setIsMockMode(true);
+            await refreshBeneficiaries();
+        } finally {
+            setLoading(false);
+        }
+    }, [workerId, refreshBeneficiaries]);
+
+    // Clear mock village caseload
+    const clearMockCaseload = useCallback(async () => {
+        setLoading(true);
+        try {
+            await clearAshaMockCaseload(workerId);
+            setIsMockMode(false);
+            await refreshBeneficiaries();
+        } finally {
+            setLoading(false);
+        }
+    }, [workerId, refreshBeneficiaries]);
 
     useEffect(() => {
         refreshBeneficiaries();
@@ -100,6 +152,27 @@ export function AshaProvider({ children }: { children: ReactNode }) {
         updatePendingCount();
         return created;
     }, [workerId, updatePendingCount]);
+
+    // Update an existing beneficiary
+    const updateBeneficiary = useCallback(async (
+        firebaseUid: string,
+        updates: Partial<AshaBeneficiary>
+    ): Promise<AshaBeneficiary | null> => {
+        const updated = await updateAshaBeneficiary(firebaseUid, updates);
+        if (updated) {
+            setBeneficiaries(prev => prev.map(b => b.firebase_uid === firebaseUid ? updated : b));
+        }
+        return updated;
+    }, []);
+
+    // Delete or archive a beneficiary
+    const deleteBeneficiary = useCallback(async (firebaseUid: string): Promise<boolean> => {
+        const success = await deleteAshaBeneficiary(firebaseUid);
+        if (success) {
+            setBeneficiaries(prev => prev.filter(b => b.firebase_uid !== firebaseUid));
+        }
+        return success;
+    }, []);
 
     // Start a testing session for a beneficiary
     const startBeneficiarySession = useCallback((beneficiary: AshaBeneficiary) => {
@@ -156,7 +229,12 @@ export function AshaProvider({ children }: { children: ReactNode }) {
                 isFieldAssessmentActive,
                 loading,
                 pendingSyncCount,
+                isMockMode,
+                seedMockCaseload,
+                clearMockCaseload,
                 registerBeneficiary,
+                updateBeneficiary,
+                deleteBeneficiary,
                 startBeneficiarySession,
                 endBeneficiarySession,
                 syncPendingRecords,

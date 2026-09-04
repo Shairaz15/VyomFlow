@@ -105,6 +105,63 @@ export const STORAGE_KEYS = {
     lastSession: "vyomflow_last_session",
 };
 
+export function isAshaBeneficiarySessionActive(): boolean {
+    try {
+        const activeBen = localStorage.getItem('vyomflow_active_beneficiary');
+        if (activeBen) {
+            const parsed = JSON.parse(activeBen);
+            return Boolean(parsed?.firebase_uid);
+        }
+    } catch {
+        return false;
+    }
+    return false;
+}
+
+export function getScopedStorageKey(baseKey: string): string {
+    try {
+        const activeBen = localStorage.getItem('vyomflow_active_beneficiary');
+        if (activeBen) {
+            const parsed = JSON.parse(activeBen);
+            if (parsed?.firebase_uid) {
+                return `${baseKey}_${parsed.firebase_uid}`;
+            }
+        }
+    } catch {
+        // fallback
+    }
+    return baseKey;
+}
+
+function persistModuleResultSafely(
+    moduleType: string,
+    collectionName: any,
+    baseStorageKey: string,
+    result: any,
+    updatedList: any[]
+) {
+    try {
+        const effectiveKey = getScopedStorageKey(baseStorageKey);
+        localStorage.setItem(effectiveKey, JSON.stringify(updatedList));
+
+        if (isAshaBeneficiarySessionActive()) {
+            // Write only to Supabase under the beneficiary UID to prevent worker Firestore pollution
+            saveModuleResultToSupabase(moduleType, result).catch((e) =>
+                logger.error(`Supabase save failed for ${moduleType}:`, e)
+            );
+        } else if (isUserAuthenticated()) {
+            saveResultToFirestore(collectionName, result).catch((e) =>
+                logger.error(`Firestore save failed for ${collectionName}:`, e)
+            );
+            saveModuleResultToSupabase(moduleType, result).catch((e) =>
+                logger.error(`Supabase save failed for ${moduleType}:`, e)
+            );
+        }
+    } catch (error) {
+        logger.error(`Failed to persist ${moduleType} result:`, error);
+    }
+}
+
 /**
  * Clears all test data from localStorage AND Firestore (if authenticated).
  */
@@ -165,7 +222,7 @@ export async function clearAllTestData(): Promise<void> {
 export function useLanguageResults() {
     const [results, setResults] = useState<LanguageAssessmentResult[]>(() =>
         safeJsonParse<LanguageAssessmentResult[]>(
-            localStorage.getItem(STORAGE_KEYS.languageResults),
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.languageResults)),
             []
         ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
     );
@@ -174,7 +231,16 @@ export function useLanguageResults() {
     // Load results (called on mount and when auth state changes)
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.languageResults);
+                const parsed = safeJsonParse<LanguageAssessmentResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map((r) => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<LanguageAssessmentResult>(
                     "language_results"
                 );
@@ -237,19 +303,7 @@ export function useLanguageResults() {
     const saveResult = useCallback((result: LanguageAssessmentResult) => {
         setResults((prev) => {
             const updated = trimResults([...prev, result]);
-            try {
-                localStorage.setItem(STORAGE_KEYS.languageResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("language_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("language", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save language result:", error);
-            }
+            persistModuleResultSafely("language", "language_results", STORAGE_KEYS.languageResults, result, updated);
             return updated;
         });
     }, []);
@@ -285,7 +339,7 @@ export interface MemoryTestResult {
 export function useReactionResults() {
     const [results, setResults] = useState<ReactionTestResult[]>(() =>
         safeJsonParse<ReactionTestResult[]>(
-            localStorage.getItem(STORAGE_KEYS.reactionResults),
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.reactionResults)),
             []
         ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
     );
@@ -294,7 +348,16 @@ export function useReactionResults() {
     // Load results (called on mount and when auth state changes)
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.reactionResults);
+                const parsed = safeJsonParse<ReactionTestResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map((r) => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<ReactionTestResult>(
                     "reaction_results"
                 );
@@ -371,20 +434,7 @@ export function useReactionResults() {
             }
 
             updated = trimResults(updated);
-
-            try {
-                localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("reaction_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("reaction", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save reaction result:", error);
-            }
+            persistModuleResultSafely("reaction", "reaction_results", STORAGE_KEYS.reactionResults, result, updated);
             return updated;
         });
     }, []);
@@ -439,13 +489,27 @@ export function useReactionResults() {
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useMemoryResults() {
-    const [results, setResults] = useState<MemoryTestResult[]>([]);
+    const [results, setResults] = useState<MemoryTestResult[]>(() =>
+        safeJsonParse<MemoryTestResult[]>(
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.memoryResults)),
+            []
+        ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
+    );
     const [isLoading, setIsLoading] = useState(true);
 
     // Load results (called on mount and when auth state changes)
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.memoryResults);
+                const parsed = safeJsonParse<MemoryTestResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map(r => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<MemoryTestResult>(
                     "memory_results"
                 );
@@ -521,20 +585,7 @@ export function useMemoryResults() {
             }
 
             updated = trimResults(updated);
-
-            try {
-                localStorage.setItem(STORAGE_KEYS.memoryResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("memory_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("memory", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save memory result:", error);
-            }
+            persistModuleResultSafely("memory", "memory_results", STORAGE_KEYS.memoryResults, result, updated);
             return updated;
         });
     }, []);
@@ -559,7 +610,7 @@ export function useMemoryResults() {
 export function usePatternResults() {
     const [results, setResults] = useState<PatternAssessmentResult[]>(() =>
         safeJsonParse<PatternAssessmentResult[]>(
-            localStorage.getItem(STORAGE_KEYS.patternResults),
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.patternResults)),
             []
         ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
     );
@@ -568,7 +619,16 @@ export function usePatternResults() {
     // Load results (called on mount and when auth state changes)
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.patternResults);
+                const parsed = safeJsonParse<PatternAssessmentResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map(r => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<PatternAssessmentResult>(
                     "pattern_results"
                 );
@@ -631,19 +691,7 @@ export function usePatternResults() {
     const saveResult = useCallback((result: PatternAssessmentResult) => {
         setResults((prev) => {
             const updated = trimResults([...prev, result]);
-            try {
-                localStorage.setItem(STORAGE_KEYS.patternResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("pattern_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("pattern", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save pattern result:", error);
-            }
+            persistModuleResultSafely("pattern", "pattern_results", STORAGE_KEYS.patternResults, result, updated);
             return updated;
         });
     }, []);
@@ -668,7 +716,7 @@ export function usePatternResults() {
 export function useVmraResults() {
     const [results, setResults] = useState<VmraAssessmentResult[]>(() =>
         safeJsonParse<VmraAssessmentResult[]>(
-            localStorage.getItem(STORAGE_KEYS.vmraResults),
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.vmraResults)),
             []
         ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
     );
@@ -676,7 +724,16 @@ export function useVmraResults() {
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.vmraResults);
+                const parsed = safeJsonParse<VmraAssessmentResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map(r => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<VmraAssessmentResult>(
                     "vmra_results"
                 );
@@ -751,20 +808,7 @@ export function useVmraResults() {
             }
 
             updated = trimResults(updated);
-
-            try {
-                localStorage.setItem(STORAGE_KEYS.vmraResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("vmra_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("vmra", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save VMRA result:", error);
-            }
+            persistModuleResultSafely("vmra", "vmra_results", STORAGE_KEYS.vmraResults, result, updated);
             return updated;
         });
     }, []);
@@ -793,14 +837,13 @@ export function useVmraResults() {
 }
 
 /**
-/**
  * Hook for managing SAVT Attention assessment results.
  * Firestore-first for authenticated users, localStorage fallback for demo mode.
  */
 export function useAttentionResults() {
     const [results, setResults] = useState<SavtAssessmentResult[]>(() =>
         safeJsonParse<SavtAssessmentResult[]>(
-            localStorage.getItem(STORAGE_KEYS.attentionResults),
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.attentionResults)),
             []
         ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
     );
@@ -808,7 +851,16 @@ export function useAttentionResults() {
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.attentionResults);
+                const parsed = safeJsonParse<SavtAssessmentResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map(r => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<SavtAssessmentResult>(
                     "attention_results"
                 );
@@ -883,20 +935,7 @@ export function useAttentionResults() {
             }
 
             updated = trimResults(updated);
-
-            try {
-                localStorage.setItem(STORAGE_KEYS.attentionResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("attention_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("attention", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save attention result:", error);
-            }
+            persistModuleResultSafely("savt", "attention_results", STORAGE_KEYS.attentionResults, result, updated);
             return updated;
         });
     }, []);
@@ -921,7 +960,7 @@ export function useAttentionResults() {
 export function useStoryResults() {
     const [results, setResults] = useState<StoryAssessmentResult[]>(() =>
         safeJsonParse<StoryAssessmentResult[]>(
-            localStorage.getItem(STORAGE_KEYS.storyResults),
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.storyResults)),
             []
         ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
     );
@@ -929,7 +968,16 @@ export function useStoryResults() {
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.storyResults);
+                const parsed = safeJsonParse<StoryAssessmentResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map(r => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<StoryAssessmentResult>(
                     "story_results"
                 );
@@ -990,19 +1038,7 @@ export function useStoryResults() {
     const saveResult = useCallback((result: StoryAssessmentResult) => {
         setResults((prev) => {
             const updated = trimResults([...prev, result]);
-            try {
-                localStorage.setItem(STORAGE_KEYS.storyResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("story_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("story", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save story result:", error);
-            }
+            persistModuleResultSafely("story", "story_results", STORAGE_KEYS.storyResults, result, updated);
             return updated;
         });
     }, []);
@@ -1027,7 +1063,7 @@ export function useStoryResults() {
 export function useNavigationResults() {
     const [results, setResults] = useState<ImmersiveNavigationResult[]>(() =>
         safeJsonParse<ImmersiveNavigationResult[]>(
-            localStorage.getItem(STORAGE_KEYS.navigationResults),
+            localStorage.getItem(getScopedStorageKey(STORAGE_KEYS.navigationResults)),
             []
         ).map((r) => ({ ...r, timestamp: new Date(r.timestamp) }))
     );
@@ -1035,7 +1071,16 @@ export function useNavigationResults() {
 
     const loadResults = useCallback(async (mounted: { current: boolean }) => {
         try {
-            if (isUserAuthenticated()) {
+            if (isAshaBeneficiarySessionActive()) {
+                const scopedKey = getScopedStorageKey(STORAGE_KEYS.navigationResults);
+                const parsed = safeJsonParse<ImmersiveNavigationResult[]>(
+                    localStorage.getItem(scopedKey),
+                    []
+                );
+                if (mounted.current) {
+                    setResults(parsed.map(r => ({ ...r, timestamp: new Date(r.timestamp) })));
+                }
+            } else if (isUserAuthenticated()) {
                 const firestoreResults = await loadResultsFromFirestore<ImmersiveNavigationResult>(
                     "navigation_results"
                 );
@@ -1096,19 +1141,7 @@ export function useNavigationResults() {
     const saveResult = useCallback((result: ImmersiveNavigationResult) => {
         setResults((prev) => {
             const updated = trimResults([...prev, result]);
-            try {
-                localStorage.setItem(STORAGE_KEYS.navigationResults, JSON.stringify(updated));
-                if (isUserAuthenticated()) {
-                    saveResultToFirestore("navigation_results", result).catch((e) =>
-                        logger.error("Firestore save failed", e)
-                    );
-                    saveModuleResultToSupabase("navigation", result).catch((e) =>
-                        logger.error("Supabase save failed", e)
-                    );
-                }
-            } catch (error) {
-                logger.error("Failed to save navigation result:", error);
-            }
+            persistModuleResultSafely("navigation", "navigation_results", STORAGE_KEYS.navigationResults, result, updated);
             return updated;
         });
     }, []);

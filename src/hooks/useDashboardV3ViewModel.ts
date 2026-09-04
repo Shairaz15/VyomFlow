@@ -116,7 +116,7 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
             }
         }
 
-        const initialUid = auth.currentUser?.uid || getCurrentFirebaseUid();
+        const initialUid = getCurrentFirebaseUid() || auth.currentUser?.uid || null;
         loadSupabaseData(initialUid);
 
         if (dataMode === 'live' && initialUid) {
@@ -127,7 +127,7 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
 
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (mounted) {
-                const uid = user?.uid || null;
+                const uid = getCurrentFirebaseUid() || user?.uid || null;
                 loadSupabaseData(uid);
                 if (dataMode === 'live' && uid) {
                     unsubscribeRealtime();

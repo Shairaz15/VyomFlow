@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAsha } from '../../contexts/AshaContext';
 import { INDIAN_LANGUAGES } from '../common/OnboardingModal';
+import { Play, X, Activity } from 'lucide-react';
 import './AshaComponents.css';
 
 export function AshaFieldBanner() {
@@ -15,6 +16,10 @@ export function AshaFieldBanner() {
         l => l.code === activeBeneficiary.preferred_language || activeBeneficiary.preferred_language?.startsWith(l.code)
     );
 
+    const handleReturnToTest = () => {
+        navigate('/asha?resume=true');
+    };
+
     const handleExit = () => {
         if (window.confirm(`Exit field assessment for ${activeBeneficiary.full_name} and return to ASHA Worker Dashboard?`)) {
             endBeneficiarySession();
@@ -27,7 +32,10 @@ export function AshaFieldBanner() {
             <div className="asha-banner-container">
                 <div className="asha-banner-left">
                     <span className="asha-banner-pulse" aria-hidden="true" />
-                    <span className="asha-banner-badge">FIELD ASSESSMENT ACTIVE</span>
+                    <span className="asha-banner-badge">
+                        <Activity size={12} style={{ display: 'inline', marginRight: 4 }} />
+                        FIELD ASSESSMENT ACTIVE
+                    </span>
                     <span className="asha-banner-divider">•</span>
                     <span className="asha-banner-person">
                         Participant: <strong>{activeBeneficiary.full_name}</strong> ({activeBeneficiary.age} yrs, {activeBeneficiary.education_years} yrs edu)
@@ -40,11 +48,20 @@ export function AshaFieldBanner() {
 
                 <div className="asha-banner-right">
                     <button
+                        className="asha-banner-resume-btn"
+                        onClick={handleReturnToTest}
+                        title="Resume the active screening battery"
+                    >
+                        <Play size={13} fill="currentColor" />
+                        <span>Return to Test</span>
+                    </button>
+                    <button
                         className="asha-banner-exit-btn"
                         onClick={handleExit}
                         title="End testing and return to the beneficiary list"
                     >
-                        <span>✕ Return to ASHA Panel</span>
+                        <X size={13} />
+                        <span>End Session</span>
                     </button>
                 </div>
             </div>

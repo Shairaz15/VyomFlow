@@ -879,6 +879,11 @@ export const AiAssistantBubble: React.FC = () => {
         });
     };
 
+    // Do not render AI assistant bubble on ASHA worker portal routes
+    if (location.pathname.startsWith('/asha')) {
+        return null;
+    }
+
     return (
         <div className={`ai-bubble-container ${theme === 'light' ? 'light-mode' : ''}`} data-theme={theme}>
             {/* 1. Collapsed Floating Trigger Bubble with VyomFlow Brand Logo */}

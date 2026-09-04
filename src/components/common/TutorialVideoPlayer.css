@@ -1,0 +1,244 @@
+/**
+ * ==========================================================================
+ * VYOMFLOW MULTILINGUAL TUTORIAL VIDEO PLAYER STYLING
+ * Used Across All 7 Cognitive Assessment Modules
+ * ==========================================================================
+ */
+
+/* ==========================================================================
+ * Side-by-Side Instructions & Tutorial Layout (Desktop Side-by-Side, Mobile Stacked)
+ * ========================================================================== */
+
+.instructions-with-tutorial-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) !important;
+    gap: 1.15rem !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 980px !important;
+    margin: 0 auto !important;
+}
+
+@media (max-width: 860px) {
+    .instructions-with-tutorial-layout {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
+    }
+}
+
+.tutorial-video-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.tutorial-video-card {
+    background: #FFFFFF;
+    border: 1.5px solid rgba(23, 50, 77, 0.10);
+    border-radius: 20px;
+    padding: 0.75rem;
+    box-shadow: 0 14px 36px -12px rgba(23, 50, 77, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    box-sizing: border-box;
+    overflow: hidden; /* Ensures child elements fit strictly inside the card */
+    transition: all 0.25s ease;
+}
+
+/* Header with Clean Title & Language Switcher */
+.tutorial-video-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 0.1rem 0.2rem 0;
+}
+
+.tutorial-video-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #17324D;
+    letter-spacing: -0.01em;
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Language Switcher Dropdown - Fits seamlessly inside card */
+.tutorial-video-lang-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(79, 124, 120, 0.08);
+    border: 1px solid rgba(79, 124, 120, 0.25);
+    border-radius: 9px;
+    padding: 0.22rem 0.45rem;
+    max-width: 62%;
+    min-width: 0;
+    flex-shrink: 1;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.tutorial-video-lang-picker:hover,
+.tutorial-video-lang-picker:focus-within {
+    background: rgba(79, 124, 120, 0.14);
+    border-color: #4F7C78;
+}
+
+.tutorial-video-globe-icon {
+    flex-shrink: 0;
+    color: #4F7C78;
+}
+
+.tutorial-video-select {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #17324D;
+    cursor: pointer;
+    min-width: 0;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-family: inherit;
+    padding: 0;
+}
+
+.tutorial-video-select option {
+    background: #FFFFFF;
+    color: #17324D;
+    font-size: 0.82rem;
+}
+
+/* Video Wrapper */
+.tutorial-video-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0B1926;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tutorial-video-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 14px;
+    outline: none;
+}
+
+/* Dubbed Audio Badge Overlay */
+.tutorial-video-audio-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(11, 25, 38, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #E2E8F0;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s ease;
+}
+
+.tutorial-video-audio-badge.hide-while-playing {
+    opacity: 0;
+}
+
+.tutorial-video-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px #10B981;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.tutorial-video-audio-icon {
+    flex-shrink: 0;
+    color: #6EE7B7;
+}
+
+/* ==========================================================================
+   DARK THEME COMPATIBILITY
+   ========================================================================== */
+
+body.dark .tutorial-video-card,
+[data-theme="dark"] .tutorial-video-card {
+    background: #0E2235;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 14px 36px -12px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .tutorial-video-title,
+[data-theme="dark"] .tutorial-video-title {
+    color: #F1F5F9;
+}
+
+body.dark .tutorial-video-lang-picker,
+[data-theme="dark"] .tutorial-video-lang-picker {
+    background: rgba(79, 124, 120, 0.16);
+    border-color: rgba(79, 124, 120, 0.35);
+}
+
+body.dark .tutorial-video-globe-icon,
+[data-theme="dark"] .tutorial-video-globe-icon {
+    color: #6EE7B7;
+}
+
+body.dark .tutorial-video-select,
+[data-theme="dark"] .tutorial-video-select {
+    color: #F1F5F9;
+}
+
+body.dark .tutorial-video-select option,
+[data-theme="dark"] .tutorial-video-select option {
+    background: #0E2235;
+    color: #F1F5F9;
+}
+
+/* Responsive adjustment */
+@media (max-width: 600px) {
+    .tutorial-video-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+    }
+
+    .tutorial-video-lang-picker {
+        max-width: 100%;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .tutorial-video-select {
+        width: 100%;
+    }
+}

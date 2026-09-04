@@ -1,18 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useAsha } from '../../contexts/AshaContext';
 import { INDIAN_LANGUAGES, GENDER_OPTIONS } from '../common/OnboardingModal';
-import { UserPlus, X, AlertCircle } from 'lucide-react';
+import type { AshaBeneficiary } from '../../services/supabaseService';
+import { UserCheck, X, AlertCircle } from 'lucide-react';
 import './AshaComponents.css';
 
-interface CreateBeneficiaryModalProps {
+interface EditBeneficiaryModalProps {
     isOpen: boolean;
+    beneficiary: AshaBeneficiary | null;
     onClose: () => void;
-    onCreated?: (name: string) => void;
+    onUpdated?: (updated: AshaBeneficiary) => void;
 }
 
-export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBeneficiaryModalProps) {
-    const { registerBeneficiary } = useAsha();
+export function EditBeneficiaryModal({
+    isOpen,
+    beneficiary,
+    onClose,
+    onUpdated
+}: EditBeneficiaryModalProps) {
+    const { updateBeneficiary } = useAsha();
     const [fullName, setFullName] = useState('');
     const [age, setAge] = useState('');
     const [educationYears, setEducationYears] = useState('6');
@@ -24,7 +31,21 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        if (beneficiary && isOpen) {
+            setFullName(beneficiary.full_name || '');
+            setAge(String(beneficiary.age || ''));
+            setEducationYears(String(beneficiary.education_years ?? 6));
+            setLanguage(beneficiary.preferred_language || 'hi');
+            setGender(beneficiary.gender || 'female');
+            setVillageName(beneficiary.village_name || '');
+            setPhoneNumber(beneficiary.phone_number || '');
+            setAbhaId(beneficiary.abha_id || '');
+            setError(null);
+        }
+    }, [beneficiary, isOpen]);
+
+    if (!isOpen || !beneficiary) return null;
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -49,7 +70,7 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
 
         setSubmitting(true);
         try {
-            const beneficiary = await registerBeneficiary({
+            const updated = await updateBeneficiary(beneficiary.firebase_uid, {
                 full_name: fullName.trim(),
                 age: parsedAge,
                 education_years: parsedEdu,
@@ -60,19 +81,12 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                 abha_id: abhaId.trim() || undefined
             });
 
-            if (onCreated) {
-                onCreated(beneficiary.full_name);
+            if (updated && onUpdated) {
+                onUpdated(updated);
             }
             onClose();
-            // Reset fields
-            setFullName('');
-            setAge('');
-            setEducationYears('6');
-            setVillageName('');
-            setPhoneNumber('');
-            setAbhaId('');
         } catch (err: any) {
-            setError(err.message || 'Failed to register beneficiary. Please retry.');
+            setError(err.message || 'Failed to update beneficiary. Please retry.');
         } finally {
             setSubmitting(false);
         }
@@ -83,12 +97,12 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
             <div className="asha-modal-card" onClick={e => e.stopPropagation()}>
                 <div className="asha-modal-header">
                     <div className="asha-header-icon-badge">
-                        <UserPlus size={20} />
+                        <UserCheck size={20} />
                     </div>
                     <div>
-                        <h2 className="asha-modal-title">Register Village Beneficiary</h2>
+                        <h2 className="asha-modal-title">Edit Beneficiary Profile</h2>
                         <p className="asha-modal-subtitle">
-                            Create a localized assessment profile without needing an email or smartphone.
+                            Update contact info, village ward, and chronic health conditions.
                         </p>
                     </div>
                     <button className="asha-modal-close" onClick={onClose} aria-label="Close">
@@ -109,7 +123,6 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                         <input
                             type="text"
                             className="asha-form-input"
-                            placeholder="e.g. Ramesh Kumar / Lakshmi Devi"
                             value={fullName}
                             onChange={e => setFullName(e.target.value)}
                             required
@@ -123,7 +136,6 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                             <input
                                 type="number"
                                 className="asha-form-input"
-                                placeholder="e.g. 62"
                                 min="10"
                                 max="115"
                                 value={age}
@@ -140,7 +152,6 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                             <input
                                 type="number"
                                 className="asha-form-input"
-                                placeholder="e.g. 5"
                                 min="0"
                                 max="25"
                                 value={educationYears}
@@ -186,7 +197,6 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                             <input
                                 type="text"
                                 className="asha-form-input"
-                                placeholder="e.g. Rampur Sector 4"
                                 value={villageName}
                                 onChange={e => setVillageName(e.target.value)}
                             />
@@ -197,7 +207,7 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                         <div className="asha-form-group">
                             <label className="asha-form-label">
                                 Caregiver Phone Number
-                                <span className="asha-form-hint"> (For WhatsApp Referral)</span>
+                                <span className="asha-form-hint"> (WhatsApp Referral)</span>
                             </label>
                             <input
                                 type="tel"
@@ -211,7 +221,6 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                         <div className="asha-form-group">
                             <label className="asha-form-label">
                                 ABHA ID / Health ID
-                                <span className="asha-form-hint"> (Optional)</span>
                             </label>
                             <input
                                 type="text"
@@ -237,7 +246,7 @@ export function CreateBeneficiaryModal({ isOpen, onClose, onCreated }: CreateBen
                             className="asha-btn asha-btn-primary"
                             disabled={submitting}
                         >
-                            {submitting ? 'Creating Profile...' : 'Save & Add to Field List'}
+                            {submitting ? 'Updating...' : 'Save Changes'}
                         </button>
                     </div>
                 </form>

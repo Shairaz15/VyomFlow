@@ -1,123 +1,217 @@
+import { useState } from 'react';
 import type { AshaBeneficiary } from '../../services/supabaseService';
-import { INDIAN_LANGUAGES } from '../common/OnboardingModal';
+import {
+    Play,
+    FileText,
+    Edit3,
+    Trash2,
+    Phone,
+    MoreVertical,
+    CheckCircle2,
+    AlertTriangle,
+    Clock,
+    Sparkles
+} from 'lucide-react';
 import './AshaComponents.css';
 
 interface BeneficiaryCardProps {
     beneficiary: AshaBeneficiary;
     onStartTest: (beneficiary: AshaBeneficiary) => void;
     onViewReport: (beneficiary: AshaBeneficiary) => void;
+    onEdit?: (beneficiary: AshaBeneficiary) => void;
+    onDelete?: (beneficiary: AshaBeneficiary) => void;
 }
 
-export function BeneficiaryCard({ beneficiary, onStartTest, onViewReport }: BeneficiaryCardProps) {
-    const langObj = INDIAN_LANGUAGES.find(
-        l => l.code === beneficiary.preferred_language || beneficiary.preferred_language?.startsWith(l.code)
-    );
+export function BeneficiaryCard({
+    beneficiary,
+    onStartTest,
+    onViewReport,
+    onEdit,
+    onDelete
+}: BeneficiaryCardProps) {
+    const [showMenu, setShowMenu] = useState(false);
 
     const hasAssessed = (beneficiary.assessments_count ?? 0) > 0;
     const mocaScore = beneficiary.latest_moca != null ? Math.round(beneficiary.latest_moca) : null;
     const tier = beneficiary.latest_alert_tier || 'NOT_ASSESSED';
 
-    const getTierBadge = () => {
+    const isHighRisk = tier.includes('RECOMMEND') || tier.includes('EVALUATION') || tier === 'CLINICAL_REVIEW';
+
+    const getTierMeta = () => {
         if (!hasAssessed) {
             return {
-                label: 'Pending Initial Screening',
-                className: 'tier-pending',
-                icon: '⏳'
+                label: 'Pending Screening',
+                badgeClass: 'min-tier-pending',
+                barColor: '#f59e0b',
+                icon: <Clock size={13} />
             };
         }
         if (tier === 'STABLE') {
             return {
-                label: `Stable Cognitive Profile (${mocaScore}/30)`,
-                className: 'tier-stable',
-                icon: '✅'
+                label: 'Stable Baselines',
+                badgeClass: 'min-tier-stable',
+                barColor: '#10b981',
+                icon: <CheckCircle2 size={13} />
             };
         }
-        if (tier.includes('RECOMMEND') || tier.includes('EVALUATION')) {
+        if (isHighRisk) {
             return {
-                label: `Clinical Review Needed (${mocaScore}/30)`,
-                className: 'tier-warning',
-                icon: '⚠️'
+                label: 'Clinical Review Needed',
+                badgeClass: 'min-tier-warning',
+                barColor: '#f43f5e',
+                icon: <AlertTriangle size={13} />
             };
         }
         return {
-            label: `Screened (${mocaScore}/30)`,
-            className: 'tier-monitored',
-            icon: '📋'
+            label: 'Monitored',
+            badgeClass: 'min-tier-monitored',
+            barColor: '#6366f1',
+            icon: <Sparkles size={13} />
         };
     };
 
-    const badge = getTierBadge();
+    const tierMeta = getTierMeta();
+    const scorePercent = mocaScore != null ? Math.min(100, Math.max(10, Math.round((mocaScore / 30) * 100))) : 0;
 
-    const formattedDate = beneficiary.last_assessed_at
-        ? new Date(beneficiary.last_assessed_at).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-          })
-        : 'Never assessed';
+    const handleDeleteClick = () => {
+        setShowMenu(false);
+        if (window.confirm(`Remove ${beneficiary.full_name} from the field roster?`)) {
+            onDelete?.(beneficiary);
+        }
+    };
 
     return (
-        <div className="asha-beneficiary-card">
-            <div className="asha-card-top">
-                <div className="asha-card-avatar">
-                    <span className="asha-avatar-initial">
-                        {beneficiary.full_name ? beneficiary.full_name.charAt(0).toUpperCase() : 'P'}
-                    </span>
+        <div className={`min-beneficiary-card ${isHighRisk ? 'is-high-risk' : ''}`}>
+            {/* Header: Avatar, Name & Options Menu */}
+            <div className="min-card-header">
+                <div className="min-avatar">
+                    {beneficiary.full_name ? beneficiary.full_name.charAt(0).toUpperCase() : 'P'}
                 </div>
-                <div className="asha-card-identity">
-                    <div className="asha-name-row">
-                        <h3 className="asha-beneficiary-name">{beneficiary.full_name}</h3>
+
+                <div className="min-identity">
+                    <div className="min-name-row">
+                        <h3 className="min-name">{beneficiary.full_name}</h3>
                         {beneficiary.is_synced === false && (
-                            <span className="asha-unsynced-pill" title="Saved locally, pending cloud sync">
-                                ☁️ Offline
-                            </span>
+                            <span className="min-offline-dot" title="Offline record, will sync automatically" />
                         )}
                     </div>
-                    <div className="asha-chips-row">
-                        <span className="asha-chip">{beneficiary.age} yrs</span>
-                        <span className="asha-chip">{beneficiary.education_years} yrs schooling</span>
-                        {beneficiary.gender && <span className="asha-chip capitalize">{beneficiary.gender}</span>}
+                    <div className="min-subtitle">
+                        <span>{beneficiary.age} yrs</span>
+                        <span className="min-sep">•</span>
+                        <span>{beneficiary.village_name || 'Village'}</span>
+                        {beneficiary.phone_number && (
+                            <>
+                                <span className="min-sep">•</span>
+                                <span className="min-phone">
+                                    <Phone size={10} /> {beneficiary.phone_number}
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
+
+                {/* Quiet Options Menu Button */}
+                <div className="min-menu-container">
+                    <button
+                        type="button"
+                        className="min-menu-trigger"
+                        onClick={() => setShowMenu(prev => !prev)}
+                        title="More options"
+                    >
+                        <MoreVertical size={15} />
+                    </button>
+
+                    {showMenu && (
+                        <>
+                            <div className="min-menu-backdrop" onClick={() => setShowMenu(false)} />
+                            <div className="min-menu-dropdown">
+                                {onEdit && (
+                                    <button
+                                        type="button"
+                                        className="min-menu-item"
+                                        onClick={() => {
+                                            setShowMenu(false);
+                                            onEdit(beneficiary);
+                                        }}
+                                    >
+                                        <Edit3 size={13} /> Edit Profile
+                                    </button>
+                                )}
+                                {hasAssessed && (
+                                    <button
+                                        type="button"
+                                        className="min-menu-item"
+                                        onClick={() => {
+                                            setShowMenu(false);
+                                            onStartTest(beneficiary);
+                                        }}
+                                    >
+                                        <Play size={13} /> Re-screen
+                                    </button>
+                                )}
+                                {onDelete && (
+                                    <button
+                                        type="button"
+                                        className="min-menu-item danger"
+                                        onClick={handleDeleteClick}
+                                    >
+                                        <Trash2 size={13} /> Remove
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
 
-            <div className="asha-card-metadata">
-                <div className="asha-meta-item">
-                    <span className="asha-meta-label">Preferred Language</span>
-                    <span className="asha-meta-value language-tag">
-                        🗣️ {langObj ? `${langObj.native} (${langObj.label})` : beneficiary.preferred_language}
-                    </span>
-                </div>
+            {/* Status & MoCA Score Pill */}
+            <div className="min-card-body">
+                <div className="min-status-row">
+                    <div className={`min-status-badge ${tierMeta.badgeClass}`}>
+                        {tierMeta.icon}
+                        <span>{tierMeta.label}</span>
+                    </div>
 
-                <div className="asha-meta-item">
-                    <span className="asha-meta-label">Village / Locality</span>
-                    <span className="asha-meta-value">📍 {beneficiary.village_name || 'Village Unit'}</span>
+                    {hasAssessed && (
+                        <div className="min-moca-score">
+                            <strong>{mocaScore}</strong>
+                            <span>/30</span>
+                        </div>
+                    )}
                 </div>
-            </div>
-
-            <div className="asha-card-status-bar">
-                <div className={`asha-tier-badge ${badge.className}`}>
-                    <span className="asha-tier-icon">{badge.icon}</span>
-                    <span>{badge.label}</span>
-                </div>
-                <span className="asha-last-date">Last: {formattedDate}</span>
-            </div>
-
-            <div className="asha-card-actions">
-                <button
-                    className="asha-btn asha-btn-launch"
-                    onClick={() => onStartTest(beneficiary)}
-                >
-                    <span className="asha-btn-icon">▶</span>
-                    <span>Start Guided Assessment</span>
-                </button>
 
                 {hasAssessed && (
+                    <div className="min-score-track">
+                        <div
+                            className="min-score-fill"
+                            style={{
+                                width: `${scorePercent}%`,
+                                backgroundColor: tierMeta.barColor
+                            }}
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* Single Prominent Primary Action */}
+            <div className="min-card-footer">
+                {hasAssessed ? (
                     <button
-                        className="asha-btn asha-btn-outline"
+                        type="button"
+                        className="min-btn min-btn-secondary"
                         onClick={() => onViewReport(beneficiary)}
                     >
-                        <span>📊 Report</span>
+                        <FileText size={14} />
+                        <span>Clinical Report & Referral</span>
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className="min-btn min-btn-primary"
+                        onClick={() => onStartTest(beneficiary)}
+                    >
+                        <Play size={14} fill="currentColor" />
+                        <span>Start Screening</span>
                     </button>
                 )}
             </div>

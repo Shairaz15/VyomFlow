@@ -13,7 +13,7 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { auth } from '../lib/firebase';
-import { extract75Biomarkers } from './clinicalModelEngine';
+import { extract75Biomarkers, predictCognitiveProfile } from './clinicalModelEngine';
 import type { RawDashboardData, UserDemographics } from './dataMapper';
 export type { RawDashboardData };
 import type { CognitiveModelPrediction } from './clinicalModelEngine';
@@ -807,6 +807,10 @@ export interface AshaBeneficiary {
     preferred_language: string;
     gender?: string;
     village_name?: string;
+    phone_number?: string;
+    abha_id?: string;
+    has_hypertension?: boolean;
+    has_diabetes?: boolean;
     asha_worker_id: string;
     is_beneficiary: boolean;
     last_assessed_at?: string | null;
@@ -826,6 +830,10 @@ export interface AshaBeneficiaryInput {
     preferred_language: string;
     gender?: string;
     village_name?: string;
+    phone_number?: string;
+    abha_id?: string;
+    has_hypertension?: boolean;
+    has_diabetes?: boolean;
     asha_worker_id: string;
 }
 
@@ -884,6 +892,10 @@ export async function createAshaBeneficiary(input: AshaBeneficiaryInput): Promis
         preferred_language: input.preferred_language,
         gender: input.gender || 'Not specified',
         village_name: input.village_name || 'Village Unit',
+        phone_number: input.phone_number?.trim() || undefined,
+        abha_id: input.abha_id?.trim() || undefined,
+        has_hypertension: input.has_hypertension || false,
+        has_diabetes: input.has_diabetes || false,
         asha_worker_id: input.asha_worker_id,
         is_beneficiary: true,
         created_at: new Date().toISOString(),
@@ -900,7 +912,7 @@ export async function createAshaBeneficiary(input: AshaBeneficiaryInput): Promis
     // 2. Sync to Supabase if connected
     if (isSupabaseConfigured() && navigator.onLine) {
         try {
-            const payload = {
+            const payload: any = {
                 firebase_uid: beneficiary.firebase_uid,
                 full_name: beneficiary.full_name,
                 age: beneficiary.age,
@@ -957,6 +969,107 @@ export async function createAshaBeneficiary(input: AshaBeneficiaryInput): Promis
     }
 
     return beneficiary;
+}
+
+const ASHA_LOCAL_SESSIONS_KEY = 'vyomflow_asha_local_sessions';
+
+export function getLocalAssessmentSessions(firebaseUid: string): any[] {
+    try {
+        const raw = localStorage.getItem(ASHA_LOCAL_SESSIONS_KEY);
+        if (!raw) return [];
+        const all: any[] = JSON.parse(raw);
+        return all
+            .filter(s => s.firebase_uid === firebaseUid)
+            .sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime());
+    } catch {
+        return [];
+    }
+}
+
+export function saveLocalAssessmentSession(session: any): void {
+    try {
+        const raw = localStorage.getItem(ASHA_LOCAL_SESSIONS_KEY);
+        const all: any[] = raw ? JSON.parse(raw) : [];
+        all.unshift(session);
+        localStorage.setItem(ASHA_LOCAL_SESSIONS_KEY, JSON.stringify(all.slice(0, 100)));
+    } catch (e) {
+        logger.warn('Failed to save assessment session to local storage:', e);
+    }
+}
+
+/**
+ * Updates an existing ASHA beneficiary's demographics and details.
+ */
+export async function updateAshaBeneficiary(
+    firebaseUid: string,
+    updates: Partial<AshaBeneficiary>
+): Promise<AshaBeneficiary | null> {
+    try {
+        const raw = localStorage.getItem(ASHA_LOCAL_BENEFICIARIES_KEY);
+        const all: AshaBeneficiary[] = raw ? JSON.parse(raw) : [];
+        const index = all.findIndex(b => b.firebase_uid === firebaseUid);
+        if (index === -1) return null;
+
+        const updated: AshaBeneficiary = {
+            ...all[index],
+            ...updates,
+            updated_at: new Date().toISOString()
+        };
+        all[index] = updated;
+        localStorage.setItem(ASHA_LOCAL_BENEFICIARIES_KEY, JSON.stringify(all));
+
+        // Sync with Supabase if online
+        if (isSupabaseConfigured() && navigator.onLine) {
+            const dbPayload: any = {
+                full_name: updated.full_name,
+                age: updated.age,
+                education_years: updated.education_years,
+                preferred_language: updated.preferred_language,
+                gender: updated.gender,
+                village_name: updated.village_name,
+                updated_at: updated.updated_at
+            };
+            await supabase.from('users').update(dbPayload).eq('firebase_uid', firebaseUid);
+        }
+
+        return updated;
+    } catch (err) {
+        logger.error('Failed to update ASHA beneficiary:', err);
+        return null;
+    }
+}
+
+/**
+ * Deletes or archives a beneficiary from local storage and Supabase.
+ */
+export async function deleteAshaBeneficiary(firebaseUid: string): Promise<boolean> {
+    try {
+        const raw = localStorage.getItem(ASHA_LOCAL_BENEFICIARIES_KEY);
+        if (raw) {
+            const all: AshaBeneficiary[] = JSON.parse(raw);
+            const filtered = all.filter(b => b.firebase_uid !== firebaseUid);
+            localStorage.setItem(ASHA_LOCAL_BENEFICIARIES_KEY, JSON.stringify(filtered));
+        }
+
+        // Clean local sessions
+        const rawSess = localStorage.getItem(ASHA_LOCAL_SESSIONS_KEY);
+        if (rawSess) {
+            const allSess: any[] = JSON.parse(rawSess);
+            const filteredSess = allSess.filter(s => s.firebase_uid !== firebaseUid);
+            localStorage.setItem(ASHA_LOCAL_SESSIONS_KEY, JSON.stringify(filteredSess));
+        }
+
+        // Clean from Supabase if connected
+        if (isSupabaseConfigured() && navigator.onLine) {
+            await supabase.from('users').delete().eq('firebase_uid', firebaseUid);
+            await supabase.from('assessment_sessions').delete().eq('firebase_uid', firebaseUid);
+            await supabase.from('module_results').delete().eq('firebase_uid', firebaseUid);
+        }
+        return true;
+    } catch (err) {
+        logger.error('Failed to delete ASHA beneficiary:', err);
+        return false;
+    }
 }
 
 /**
@@ -1019,6 +1132,7 @@ export async function getAshaBeneficiaries(workerId: string): Promise<AshaBenefi
         // Overlay with database records (which have authoritative IDs and timestamps)
         dbUsers.forEach(dbU => {
             const stats = sessionMap[dbU.firebase_uid];
+            const existing = mergedMap.get(dbU.firebase_uid);
             mergedMap.set(dbU.firebase_uid, {
                 id: dbU.id,
                 firebase_uid: dbU.firebase_uid,
@@ -1028,14 +1142,18 @@ export async function getAshaBeneficiaries(workerId: string): Promise<AshaBenefi
                 preferred_language: dbU.preferred_language || 'en-IN',
                 gender: dbU.gender,
                 village_name: dbU.village_name,
+                phone_number: existing?.phone_number,
+                abha_id: existing?.abha_id,
+                has_hypertension: existing?.has_hypertension,
+                has_diabetes: existing?.has_diabetes,
                 asha_worker_id: dbU.asha_worker_id,
                 is_beneficiary: true,
-                last_assessed_at: stats?.lastDate || dbU.last_assessed_at,
+                last_assessed_at: stats?.lastDate || dbU.last_assessed_at || existing?.last_assessed_at,
                 created_at: dbU.created_at,
                 updated_at: dbU.updated_at,
-                assessments_count: stats?.count ?? 0,
-                latest_moca: stats?.latestMoca ?? null,
-                latest_alert_tier: stats?.alertTier ?? null,
+                assessments_count: stats?.count ?? existing?.assessments_count ?? 0,
+                latest_moca: stats?.latestMoca ?? existing?.latest_moca ?? null,
+                latest_alert_tier: stats?.alertTier ?? existing?.latest_alert_tier ?? null,
                 is_synced: true
             });
         });
@@ -1054,7 +1172,8 @@ export async function getAshaBeneficiaries(workerId: string): Promise<AshaBenefi
  * Fetches clinical assessment session history for a specific beneficiary.
  */
 export async function getBeneficiaryAssessmentHistory(firebaseUid: string): Promise<any[]> {
-    if (!isSupabaseConfigured()) return [];
+    const localHistory = getLocalAssessmentSessions(firebaseUid);
+    if (!isSupabaseConfigured() || !navigator.onLine) return localHistory;
     try {
         const { data, error } = await supabase
             .from('assessment_sessions')
@@ -1063,10 +1182,140 @@ export async function getBeneficiaryAssessmentHistory(firebaseUid: string): Prom
             .order('session_date', { ascending: false });
 
         if (error) throw error;
-        return data || [];
+        if (data && data.length > 0) {
+            const seen = new Set(data.map(d => d.session_id));
+            const merged = [...data];
+            localHistory.forEach(lh => {
+                if (!seen.has(lh.session_id)) {
+                    merged.push(lh);
+                }
+            });
+            return merged.sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime());
+        }
+        return localHistory;
     } catch (err) {
         logger.warn('Failed to fetch beneficiary assessment history:', err);
-        return [];
+        return localHistory;
+    }
+}
+
+/**
+ * Compiles completed test module results for a beneficiary, runs ML inference,
+ * and saves an aggregated clinical assessment session record to Supabase and local cache.
+ */
+export async function compileAndSaveBeneficiarySession(
+    beneficiaryUid: string,
+    providedRawData?: Partial<RawDashboardData>,
+    demographics?: UserDemographics
+): Promise<{ success: boolean; session?: any; prediction?: CognitiveModelPrediction | null }> {
+    try {
+        // 1. Locate beneficiary in local cache
+        const raw = localStorage.getItem(ASHA_LOCAL_BENEFICIARIES_KEY);
+        const all: AshaBeneficiary[] = raw ? JSON.parse(raw) : [];
+        const beneficiary = all.find(b => b.firebase_uid === beneficiaryUid);
+
+        const effectiveDemographics: UserDemographics = demographics || {
+            age: beneficiary?.age ?? 65,
+            educationYears: beneficiary?.education_years ?? 4,
+            gender: beneficiary?.gender ?? 'unknown'
+        };
+
+        // 2. Build complete raw data
+        let completeRawData: RawDashboardData = {
+            reaction: providedRawData?.reaction || [],
+            memory: providedRawData?.memory || [],
+            pattern: providedRawData?.pattern || [],
+            language: providedRawData?.language || [],
+            vmra: providedRawData?.vmra || [],
+            story: providedRawData?.story || [],
+            navigation: providedRawData?.navigation || [],
+            attention: providedRawData?.attention || []
+        };
+
+        // If no raw data provided, attempt to fetch from Supabase
+        if (
+            completeRawData.reaction.length === 0 &&
+            completeRawData.story.length === 0 &&
+            completeRawData.pattern.length === 0 &&
+            isSupabaseConfigured() &&
+            navigator.onLine
+        ) {
+            const fetched = await fetchLiveModuleResultsFromSupabase(beneficiaryUid, false);
+            completeRawData = fetched;
+        }
+
+        // 3. Run Clinical ML Inference
+        const prediction = await predictCognitiveProfile(completeRawData, effectiveDemographics);
+
+        const dateObj = new Date();
+        const dateKey = dateObj.toISOString().split('T')[0];
+        const sessionId = `session_${dateKey}_${Date.now().toString().slice(-4)}`;
+
+        // 4. Create Session Record
+        const sessionRecord = {
+            id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sess_${Date.now()}`,
+            firebase_uid: beneficiaryUid,
+            session_id: sessionId,
+            session_number: (beneficiary?.assessments_count || 0) + 1,
+            is_mock: false,
+            session_date: dateObj.toISOString(),
+            duration_seconds: 360,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+            estimated_moca: prediction.estimatedMoCA,
+            moca_ci_95: prediction.mocaConfidenceInterval,
+            predicted_diagnosis: prediction.predictedDiagnosis,
+            p_normal: prediction.probabilities.normal,
+            p_mci: prediction.probabilities.mci,
+            p_dementia: prediction.probabilities.dementia,
+            impairment_risk_score: prediction.impairmentRiskScore,
+            clinical_alert_tier: prediction.clinicalAlertTier,
+            model_confidence: prediction.modelConfidence,
+            battery_coverage: prediction.batteryCoverage,
+            completed_modules: prediction.completedModules,
+            domain_memory: prediction.domainScores.memory,
+            domain_language: prediction.domainScores.language,
+            domain_executive: prediction.domainScores.executive,
+            domain_processing_speed: prediction.domainScores.processingSpeed,
+            domain_spatial_orientation: prediction.domainScores.spatialOrientation,
+            domain_attention: prediction.domainScores.attention
+        };
+
+        // 5. Save local assessment session
+        saveLocalAssessmentSession(sessionRecord);
+
+        // 6. Update local beneficiary stats
+        if (beneficiary) {
+            const updatedBen: AshaBeneficiary = {
+                ...beneficiary,
+                latest_moca: Math.round(prediction.estimatedMoCA * 10) / 10,
+                latest_alert_tier: prediction.clinicalAlertTier,
+                last_assessed_at: dateObj.toISOString(),
+                assessments_count: (beneficiary.assessments_count || 0) + 1,
+                updated_at: dateObj.toISOString()
+            };
+            saveLocalBeneficiary(updatedBen);
+        }
+
+        // 7. Save to Supabase if connected
+        if (isSupabaseConfigured() && navigator.onLine) {
+            try {
+                await supabase.from('assessment_sessions').insert(sessionRecord);
+                await supabase.from('users').update({
+                    last_assessed_at: dateObj.toISOString()
+                }).eq('firebase_uid', beneficiaryUid);
+                logger.info(`Successfully compiled and stored clinical session for beneficiary ${beneficiaryUid}`);
+            } catch (err) {
+                logger.warn('Failed to insert session to Supabase, queued offline:', err);
+                queueOfflineWrite('session', sessionRecord);
+            }
+        } else {
+            queueOfflineWrite('session', sessionRecord);
+        }
+
+        return { success: true, session: sessionRecord, prediction };
+    } catch (err) {
+        logger.error('Failed to compile beneficiary session:', err);
+        return { success: false, prediction: null };
     }
 }
 

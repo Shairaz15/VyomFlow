@@ -1,3 +1,4 @@
 export * from "./reactionLogic";
 export * from "./reactionScoring";
 export * from "./reactionFeatures";
+export * from "./ReactionTutorialPlayer";

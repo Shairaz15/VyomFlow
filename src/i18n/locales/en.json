@@ -975,5 +975,20 @@
   },
   "patientResults": {
     "comparedToLastTime": "Compared to last visit"
+  },
+  "asha": {
+    "portalTitle": "Grassroots Cognitive Screening",
+    "portalSubtitle": "Conduct rapid AI biomarker assessments for rural residents who have no smartphone access. Spoken voice prompts, 1-click WhatsApp referrals, and offline caching.",
+    "registerBeneficiary": "Register Beneficiary",
+    "exportCsv": "Export CSV",
+    "outdoorMode": "High Sunlight Mode",
+    "rapidBattery": "Rapid Field Battery",
+    "mocaScore": "Estimated MoCA",
+    "clinicalReview": "Clinical Review Needed",
+    "stable": "Stable Profile",
+    "pending": "Pending Screening",
+    "whatsAppReferral": "WhatsApp Referral",
+    "printPhcSlip": "Print PHC Slip",
+    "villageRoster": "Village Beneficiary Roster"
   }
 }

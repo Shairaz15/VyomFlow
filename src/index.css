@@ -685,3 +685,24 @@ a:focus-visible {
 /* ===== Responsive Typography ===== */
 /* Fluid typography via clamp() in :root — no breakpoint overrides needed.
    Headings inherit fluid sizing from CSS custom properties. */
+
+/* ==========================================================================
+   SIDE-BY-SIDE INSTRUCTIONS & TUTORIAL VIDEO LAYOUT (Global across all 7 modules)
+   ========================================================================== */
+
+.instructions-with-tutorial-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) !important;
+    gap: 1.15rem !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 980px !important;
+    margin: 0 auto !important;
+}
+
+@media (max-width: 860px) {
+    .instructions-with-tutorial-layout {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
+    }
+}

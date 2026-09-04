@@ -232,8 +232,8 @@ export function StoryAssessment() {
                                 </div>
                             </Card>
 
-                            {/* Tutorial Video Placeholder */}
-                            <TutorialVideoPlaceholder />
+                            {/* Multilingual Tutorial Video */}
+                            <TutorialVideoPlaceholder module="story" />
                         </div>
                     )}
 

@@ -4,7 +4,8 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadius
 import { useAuth } from "../../../contexts/AuthContext";
 import { useLanguage } from "../../../i18n/LanguageContext";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock, SpecularButton } from "../../common";
+import { Button, Card, Icon, MotivationalQuoteBlock, SpecularButton } from "../../common";
+import { ReactionTutorialPlayer } from "./ReactionTutorialPlayer";
 import type { ReactionState, RoundResult } from "./reactionLogic";
 import {
     DEFAULT_CONFIG,
@@ -363,8 +364,8 @@ export function ReactionTimeTest() {
                                 </div>
                             </Card>
 
-                            {/* Tutorial Video Placeholder */}
-                            <TutorialVideoPlaceholder />
+                            {/* Interactive Multilingual Tutorial Video */}
+                            <ReactionTutorialPlayer />
                         </div>
                     )}
 

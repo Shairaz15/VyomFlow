@@ -554,8 +554,8 @@ export function VmraAssessment() {
                             </div>
                         </Card>
 
-                        {/* Tutorial Video Placeholder */}
-                        <TutorialVideoPlaceholder />
+                        {/* Multilingual Tutorial Video */}
+                        <TutorialVideoPlaceholder module="visual_memory" />
                     </div>
                 );
 

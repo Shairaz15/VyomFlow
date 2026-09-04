@@ -1013,8 +1013,8 @@ export function LanguageAssessment() {
                                 </div>
                             </Card>
 
-                            {/* Tutorial Video Placeholder */}
-                            <TutorialVideoPlaceholder />
+                            {/* Multilingual Tutorial Video */}
+                            <TutorialVideoPlaceholder module="language" />
                         </div>
                     )}
 
