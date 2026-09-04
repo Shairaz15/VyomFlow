@@ -398,9 +398,10 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
             alertOutput,
             driftMetrics,
             demographics,
-            isLoading || isHooksLoading || isSeeding
+            isLoading || isHooksLoading || isSeeding,
+            dataMode
         );
-    }, [effectiveRawData, demographics, prediction, evaluation, alertOutput, driftMetrics, isLoading, isHooksLoading, isSeeding]);
+    }, [effectiveRawData, demographics, prediction, evaluation, alertOutput, driftMetrics, isLoading, isHooksLoading, isSeeding, dataMode]);
 
     return {
         ...baseViewModel,

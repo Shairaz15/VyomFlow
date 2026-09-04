@@ -1067,7 +1067,8 @@ export function buildDashboardViewModel(
     alertOutput: AlertOutput | null,
     driftMetrics: DriftMetrics | null,
     demographics: UserDemographics | undefined,
-    isLoading: boolean
+    isLoading: boolean,
+    dataMode?: string
 ): DashboardViewModel {
     const hasData = Boolean(
         (rawData.reaction?.length) ||
@@ -1091,7 +1092,9 @@ export function buildDashboardViewModel(
     overview.lastAssessmentDate = findLatestTimestamp(rawData);
 
     // Adaptive 4-to-7 battery expansion flag
-    const isExpandedBattery = prediction?.predictedDiagnosis === 'MCI' || prediction?.predictedDiagnosis === 'Dementia';
+    // Expand if prediction says MCI/Dementia OR if explicitly in a mock_mci/mock_decline demo mode
+    const isMockExpanded = dataMode === 'mock_mci' || dataMode === 'mock_decline';
+    const isExpandedBattery = isMockExpanded || prediction?.predictedDiagnosis === 'MCI' || prediction?.predictedDiagnosis === 'Dementia';
     const BASELINE_MODULE_KEYS = ['reaction', 'vmra', 'memory', 'pattern', 'language'];
 
     // Compute exact number of completed full sessions (all 7 for expanded, 4 for baseline = 1 session)

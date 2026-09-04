@@ -29,6 +29,7 @@ import { evaluatePatientTrajectory, evaluateLongitudinalDrift, type Longitudinal
 import { generateClinicalAlert, type AlertOutput } from '../services/clinicalAlertEngine';
 import { mapToSessionData, type RawDashboardData, type UserDemographics } from '../services/dataMapper';
 import { buildDashboardViewModel, type DashboardViewModel } from '../services/dashboardViewModel';
+import { getActiveDataMode } from '../services/supabaseService';
 import { logger } from '../utils/logger';
 
 export function useDashboardViewModel(): DashboardViewModel {
@@ -177,7 +178,8 @@ export function useDashboardViewModel(): DashboardViewModel {
             alertOutput,
             driftMetrics,
             demographics,
-            isLoading
+            isLoading,
+            getActiveDataMode()
         );
     }, [rawData, prediction, evaluation, alertOutput, driftMetrics, demographics, isLoading]);
 }

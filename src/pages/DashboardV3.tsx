@@ -213,28 +213,21 @@ export function DashboardV3() {
                     <div className="dv2-view-content" style={{ marginTop: '0.75rem' }}>
                         {/* Supportive Clinical Banner when Comprehensive Diagnostic Battery is Unlocked */}
                         {vm.isExpandedBattery && (
-                            <div
-                                className="expanded-battery-banner animate-fadeIn"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.85rem',
-                                    padding: '0.85rem 1.25rem',
-                                    marginBottom: '1.25rem',
-                                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.05) 100%)',
-                                    border: '1px solid rgba(245, 158, 11, 0.35)',
-                                    borderRadius: '14px',
-                                    color: '#FDE68A',
-                                    backdropFilter: 'blur(8px)',
-                                }}
-                            >
-                                <span style={{ fontSize: '1.35rem', flexShrink: 0 }}>🩺</span>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 650, fontSize: '0.92rem', color: '#FCD34D' }}>
-                                        Comprehensive Diagnostic Battery Activated
+                            <div className="expanded-battery-banner animate-fadeIn" role="status" aria-live="polite">
+                                <div className="expanded-battery-icon-wrapper">
+                                    <span className="expanded-battery-icon">🩺</span>
+                                </div>
+                                <div className="expanded-battery-content">
+                                    <div className="expanded-battery-header">
+                                        <span className="expanded-battery-title">
+                                            Comprehensive Diagnostic Battery Active
+                                        </span>
+                                        <span className="expanded-battery-badge">
+                                            7 of 7 Tests Unlocked
+                                        </span>
                                     </div>
-                                    <div style={{ fontSize: '0.82rem', color: 'rgba(253, 230, 138, 0.85)', marginTop: '2px' }}>
-                                        AI clinical risk screening identified patterns indicative of MCI or cognitive decline. Assessment modules and trend tracking have automatically expanded from 4 to all 7 clinical assessments for granular diagnostic mapping.
+                                    <div className="expanded-battery-description">
+                                        Cognitive risk patterns detected. Assessment battery expanded from 4 to all 7 clinical tests for detailed diagnostic mapping.
                                     </div>
                                 </div>
                             </div>

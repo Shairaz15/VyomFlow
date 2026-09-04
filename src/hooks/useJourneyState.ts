@@ -736,8 +736,10 @@ export function useJourneyState(): JourneyState {
         if (isActivityCompletedInProtocol(mergedNavigation, 'navigation')) completedActivityIds.add('navigation');
         if (isActivityCompletedInProtocol(mergedLanguage, 'language')) completedActivityIds.add('language');
 
-        // Dynamic 4-to-7 battery activation: only expand when patient evaluates to MCI or Dementia
-        const isExpandedBattery = prediction?.predictedDiagnosis === 'MCI' || prediction?.predictedDiagnosis === 'Dementia';
+        // Dynamic 4-to-7 battery activation: expand when patient evaluates to MCI or Dementia,
+        // OR when explicitly in a mock_mci / mock_decline demo mode
+        const isMockExpanded = dataMode === 'mock_mci' || dataMode === 'mock_decline';
+        const isExpandedBattery = isMockExpanded || prediction?.predictedDiagnosis === 'MCI' || prediction?.predictedDiagnosis === 'Dementia';
         const activeNodes = isExpandedBattery
             ? JOURNEY_NODES
             : JOURNEY_NODES.filter((n) => BASELINE_ACTIVITY_IDS.includes(n.id));
