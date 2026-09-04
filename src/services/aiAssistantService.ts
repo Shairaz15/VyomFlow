@@ -12,10 +12,11 @@
 import { logger } from '../utils/logger';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
+import { SARVAM_API_KEY } from '../utils/sarvamConfig';
+
 let currentPlayingAudio: HTMLAudioElement | null = null;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_ijjzfhen_Cwenf03H9l469NGfqjTeHSad';
 
 const GEMINI_MODELS = [
     'gemini-3.6-flash',

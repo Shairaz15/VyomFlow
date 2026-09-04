@@ -163,6 +163,7 @@ export function PatternAssessment() {
         } else {
             // Wrong input
             setFeedbackTile({ index, status: 'wrong' });
+            setTimeout(() => setFeedbackTile(null), 800);
             handleRoundEnd(false);
         }
     };
@@ -196,6 +197,8 @@ export function PatternAssessment() {
             } else {
                 setMessage(t("pattern.sequenceEnded"));
                 setTimeout(() => {
+                    setFeedbackTile(null);
+                    setActiveTile(null);
                     setPhase('complete');
                 }, 1500);
                 return;
@@ -285,12 +288,37 @@ export function PatternAssessment() {
     };
 
     const handleRetake = () => {
-        setPhase('instructions');
-        setLevel(1);
-        setRounds([]);
+        if (sequenceIntervalRef.current) {
+            clearInterval(sequenceIntervalRef.current);
+            sequenceIntervalRef.current = null;
+        }
+        setFeedbackTile(null);
+        setActiveTile(null);
+        setSequence([]);
         setUserSequence([]);
+        setRounds([]);
+        setLevel(1);
+        setGridSize(3);
         setGameState('idle');
         setMessage("");
+        setPhase('instructions');
+    };
+
+    const handleStartTest = () => {
+        if (sequenceIntervalRef.current) {
+            clearInterval(sequenceIntervalRef.current);
+            sequenceIntervalRef.current = null;
+        }
+        setFeedbackTile(null);
+        setActiveTile(null);
+        setSequence([]);
+        setUserSequence([]);
+        setRounds([]);
+        setLevel(1);
+        setGridSize(3);
+        setGameState('idle');
+        setMessage(t("pattern.watchPattern"));
+        setPhase('demonstration');
     };
 
     // Render Helpers
@@ -396,7 +424,7 @@ export function PatternAssessment() {
                                         <Button
                                             variant="primary"
                                             className="story-primary-start-btn"
-                                            onClick={() => setPhase('demonstration')}
+                                            onClick={handleStartTest}
                                         >
                                             {t("pattern.startTest")}
                                         </Button>

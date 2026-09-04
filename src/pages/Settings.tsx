@@ -107,6 +107,14 @@ export function Settings() {
             });
             setLocale(preferredLanguage);
             localStorage.setItem('preferredLanguage', preferredLanguage);
+            try {
+                const existing = localStorage.getItem('vyomflow_user_profile');
+                const parsed = existing ? JSON.parse(existing) : {};
+                if (age) parsed.age = Number(age);
+                if (gender) parsed.gender = gender;
+                parsed.preferredLanguage = preferredLanguage;
+                localStorage.setItem('vyomflow_user_profile', JSON.stringify(parsed));
+            } catch {}
             setMessage({ type: 'success', text: t('settings.profileUpdated') });
         } catch (error) {
             console.error('Error saving profile:', error);

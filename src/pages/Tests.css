@@ -111,51 +111,56 @@ html.dark .hero-top-row,
     font-weight: 600;
 }
 
-.journey-reset-session-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    background: transparent;
-    border: 1px solid var(--glass-border);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    padding: 0;
-    margin-left: 2px;
-}
-
-.journey-reset-session-btn:hover {
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.4);
-    background: rgba(239, 68, 68, 0.08);
-    transform: rotate(-45deg);
-}
-
 .dots-mini-row {
     display: flex;
-    gap: 7px;
+    align-items: center;
+    gap: 6px;
     margin: 2px 0;
 }
 
 .dot-mini {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: var(--glass-border);
-    transition: all 0.25s ease;
+    background: #1e293b;
+    border: 1px solid #334155;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.dot-mini:hover {
+    transform: scale(1.18);
+    border-color: #64748b;
 }
 
 .dot-mini.done {
-    background: #059669;
+    background: #10b981;
+    border-color: transparent;
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.5), 0 0 6px rgba(16, 185, 129, 0.35);
 }
 
 .dot-mini.current {
-    background: #3A9D9B;
+    background: #22d3ee;
+    border-color: transparent;
+    transform: scale(1.25);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.45), 0 0 10px rgba(6, 182, 212, 0.6);
+    animation: dotMiniPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.dot-mini.current:hover {
     transform: scale(1.35);
-    box-shadow: 0 0 8px rgba(58, 157, 155, 0.4);
+}
+
+@keyframes dotMiniPulse {
+    0%, 100% {
+        transform: scale(1.25);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.45), 0 0 10px rgba(6, 182, 212, 0.6);
+    }
+    50% {
+        transform: scale(1.32);
+        box-shadow: 0 0 0 5px rgba(6, 182, 212, 0.25), 0 0 14px rgba(6, 182, 212, 0.85);
+    }
 }
 
 .journey-compact-cta {
@@ -400,21 +405,7 @@ html:not(.dark) .hero-progress-pill,
     border-left-color: rgba(23, 50, 77, 0.10) !important;
 }
 
-html:not(.dark) .dot-mini,
-[data-theme="light"] .dot-mini {
-    background: rgba(23, 50, 77, 0.12) !important;
-}
-
-html:not(.dark) .dot-mini.done,
-[data-theme="light"] .dot-mini.done {
-    background: #15803d !important;
-}
-
-html:not(.dark) .dot-mini.current,
-[data-theme="light"] .dot-mini.current {
-    background: #4F7C78 !important;
-    box-shadow: 0 0 8px rgba(79, 124, 120, 0.5) !important;
-}
+/* Removed dull overrides for .dot-mini to preserve vibrant high-contrast indicator dots */
 
 .journey-compact-cta,
 .dark .journey-compact-cta,

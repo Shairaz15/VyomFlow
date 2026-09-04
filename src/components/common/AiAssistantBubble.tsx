@@ -51,9 +51,8 @@ import {
     checkAiServerStatus,
     detectMessageLanguage,
 } from '../../services/aiAssistantService';
+import { SARVAM_API_KEY } from '../../utils/sarvamConfig';
 import './AiAssistantBubble.css';
-
-const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 interface ChatMessage {
     id: string;

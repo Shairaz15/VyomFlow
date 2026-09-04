@@ -21,6 +21,8 @@ import {
     selectDistractors,
     buildGrid,
     getSessionConfig,
+    IMAGE_CATALOG,
+    VMRA_SUPABASE_URL,
 } from '../data/vmraImageCatalog';
 import { buildSessionResult } from '../utils/vmraScoring';
 import { useVmraResults } from '../hooks/useTestResults';
@@ -106,7 +108,6 @@ export function VmraAssessment() {
     // Encoding state
     const [targetImages, setTargetImages] = useState<ImageStimulus[]>([]);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [imageVisible, setImageVisible] = useState(true);
     const encodingStartTime = useRef<number>(0);
 
     // Retention state
@@ -159,6 +160,19 @@ export function VmraAssessment() {
         scrollToActiveStage();
     }, [phase, scrollToActiveStage]);
 
+    // Preload & GPU-decode all 24 VMRA images into memory for 0ms instantaneous paint
+    useEffect(() => {
+        IMAGE_CATALOG.forEach(stimulus => {
+            if (stimulus.imageSrc) {
+                const img = new Image();
+                img.src = stimulus.imageSrc;
+                if ('decode' in img) {
+                    img.decode().catch(() => {});
+                }
+            }
+        });
+    }, []);
+
     // Handle Exit / Back Navigation
     const handleExitClick = () => {
         if (phase === 'onboarding' || phase === 'results') {
@@ -192,12 +206,11 @@ export function VmraAssessment() {
         const targets = selectTargetImages(config.targetCount);
         setTargetImages(targets);
         setCurrentImageIndex(0);
-        setImageVisible(true);
         encodingStartTime.current = Date.now();
         setPhase('encoding');
     }, [config.targetCount, isAuthenticated]);
 
-    // ─── Encoding: cycle through images ───────────────────────────
+    // ─── Encoding: cycle through images with 0ms instantaneous frame swap ───
 
     useEffect(() => {
         if (phase !== 'encoding') return;
@@ -213,21 +226,14 @@ export function VmraAssessment() {
             return;
         }
 
-        // Show image for encodingTimePerImage, with fade
-        setImageVisible(true);
-        const showTimer = setTimeout(() => {
-            setImageVisible(false);
-        }, config.encodingTimePerImage - config.fadeDuration);
-
-        const nextTimer = setTimeout(() => {
+        const timer = setTimeout(() => {
             setCurrentImageIndex(prev => prev + 1);
         }, config.encodingTimePerImage);
 
         return () => {
-            clearTimeout(showTimer);
-            clearTimeout(nextTimer);
+            clearTimeout(timer);
         };
-    }, [phase, currentImageIndex, targetImages.length, config]);
+    }, [phase, currentImageIndex, targetImages.length, config.encodingTimePerImage]);
 
     // ─── Retention: countdown timer ───────────────────────────────
 
@@ -468,6 +474,7 @@ export function VmraAssessment() {
         if (image.imageSrc) {
             return (
                 <img
+                    key={image.id}
                     src={image.imageSrc}
                     alt={image.name}
                     className="vmra-stimulus-img"
@@ -475,12 +482,11 @@ export function VmraAssessment() {
                     loading="eager"
                     draggable={false}
                     onError={(e) => {
-                        // Fallback to SVG if image fails to load
-                        (e.target as HTMLElement).style.display = 'none';
-                        const parent = (e.target as HTMLElement).parentElement;
-                        if (parent) {
-                            const fallback = parent.querySelector('.vmra-svg-fallback');
-                            if (fallback) (fallback as HTMLElement).style.display = 'block';
+                        const target = e.currentTarget;
+                        if (!target.dataset.fallbackApplied) {
+                            target.dataset.fallbackApplied = 'true';
+                            // Fallback to Supabase cloud storage if local bundle missing
+                            target.src = `${VMRA_SUPABASE_URL}/${image.id}.jpg`;
                         }
                     }}
                 />
@@ -558,8 +564,16 @@ export function VmraAssessment() {
                 return (
                     <div className="vmra-phase vmra-encoding">
                         <p className="vmra-phase-label">{t('vmra.rememberImage')}</p>
-                        <div className={`vmra-image-display ${imageVisible ? 'visible' : 'fading'}`}>
-                            {targetImages[currentImageIndex] && renderIcon(targetImages[currentImageIndex], 160)}
+                        <div className="vmra-image-display">
+                            {targetImages.map((image, idx) => (
+                                <div
+                                    key={image.id}
+                                    className={`vmra-stacked-stimulus ${idx === currentImageIndex ? 'active' : ''}`}
+                                    aria-hidden={idx !== currentImageIndex}
+                                >
+                                    {renderIcon(image, 160)}
+                                </div>
+                            ))}
                         </div>
                         <div className="vmra-progress-dots">
                             {targetImages.map((_, i) => (

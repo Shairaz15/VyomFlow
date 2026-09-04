@@ -2,9 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Card, Icon } from "../../common";
 import { useLanguage } from "../../../i18n/LanguageContext";
 import type { SupportedLanguage } from "../../../types/storyTypes";
+import { SARVAM_API_KEY } from "../../../utils/sarvamConfig";
 import "./StoryAssessment.css";
-
-const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 interface StoryRecorderProps {
     selectedLanguage?: SupportedLanguage;

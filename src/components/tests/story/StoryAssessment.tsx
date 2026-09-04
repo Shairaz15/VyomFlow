@@ -256,7 +256,7 @@ export function StoryAssessment() {
                     {/* Phase 3: Story Narration Player */}
                     {phase === "narration" && (
                         <StoryPlayer
-                            storyText={story.englishReference}
+                            storyText={story.content[selectedLanguage] || story.englishReference}
                             languageCode={selectedLanguage}
                             onComplete={handleNarrationComplete}
                         />

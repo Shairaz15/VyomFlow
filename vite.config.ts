@@ -44,6 +44,14 @@ export default defineConfig({
           'api-subscription-key': SARVAM_API_KEY,
         },
       },
+      '/api/tts': {
+        target: 'https://api.sarvam.ai',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/tts/, '/text-to-speech'),
+        headers: {
+          'api-subscription-key': SARVAM_API_KEY,
+        },
+      },
       '/api/sarvam-translate': {
         target: 'https://api.sarvam.ai',
         changeOrigin: true,

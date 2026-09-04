@@ -1,13 +1,13 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import type { DashboardViewModel, AssessmentModuleViewModel, ModuleBiomarkerSummary } from '../../services/dashboardViewModel';
 import { MODULE_META } from '../../services/dashboardViewModel';
+import { useAuth } from '../../contexts/AuthContext';
+import { db } from '../../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { 
     Printer, 
     Download, 
     X, 
-    Edit3, 
-    Sparkles, 
-    Stethoscope, 
     FileText 
 } from 'lucide-react';
 import './ClinicianReportModal.css';
@@ -32,14 +32,12 @@ const DOMAIN_NORMATIVE_DISTRIBUTION: Record<string, { mean: number; sd: number; 
 const MODULE_CLINICAL_SPECS: Record<string, {
     primaryBiomarkerName: string;
     normTarget: string;
-    sensorFidelity: string;
     formatValue: (mod: AssessmentModuleViewModel, topBio?: ModuleBiomarkerSummary[]) => string;
     getStatus: (mod: AssessmentModuleViewModel, topBio?: ModuleBiomarkerSummary[]) => { label: string; type: 'normal' | 'watch' | 'alert' | 'pending' };
 }> = {
     reaction: {
         primaryBiomarkerName: 'Mean Latency (Psychomotor)',
         normTarget: '< 340 ms',
-        sensorFidelity: '1000 Hz Sub-ms Touch',
         formatValue: (mod, topBio) => {
             if (!mod.isCompleted || mod.score == null) return 'Pending';
             const avg = topBio?.find(b => b.name.includes('Latency'))?.value ?? mod.score;
@@ -54,13 +52,12 @@ const MODULE_CLINICAL_SPECS: Record<string, {
         },
     },
     attention: {
-        primaryBiomarkerName: 'Sensitivity (d′) & Hit Ratio',
-        normTarget: '> 2.20 d′ / > 85%',
-        sensorFidelity: 'Continuous Vigilance Log',
+        primaryBiomarkerName: "Sensitivity (d') & Hit Ratio",
+        normTarget: "> 2.20 d' / > 85%",
         formatValue: (mod, topBio) => {
             if (!mod.isCompleted || mod.score == null) return 'Pending';
-            const dPrime = topBio?.find(b => b.name.includes('Sensitivity') || b.name.includes('d′'))?.value;
-            return dPrime != null ? `${dPrime} d′ (${mod.score}/100)` : `${mod.score}/100`;
+            const dPrime = topBio?.find(b => b.name.includes('Sensitivity') || b.name.includes('d′') || b.name.includes("d'"))?.value;
+            return dPrime != null ? `${dPrime} d' (${mod.score}/100)` : `${mod.score}/100`;
         },
         getStatus: (mod) => {
             if (!mod.isCompleted) return { label: 'Pending Battery', type: 'pending' };
@@ -72,7 +69,6 @@ const MODULE_CLINICAL_SPECS: Record<string, {
     vmra: {
         primaryBiomarkerName: 'Delayed Visual Recall Accuracy',
         normTarget: '> 75%',
-        sensorFidelity: 'Pattern Entropy Validated',
         formatValue: (mod, topBio) => {
             if (!mod.isCompleted || mod.score == null) return 'Pending';
             const acc = topBio?.find(b => b.name.includes('Recall') || b.name.includes('Accuracy'))?.value ?? mod.score;
@@ -88,7 +84,6 @@ const MODULE_CLINICAL_SPECS: Record<string, {
     story: {
         primaryBiomarkerName: 'Narrative Discourse & Info Units',
         normTarget: '> 70 / 100',
-        sensorFidelity: 'NLP Entity Extraction',
         formatValue: (mod) => {
             if (!mod.isCompleted || mod.score == null) return 'Pending';
             return `${Math.round(mod.score)} / 100`;
@@ -103,7 +98,6 @@ const MODULE_CLINICAL_SPECS: Record<string, {
     language: {
         primaryBiomarkerName: 'Cognitive Speech Index (Acoustics/CSI)',
         normTarget: '> 70 / 100 (Pause < 950ms)',
-        sensorFidelity: '16 kHz Vocal Pipeline',
         formatValue: (mod, topBio) => {
             if (!mod.isCompleted || mod.score == null) return 'Pending';
             const wpm = topBio?.find(b => b.name.includes('Words Per Minute') || b.name.includes('WPM'))?.value;
@@ -119,7 +113,6 @@ const MODULE_CLINICAL_SPECS: Record<string, {
     pattern: {
         primaryBiomarkerName: 'Max Sequence Level Span',
         normTarget: '≥ Level 6 (Accuracy > 75%)',
-        sensorFidelity: 'Spatial Grid Calibrated',
         formatValue: (mod, topBio) => {
             if (!mod.isCompleted || mod.score == null) return 'Pending';
             const maxLvl = topBio?.find(b => b.name.includes('Max Level'))?.value;
@@ -135,7 +128,6 @@ const MODULE_CLINICAL_SPECS: Record<string, {
     navigation: {
         primaryBiomarkerName: 'Route Efficiency & Heading Error',
         normTarget: '> 80 / 100',
-        sensorFidelity: 'Continuous Kinematics',
         formatValue: (mod) => {
             if (!mod.isCompleted || mod.score == null) return 'Pending';
             return `${Math.round(mod.score)} / 100`;
@@ -150,21 +142,84 @@ const MODULE_CLINICAL_SPECS: Record<string, {
 };
 
 export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) => {
-    // ─── 1. Demographics & Clinician Customization State ─────────
-    const [patientName, setPatientName] = useState('Patient Self-Test');
-    const [patientId, setPatientId] = useState(() => `PT-${Math.abs(Date.now() % 1000000).toString().padStart(6, '0')}`);
-    const [age, setAge] = useState<number>(vm.clinicianReport?.demographics?.age || 68);
-    const [gender, setGender] = useState<string>(vm.clinicianReport?.demographics?.gender || 'Female');
-    const [educationYears, setEducationYears] = useState<number>(vm.clinicianReport?.demographics?.educationYears || 16);
-    const [handDominance, setHandDominance] = useState<string>('Right');
+    const { user } = useAuth();
 
-    const [physicianName, setPhysicianName] = useState('Dr. R. Sharma, MD, PhD');
-    const [physicianSpecialty, setPhysicianSpecialty] = useState('Board Certified Neurologist');
-    const [physicianLicense, setPhysicianLicense] = useState('NPI-89102941');
-    const [clinicName, setClinicName] = useState('VyomFlow Neurocognitive Assessment Network');
-    const [clinicDepartment] = useState('Department of Cognitive Neurology • Quantitative Digital Phenotyping');
-    const [includeDigitalSignature, setIncludeDigitalSignature] = useState(true);
-    const [showEditDrawer, setShowEditDrawer] = useState(false);
+    // Helper to resolve demographic profile directly from Auth + LocalStorage + Firestore
+    const resolveInitialProfile = useCallback(() => {
+        let name = user?.displayName?.trim() || '';
+        if (!name && user?.email) {
+            const rawPrefix = user.email.split('@')[0];
+            name = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+        }
+
+        let ageVal = vm.clinicianReport?.demographics?.age;
+        let genderVal = vm.clinicianReport?.demographics?.gender;
+        let eduVal = vm.clinicianReport?.demographics?.educationYears;
+
+        try {
+            const saved = localStorage.getItem('vyomflow_user_profile');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.name && !name) name = parsed.name;
+                if (parsed.age) ageVal = Number(parsed.age);
+                if (parsed.gender) genderVal = parsed.gender;
+                if (parsed.educationYears) eduVal = Number(parsed.educationYears);
+            }
+        } catch {}
+
+        return {
+            name: name || 'Patient Self-Test',
+            age: ageVal || 65,
+            gender: genderVal || 'Not specified',
+            educationYears: eduVal || 16,
+        };
+    }, [user, vm.clinicianReport]);
+
+    const initial = useMemo(() => resolveInitialProfile(), [resolveInitialProfile]);
+
+    // ─── 1. Demographics State directly from Profile ─────────────
+    const [patientName, setPatientName] = useState(initial.name);
+    const [age, setAge] = useState<number>(initial.age);
+    const [gender, setGender] = useState<string>(initial.gender);
+    const [educationYears, setEducationYears] = useState<number>(initial.educationYears);
+
+    // Sync when modal opens or user profile is updated in Auth / Firestore
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const prof = resolveInitialProfile();
+        setPatientName(prof.name);
+        setAge(prof.age);
+        setGender(prof.gender);
+        setEducationYears(prof.educationYears);
+
+        if (user?.uid) {
+            getDoc(doc(db, 'users', user.uid)).then((snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.displayName) setPatientName(data.displayName);
+                    else if (user.displayName) setPatientName(user.displayName);
+
+                    if (data.age) setAge(Number(data.age));
+                    if (data.gender) setGender(data.gender);
+                    if (data.educationYears) setEducationYears(Number(data.educationYears));
+
+                    // Cache to localStorage
+                    try {
+                        const saved = localStorage.getItem('vyomflow_user_profile');
+                        const parsed = saved ? JSON.parse(saved) : {};
+                        if (data.age) parsed.age = Number(data.age);
+                        if (data.gender) parsed.gender = data.gender;
+                        if (data.educationYears) parsed.educationYears = Number(data.educationYears);
+                        if (data.displayName || user.displayName) parsed.name = data.displayName || user.displayName;
+                        localStorage.setItem('vyomflow_user_profile', JSON.stringify(parsed));
+                    } catch {}
+                }
+            }).catch(err => {
+                console.warn('Could not fetch Firestore user profile:', err);
+            });
+        }
+    }, [isOpen, user, resolveInitialProfile]);
 
     const reportDate = useMemo(() => new Date().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -206,7 +261,8 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
             narrative += '\n\n';
         }
 
-        narrative += `LONGITUDINAL TRAJECTORY: Category classified as ${vm.longitudinal.trajectory} across ${vm.sessionCount} session(s). ${vm.longitudinal.summary || 'No statistically significant acute longitudinal drift detected.'}\n\n`;
+        const sessionWord = vm.sessionCount === 1 ? 'session' : 'sessions';
+        narrative += `LONGITUDINAL TRAJECTORY: Category classified as ${vm.longitudinal.trajectory} across ${vm.sessionCount} ${sessionWord}. ${vm.longitudinal.summary || 'No statistically significant acute longitudinal drift detected.'}\n\n`;
 
         narrative += `RECOMMENDED ACTION PLAN: ${vm.overview.recommendation || vm.recommendation?.text || 'Continue routine digital neurocognitive monitoring at regular quarterly intervals.'}`;
 
@@ -214,6 +270,19 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
     }, [vm, completedModulesCount, totalModulesCount, completionPercent, confidenceVal]);
 
     const [physicianNotes, setPhysicianNotes] = useState(() => generateAutoClinicalImpression());
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const adjustTextareaHeight = useCallback(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, []);
+
+    useEffect(() => {
+        adjustTextareaHeight();
+    }, [physicianNotes, isOpen, adjustTextareaHeight]);
 
     if (!isOpen) return null;
 
@@ -249,16 +318,9 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                 margin-bottom: 3px;
                 letter-spacing: -0.01em;
             }
-            .cr-hospital-subtitle {
-                font-size: 10px;
-                font-weight: 700;
-                color: #0f766e;
-                text-transform: uppercase;
-                letter-spacing: 0.04em;
-            }
             .cr-doc-meta-badge {
                 text-align: right;
-                font-size: 10px;
+                font-size: 11px;
                 color: #475569;
                 line-height: 1.45;
             }
@@ -393,45 +455,21 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
             }
             .cr-explain-item strong { color: #0f172a; }
             .cr-explain-item span { color: #64748b; display: block; font-size: 9px; }
-            .cr-attestation-block {
+            .cr-summary-block {
                 margin-top: 14px;
                 padding-top: 10px;
                 border-top: 2px solid #cbd5e1;
-                display: grid;
-                grid-template-columns: 2fr 1fr;
-                gap: 16px;
             }
             .cr-notes-box {
                 border: 1px solid #cbd5e1;
                 border-radius: 4px;
                 padding: 8px 10px;
-                min-height: 70px;
+                min-height: 80px;
                 font-size: 10.5px;
                 color: #1e293b;
                 background: #ffffff;
                 white-space: pre-wrap;
                 line-height: 1.4;
-            }
-            .cr-sig-line {
-                border-bottom: 1px solid #0f172a;
-                height: 35px;
-                margin-bottom: 3px;
-                position: relative;
-            }
-            .cr-sig-stamp {
-                position: absolute;
-                bottom: 2px;
-                left: 0;
-                font-family: 'Brush Script MT', cursive, Georgia, serif;
-                font-size: 20px;
-                color: #0f766e;
-                opacity: 0.9;
-            }
-            .cr-sig-caption {
-                font-size: 9px;
-                color: #475569;
-                text-transform: uppercase;
-                font-weight: 700;
             }
             .cr-doc-footer {
                 margin-top: 14px;
@@ -451,7 +489,7 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                 .cr-patient-grid, .cr-diag-card, .cr-explain-col { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 .cr-table th, .cr-status-tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 tr { page-break-inside: avoid; break-inside: avoid; }
-                .cr-attestation-block { page-break-inside: avoid; break-inside: avoid; }
+                .cr-summary-block { page-break-inside: avoid; break-inside: avoid; }
                 .cr-section-heading { page-break-after: avoid; break-after: avoid; }
             }
         `;
@@ -537,14 +575,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                         <span className="cr-toolbar-badge">Hospital Protocol v3.2</span>
                     </div>
                     <div className="cr-toolbar-actions">
-                        <button 
-                            className="cr-btn-edit-toggle"
-                            onClick={() => setShowEditDrawer(!showEditDrawer)}
-                            title="Edit patient and clinician metadata"
-                        >
-                            <Edit3 size={14} />
-                            <span>{showEditDrawer ? 'Close Editor' : 'Edit Demographics & Doctor'}</span>
-                        </button>
                         <button className="cr-btn-print" onClick={handlePrint}>
                             <Printer size={14} />
                             <span>Save as PDF / Print</span>
@@ -559,129 +589,31 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                     </div>
                 </div>
 
-                {/* Collapsible Edit Drawer for Clinician Customization */}
-                {showEditDrawer && (
-                    <div className="cr-drawer-panel">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--dv2-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Stethoscope size={15} style={{ color: '#0ea5e9' }} />
-                                <span>Report Profile & Attestation Settings</span>
-                            </span>
-                            <button 
-                                onClick={() => setPhysicianNotes(generateAutoClinicalImpression())}
-                                style={{
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    color: '#0ea5e9',
-                                    background: 'rgba(14, 165, 233, 0.1)',
-                                    border: '1px solid rgba(14, 165, 233, 0.25)',
-                                    borderRadius: '6px',
-                                    padding: '0.2rem 0.55rem',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.3rem',
-                                }}
-                            >
-                                <Sparkles size={12} />
-                                <span>Regenerate AI Note</span>
-                            </button>
-                        </div>
-
-                        <div className="cr-drawer-grid">
-                            <div className="cr-drawer-field">
-                                <label>Patient Name / Alias</label>
-                                <input value={patientName} onChange={(e) => setPatientName(e.target.value)} />
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Patient ID (MRN)</label>
-                                <input value={patientId} onChange={(e) => setPatientId(e.target.value)} />
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Age</label>
-                                <input type="number" value={age} onChange={(e) => setAge(Number(e.target.value))} />
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Biological Sex</label>
-                                <select value={gender} onChange={(e) => setGender(e.target.value)}>
-                                    <option value="Female">Female</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Education (Years)</label>
-                                <input type="number" value={educationYears} onChange={(e) => setEducationYears(Number(e.target.value))} />
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Hand Dominance</label>
-                                <select value={handDominance} onChange={(e) => setHandDominance(e.target.value)}>
-                                    <option value="Right">Right Handed</option>
-                                    <option value="Left">Left Handed</option>
-                                    <option value="Ambidextrous">Ambidextrous</option>
-                                </select>
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Physician Name</label>
-                                <input value={physicianName} onChange={(e) => setPhysicianName(e.target.value)} />
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Specialty & Title</label>
-                                <input value={physicianSpecialty} onChange={(e) => setPhysicianSpecialty(e.target.value)} />
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>License / NPI Number</label>
-                                <input value={physicianLicense} onChange={(e) => setPhysicianLicense(e.target.value)} />
-                            </div>
-                            <div className="cr-drawer-field">
-                                <label>Institution / Hospital</label>
-                                <input value={clinicName} onChange={(e) => setClinicName(e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.65rem' }}>
-                            <input 
-                                type="checkbox" 
-                                id="cr-sig-toggle" 
-                                checked={includeDigitalSignature} 
-                                onChange={(e) => setIncludeDigitalSignature(e.target.checked)} 
-                            />
-                            <label htmlFor="cr-sig-toggle" style={{ fontSize: '0.78rem', color: 'var(--dv2-text)', cursor: 'pointer' }}>
-                                Render official digital sign-off stamp on attestation block
-                            </label>
-                        </div>
-                    </div>
-                )}
-
                 {/* The Medical Document Sheet */}
                 <div className="cr-document-sheet" id="clinical-report-sheet">
                     {/* Header & Letterhead */}
                     <div className="cr-doc-header">
                         <div>
-                            <h1 className="cr-hospital-title">{clinicName}</h1>
-                            <p className="cr-hospital-subtitle">{clinicDepartment}</p>
+                            <h1 className="cr-hospital-title">VyomFlow Neurocognitive Assessment Insights</h1>
                         </div>
                         <div className="cr-doc-meta-badge">
-                            <div><strong>Dossier ID:</strong> {reportId}</div>
                             <div><strong>Assessment Date:</strong> {reportDate}</div>
-                            <div><strong>Protocol Validity:</strong> 99.4% (Multi-Sensor Calibrated)</div>
-                            <div><strong>Battery Completeness:</strong> {completedModulesCount}/{totalModulesCount} Modules ({completionPercent}%)</div>
                         </div>
                     </div>
 
                     {/* Patient Demographic Table */}
                     <div className="cr-patient-grid">
                         <div className="cr-grid-cell">
-                            <div className="cr-grid-cell-label">Patient Name & Identifier</div>
-                            <div className="cr-grid-cell-value">{patientName} • {patientId}</div>
+                            <div className="cr-grid-cell-label">Patient Name</div>
+                            <div className="cr-grid-cell-value">{patientName}</div>
                         </div>
                         <div className="cr-grid-cell">
-                            <div className="cr-grid-cell-label">Chronological Age</div>
+                            <div className="cr-grid-cell-label">Age</div>
                             <div className="cr-grid-cell-value">{age} Years</div>
                         </div>
                         <div className="cr-grid-cell">
-                            <div className="cr-grid-cell-label">Sex & Hand Dominance</div>
-                            <div className="cr-grid-cell-value">{gender} • {handDominance}</div>
+                            <div className="cr-grid-cell-label">Biological Sex</div>
+                            <div className="cr-grid-cell-value">{gender}</div>
                         </div>
                         <div className="cr-grid-cell">
                             <div className="cr-grid-cell-label">Formal Education</div>
@@ -713,9 +645,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                             <div className="cr-diag-stat-val" style={{ color: '#0369a1' }}>
                                 {vm.aiPrediction?.estimatedMoCA ? `${vm.aiPrediction.estimatedMoCA} / 30` : '26 / 30'}
                             </div>
-                            <div className="cr-diag-stat-sub">
-                                95% CI: {Math.max(10, (vm.aiPrediction?.estimatedMoCA || 26) - 2)} – {Math.min(30, (vm.aiPrediction?.estimatedMoCA || 26) + 2)} pts
-                            </div>
                         </div>
 
                         <div className="cr-diag-stat">
@@ -724,7 +653,7 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                 {vm.longitudinal.trajectory}
                             </div>
                             <div className="cr-diag-stat-sub">
-                                {vm.sessionCount} Completed Session(s) Recorded
+                                {vm.sessionCount} Completed {vm.sessionCount === 1 ? 'Session' : 'Sessions'} Recorded
                             </div>
                         </div>
 
@@ -741,7 +670,7 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
 
                     {/* Section 2: 6-Domain Cognitive Telemetry Matrix */}
                     <div className="cr-section-heading">
-                        <span>2. Neurocognitive Domain Profile (Age-Adjusted Z-Scores & Percentiles)</span>
+                        <span>2. Neurocognitive Domain Profile (Age-Adjusted Z-Scores)</span>
                     </div>
 
                     <div className="cr-table-responsive">
@@ -752,8 +681,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                     <th>Raw Score (/100)</th>
                                     <th>Normative Ref Band</th>
                                     <th>Z-Score Deviation</th>
-                                    <th>Percentile Rank</th>
-                                    <th>Delta vs Baseline</th>
                                     <th>Clinical Classification</th>
                                 </tr>
                             </thead>
@@ -767,15 +694,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                     const zScore = ((ds.score - norm.mean) / norm.sd).toFixed(1);
                                     const zFormatted = Number(zScore) > 0 ? `+${zScore}σ` : `${zScore}σ`;
 
-                                    // Approximate percentile rank from Z-score
-                                    const percentile = Math.min(99, Math.max(1, Math.round(
-                                        50 * (1 + Math.sign(Number(zScore)) * Math.sqrt(1 - Math.exp(-2 * Math.pow(Number(zScore), 2) / Math.PI)))
-                                    )));
-
-                                    const deltaFormatted = (ds.delta != null && !isNaN(ds.delta))
-                                        ? (ds.delta > 0 ? `+${ds.delta}` : `${ds.delta}`)
-                                        : 'Baseline';
-
                                     return (
                                         <tr key={idx}>
                                             <td style={{ fontWeight: 700 }}>{ds.name}</td>
@@ -787,14 +705,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                                 color: Number(zScore) < -1.5 ? '#991b1b' : (Number(zScore) < -1.0 ? '#c2410c' : '#166534')
                                             }}>
                                                 {zFormatted}
-                                            </td>
-                                            <td style={{ fontFamily: 'monospace' }}>{percentile}th %ile</td>
-                                            <td style={{
-                                                fontFamily: 'monospace',
-                                                fontWeight: 600,
-                                                color: (ds.delta != null && ds.delta > 0) ? '#166534' : ((ds.delta != null && ds.delta < 0) ? '#991b1b' : '#64748b')
-                                            }}>
-                                                {deltaFormatted}
                                             </td>
                                             <td>
                                                 <span className={`cr-status-tag ${isFlagged ? 'cr-tag-alert' : isBorderline ? 'cr-tag-watch' : 'cr-tag-normal'}`}>
@@ -821,7 +731,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                     <th>Primary Quantitative Biomarker</th>
                                     <th>Observed Telemetry</th>
                                     <th>Normative Target</th>
-                                    <th>Sensor Fidelity</th>
                                     <th>Evaluation Status</th>
                                 </tr>
                             </thead>
@@ -846,7 +755,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                     const spec = MODULE_CLINICAL_SPECS[meta.key] || {
                                         primaryBiomarkerName: 'Composite Biomarker Score',
                                         normTarget: '> 75 / 100',
-                                        sensorFidelity: 'Calibrated Telemetry',
                                         formatValue: () => mod.score != null ? `${mod.score} / 100` : 'Pending',
                                         getStatus: () => mod.isCompleted ? { label: 'Normal Limits', type: 'normal' } : { label: 'Pending Battery', type: 'pending' },
                                     };
@@ -860,7 +768,7 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                                 {meta.name}
                                                 {mod.sessionCount > 1 && (
                                                     <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 500, marginLeft: '4px' }}>
-                                                        ({mod.sessionCount} sess)
+                                                        ({mod.sessionCount} {mod.sessionCount === 1 ? 'session' : 'sessions'})
                                                     </span>
                                                 )}
                                             </td>
@@ -873,7 +781,6 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                                                 {observedDisplay}
                                             </td>
                                             <td style={{ color: '#64748b' }}>{spec.normTarget}</td>
-                                            <td style={{ fontSize: '9.5px', color: '#475569' }}>{spec.sensorFidelity}</td>
                                             <td>
                                                 <span className={`cr-status-tag cr-tag-${statusObj.type}`}>
                                                     {statusObj.label}
@@ -929,40 +836,33 @@ export const ClinicianReportModal: React.FC<Props> = ({ isOpen, onClose, vm }) =
                         </div>
                     </div>
 
-                    {/* Section 5: Physician Attestation & Clinical Notes */}
+                    {/* Section 5: Clinical Summary & Neurological Recommendations */}
                     <div className="cr-section-heading">
-                        <span>5. Attending Clinician Review & Attestation</span>
+                        <span>5. Clinical Summary & Neurological Recommendations</span>
                     </div>
 
-                    <div className="cr-attestation-block">
-                        <div>
-                            <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', marginBottom: '3px' }}>
-                                Clinical Summary & Neurological Recommendations (Editable):
-                            </div>
-                            <textarea
-                                className="cr-notes-box"
-                                value={physicianNotes}
-                                onChange={(e) => setPhysicianNotes(e.target.value)}
-                                style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
-                            />
+                    <div className="cr-summary-block">
+                        <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', marginBottom: '4px' }}>
+                            Clinical Summary & Neurological Recommendations (Editable):
                         </div>
-
-                        <div>
-                            <div style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', marginBottom: '3px' }}>
-                                Attending Physician Sign-Off:
-                            </div>
-                            <div className="cr-sig-line">
-                                {includeDigitalSignature && (
-                                    <div className="cr-sig-stamp">
-                                        {physicianName}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="cr-sig-caption">{physicianName} • {physicianSpecialty}</div>
-                            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>
-                                Medical License / Identifier: {physicianLicense} • Formally Signed on {reportDate}
-                            </div>
-                        </div>
+                        <textarea
+                            ref={textareaRef}
+                            className="cr-notes-box"
+                            value={physicianNotes}
+                            onChange={(e) => {
+                                setPhysicianNotes(e.target.value);
+                                adjustTextareaHeight();
+                            }}
+                            onInput={adjustTextareaHeight}
+                            rows={1}
+                            style={{ 
+                                width: '100%', 
+                                resize: 'none', 
+                                overflow: 'hidden', 
+                                fontFamily: 'inherit',
+                                lineHeight: 1.55,
+                            }}
+                        />
                     </div>
 
                     {/* Document Footer with Regulatory Safeguards */}

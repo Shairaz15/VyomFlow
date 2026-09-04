@@ -57,6 +57,34 @@ const server = createServer(async (req, res) => {
     });
     return;
   }
+  // REST API TTS Proxy endpoint
+  if (req.url === '/api/tts' && req.method === 'POST') {
+    let body = [];
+    req.on('data', (chunk) => body.push(chunk));
+    req.on('end', async () => {
+      try {
+        const buffer = Buffer.concat(body);
+        const payload = JSON.parse(buffer.toString());
+        const response = await fetch('https://api.sarvam.ai/text-to-speech', {
+          method: 'POST',
+          headers: {
+            'api-subscription-key': req.headers['api-subscription-key'] || API_KEY,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        res.writeHead(response.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (err) {
+        console.error('REST TTS Proxy error:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
 
   res.writeHead(404);
   res.end('Not Found');

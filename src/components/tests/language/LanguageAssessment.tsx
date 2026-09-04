@@ -11,6 +11,7 @@ import { extractLanguageFeatures } from "../../../ai/languageFeatures";
 import type { LanguageAssessmentResult } from "../../../types/languageTypes";
 import "../story/StoryAssessment.css";
 import "./LanguageAssessment.css";
+import { SARVAM_API_KEY } from "../../../utils/sarvamConfig";
 
 type Phase = "instructions" | "permission" | "warmup" | "assessment" | "processing" | "complete";
 
@@ -26,8 +27,6 @@ const PROMPTS = [
     "Talk about a memorable trip you have taken.",
     "Describe a person who has influenced your life."
 ];
-
-const SARVAM_API_KEY = import.meta.env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 const formatDetectedLanguage = (code: string): string => {
     if (!code || code === 'Auto-detecting...' || code === 'Listening...') return code;
