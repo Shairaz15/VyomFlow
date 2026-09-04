@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 
 async function sendTest() {
-  const recipientEmail = 'sashankraviraj@gmail.com';
-  const recipientName = 'Sashank Raviraj';
+  const recipientEmail = process.argv[2] || 'raviraj.sashank@gmail.com';
+  const recipientName = process.argv[3] || 'Sashank Raviraj';
   const daysSince = 7;
   const assessmentUrl = 'https://biomed-rho.vercel.app/tests';
 
