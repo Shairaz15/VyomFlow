@@ -15,15 +15,29 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { SARVAM_API_KEY } from '../utils/sarvamConfig';
 
 let currentPlayingAudio: HTMLAudioElement | null = null;
+let ttsPlaybackId = 0;
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 const GEMINI_MODELS = [
-    'gemini-3.6-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash-lite',
     'gemini-flash-lite-latest',
-    'gemini-flash-latest',
-    'gemini-pro-latest',
+    'gemini-3.5-flash',
+    'gemini-3.6-flash',
 ];
+
+interface TelemetryCacheEntry {
+    data: Record<string, any>;
+    timestamp: number;
+}
+const telemetryCache = new Map<string, TelemetryCacheEntry>();
+const CACHE_TTL_MS = 60_000;
+
+export function invalidateTelemetryCache(uid?: string) {
+    if (uid) telemetryCache.delete(uid);
+    else telemetryCache.clear();
+}
 
 export const SARVAM_LANG_MAP: Record<string, string> = {
     en: 'en-IN',
@@ -162,32 +176,38 @@ export async function fetchUserSupabaseTelemetry(firebaseUid?: string): Promise<
 
         if (!uid) return {};
 
-        // 1. Fetch User Profile
-        const { data: userProfile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('firebase_uid', uid)
-            .maybeSingle();
+        // In-memory cache check (<60s TTL) for instant chatbot multi-turn responsiveness
+        const cached = telemetryCache.get(uid);
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+            return cached.data;
+        }
 
-        // 2. Fetch Recent Module Results
-        const { data: moduleResults } = await supabase
-            .from('module_results')
-            .select('module_type, score, timestamp, biomarkers')
-            .eq('firebase_uid', uid)
-            .order('timestamp', { ascending: false })
-            .limit(10);
+        // Parallelize all 3 Supabase queries for ultra-fast telemetry resolution
+        const [userRes, moduleRes, sessionRes] = await Promise.all([
+            supabase
+                .from('users')
+                .select('*')
+                .eq('firebase_uid', uid)
+                .maybeSingle(),
+            supabase
+                .from('module_results')
+                .select('module_type, score, timestamp, biomarkers')
+                .eq('firebase_uid', uid)
+                .order('timestamp', { ascending: false })
+                .limit(10),
+            supabase
+                .from('assessment_sessions')
+                .select('*')
+                .eq('firebase_uid', uid)
+                .order('session_date', { ascending: false })
+                .limit(1),
+        ]);
 
-        // 3. Fetch Latest Full Assessment Session
-        const { data: sessions } = await supabase
-            .from('assessment_sessions')
-            .select('*')
-            .eq('firebase_uid', uid)
-            .order('session_date', { ascending: false })
-            .limit(1);
+        const userProfile = userRes.data;
+        const moduleResults = moduleRes.data;
+        const latestSession = sessionRes.data?.[0] || null;
 
-        const latestSession = sessions?.[0] || null;
-
-        return {
+        const telemetry = {
             user_name: userProfile?.full_name || 'User',
             user_email: userProfile?.email,
             age: userProfile?.age,
@@ -207,6 +227,9 @@ export async function fetchUserSupabaseTelemetry(firebaseUid?: string): Promise<
                 session_date: latestSession.session_date,
             } : null,
         };
+
+        telemetryCache.set(uid, { data: telemetry, timestamp: Date.now() });
+        return telemetry;
     } catch (err) {
         logger.warn('Failed to fetch user telemetry from Supabase:', err);
         return {};
@@ -221,7 +244,7 @@ export async function checkAiServerStatus(): Promise<AiServerStatus> {
         return {
             online: true,
             provider: 'gemini',
-            model: 'Google Gemini 3.6 Flash',
+            model: 'Google Gemini 3.1 Flash Lite',
         };
     }
 
@@ -266,7 +289,19 @@ async function callGeminiApi(
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            // Fast cascade: abort if a model takes >8s
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+            const generationConfig: Record<string, any> = {
+                temperature: 0.5,
+                maxOutputTokens: 800,
+                topP: 0.95,
+            };
+
+            // Suppress reasoning/thinking overhead on models supporting thinkingBudget for instant responses (<1.5s)
+            if (model.includes('3.1-flash-lite')) {
+                generationConfig.thinkingConfig = { thinkingBudget: 0 };
+            }
 
             const res = await fetch(url, {
                 method: 'POST',
@@ -276,11 +311,7 @@ async function callGeminiApi(
                         parts: [{ text: systemPrompt }],
                     },
                     contents,
-                    generationConfig: {
-                        temperature: 0.5,
-                        maxOutputTokens: 1200,
-                        topP: 0.95,
-                    },
+                    generationConfig,
                 }),
                 signal: controller.signal,
             });
@@ -467,12 +498,81 @@ MEDICAL SCOPE & KNOWLEDGE BASE:
  * Speaks text using Sarvam AI Indic Neural TTS (Bulbul v3 - Priya)
  * Automatically falls back to Web Speech API if offline
  */
+/**
+ * Helper to split text for progressive low-latency TTS playback.
+ * Chunk 1 plays in <0.8s while Chunk 2 synthesizes concurrently.
+ */
+function splitTextForStreamingTTS(text: string): string[] {
+    const clean = text
+        .replace(/[#*_`~>-]/g, '')
+        .replace(/\bhttps?:\/\/\S+/gi, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (!clean) return [];
+    if (clean.length <= 130) return [clean];
+
+    // Attempt to split after the first sentence (between 25 and 140 characters)
+    const match = clean.match(/^([\s\S]{25,140}?[.!?।\n])\s+([\s\S]+)$/);
+    if (match && match[1] && match[2]) {
+        return [match[1].trim(), match[2].trim().slice(0, 450)];
+    }
+
+    return [clean.slice(0, 450)];
+}
+
+async function fetchSarvamTTSAudio(textChunk: string, targetLanguageCode: string): Promise<string | null> {
+    const payload = {
+        inputs: [textChunk],
+        target_language_code: targetLanguageCode,
+        speaker: 'priya',
+        model: 'bulbul:v3',
+        pace: 0.95,
+        speech_sample_rate: 22050,
+    };
+
+    try {
+        let res: Response;
+        try {
+            res = await fetch('/api/sarvam-tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+        } catch {
+            res = await fetch('https://api.sarvam.ai/text-to-speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'api-subscription-key': SARVAM_API_KEY,
+                },
+                body: JSON.stringify(payload),
+            });
+        }
+
+        if (res && res.ok) {
+            const data = await res.json();
+            return data.audios?.[0] || data.audio || null;
+        }
+    } catch (err) {
+        logger.warn('Failed to fetch Sarvam TTS chunk:', err);
+    }
+    return null;
+}
+
+/**
+ * Speaks text using Sarvam AI Indic Neural TTS (Bulbul v3 - Priya)
+ * Employs two-stage progressive streaming to begin speech in <0.8s instead of waiting 5+ seconds.
+ * Automatically falls back to Web Speech API if offline
+ */
 export async function speakWithSarvamAI(
     text: string,
     langCode: string = 'en',
     onEnd?: () => void
 ): Promise<void> {
     stopSpeaking();
+    const currentId = ++ttsPlaybackId;
 
     const cleanText = text
         .replace(/[#*_`~>-]/g, '')
@@ -497,64 +597,66 @@ export async function speakWithSarvamAI(
     else if (/[\u0A00-\u0A7F]/.test(cleanText)) effectiveLang = 'pa';
 
     const sarvamLang = SARVAM_LANG_MAP[effectiveLang] || 'hi-IN';
+    const chunks = splitTextForStreamingTTS(cleanText);
 
     try {
-        // Sarvam TTS API (chunks under 450 chars for rapid speech generation)
-        let res: Response;
-        try {
-            res = await fetch('/api/sarvam-tts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    inputs: [cleanText.slice(0, 450)],
-                    target_language_code: sarvamLang,
-                    speaker: 'priya',
-                    model: 'bulbul:v3',
-                    pace: 0.95,
-                    speech_sample_rate: 22050,
-                }),
-            });
-        } catch {
-            res = await fetch('https://api.sarvam.ai/text-to-speech', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'api-subscription-key': SARVAM_API_KEY,
-                },
-                body: JSON.stringify({
-                    inputs: [cleanText.slice(0, 450)],
-                    target_language_code: sarvamLang,
-                    speaker: 'priya',
-                    model: 'bulbul:v3',
-                    pace: 0.95,
-                    speech_sample_rate: 22050,
-                }),
-            });
-        }
+        // Step 1: Synthesize first chunk immediately (<0.8s time-to-first-sound)
+        const chunk1Promise = fetchSarvamTTSAudio(chunks[0], sarvamLang);
+        
+        // If there's a second chunk, pre-fetch it in background concurrently
+        const chunk2Promise = chunks.length > 1
+            ? fetchSarvamTTSAudio(chunks[1], sarvamLang)
+            : Promise.resolve(null);
 
-        if (res && res.ok) {
-            const data = await res.json();
-            const base64Audio = data.audios?.[0] || data.audio;
-            if (base64Audio) {
-                const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
-                currentPlayingAudio = audio;
-                
-                audio.onended = () => {
-                    currentPlayingAudio = null;
-                    if (onEnd) onEnd();
-                };
-                audio.onerror = () => {
-                    currentPlayingAudio = null;
-                    if (onEnd) onEnd();
-                };
+        const base64Chunk1 = await chunk1Promise;
+        if (ttsPlaybackId !== currentId) return; // Playback was cancelled
 
-                await audio.play();
-                return;
-            }
+        if (base64Chunk1) {
+            const audio1 = new Audio(`data:audio/wav;base64,${base64Chunk1}`);
+            currentPlayingAudio = audio1;
+
+            audio1.onended = async () => {
+                if (ttsPlaybackId !== currentId) return;
+                currentPlayingAudio = null;
+
+                if (chunks.length > 1) {
+                    const base64Chunk2 = await chunk2Promise;
+                    if (ttsPlaybackId !== currentId) return;
+
+                    if (base64Chunk2) {
+                        const audio2 = new Audio(`data:audio/wav;base64,${base64Chunk2}`);
+                        currentPlayingAudio = audio2;
+
+                        audio2.onended = () => {
+                            currentPlayingAudio = null;
+                            if (onEnd) onEnd();
+                        };
+                        audio2.onerror = () => {
+                            currentPlayingAudio = null;
+                            if (onEnd) onEnd();
+                        };
+
+                        await audio2.play();
+                        return;
+                    }
+                }
+
+                if (onEnd) onEnd();
+            };
+
+            audio1.onerror = () => {
+                currentPlayingAudio = null;
+                if (onEnd) onEnd();
+            };
+
+            await audio1.play();
+            return;
         }
     } catch (err) {
-        logger.warn('Sarvam TTS API network issue, falling back to Web Speech API:', err);
+        logger.warn('Sarvam TTS streaming error, falling back to Web Speech API:', err);
     }
+
+    if (ttsPlaybackId !== currentId) return;
 
     // Web Speech API Fallback
     speakText(cleanText, langCode, onEnd);
@@ -683,6 +785,7 @@ export function speakText(text: string, langCode: string = 'en', onEnd?: () => v
 }
 
 export function stopSpeaking(): void {
+    ttsPlaybackId++;
     if (currentPlayingAudio) {
         try {
             currentPlayingAudio.pause();

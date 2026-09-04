@@ -19,12 +19,23 @@ CREATE TABLE IF NOT EXISTS users (
     gender VARCHAR(32),
     education_years DOUBLE PRECISION,
     preferred_language VARCHAR(32) DEFAULT 'en-IN',
+    is_beneficiary BOOLEAN DEFAULT FALSE,
+    asha_worker_id VARCHAR(128),
+    village_name VARCHAR(128),
+    last_assessed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_asha_beneficiary ON users(asha_worker_id, is_beneficiary);
+
+-- Safe migrations if running on an existing DB:
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS is_beneficiary BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS asha_worker_id VARCHAR(128);
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS village_name VARCHAR(128);
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS last_assessed_at TIMESTAMPTZ;
 
 -- Auto-Updating updated_at Trigger
 CREATE OR REPLACE FUNCTION update_timestamp_column()

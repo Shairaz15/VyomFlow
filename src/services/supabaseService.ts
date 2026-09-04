@@ -24,16 +24,27 @@ import { logger } from '../utils/logger';
 const OFFLINE_QUEUE_KEY = 'vyomflow_supabase_offline_queue';
 
 /**
- * Gets the active Firebase UID if authenticated.
+ * Gets the active Firebase UID (or the active ASHA beneficiary UID if running a field test).
  */
 export function getCurrentFirebaseUid(): string | null {
+    try {
+        const activeBen = localStorage.getItem('vyomflow_active_beneficiary');
+        if (activeBen) {
+            const parsed = JSON.parse(activeBen);
+            if (parsed?.firebase_uid) {
+                return parsed.firebase_uid;
+            }
+        }
+    } catch {
+        // Fallback to logged in user
+    }
     return auth.currentUser?.uid ?? null;
 }
 
 /**
  * Pushes a failed write to the local offline queue for background retry.
  */
-function queueOfflineWrite(type: 'module' | 'session', payload: any): void {
+function queueOfflineWrite(type: 'module' | 'session' | 'beneficiary', payload: any): void {
     try {
         const queueStr = localStorage.getItem(OFFLINE_QUEUE_KEY);
         const queue = queueStr ? JSON.parse(queueStr) : [];
@@ -63,6 +74,9 @@ export async function flushOfflineQueue(): Promise<void> {
                     if (error) remaining.push(item);
                 } else if (item.type === 'session') {
                     const { error } = await supabase.from('assessment_sessions').insert(item.payload);
+                    if (error) remaining.push(item);
+                } else if (item.type === 'beneficiary' || item.type === 'user') {
+                    const { error } = await supabase.from('users').upsert(item.payload, { onConflict: 'firebase_uid' });
                     if (error) remaining.push(item);
                 }
             } catch {
@@ -779,4 +793,281 @@ export async function deleteAllUserDataFromSupabase(firebaseUid: string): Promis
         return false;
     }
 }
+
+// ============================================================================
+// ASHA WORKER BENEFICIARY MANAGEMENT
+// ============================================================================
+
+export interface AshaBeneficiary {
+    id: string; // UUID in Supabase
+    firebase_uid: string; // Synthetic UID: asha_ben_<worker_prefix>_<timestamp>
+    full_name: string;
+    age: number;
+    education_years: number;
+    preferred_language: string;
+    gender?: string;
+    village_name?: string;
+    asha_worker_id: string;
+    is_beneficiary: boolean;
+    last_assessed_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    // Local / UI enriched fields
+    assessments_count?: number;
+    latest_moca?: number | null;
+    latest_alert_tier?: string | null;
+    is_synced?: boolean;
+}
+
+export interface AshaBeneficiaryInput {
+    full_name: string;
+    age: number;
+    education_years: number;
+    preferred_language: string;
+    gender?: string;
+    village_name?: string;
+    asha_worker_id: string;
+}
+
+const ASHA_LOCAL_BENEFICIARIES_KEY = 'vyomflow_asha_local_beneficiaries';
+
+/**
+ * Reads local cached beneficiaries from localStorage.
+ */
+export function getLocalBeneficiaries(workerId: string): AshaBeneficiary[] {
+    try {
+        const raw = localStorage.getItem(ASHA_LOCAL_BENEFICIARIES_KEY);
+        if (!raw) return [];
+        const all: AshaBeneficiary[] = JSON.parse(raw);
+        return all.filter(b => b.asha_worker_id === workerId);
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * Saves or updates a beneficiary in local cache.
+ */
+function saveLocalBeneficiary(beneficiary: AshaBeneficiary): void {
+    try {
+        const raw = localStorage.getItem(ASHA_LOCAL_BENEFICIARIES_KEY);
+        const all: AshaBeneficiary[] = raw ? JSON.parse(raw) : [];
+        const index = all.findIndex(b => b.firebase_uid === beneficiary.firebase_uid);
+        if (index >= 0) {
+            all[index] = { ...all[index], ...beneficiary };
+        } else {
+            all.unshift(beneficiary);
+        }
+        localStorage.setItem(ASHA_LOCAL_BENEFICIARIES_KEY, JSON.stringify(all));
+    } catch (e) {
+        logger.warn('Failed to save beneficiary to local storage:', e);
+    }
+}
+
+/**
+ * Creates a new ASHA beneficiary record in Supabase (with instant local offline fallback).
+ */
+export async function createAshaBeneficiary(input: AshaBeneficiaryInput): Promise<AshaBeneficiary> {
+    const timestamp = Date.now();
+    const cleanWorkerPrefix = input.asha_worker_id.replace(/[^a-zA-Z0-9]/g, '').slice(-6) || 'worker';
+    const syntheticUid = `asha_ben_${cleanWorkerPrefix}_${timestamp}`;
+    
+    // Generate a client UUID (valid v4 fallback if window.crypto.randomUUID is available)
+    let newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `b${timestamp}-0000-4000-8000-${Math.floor(Math.random() * 1000000000000)}`;
+
+    const beneficiary: AshaBeneficiary = {
+        id: newId,
+        firebase_uid: syntheticUid,
+        full_name: input.full_name.trim(),
+        age: Number(input.age),
+        education_years: Number(input.education_years),
+        preferred_language: input.preferred_language,
+        gender: input.gender || 'Not specified',
+        village_name: input.village_name || 'Village Unit',
+        asha_worker_id: input.asha_worker_id,
+        is_beneficiary: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        assessments_count: 0,
+        latest_moca: null,
+        latest_alert_tier: null,
+        is_synced: false
+    };
+
+    // 1. Save immediately to local offline cache
+    saveLocalBeneficiary(beneficiary);
+
+    // 2. Sync to Supabase if connected
+    if (isSupabaseConfigured() && navigator.onLine) {
+        try {
+            const payload = {
+                firebase_uid: beneficiary.firebase_uid,
+                full_name: beneficiary.full_name,
+                age: beneficiary.age,
+                education_years: beneficiary.education_years,
+                preferred_language: beneficiary.preferred_language,
+                gender: beneficiary.gender,
+                village_name: beneficiary.village_name,
+                asha_worker_id: beneficiary.asha_worker_id,
+                is_beneficiary: true
+            };
+
+            const { data, error } = await supabase
+                .from('users')
+                .upsert(payload, { onConflict: 'firebase_uid' })
+                .select('id, created_at, updated_at')
+                .single();
+
+            if (!error && data) {
+                beneficiary.id = data.id || beneficiary.id;
+                beneficiary.is_synced = true;
+                saveLocalBeneficiary(beneficiary);
+                logger.info(`Successfully created beneficiary ${beneficiary.full_name} in Supabase!`);
+            } else {
+                logger.warn('Supabase insert warning, queueing to offline write queue:', error);
+                queueOfflineWrite('beneficiary', payload);
+            }
+        } catch (err) {
+            logger.warn('Error saving beneficiary to Supabase, queued offline:', err);
+            queueOfflineWrite('beneficiary', {
+                firebase_uid: beneficiary.firebase_uid,
+                full_name: beneficiary.full_name,
+                age: beneficiary.age,
+                education_years: beneficiary.education_years,
+                preferred_language: beneficiary.preferred_language,
+                gender: beneficiary.gender,
+                village_name: beneficiary.village_name,
+                asha_worker_id: beneficiary.asha_worker_id,
+                is_beneficiary: true
+            });
+        }
+    } else {
+        // Offline queue
+        queueOfflineWrite('beneficiary', {
+            firebase_uid: beneficiary.firebase_uid,
+            full_name: beneficiary.full_name,
+            age: beneficiary.age,
+            education_years: beneficiary.education_years,
+            preferred_language: beneficiary.preferred_language,
+            gender: beneficiary.gender,
+            village_name: beneficiary.village_name,
+            asha_worker_id: beneficiary.asha_worker_id,
+            is_beneficiary: true
+        });
+    }
+
+    return beneficiary;
+}
+
+/**
+ * Fetches all beneficiaries assigned to this ASHA worker, combining Supabase records with local offline cache.
+ */
+export async function getAshaBeneficiaries(workerId: string): Promise<AshaBeneficiary[]> {
+    const localList = getLocalBeneficiaries(workerId);
+    if (!isSupabaseConfigured() || !navigator.onLine) {
+        return localList;
+    }
+
+    try {
+        const { data: dbUsers, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('asha_worker_id', workerId)
+            .eq('is_beneficiary', true)
+            .order('created_at', { ascending: false });
+
+        if (error || !dbUsers) {
+            logger.warn('Failed to fetch beneficiaries from Supabase, using local cache:', error);
+            return localList;
+        }
+
+        // Fetch recent assessment stats for these beneficiaries
+        const uids = dbUsers.map(u => u.firebase_uid);
+        let sessionMap: Record<string, { count: number; latestMoca: number | null; alertTier: string | null; lastDate: string | null }> = {};
+
+        if (uids.length > 0) {
+            const { data: sessions } = await supabase
+                .from('assessment_sessions')
+                .select('firebase_uid, estimated_moca, clinical_alert_tier, session_date')
+                .in('firebase_uid', uids)
+                .order('session_date', { ascending: false });
+
+            if (sessions) {
+                sessions.forEach(s => {
+                    if (!sessionMap[s.firebase_uid]) {
+                        sessionMap[s.firebase_uid] = {
+                            count: 1,
+                            latestMoca: s.estimated_moca,
+                            alertTier: s.clinical_alert_tier,
+                            lastDate: s.session_date
+                        };
+                    } else {
+                        sessionMap[s.firebase_uid].count++;
+                    }
+                });
+            }
+        }
+
+        // Merge remote records with local cache
+        const mergedMap = new Map<string, AshaBeneficiary>();
+
+        // Put local first
+        localList.forEach(item => {
+            mergedMap.set(item.firebase_uid, item);
+        });
+
+        // Overlay with database records (which have authoritative IDs and timestamps)
+        dbUsers.forEach(dbU => {
+            const stats = sessionMap[dbU.firebase_uid];
+            mergedMap.set(dbU.firebase_uid, {
+                id: dbU.id,
+                firebase_uid: dbU.firebase_uid,
+                full_name: dbU.full_name,
+                age: Number(dbU.age),
+                education_years: Number(dbU.education_years),
+                preferred_language: dbU.preferred_language || 'en-IN',
+                gender: dbU.gender,
+                village_name: dbU.village_name,
+                asha_worker_id: dbU.asha_worker_id,
+                is_beneficiary: true,
+                last_assessed_at: stats?.lastDate || dbU.last_assessed_at,
+                created_at: dbU.created_at,
+                updated_at: dbU.updated_at,
+                assessments_count: stats?.count ?? 0,
+                latest_moca: stats?.latestMoca ?? null,
+                latest_alert_tier: stats?.alertTier ?? null,
+                is_synced: true
+            });
+        });
+
+        const result = Array.from(mergedMap.values());
+        // Save fresh merged snapshot back to local storage
+        localStorage.setItem(ASHA_LOCAL_BENEFICIARIES_KEY, JSON.stringify(result));
+        return result;
+    } catch (err) {
+        logger.error('Error in getAshaBeneficiaries:', err);
+        return localList;
+    }
+}
+
+/**
+ * Fetches clinical assessment session history for a specific beneficiary.
+ */
+export async function getBeneficiaryAssessmentHistory(firebaseUid: string): Promise<any[]> {
+    if (!isSupabaseConfigured()) return [];
+    try {
+        const { data, error } = await supabase
+            .from('assessment_sessions')
+            .select('*')
+            .eq('firebase_uid', firebaseUid)
+            .order('session_date', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        logger.warn('Failed to fetch beneficiary assessment history:', err);
+        return [];
+    }
+}
+
 

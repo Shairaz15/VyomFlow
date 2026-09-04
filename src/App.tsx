@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./i18n/LanguageContext";
+import { AshaProvider } from "./contexts/AshaContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProtectedRoute, AdminRoute, AiAssistantBubble } from "./components/common";
 import { OnboardingModal } from "./components/common/OnboardingModal";
-import { Landing, Tests, VmraAssessment, SarvamTest, DashboardV3 } from "./pages";
+import { AshaFieldBanner } from "./components/asha/AshaFieldBanner";
+import { Landing, Tests, VmraAssessment, SarvamTest, DashboardV3, AshaPanel } from "./pages";
 import { ReactionTimeTest } from "./components/tests/reaction/ReactionTimeTest";
 import { PatternAssessment } from "./components/tests/pattern/PatternAssessment";
 import { LanguageAssessment } from "./components/tests/language/LanguageAssessment";
@@ -31,24 +33,36 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <LanguageProvider>
-          <OnboardingModal />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/demo" element={<Demo />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/sarvam-test" element={<SarvamTest />} />
+          <AshaProvider>
+            <OnboardingModal />
+            <BrowserRouter>
+              <AshaFieldBanner />
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Landing />} />
+                <Route path="/demo" element={<Demo />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/sarvam-test" element={<SarvamTest />} />
 
-              {/* Protected Routes (authenticated users) */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardV3 />
-                  </ProtectedRoute>
-                }
-              />
+                {/* ASHA Field Portal Route */}
+                <Route
+                  path="/asha"
+                  element={
+                    <ProtectedRoute>
+                      <AshaPanel />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Protected Routes (authenticated users) */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardV3 />
+                    </ProtectedRoute>
+                  }
+                />
 
               {/* Tests & Journey pages */}
               <Route path="/tests" element={<Tests />} />
@@ -162,7 +176,8 @@ function App() {
             </Routes>
             <AiAssistantBubble />
           </BrowserRouter>
-        </LanguageProvider>
+        </AshaProvider>
+      </LanguageProvider>
       </AuthProvider>
     </ThemeProvider>
   );

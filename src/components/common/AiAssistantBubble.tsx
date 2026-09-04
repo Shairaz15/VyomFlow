@@ -397,10 +397,11 @@ export const AiAssistantBubble: React.FC = () => {
             setChatMessages(prev => [...prev, aiMsg]);
             setIsLoading(false);
 
-            // Progressive chunked streaming (2 words per 28ms) for instant first-word responsiveness
+            // Fluid progressive streaming (adaptive chunking for smooth & rapid delivery)
             const words = reply.split(' ');
             let currentIdx = 0;
-            const chunkSize = 2;
+            const chunkSize = words.length > 80 ? 5 : words.length > 30 ? 3 : 2;
+            const tickInterval = 16; // 60 FPS smooth frame rate
 
             await new Promise<void>((resolve) => {
                 const streamTimer = setInterval(() => {
@@ -424,7 +425,7 @@ export const AiAssistantBubble: React.FC = () => {
                         }
                         resolve();
                     }
-                }, 28);
+                }, tickInterval);
             });
         } catch {
             const errorMsg: ChatMessage = {

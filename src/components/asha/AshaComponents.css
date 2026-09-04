@@ -1,0 +1,715 @@
+/* ASHA Field Portal Component Styles */
+
+/* Field Top Banner */
+.asha-field-banner {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+    backdrop-filter: blur(12px);
+    color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.875rem;
+}
+
+.asha-banner-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0.6rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.asha-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.asha-banner-pulse {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0.7);
+    animation: asha-pulse 1.8s infinite;
+}
+
+@keyframes asha-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.asha-banner-badge {
+    font-weight: 700;
+    font-size: 0.725rem;
+    letter-spacing: 0.08em;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.asha-banner-divider {
+    opacity: 0.5;
+}
+
+.asha-banner-exit-btn {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.asha-banner-exit-btn:hover {
+    background: rgba(239, 68, 68, 0.85);
+    border-color: rgba(239, 68, 68, 1);
+    transform: translateY(-1px);
+}
+
+/* Modal Overlay & Card */
+.asha-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(5, 10, 20, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.asha-modal-card {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(16, 185, 129, 0.1);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    color: #f8fafc;
+    padding: 1.75rem;
+    animation: asha-scale-up 0.2s ease-out;
+}
+
+.asha-modal-card.asha-report-modal {
+    max-width: 700px;
+}
+
+@keyframes asha-scale-up {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.asha-modal-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.asha-header-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.asha-modal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
+    color: #f1f5f9;
+}
+
+.asha-modal-subtitle {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin: 0.25rem 0 0 0;
+    line-height: 1.4;
+}
+
+.asha-modal-close {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.asha-modal-close:hover {
+    color: #ffffff;
+}
+
+.asha-modal-alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+
+.asha-modal-alert-error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+/* Forms */
+.asha-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.asha-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+}
+
+.asha-form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+@media (max-width: 540px) {
+    .asha-form-row {
+        flex-direction: column;
+    }
+}
+
+.asha-form-label {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+.asha-form-hint {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: #64748b;
+}
+
+.asha-form-input,
+.asha-form-select {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    color: #f8fafc;
+    font-size: 0.925rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.asha-form-input:focus,
+.asha-form-select:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+/* Language Selection Grid */
+.asha-language-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+    gap: 0.45rem;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 0.25rem;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.asha-lang-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: #cbd5e1;
+}
+
+.asha-lang-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.asha-lang-chip.active {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #34d399;
+}
+
+.asha-chip-native {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.asha-chip-label {
+    font-size: 0.675rem;
+    opacity: 0.7;
+}
+
+/* Modal Actions */
+.asha-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.asha-btn {
+    border-radius: 8px;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.asha-btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.asha-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+}
+
+.asha-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.asha-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.asha-btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+/* Beneficiary Card */
+.asha-beneficiary-card {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.asha-beneficiary-card:hover {
+    border-color: rgba(16, 185, 129, 0.35);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), 0 0 20px rgba(16, 185, 129, 0.08);
+    transform: translateY(-2px);
+}
+
+.asha-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+.asha-card-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.asha-card-identity {
+    flex: 1;
+    min-width: 0;
+}
+
+.asha-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.asha-beneficiary-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.asha-unsynced-pill {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-size: 0.675rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.asha-chips-row {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.asha-chip {
+    font-size: 0.725rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+}
+
+.asha-card-metadata {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.65rem 0.85rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.asha-meta-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+}
+
+.asha-meta-label {
+    color: #64748b;
+}
+
+.asha-meta-value {
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.asha-meta-value.language-tag {
+    color: #34d399;
+    font-weight: 600;
+}
+
+.asha-card-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.asha-tier-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tier-pending {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+.tier-stable {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+}
+
+.tier-warning {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.tier-monitored {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #818cf8;
+}
+
+.asha-last-date {
+    font-size: 0.725rem;
+    color: #64748b;
+}
+
+.asha-card-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.35rem;
+}
+
+.asha-btn-launch {
+    flex: 1;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+}
+
+.asha-btn-launch:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+}
+
+.asha-btn-outline {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #cbd5e1;
+}
+
+.asha-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+/* Clinical Report Body in Modal */
+.asha-report-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+}
+
+.asha-report-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin: 1.25rem 0;
+}
+
+.asha-score-hero {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 1rem;
+}
+
+@media (max-width: 580px) {
+    .asha-score-hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+.asha-moca-tile,
+.asha-tier-tile {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.asha-moca-sub {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.asha-moca-value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #10b981;
+    line-height: 1.2;
+    margin-top: 0.25rem;
+}
+
+.asha-moca-max {
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: normal;
+}
+
+.asha-moca-norm {
+    font-size: 0.725rem;
+    color: #34d399;
+    margin-top: 0.25rem;
+}
+
+.asha-tier-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-top: 0.35rem;
+}
+
+.asha-tier-desc {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0.35rem 0 0 0;
+    line-height: 1.4;
+}
+
+.asha-section-heading {
+    font-size: 0.925rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0 0 0.75rem 0;
+}
+
+.asha-domains-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+@media (max-width: 500px) {
+    .asha-domains-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.asha-domain-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+}
+
+.asha-domain-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    margin-bottom: 0.4rem;
+}
+
+.asha-domain-score {
+    font-weight: 700;
+    color: #34d399;
+}
+
+.asha-progress-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.asha-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.asha-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.asha-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.825rem;
+}
+
+.asha-history-date {
+    display: block;
+    color: #f1f5f9;
+    font-weight: 600;
+}
+
+.asha-history-tier {
+    font-size: 0.725rem;
+    color: #94a3b8;
+}
+
+.asha-history-score {
+    font-weight: 700;
+    color: #10b981;
+}
+
+.asha-empty-report {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #94a3b8;
+}
+
+.asha-empty-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}

@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Compass, LayoutDashboard, Settings, Shield, LogOut } from 'lucide-react';
+import { Compass, LayoutDashboard, Settings, Shield, LogOut, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import './UserMenu.css';
@@ -85,6 +85,10 @@ export function UserMenu() {
                     <Link to="/settings" className="menu-item" onClick={() => setIsOpen(false)}>
                         <Settings className="menu-item-icon" size={16} strokeWidth={1.75} />
                         <span>{t('common.settings')}</span>
+                    </Link>
+                    <Link to="/asha" className="menu-item asha-portal-link" onClick={() => setIsOpen(false)}>
+                        <Users className="menu-item-icon text-emerald-400" size={16} strokeWidth={1.75} />
+                        <span className="font-semibold text-emerald-400">ASHA Field Portal</span>
                     </Link>
                     <Link to="/privacy" className="menu-item" onClick={() => setIsOpen(false)}>
                         <Shield className="menu-item-icon" size={16} strokeWidth={1.75} />
