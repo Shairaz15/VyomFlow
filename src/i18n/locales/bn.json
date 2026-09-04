@@ -410,7 +410,7 @@
     "improving": "উন্নতি হচ্ছে",
     "declining": "হ্রাস পাচ্ছে",
     "visualRecall": "দৃষ্টি স্মরণ",
-    "targetsRecalled": "```\n{{count}} / {{total}} টার্গেট প্রত্যাহার করা হয়েছে",
+    "targetsRecalled": "{{count}} / {{total}} টার্গেট প্রত্যাহার করা হয়েছে",
     "discrimination": "বৈষম্য",
     "zeroFalseAlarms": "মিথ্যা অ্যালার্ম শূন্য",
     "falseSelections": "{{count}} মিথ্যা নির্বাচন",
@@ -434,7 +434,7 @@
     "selectedImages": "নির্বাচিত: {{count}} ছবি",
     "leaveAssessment": "এই মূল্যায়নটি বাতিল করতে চান?",
     "leaveWarning": "আপনি যদি এখনই প্রস্থান করেন তবে আপনার বর্তমান মূল্যায়নের অগ্রগতি হারিয়ে যাবে।",
-    "continueTest": "পরীক্ষা চালিয়ে যান\n```",
+    "continueTest": "পরীক্ষা চালিয়ে যান",
     "leaveTest": "এখানে পরীক্ষাটি শেষ করুন",
     "confirmSubmitEmpty": "আপনি কোনো ছবি নির্বাচন করেননি। তবুও জমা দিতে চান?"
   },
@@ -462,7 +462,7 @@
     "fastestValidReflex": "দ্রুততম বৈধ প্রতিবর্ত",
     "inhibitoryControl": "বাধা নিয়ন্ত্রণ",
     "zeroPremature": "শূন্য অপরিণত ট্যাপ",
-    "falseStartsCount": "```\n{{count}} ভুল শুরু(গুলি)",
+    "falseStartsCount": "{{count}} ভুল শুরু(গুলি)",
     "trialConsistency": "পরীক্ষার ধারাবাহিকতা",
     "uniformResponse": "সুষম প্রতিক্রিয়া হার",
     "varianceDesc": "SD: ±{{variance}}ms ভেদ",
@@ -488,7 +488,7 @@
     "assessmentComplete": "মূল্যায়ন সম্পন্ন"
   },
   "pattern": {
-    "title": "প্যাটার্ন স্বীকৃতি\n```",
+    "title": "প্যাটার্ন স্বীকৃতি",
     "subtitle": "দৃষ্টি-স্থানিক কার্যক্ষম স্মৃতি এবং নির্বাহী নিয়ন্ত্রণ মূল্যায়নের জন্য চাক্ষুষ ক্রমগুলি বিশ্লেষণ করুন এবং অনুক্রমিক প্যাটার্নগুলি মনে রাখুন।",
     "howItWorks": "এই মূল্যায়নটি কিভাবে কাজ করে",
     "step1Title": "অনুক্রমটি পর্যবেক্ষণ করুন:",

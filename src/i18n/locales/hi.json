@@ -462,7 +462,7 @@
     "fastestValidReflex": "सबसे तेज़ मान्य रिफ्लेक्स",
     "inhibitoryControl": "अवरोधक नियंत्रण",
     "zeroPremature": "शून्य समयपूर्व टैप",
-    "falseStartsCount": "```hindi\n{{count}} गलत शुरुआत(शुरूआतें)",
+    "falseStartsCount": "{{count}} गलत शुरुआत(शुरूआतें)",
     "trialConsistency": "परीक्षण में निरंतरता",
     "uniformResponse": "समान प्रतिक्रिया दर",
     "varianceDesc": "एसडी: ±{{variance}}ms विचरण",
@@ -488,7 +488,7 @@
     "assessmentComplete": "मूल्यांकन पूरा हुआ"
   },
   "pattern": {
-    "title": "पैटर्न रिकॉग्निशन\n```",
+    "title": "पैटर्न रिकॉग्निशन",
     "subtitle": "दृश्य अनुक्रमों का विश्लेषण करें और दृश्य-स्थानिक कार्यशील स्मृति और कार्यकारी नियंत्रण का आकलन करने के लिए अनुक्रमिक पैटर्न को याद रखें।",
     "howItWorks": "यह आकलन कैसे काम करता है",
     "step1Title": "अनुक्रम का अवलोकन करें:",
