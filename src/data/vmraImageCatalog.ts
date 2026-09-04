@@ -450,8 +450,8 @@ export function getSessionConfig(sessionNumber: number): VmraSessionConfig {
         return {
             targetCount: 10,
             distractorCount: 10,
-            encodingTimePerImage: 2200,
-            fadeDuration: 250,
+            encodingTimePerImage: 1400, // Snappier presentation (reduced from 2200ms)
+            fadeDuration: 200,
             retentionDuration: 5000,
             similarityLevel: 'low',
             gridColumns: 5,
@@ -461,8 +461,8 @@ export function getSessionConfig(sessionNumber: number): VmraSessionConfig {
         return {
             targetCount: 10,
             distractorCount: 10,
-            encodingTimePerImage: 2000,
-            fadeDuration: 250,
+            encodingTimePerImage: 1250, // Snappier presentation (reduced from 2000ms)
+            fadeDuration: 200,
             retentionDuration: 5000,
             similarityLevel: 'medium',
             gridColumns: 5,
@@ -472,8 +472,8 @@ export function getSessionConfig(sessionNumber: number): VmraSessionConfig {
         return {
             targetCount: 11,
             distractorCount: 11,
-            encodingTimePerImage: 1200,
-            fadeDuration: 300,
+            encodingTimePerImage: 1100, // Snappier presentation (reduced from 1200ms)
+            fadeDuration: 200,
             retentionDuration: 5000,
             similarityLevel: 'medium',
             gridColumns: 5,
@@ -483,8 +483,8 @@ export function getSessionConfig(sessionNumber: number): VmraSessionConfig {
         return {
             targetCount: 12,
             distractorCount: 12,
-            encodingTimePerImage: 1000,
-            fadeDuration: 250,
+            encodingTimePerImage: 900, // Fast presentation for advanced sessions (reduced from 1000ms)
+            fadeDuration: 200,
             retentionDuration: 5000,
             similarityLevel: 'high',
             gridColumns: 5,

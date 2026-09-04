@@ -8,7 +8,8 @@ import {
 import { useLanguage } from "../i18n/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { ThemeToggle } from "../components/common/ThemeToggle";
-import { GoogleSignInModal, UserMenu } from "../components/common";
+import { GoogleSignInModal, UserMenu, SpecularButton } from "../components/common";
+import { useTheme } from "../contexts/ThemeContext";
 import { ScientificBrainCanvas } from "../components/landing/ScientificBrainCanvas";
 import { VyomFlowVideoBrand } from "../components/landing/VyomFlowVideoBrand";
 import { VyomFlowLogo } from "../components/common/VyomFlowLogo";
@@ -19,6 +20,8 @@ export function Landing() {
     const navigate = useNavigate();
     const { t } = useLanguage();
     const { user, isAuthenticated, signOut } = useAuth();
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -79,13 +82,22 @@ export function Landing() {
                         <ThemeToggle />
                         {isAuthenticated ? (
                             <>
-                                <button
-                                    type="button"
+                                <SpecularButton
+                                    size="sm"
+                                    radius={16}
+                                    tint="#4F7C78"
+                                    tintOpacity={0.96}
+                                    lineColor="#5EEAD4"
+                                    baseColor="#1e293b"
+                                    textColor="#FFFFFF"
+                                    intensity={1.2}
+                                    followMouse
+                                    autoAnimate
                                     onClick={handleBeginJourney}
-                                    className="vyom-pill-btn-dark !py-2.5 !px-5 text-xs font-semibold cursor-pointer"
+                                    className="!py-2 !px-4 text-xs font-semibold cursor-pointer"
                                 >
                                     {t("journey.continueJourney")}
-                                </button>
+                                </SpecularButton>
                                 <UserMenu />
                             </>
                         ) : (
@@ -97,13 +109,22 @@ export function Landing() {
                                 >
                                     {t("nav.signIn")}
                                 </button>
-                                <button
-                                    type="button"
+                                <SpecularButton
+                                    size="sm"
+                                    radius={16}
+                                    tint="#4F7C78"
+                                    tintOpacity={0.96}
+                                    lineColor="#5EEAD4"
+                                    baseColor="#1e293b"
+                                    textColor="#FFFFFF"
+                                    intensity={1.2}
+                                    followMouse
+                                    autoAnimate
                                     onClick={handleBeginJourney}
-                                    className="vyom-pill-btn-dark !py-2.5 !px-5 text-xs font-semibold cursor-pointer"
+                                    className="!py-2 !px-4 text-xs font-semibold cursor-pointer"
                                 >
                                     {t("landing.getStarted")}
-                                </button>
+                                </SpecularButton>
                             </>
                         )}
                     </div>
@@ -206,14 +227,23 @@ export function Landing() {
                                 {t("nav.signOut")}
                             </button>
                         ) : (
-                            <button
-                                type="button"
+                            <SpecularButton
+                                size="md"
+                                radius={24}
+                                tint="#4F7C78"
+                                tintOpacity={0.96}
+                                lineColor="#5EEAD4"
+                                baseColor="#1e293b"
+                                textColor="#F7F4EC"
+                                intensity={1.25}
+                                followMouse
+                                autoAnimate
                                 onClick={async () => { setMobileMenuOpen(false); await handleSignIn(); }}
-                                className="w-full h-[48px] rounded-[24px] bg-[#4F7C78] hover:bg-[#3D6360] text-[#F7F4EC] text-sm font-semibold shadow-md justify-center flex items-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
+                                className="w-full h-[48px]"
                             >
                                 <span>{t("nav.signIn")}</span>
                                 <span className="text-base">→</span>
-                            </button>
+                            </SpecularButton>
                         )}
                     </div>
                 </div>
@@ -241,19 +271,38 @@ export function Landing() {
 
                         {/* HERO BUTTONS */}
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto vyom-hero-cta-container">
-                            <button
+                            <SpecularButton
+                                size="lg"
+                                radius={28}
+                                tint={isDark ? "#17324D" : "#4F7C78"}
+                                tintOpacity={0.96}
+                                lineColor="#5EEAD4"
+                                baseColor="#1e293b"
+                                textColor="#FFFFFF"
+                                intensity={1.35}
+                                followMouse
+                                autoAnimate
                                 onClick={handleBeginJourney}
-                                className="vyom-pill-btn-dark w-full sm:w-auto"
+                                className="w-full sm:w-auto"
                             >
                                 <span>{isAuthenticated ? t("journey.continueJourney") : t("landing.beginJourney")}</span>
                                 <span className="text-lg leading-none">→</span>
-                            </button>
-                            <button
+                            </SpecularButton>
+                            <SpecularButton
+                                size="lg"
+                                radius={28}
+                                tint={isDark ? "#1E293B" : "#F7F4EC"}
+                                tintOpacity={0.9}
+                                lineColor={isDark ? "#38bdf8" : "#4F7C78"}
+                                baseColor={isDark ? "#0F172A" : "#E2E8F0"}
+                                textColor={isDark ? "#F8FAFC" : "#17324D"}
+                                intensity={1.0}
+                                followMouse
                                 onClick={() => handleScrollTo("how-it-works")}
-                                className="vyom-pill-btn-light w-full sm:w-auto"
+                                className="w-full sm:w-auto"
                             >
                                 {t("landing.howItWorks")}
-                            </button>
+                            </SpecularButton>
                         </div>
                     </div>
                 </section>
@@ -275,19 +324,38 @@ export function Landing() {
 
                         {/* Primary & Secondary Action Buttons (Stacked, 54px height, 28px radius) */}
                         <div className="flex flex-col gap-3 w-full max-w-[340px] mx-auto vyom-hero-cta-container mb-4 sm:mb-7">
-                            <button
+                            <SpecularButton
+                                size="lg"
+                                radius={28}
+                                tint="#17324D"
+                                tintOpacity={0.96}
+                                lineColor="#5EEAD4"
+                                baseColor="#0F172A"
+                                textColor="#FFFFFF"
+                                intensity={1.35}
+                                followMouse
+                                autoAnimate
                                 onClick={handleBeginJourney}
-                                className="w-full h-[54px] rounded-[28px] bg-[#17324D] hover:bg-[#102031] text-[#F7F4EC] text-[16px] font-semibold shadow-md flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                                className="w-full h-[54px]"
                             >
                                 <span>{isAuthenticated ? t("journey.continueJourney") : t("landing.beginJourney")}</span>
                                 <span className="text-lg leading-none">→</span>
-                            </button>
-                            <button
+                            </SpecularButton>
+                            <SpecularButton
+                                size="lg"
+                                radius={28}
+                                tint={isDark ? "#1E293B" : "#F7F4EC"}
+                                tintOpacity={0.9}
+                                lineColor={isDark ? "#38bdf8" : "#4F7C78"}
+                                baseColor={isDark ? "#0F172A" : "#E2E8F0"}
+                                textColor={isDark ? "#F8FAFC" : "#17324D"}
+                                intensity={1.0}
+                                followMouse
                                 onClick={() => handleScrollTo("how-it-works")}
-                                className="w-full h-[54px] rounded-[28px] vyom-mobile-btn-secondary text-[15px] font-semibold flex items-center justify-center active:scale-[0.98] transition-all"
+                                className="w-full h-[54px]"
                             >
                                 {t("landing.howItWorks")}
-                            </button>
+                            </SpecularButton>
                         </div>
 
                         {/* Centered Mobile Brain Visual with Subtle Ambient Radial Glow */}
@@ -788,35 +856,64 @@ export function Landing() {
                                 </div>
 
                                 {/* Desktop CTA Button (>= 768px) */}
-                                <button
-                                    onClick={handleBeginJourney}
-                                    className="!hidden md:!inline-flex vyom-pill-btn-light !bg-white/90 hover:!bg-white !text-[#182338] !border-white/60 !py-3.5 !px-8 sm:!px-10 text-sm sm:text-base font-semibold shadow-xl backdrop-blur-md transition-all duration-300 transform active:scale-95 items-center gap-2"
-                                >
-                                    <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
-                                    <span className="text-lg leading-none">→</span>
-                                </button>
+                                <div className="!hidden md:!inline-flex">
+                                    <SpecularButton
+                                        size="lg"
+                                        radius={28}
+                                        tint="#FFFFFF"
+                                        tintOpacity={0.96}
+                                        lineColor="#5EEAD4"
+                                        baseColor="#E2E8F0"
+                                        textColor="#182338"
+                                        intensity={1.35}
+                                        followMouse
+                                        autoAnimate
+                                        onClick={handleBeginJourney}
+                                        className="!py-3.5 !px-8 sm:!px-10 text-sm sm:text-base font-semibold shadow-xl"
+                                    >
+                                        <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
+                                        <span className="text-lg leading-none">→</span>
+                                    </SpecularButton>
+                                </div>
 
                                 {/* Dedicated Mobile Stacked CTA Buttons (< 768px) */}
                                 <div className="md:hidden flex flex-col items-center w-full max-w-[320px] mx-auto gap-3.5">
                                     {/* Primary CTA: Begin Your Journey */}
-                                    <button
-                                        type="button"
+                                    <SpecularButton
+                                        size="md"
+                                        radius={24}
+                                        tint="#FFFFFF"
+                                        tintOpacity={0.96}
+                                        lineColor="#5EEAD4"
+                                        baseColor="#E2E8F0"
+                                        textColor="#17324D"
+                                        intensity={1.25}
+                                        followMouse
+                                        autoAnimate
                                         onClick={handleBeginJourney}
-                                        className="w-full max-w-[280px] h-[48px] rounded-full bg-white hover:bg-[#F7F4EC] text-[#17324D] text-sm font-semibold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                        className="w-full max-w-[280px] h-[48px]"
                                     >
                                         <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
                                         <span className="text-base leading-none">→</span>
-                                    </button>
+                                    </SpecularButton>
 
                                     {/* Secondary CTA: Back to Top */}
-                                    <button
-                                        type="button"
+                                    <SpecularButton
+                                        size="sm"
+                                        radius={20}
+                                        tint="rgba(255, 255, 255, 0.15)"
+                                        tintOpacity={0.85}
+                                        lineColor="#FFFFFF"
+                                        baseColor="transparent"
+                                        textColor="#F7F4EC"
+                                        intensity={1.0}
+                                        followMouse
                                         onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                                        className="w-full max-w-[210px] h-[42px] rounded-full bg-white/10 hover:bg-white/20 border border-white/25 text-[#F7F4EC] text-xs font-semibold backdrop-blur-md active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                        className="w-full max-w-[210px] h-[42px]"
                                     >
                                         <span>Back to Top</span>
                                         <span className="text-sm leading-none">↑</span>
-                                    </button>
+                                    </SpecularButton>
                                 </div>
                             </div>
                         </div>

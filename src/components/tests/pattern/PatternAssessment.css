@@ -101,6 +101,95 @@
     border: 1.5px solid rgba(23, 50, 77, 0.08);
 }
 
+/* ─── Practice Over Interstitial Card (Reaction Time Style) ────── */
+
+.pattern-practice-interstitial-card {
+    width: 100%;
+    max-width: 540px;
+    margin: 0 auto;
+    min-height: 330px;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.5rem;
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6) !important;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.pattern-interstitial-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+    color: #E2E8F0;
+}
+
+.pattern-interstitial-tag {
+    background: rgba(245, 158, 11, 0.3);
+    color: #FBBF24;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.pattern-interstitial-icon-bubble {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #34D399, #059669);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 1.2rem;
+    animation: pulsePracticeDone 1.8s infinite ease-in-out;
+}
+
+@keyframes pulsePracticeDone {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.45);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 28px rgba(16, 185, 129, 0.7);
+    }
+}
+
+.pattern-interstitial-title {
+    font-size: clamp(1.65rem, 4vw, 2.25rem);
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.65rem;
+    line-height: 1.2;
+}
+
+.pattern-interstitial-hint {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #94A3B8;
+    margin: 0;
+}
+
 .grid-3 {
     grid-template-columns: repeat(3, 1fr);
 }

@@ -4,10 +4,11 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadius
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { PageWrapper } from "../../layout/PageWrapper";
-import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock, SpecularButton } from "../../common";
 import { useLanguage } from "../../../i18n/LanguageContext";
 import { useLanguageResults } from "../../../hooks/useTestResults";
 import { extractLanguageFeatures } from "../../../ai/languageFeatures";
+import { evaluateLanguageWithGemini } from "../../../services/languageGeminiService";
 import type { LanguageAssessmentResult } from "../../../types/languageTypes";
 import "../story/StoryAssessment.css";
 import "./LanguageAssessment.css";
@@ -79,6 +80,7 @@ export function LanguageAssessment() {
     const processorRef = useRef<ScriptProcessorNode | null>(null);
     const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const phaseRef = useRef<Phase>(phase);
+    const recognitionRef = useRef<any>(null);
 
     // Real-Time Acoustic & Voice Activity Detection (VAD) Tracker
     const pauseTrackerRef = useRef<{
@@ -347,6 +349,13 @@ export function LanguageAssessment() {
             }
         });
 
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.stop();
+            } catch {}
+            recognitionRef.current = null;
+        }
+
         wsVerbatimRef.current = null;
         wsTranslateRef.current = null;
     };
@@ -428,6 +437,36 @@ export function LanguageAssessment() {
             startTimeRef.current = Date.now();
             setIsRecording(true);
             isRecordingRef.current = true;
+
+            // Zero-latency live browser speech preview
+            try {
+                const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                if (SpeechRecognitionClass) {
+                    const rec = new SpeechRecognitionClass();
+                    rec.continuous = true;
+                    rec.interimResults = true;
+                    rec.lang = 'en-IN';
+                    rec.onresult = (event: any) => {
+                        let fullText = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            fullText += event.results[i][0].transcript + ' ';
+                        }
+                        fullText = fullText.trim();
+                        if (fullText) {
+                            if (phaseRef.current === 'warmup') {
+                                setWarmupTranscript(fullText);
+                            } else {
+                                setVerbatimTranscript(fullText);
+                                setTranscript(fullText);
+                            }
+                        }
+                    };
+                    rec.start();
+                    recognitionRef.current = rec;
+                }
+            } catch (recErr) {
+                console.warn('[LanguageAssessment] Live speech recognition skipped:', recErr);
+            }
 
             // 2. Setup Real-Time Web Audio VAD + Streaming Processor
             try {
@@ -590,6 +629,37 @@ export function LanguageAssessment() {
         let sarvamTranslation = englishTranslation;
         let detectedLang = detectedLanguage;
 
+        // Direct fast Sarvam AI STT if live capture is empty or needs high-fidelity audio transcription
+        if (_audioBlob && _audioBlob.size > 100 && (!sarvamTranscript || sarvamTranscript.length < 10)) {
+            try {
+                const fd = new FormData();
+                const ext = _audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
+                fd.append('file', _audioBlob, `speech_audio.${ext}`);
+                fd.append('model', 'saaras:v4');
+
+                const directRes = await fetch('https://api.sarvam.ai/speech-to-text', {
+                    method: 'POST',
+                    headers: { 'api-subscription-key': SARVAM_API_KEY },
+                    body: fd
+                });
+
+                if (directRes.ok) {
+                    const data = await directRes.json();
+                    if (data.transcript && data.transcript.trim()) {
+                        sarvamTranscript = data.transcript.trim();
+                        setTranscript(sarvamTranscript);
+                        setVerbatimTranscript(sarvamTranscript);
+                    }
+                    if (data.language_code) {
+                        detectedLang = data.language_code;
+                        setDetectedLanguage(data.language_code);
+                    }
+                }
+            } catch (sttErr) {
+                console.warn('[LanguageAssessment] Direct Sarvam STT fetch skipped:', sttErr);
+            }
+        }
+
         try {
             // If non-English detected, translate to English for semantic scoring
             if (detectedLang && detectedLang !== 'en-IN' && detectedLang !== 'en-US' && detectedLang !== 'unknown' && detectedLang !== 'Auto-detecting...') {
@@ -637,14 +707,17 @@ export function LanguageAssessment() {
         setIsProcessingAudio(false);
         setDiagnosticStatus("Processed Successfully");
 
-        // Fallback demo text if speech was totally silent
+        const cleanSpoken = (sarvamTranscript || "").trim();
+        const cleanWords = cleanSpoken.split(/\s+/).filter(Boolean);
+        const hasSpokenContent = cleanWords.length > 0;
+
         const vad = pauseTrackerRef.current;
         const totalDurationMs = Math.max(duration, 1000);
-        const actualSpeechDurationMs = Math.max(vad.totalSpeechDurationMs, totalDurationMs * 0.75);
+        const actualSpeechDurationMs = Math.max(vad.totalSpeechDurationMs, hasSpokenContent ? totalDurationMs * 0.75 : 0);
 
         // Extract Multi-Pillar Acoustic & Linguistic Biomarkers
         const { raw, derived } = extractLanguageFeatures({
-            transcript: sarvamTranscript || "I had a wonderful day walking through the campus garden and preparing lunch.",
+            transcript: cleanSpoken,
             verbatimTranscript: sarvamTranscript,
             englishTranslation: sarvamTranslation || undefined,
             durationMs: totalDurationMs,
@@ -655,32 +728,64 @@ export function LanguageAssessment() {
             promptTopic: prompt,
         });
 
-        // Composite Cognitive Speech Index (CSI)
-        const csi = Math.round(
-            (derived.fluencyIndex * 0.35) +
-            (derived.speechStability * 0.25) +
-            ((derived.phonationRatio ?? 0.8) * 100 * 0.20) +
-            ((derived.rootTTR ?? 0.72) * 100 * 0.20)
-        );
-        derived.cognitiveSpeechIndex = Math.min(Math.max(csi, 45), 98);
+        // Evaluate with Gemini Flash Clinical Speech Evaluator
+        setDiagnosticStatus("Evaluating with Gemini AI...");
+        const geminiEval = await evaluateLanguageWithGemini(prompt, cleanSpoken, sarvamTranslation);
+
+        if (hasSpokenContent) {
+            derived.topicAdherence = geminiEval.topicAdherence;
+            derived.ideaDensity = geminiEval.ideaDensity;
+            derived.distinctPropositions = geminiEval.distinctPropositions;
+            derived.circumlocutionCount = geminiEval.circumlocutions.length;
+            derived.syntacticComplexity = geminiEval.syntacticComplexity;
+            derived.semanticCoherence = geminiEval.topicAdherence;
+            derived.clinicalSummary = geminiEval.clinicalSummary;
+            derived.evaluationSource = geminiEval.evaluationSource;
+
+            // Composite Cognitive Speech Index (CSI) incorporating Topic Adherence & Idea Density
+            const csi = Math.round(
+                (geminiEval.topicAdherence * 0.25) +
+                ((geminiEval.ideaDensity) * 100 * 0.25) +
+                ((derived.fluencyIndex ?? 80) * 0.20) +
+                ((derived.speechStability ?? 80) * 0.15) +
+                (((derived.phonationRatio ?? 0.8)) * 100 * 0.15)
+            );
+            derived.cognitiveSpeechIndex = Math.min(Math.max(csi, 0), 100);
+        } else {
+            derived.cognitiveSpeechIndex = 0;
+            derived.wpm = 0;
+            derived.fluencyIndex = 0;
+            derived.speechStability = 0;
+            derived.semanticCoherence = 0;
+            derived.topicAdherence = 0;
+            derived.ideaDensity = 0;
+            derived.distinctPropositions = 0;
+            derived.circumlocutionCount = 0;
+            derived.clinicalSummary = "No spoken discourse was detected during this assessment.";
+            derived.evaluationSource = 'algorithmic';
+        }
 
         const finalResult: LanguageAssessmentResult = {
             id: `lang_${Date.now()}`,
             sessionId: `session_${Date.now()}`,
             timestamp: new Date(),
-            transcript: sarvamTranscript || "I had a wonderful day walking through the campus garden and preparing lunch.",
+            transcript: cleanSpoken,
             verbatimTranscript: sarvamTranscript,
             englishTranslation: sarvamTranslation || undefined,
             detectedLanguage: detectedLang !== "Auto-detecting..." ? detectedLang : "en-IN",
             promptTopic: prompt,
             rawMetrics: raw,
             derivedFeatures: derived,
+            clinicalSummary: derived.clinicalSummary,
+            evaluationSource: derived.evaluationSource,
             explainability: {
-                keyFactors: [
+                keyFactors: hasSpokenContent ? [
+                    `Topic adherence: ${derived.topicAdherence}%`,
+                    `Idea density: ${((derived.ideaDensity ?? 0.65) * 100).toFixed(0)}% (${derived.distinctPropositions || 0} propositions)`,
                     `Speech rate: ${Math.round(derived.wpm)} WPM`,
                     `Phonation ratio: ${(((derived.phonationRatio ?? 0.8)) * 100).toFixed(0)}%`,
-                    `Vocabulary diversity: ${(((derived.rootTTR ?? 0.72)) * 100).toFixed(0)}%`,
-                ],
+                    ...(derived.circumlocutionCount && derived.circumlocutionCount > 0 ? [`Circumlocutions detected: ${derived.circumlocutionCount}`] : [])
+                ] : ["No speech detected"],
             },
         };
 
@@ -759,20 +864,20 @@ export function LanguageAssessment() {
     const radarData = useMemo(() => {
         if (!result) return [];
         const df = result.derivedFeatures;
+        const adherenceScore = Math.min(100, Math.round(df.topicAdherence ?? df.semanticCoherence ?? 85));
+        const ideaScore = Math.min(100, Math.round((df.ideaDensity ?? 0.65) * 100));
         const wpmScore = Math.min(100, Math.round((df.wpm / 140) * 100));
         const ttrScore = Math.min(100, Math.round(((df.rootTTR ?? 0.72) / 0.8) * 100));
-        const phonationScore = Math.min(100, Math.round((df.phonationRatio ?? 0.8) * 100));
         const fluencyScore = Math.min(100, Math.round(df.fluencyIndex ?? 85));
-        const stabilityScore = Math.min(100, Math.round(df.speechStability ?? 80));
-        const coherenceScore = Math.min(100, Math.round(df.semanticCoherence ?? df.coherenceProxy ?? 85));
+        const phonationScore = Math.min(100, Math.round((df.phonationRatio ?? 0.8) * 100));
 
         return [
+            { subject: 'Topic Adherence', A: adherenceScore, fullMark: 100 },
+            { subject: 'Idea Density', A: ideaScore, fullMark: 100 },
             { subject: 'Speech Rate', A: wpmScore, fullMark: 100 },
             { subject: 'Fluency Index', A: fluencyScore, fullMark: 100 },
             { subject: 'Vocabulary (TTR)', A: ttrScore, fullMark: 100 },
             { subject: 'Phonation Ratio', A: phonationScore, fullMark: 100 },
-            { subject: 'Speech Stability', A: stabilityScore, fullMark: 100 },
-            { subject: 'Semantic Flow', A: coherenceScore, fullMark: 100 },
         ];
     }, [result]);
 
@@ -1218,16 +1323,32 @@ export function LanguageAssessment() {
                                     <div className="overview-header">
                                         <div className="overview-title-group">
                                             <h2 className="vyom-serif">{t("language.profileTitle")}</h2>
-                                            <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
-                                                <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
-                                                <span>{trend === 'up' ? t("vmra.improving") : t("vmra.declining")}</span>
-                                            </span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
+                                                    <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
+                                                    <span>{trend === 'up' ? t("vmra.improving") : t("vmra.declining")}</span>
+                                                </span>
+                                                {result.evaluationSource === 'gemini' && (
+                                                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 flex items-center gap-1">
+                                                        <Icon name="brain-circuit" size={11} />
+                                                        <span>AI Clinical Evaluation</span>
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="score-badge-circle">
                                             <span className="score-num">{csiScore}</span>
                                             <span className="score-denom">/ 100</span>
                                         </div>
                                     </div>
+
+                                    {/* Circumlocution & Retrieval Warning Banner */}
+                                    {(result.derivedFeatures.circumlocutionCount && result.derivedFeatures.circumlocutionCount > 0) && (
+                                        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-900 dark:text-amber-200 text-xs mt-3">
+                                            <span>⚠️</span>
+                                            <span><strong>{result.derivedFeatures.circumlocutionCount} Circumlocution(s) Detected:</strong> Used vague placeholder phrases when retrieving specific words.</span>
+                                        </div>
+                                    )}
                                 </Card>
 
                                 <MotivationalQuoteBlock
@@ -1239,8 +1360,28 @@ export function LanguageAssessment() {
                                 <div className="biomarkers-grid-row">
                                     <Card className="metric-card">
                                         <div className="metric-info-col">
+                                            <h4>Topic Adherence</h4>
+                                            <p className="metric-desc">Relevance & thematic continuity</p>
+                                        </div>
+                                        <div className="metric-val">
+                                            {Math.round(result.derivedFeatures.topicAdherence ?? result.derivedFeatures.semanticCoherence ?? 85)}%
+                                        </div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
+                                            <h4>Idea Density</h4>
+                                            <p className="metric-desc">{result.derivedFeatures.distinctPropositions ?? 0} distinct propositions</p>
+                                        </div>
+                                        <div className="metric-val">
+                                            {Math.round((result.derivedFeatures.ideaDensity ?? 0.65) * 100)}%
+                                        </div>
+                                    </Card>
+
+                                    <Card className="metric-card">
+                                        <div className="metric-info-col">
                                             <h4>{t("language.speechRate")}</h4>
-                                            <p className="metric-desc">{result.rawMetrics.wordCount} words • {(result.rawMetrics.speechDuration / 1000).toFixed(1)}s duration</p>
+                                            <p className="metric-desc">{result.rawMetrics.wordCount} words • {(result.rawMetrics.speechDuration / 1000).toFixed(1)}s</p>
                                         </div>
                                         <div className="metric-val">
                                             {Math.round(result.derivedFeatures.wpm)} <span className="metric-unit">WPM</span>
@@ -1254,26 +1395,6 @@ export function LanguageAssessment() {
                                         </div>
                                         <div className="metric-val">
                                             {Math.round(result.derivedFeatures.fluencyIndex ?? 85)}%
-                                        </div>
-                                    </Card>
-
-                                    <Card className="metric-card">
-                                        <div className="metric-info-col">
-                                            <h4>{t("language.vocabularyDiversity")}</h4>
-                                            <p className="metric-desc">{result.rawMetrics.uniqueWordCount} unique words (Root TTR)</p>
-                                        </div>
-                                        <div className="metric-val">
-                                            {Math.round((result.derivedFeatures.rootTTR ?? 0.72) * 100)}%
-                                        </div>
-                                    </Card>
-
-                                    <Card className="metric-card">
-                                        <div className="metric-info-col">
-                                            <h4>{t("language.phonationRatio")}</h4>
-                                            <p className="metric-desc">{result.rawMetrics.pauseCount} pauses (avg {result.rawMetrics.pauseDurationAvg}ms)</p>
-                                        </div>
-                                        <div className="metric-val">
-                                            {Math.round((result.derivedFeatures.phonationRatio ?? 0.8) * 100)}%
                                         </div>
                                     </Card>
                                 </div>
@@ -1331,8 +1452,19 @@ export function LanguageAssessment() {
                                             )}
                                         </div>
 
+                                        {/* Clinical Narrative Summary Box */}
+                                        {result.clinicalSummary && (
+                                            <div className="mt-3 p-3.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs sm:text-sm">
+                                                <div className="flex items-center gap-2 mb-1.5 font-semibold text-teal-800 dark:text-teal-200">
+                                                    <Icon name="brain-circuit" size={15} />
+                                                    <span>Clinical Narrative Assessment</span>
+                                                </div>
+                                                <p className="text-slate-700 dark:text-slate-300 leading-relaxed m-0">{result.clinicalSummary}</p>
+                                            </div>
+                                        )}
+
                                         {/* Clinical Insight Chips */}
-                                        <div className="lang-insights-row">
+                                        <div className="lang-insights-row mt-3">
                                             {getInsights(result).slice(0, 3).map((insight, i) => (
                                                 <span key={i} className={`lang-insight-pill ${insight.type}`}>
                                                     {insight.text}
@@ -1344,16 +1476,37 @@ export function LanguageAssessment() {
 
                                 {/* Centered Actions */}
                                 <div className="results-actions">
-                                    <button type="button" onClick={handleRetake} className="story-retake-btn">
+                                    <SpecularButton
+                                        size="md"
+                                        radius={24}
+                                        tint="rgba(255, 255, 255, 0.14)"
+                                        tintOpacity={0.92}
+                                        lineColor="#38bdf8"
+                                        baseColor="rgba(255, 255, 255, 0.3)"
+                                        textColor="#FFFFFF"
+                                        intensity={1.15}
+                                        followMouse
+                                        onClick={handleRetake}
+                                        className="story-retake-btn"
+                                    >
                                         <Icon name="language" size={16} /> {t("language.retakeTest")}
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        className="story-primary-start-btn story-back-assessments-btn" 
+                                    </SpecularButton>
+                                    <SpecularButton
+                                        size="md"
+                                        radius={24}
+                                        tint="#4F7C78"
+                                        tintOpacity={0.96}
+                                        lineColor="#5EEAD4"
+                                        baseColor="#1e293b"
+                                        textColor="#FFFFFF"
+                                        intensity={1.25}
+                                        followMouse
+                                        autoAnimate
                                         onClick={() => navigate('/tests')}
+                                        className="story-primary-start-btn story-back-assessments-btn"
                                     >
                                         {t("language.backToAssessments")}
-                                    </button>
+                                    </SpecularButton>
                                 </div>
                             </div>
                         );

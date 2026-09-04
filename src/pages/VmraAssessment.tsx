@@ -13,7 +13,7 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadius
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from '../components/common';
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock, SpecularButton } from '../components/common';
 import { PageWrapper } from '../components/layout';
 import { VMRA_ICON_MAP } from '../components/vmra/vmraIcons';
 import {
@@ -860,16 +860,37 @@ export function VmraAssessment() {
 
                         {/* Centered Actions */}
                         <div className="results-actions">
-                            <button type="button" onClick={startEncoding} className="story-retake-btn">
+                            <SpecularButton
+                                size="md"
+                                radius={24}
+                                tint="rgba(255, 255, 255, 0.14)"
+                                tintOpacity={0.92}
+                                lineColor="#38bdf8"
+                                baseColor="rgba(255, 255, 255, 0.3)"
+                                textColor="#FFFFFF"
+                                intensity={1.15}
+                                followMouse
+                                onClick={startEncoding}
+                                className="story-retake-btn"
+                            >
                                 <Icon name="reaction" size={15} /> {t('vmra.retakeTest')}
-                            </button>
-                            <button 
-                                type="button" 
-                                className="story-primary-start-btn story-back-assessments-btn" 
+                            </SpecularButton>
+                            <SpecularButton
+                                size="md"
+                                radius={24}
+                                tint="#4F7C78"
+                                tintOpacity={0.96}
+                                lineColor="#5EEAD4"
+                                baseColor="#1e293b"
+                                textColor="#FFFFFF"
+                                intensity={1.25}
+                                followMouse
+                                autoAnimate
                                 onClick={() => navigate('/tests')}
+                                className="story-primary-start-btn story-back-assessments-btn"
                             >
                                 {t('vmra.backToAssessments')}
-                            </button>
+                            </SpecularButton>
                         </div>
                     </div>
                 );

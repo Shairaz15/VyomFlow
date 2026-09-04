@@ -10,6 +10,7 @@ import { db } from '../lib/firebase';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { sendWeeklyReminder, isEmailConfigured, saveEmailPreferences, getEmailPreferences } from '../services/emailService';
 import { INDIAN_LANGUAGES, GENDER_OPTIONS } from '../components/common/OnboardingModal';
+import { Button } from '../components/common';
 import type { Gender, LanguageCode } from '../components/common/OnboardingModal';
 import { useLanguage } from '../i18n/LanguageContext';
 import { clearAllTestData } from '../hooks/useTestResults';
@@ -245,13 +246,15 @@ export function Settings() {
                             ))}
                         </select>
                     </div>
-                    <button
-                        className="btn btn-primary btn-sm settings-save-btn"
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className="settings-save-btn"
                         onClick={handleSaveProfile}
                         disabled={savingProfile}
                     >
                         {savingProfile ? t('settings.saving') : t('settings.saveProfile')}
-                    </button>
+                    </Button>
                 </section>
 
                 <section className="settings-section">
@@ -289,13 +292,14 @@ export function Settings() {
                                     {t('settings.testEmailDesc')}
                                 </span>
                             </div>
-                            <button
-                                className="btn btn-secondary btn-sm"
+                            <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={handleSendTestEmail}
                                 disabled={sendingTest || !preferences.emailNotifications}
                             >
                                 {sendingTest ? t('settings.sendingTest') : t('settings.sendTest')}
-                            </button>
+                            </Button>
                         </div>
                     )}
 
@@ -315,13 +319,16 @@ export function Settings() {
                                 {t('settings.resetCacheDesc')}
                             </span>
                         </div>
-                        <button
-                            className="btn btn-secondary btn-sm"
+                        <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={handleCleanSlate}
-                            style={{ borderColor: 'rgba(239, 68, 68, 0.4)', color: '#ef4444' }}
+                            lineColor="#ef4444"
+                            textColor="#ef4444"
+                            style={{ borderColor: 'rgba(239, 68, 68, 0.4)' }}
                         >
                             {t('settings.clearLocalData')}
-                        </button>
+                        </Button>
                     </div>
                 </section>
 

@@ -695,46 +695,8 @@
 }
 
 .synapse-cta-btn {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 600;
-    padding: 0.35rem 0.95rem;
-    border-radius: var(--radius-sm, 7px);
-    border: none;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.cta-btn-active {
-    background: #4F7C78;
-    color: #ffffff;
-    box-shadow: 0 2px 10px rgba(79, 124, 120, 0.3);
-}
-
-.cta-btn-active:hover {
-    filter: brightness(1.1);
-    transform: translateX(2px);
-}
-
-.cta-btn-completed {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: rgba(21, 128, 61, 0.08);
-    color: #15803d;
-    border: 1px solid rgba(21, 128, 61, 0.2);
-}
-
-.cta-btn-completed:hover {
-    background: rgba(21, 128, 61, 0.15);
-}
-
-.cta-btn-subtle {
-    background: rgba(79, 124, 120, 0.08);
-    color: #17324D;
-}
-
-.cta-btn-subtle:hover {
-    background: rgba(79, 124, 120, 0.15);
 }
 
 /* ==========================================================================

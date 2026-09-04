@@ -10,7 +10,7 @@ import { StoryPlayer } from "./StoryPlayer";
 import { ComprehensionQuiz } from "./ComprehensionQuiz";
 import { StoryRecorder } from "./StoryRecorder";
 import { StoryResults } from "./StoryResults";
-import { matchStoryUnits } from "./StoryMatchingService";
+import { matchStoryUnitsAsync } from "./StoryMatchingService";
 import { computeStoryScore } from "./StoryScoring";
 import { useStoryResults } from "../../../hooks/useTestResults";
 import "./StoryAssessment.css";
@@ -103,11 +103,13 @@ export function StoryAssessment() {
         durationMs: number;
         pauseCount: number;
         pauseDurationMs: number;
+        cognitivePauseCount?: number;
+        syntacticPauseCount?: number;
     }) => {
         setPhase("processing");
 
-        // Execute matching and biomarker extraction
-        const matchResult = matchStoryUnits(data.transcript, data.englishTranslation, story.informationUnits);
+        // Execute AI-assisted semantic matching and biomarker extraction
+        const matchResult = await matchStoryUnitsAsync(data.transcript, data.englishTranslation, story);
         const { storyRecallScore, biomarkers } = computeStoryScore({
             story,
             recalledText: data.transcript,
@@ -115,6 +117,8 @@ export function StoryAssessment() {
             durationMs: data.durationMs,
             pauseCount: data.pauseCount,
             pauseDurationMs: data.pauseDurationMs,
+            cognitivePauseCount: data.cognitivePauseCount,
+            syntacticPauseCount: data.syntacticPauseCount,
             matchResult,
             comprehensionResponses
         });

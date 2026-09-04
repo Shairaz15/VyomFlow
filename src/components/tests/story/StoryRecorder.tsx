@@ -14,6 +14,8 @@ interface StoryRecorderProps {
         durationMs: number;
         pauseCount: number;
         pauseDurationMs: number;
+        cognitivePauseCount?: number;
+        syntacticPauseCount?: number;
     }) => void;
 }
 
@@ -23,21 +25,23 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
     const [transcript, setTranscript] = useState("");
     const [verbatimTranscript, setVerbatimTranscript] = useState("");
     const [englishTranslation, setEnglishTranslation] = useState("");
-    const [detectedLanguage, setDetectedLanguage] = useState<string>("Auto-detecting...");
+    const [liveTranscript, setLiveTranscript] = useState("");
+    const [detectedLanguage, setDetectedLanguage] = useState<string>(selectedLanguage || "Auto-detecting...");
     const [timer, setTimer] = useState(0);
     const [isProcessingAudio, setIsProcessingAudio] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [diagnosticStatus, setDiagnosticStatus] = useState<string>("Ready");
 
-    // Refs
+    // Audio & Streaming Refs (Following AiAssistantBubble Pattern)
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
-
     const wsVerbatimRef = useRef<WebSocket | null>(null);
-    const wsTranslateRef = useRef<WebSocket | null>(null);
+    const recognitionRef = useRef<any>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const processorRef = useRef<ScriptProcessorNode | null>(null);
     const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const isRecordingRef = useRef<boolean>(false);
+    const liveTranscriptRef = useRef<string>("");
 
     // Real-Time Acoustic & Voice Activity Detection (VAD) Tracker
     const pauseTrackerRef = useRef<{
@@ -46,25 +50,28 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         pauseCount: number;
         totalPauseDurationMs: number;
         totalSpeechDurationMs: number;
+        cognitivePauseCount: number; // Hesitation blocks > 2200ms
+        syntacticPauseCount: number; // Natural breathing/clause pauses 1000-2200ms
     }>({
         isSilent: false,
         lastStateChangeTime: 0,
         pauseCount: 0,
         totalPauseDurationMs: 0,
-        totalSpeechDurationMs: 0
+        totalSpeechDurationMs: 0,
+        cognitivePauseCount: 0,
+        syntacticPauseCount: 0
     });
 
     const startTimeRef = useRef<number>(0);
     const intervalRef = useRef<any>(null);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
-    const isRecordingRef = useRef<boolean>(false);
 
     // Scroll to bottom of transcript
     useEffect(() => {
         if (transcriptEndRef.current) {
             transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [transcript, verbatimTranscript, englishTranslation]);
+    }, [transcript, verbatimTranscript, englishTranslation, liveTranscript]);
 
     // Timer Logic
     useEffect(() => {
@@ -92,7 +99,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         };
     }, []);
 
-    // Convert Float32 PCM chunk from ScriptProcessorNode to a valid 16kHz mono WAV Base64 string for Sarvam AI
+    // Convert Float32 PCM chunk to 16kHz mono WAV Base64 string for WebSocket streaming (AiAssistantBubble pattern)
     const convertFloat32ToWavBase64 = (float32Array: Float32Array, sampleRate = 16000): string => {
         const numSamples = float32Array.length;
         const buffer = new ArrayBuffer(44 + numSamples * 2);
@@ -100,22 +107,21 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
 
         // RIFF header
         view.setUint32(0, 0x52494646, false); // "RIFF"
-        view.setUint32(4, 36 + numSamples * 2, true); // file length - 8
+        view.setUint32(4, 36 + numSamples * 2, true);
         view.setUint32(8, 0x57415645, false); // "WAVE"
         // fmt sub-chunk
         view.setUint32(12, 0x666d7420, false); // "fmt "
-        view.setUint32(16, 16, true); // SubChunk1Size (16 for PCM)
-        view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
-        view.setUint16(22, 1, true); // NumChannels (1 mono)
-        view.setUint32(24, sampleRate, true); // SampleRate
-        view.setUint32(28, sampleRate * 2, true); // ByteRate
-        view.setUint16(32, 2, true); // BlockAlign
-        view.setUint16(34, 16, true); // BitsPerSample
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true); // PCM
+        view.setUint16(22, 1, true); // Mono
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
         // data sub-chunk
         view.setUint32(36, 0x64617461, false); // "data"
-        view.setUint32(40, numSamples * 2, true); // data size
+        view.setUint32(40, numSamples * 2, true);
 
-        // Write 16-bit PCM samples
         let offset = 44;
         for (let i = 0; i < numSamples; i++, offset += 2) {
             const s = Math.max(-1, Math.min(1, float32Array[i]));
@@ -131,19 +137,15 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         return btoa(binary);
     };
 
-    // Try starting WebSocket proxy streams (via Vite dev proxy or cloud proxy)
+    // Try starting WebSocket proxy stream (Exact AiAssistantBubble pattern)
     const tryConnectProxyWebSockets = () => {
         try {
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const verbatimUrl = isLocalDev
                 ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000`
-                : `${import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com'}?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
-            const translateUrl = isLocalDev
-                ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000`
-                : `${import.meta.env.VITE_SARVAM_PROXY_URL || 'wss://vyomflow-proxy.onrender.com'}?model=saaras:v4&language-code=unknown&mode=translate&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
+                : `wss://vyomflow-proxy.onrender.com?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
 
-            console.log('[StoryRecorder][Sarvam] Connecting to WebSocket proxies:', verbatimUrl);
             const wsVerbatim = new WebSocket(verbatimUrl);
 
             wsVerbatim.onmessage = (event) => {
@@ -152,100 +154,72 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                     if (msg.type === 'data') {
                         const text = msg.data?.transcript?.trim() || '';
                         if (text) {
-                            setVerbatimTranscript(prev => (prev ? `${prev} ${text}` : text));
-                            setTranscript(prev => (prev ? `${prev} ${text}` : text));
+                            setLiveTranscript(prev => {
+                                const next = prev ? `${prev} ${text}` : text;
+                                liveTranscriptRef.current = next;
+                                setTranscript(next);
+                                setVerbatimTranscript(next);
+                                return next;
+                            });
                         }
-                        if (msg.data?.language_code) {
-                            setDetectedLanguage(msg.data.language_code);
-                        }
-                    } else if (msg.type === 'error') {
-                        console.warn('[StoryRecorder][WS Verbatim Error]', msg.data);
                     }
                 } catch {}
             };
 
-            wsVerbatim.onopen = () => {
-                console.log('[StoryRecorder][Sarvam] Verbatim WebSocket connected');
-                setDiagnosticStatus("WebSocket Live Stream: Connected");
-            };
-
-            wsVerbatim.onerror = (err) => {
-                console.warn('[StoryRecorder][Sarvam] WebSocket proxy not reached, using REST API fallback', err);
-                setDiagnosticStatus("REST API Mode (Proxy Offline)");
-            };
-
             wsVerbatimRef.current = wsVerbatim;
-
-            // Connect simultaneous English translation socket
-            try {
-                const wsTranslate = new WebSocket(translateUrl);
-                wsTranslate.onmessage = (event) => {
-                    try {
-                        const msg = JSON.parse(event.data);
-                        if (msg.type === 'data') {
-                            const text = msg.data?.transcript?.trim() || '';
-                            if (text) {
-                                setEnglishTranslation(prev => (prev ? `${prev} ${text}` : text));
-                            }
-                        } else if (msg.type === 'transcript' && msg.text) {
-                            const text = msg.text.trim();
-                            if (text) {
-                                setEnglishTranslation(prev => (prev ? `${prev} ${text}` : text));
-                            }
-                        }
-                    } catch {}
-                };
-                wsTranslateRef.current = wsTranslate;
-            } catch (wsTrErr) {
-                console.warn('[StoryRecorder] Translate WebSocket connection skipped:', wsTrErr);
-            }
-        } catch (e: any) {
-            console.log('[StoryRecorder][Sarvam] WebSocket proxy error:', e?.message);
-            setDiagnosticStatus("REST API Direct Mode");
+        } catch {
+            // Non-fatal
         }
     };
 
-    // Real-time debounced English translation fallback
-    useEffect(() => {
-        if (!isRecording) return;
-        const textToTranslate = (verbatimTranscript || transcript).trim();
-        if (!textToTranslate || textToTranslate.length < 4) return;
-
-        const debounceTimer = setTimeout(async () => {
+    // Cleanup Audio Resources
+    const cleanupAudioResources = () => {
+        if (wsVerbatimRef.current) {
             try {
-                const res = await fetch('/api/sarvam-translate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        input: textToTranslate,
-                        source_language_code: detectedLanguage && detectedLanguage !== 'unknown' && detectedLanguage !== 'Auto-detecting...' && detectedLanguage !== 'Listening...' ? detectedLanguage : 'hi-IN',
-                        target_language_code: 'en-IN',
-                        model: 'sarvam-translate:v1',
-                        mode: 'formal'
-                    })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.translated_text && data.translated_text.trim()) {
-                        setEnglishTranslation(data.translated_text.trim());
-                    }
-                }
-            } catch {
-                // Non-critical background live translation
-            }
-        }, 1200);
+                wsVerbatimRef.current.close();
+            } catch {}
+            wsVerbatimRef.current = null;
+        }
 
-        return () => clearTimeout(debounceTimer);
-    }, [verbatimTranscript, transcript, isRecording, detectedLanguage]);
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.stop();
+            } catch {}
+            recognitionRef.current = null;
+        }
 
-    // Universal Recording Handler with Live Preview + Real-Time Acoustic Tracker
+        if (processorRef.current) {
+            try {
+                processorRef.current.disconnect();
+            } catch {}
+            processorRef.current = null;
+        }
+
+        if (sourceRef.current) {
+            try {
+                sourceRef.current.disconnect();
+            } catch {}
+            sourceRef.current = null;
+        }
+
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+            try {
+                audioContextRef.current.close();
+            } catch {}
+            audioContextRef.current = null;
+        }
+    };
+
+    // Start Recording (Exact AiAssistantBubble implementation)
     const startRecording = async () => {
         try {
             setTranscript("");
             setVerbatimTranscript("");
             setEnglishTranslation("");
+            setLiveTranscript("");
+            liveTranscriptRef.current = "";
             setErrorMessage(null);
-            setDetectedLanguage("Listening...");
+            setDetectedLanguage(selectedLanguage || "Listening...");
             setDiagnosticStatus("Recording active...");
             audioChunksRef.current = [];
             isRecordingRef.current = true;
@@ -256,7 +230,9 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 lastStateChangeTime: Date.now(),
                 pauseCount: 0,
                 totalPauseDurationMs: 0,
-                totalSpeechDurationMs: 0
+                totalSpeechDurationMs: 0,
+                cognitivePauseCount: 0,
+                syntacticPauseCount: 0
             };
 
             // Request Microphone Access
@@ -264,8 +240,8 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     audio: { 
-                        echoCancellation: true,
-                        noiseSuppression: true,
+                        echoCancellation: true, 
+                        noiseSuppression: true, 
                         sampleRate: 16000 
                     } 
                 });
@@ -280,17 +256,17 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 
                 setErrorMessage(customMsg);
                 setDiagnosticStatus("Microphone Error");
+                isRecordingRef.current = false;
+                setIsRecording(false);
                 return;
             }
 
-            // MediaRecorder for Sarvam AI Audio Processing
+            // MediaRecorder for Audio Processing
             let mimeType = 'audio/webm';
             if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
                 mimeType = 'audio/webm;codecs=opus';
             } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                mimeType = 'audio/mp4'; // iOS Safari
-            } else if (MediaRecorder.isTypeSupported('audio/aac')) {
-                mimeType = 'audio/aac';
+                mimeType = 'audio/mp4';
             }
 
             const mediaRecorder = new MediaRecorder(stream, { mimeType });
@@ -303,12 +279,43 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 }
             };
 
-            mediaRecorder.start(400); // 400ms chunk frequency
+            mediaRecorder.start(400);
 
-            // Connect local/cloud WebSocket proxy if active
+            // Connect streaming WebSocket (AiAssistantBubble pattern)
             tryConnectProxyWebSockets();
 
-            // Web Audio API PCM & VAD Acoustic Tracker
+            // Web Speech Recognition for instant 0ms visual text feedback
+            try {
+                const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                if (SpeechRecognitionClass) {
+                    const recognition = new SpeechRecognitionClass();
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    recognition.lang = selectedLanguage || 'en-IN';
+
+                    recognition.onresult = (event: any) => {
+                        let fullText = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            fullText += event.results[i][0].transcript + ' ';
+                        }
+                        fullText = fullText.trim();
+                        if (fullText) {
+                            liveTranscriptRef.current = fullText;
+                            setLiveTranscript(fullText);
+                            setVerbatimTranscript(fullText);
+                            setTranscript(fullText);
+                        }
+                    };
+
+                    recognition.onerror = () => {};
+                    recognition.start();
+                    recognitionRef.current = recognition;
+                }
+            } catch (speechErr) {
+                console.warn('[StoryRecorder] Live browser speech recognition skipped:', speechErr);
+            }
+
+            // Web Audio API PCM streaming
             try {
                 const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
                 const audioCtx = new AudioCtx({ sampleRate: 16000 });
@@ -326,32 +333,35 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                 processor.onaudioprocess = (e) => {
                     const inputData = e.inputBuffer.getChannelData(0);
 
-                    // 1. Real-time Acoustic & Silence Tracking (VAD)
+                    // 1. Acoustic VAD Pause Tracking
                     let sumSquares = 0;
                     for (let i = 0; i < inputData.length; i++) {
                         sumSquares += inputData[i] * inputData[i];
                     }
                     const rms = Math.sqrt(sumSquares / inputData.length);
-                    const isSpeech = rms > 0.015; // Vocal threshold
+                    const isSpeech = rms > 0.015;
                     const now = Date.now();
 
                     const elapsed = now - pauseTrackerRef.current.lastStateChangeTime;
                     if (isSpeech && pauseTrackerRef.current.isSilent) {
-                        // Silence -> Speech transition
-                        if (elapsed >= 250) { // Cognitive pause threshold > 250ms
+                        if (elapsed >= 1000) {
                             pauseTrackerRef.current.pauseCount++;
                             pauseTrackerRef.current.totalPauseDurationMs += elapsed;
+                            if (elapsed >= 2200) {
+                                pauseTrackerRef.current.cognitivePauseCount++;
+                            } else {
+                                pauseTrackerRef.current.syntacticPauseCount++;
+                            }
                         }
                         pauseTrackerRef.current.isSilent = false;
                         pauseTrackerRef.current.lastStateChangeTime = now;
                     } else if (!isSpeech && !pauseTrackerRef.current.isSilent) {
-                        // Speech -> Silence transition
                         pauseTrackerRef.current.totalSpeechDurationMs += elapsed;
                         pauseTrackerRef.current.isSilent = true;
                         pauseTrackerRef.current.lastStateChangeTime = now;
                     }
 
-                    // 2. Stream real-time WAV payload to WebSockets if open
+                    // 2. Stream chunk to WebSocket if connected
                     const wavBase64 = convertFloat32ToWavBase64(inputData, 16000);
                     const payload = JSON.stringify({
                         audio: {
@@ -363,9 +373,6 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
 
                     if (wsVerbatimRef.current?.readyState === WebSocket.OPEN) {
                         wsVerbatimRef.current.send(payload);
-                    }
-                    if (wsTranslateRef.current?.readyState === WebSocket.OPEN) {
-                        wsTranslateRef.current.send(payload);
                     }
                 };
 
@@ -379,6 +386,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
             startTimeRef.current = Date.now();
 
         } catch (err: any) {
+            console.error("Recording error:", err);
             setErrorMessage(`[Error: RECORD_START_FAILED] ${err.message || 'Unknown recording initialization error'}`);
             setDiagnosticStatus("Start Failed");
             isRecordingRef.current = false;
@@ -386,7 +394,7 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         }
     };
 
-    // Stop Recording
+    // Stop Recording (Exact AiAssistantBubble implementation)
     const stopRecording = () => {
         isRecordingRef.current = false;
 
@@ -417,11 +425,12 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
 
                 cleanupAudioResources();
                 setIsRecording(false);
-                
+
                 if (audioBlob.size > 100) {
-                    await process100PercentSarvamAI(audioBlob);
+                    await processSarvamSTT(audioBlob);
+                } else if (liveTranscriptRef.current.trim()) {
+                    processResults(liveTranscriptRef.current.trim());
                 } else {
-                    setErrorMessage("[Warning: AUDIO_EMPTY] Recorded audio was empty (< 100 bytes). Retrying or continuing with fallback.");
                     processResults();
                 }
             };
@@ -434,148 +443,142 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         } else {
             cleanupAudioResources();
             setIsRecording(false);
-            processResults();
+            processResults(liveTranscriptRef.current.trim());
         }
     };
 
-    // Cleanup Audio Resources
-    const cleanupAudioResources = () => {
-        if (processorRef.current && audioContextRef.current) {
-            try {
-                processorRef.current.disconnect();
-                sourceRef.current?.disconnect();
-                audioContextRef.current.close();
-            } catch {}
-        }
-
-        const flushMsg = JSON.stringify({ type: 'flush' });
-        [wsVerbatimRef.current, wsTranslateRef.current].forEach(ws => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                try {
-                    ws.send(flushMsg);
-                    ws.close();
-                } catch {}
-            }
-        });
-
-        wsVerbatimRef.current = null;
-        wsTranslateRef.current = null;
-    };
-
-    // 100% Authentic Sarvam AI STT Processing with explicit status & error reporting
-    const process100PercentSarvamAI = async (audioBlob: Blob) => {
+    // 100% Sarvam AI STT Processing (Exact AiAssistantBubble REST Pattern)
+    const processSarvamSTT = async (audioBlob: Blob) => {
         setIsProcessingAudio(true);
         setErrorMessage(null);
-        setDiagnosticStatus("Sarvam AI STT Processing...");
+        setDiagnosticStatus("Transcribing with Sarvam AI...");
         const duration = Date.now() - startTimeRef.current;
 
-        let sarvamNativeScript = "";
-        let sarvamEnglishTranslation = "";
-        let sarvamDetectedLang: string = (selectedLanguage as string) || "unknown";
+        let finalSpokenText = liveTranscriptRef.current.trim() || liveTranscript.trim() || verbatimTranscript.trim() || transcript.trim();
+        let englishTrans = "";
 
-        const blobToBase64 = (blob: Blob): Promise<string> => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        };
+        const isEnglish = selectedLanguage === 'en-IN';
+        const filename = `story_audio.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
 
+        const formData = new FormData();
+        formData.append('file', audioBlob, filename);
+        formData.append('model', 'saaras:v3');
+        formData.append('language_code', 'unknown');
+
+        // PRIMARY: Transcribe verbatim in native language (speech-to-text) to keep Hindi in Hindi!
         try {
-            const base64Audio = await blobToBase64(audioBlob);
-
-            // 1. Live WebSocket Transcript is already captured in real-time in sarvamNativeScript
-            // 2. Sarvam Translation to English (if audio is non-English)
+            let sttRes: Response;
             try {
-                const resTranslate = await fetch('/api/sarvam-translate', {
+                sttRes = await fetch('/api/sarvam-stt', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        audioBase64: base64Audio,
-                        mimeType: audioBlob.type || 'audio/webm',
-                        model: 'saaras:v3'
-                    }),
+                    headers: { 'api-subscription-key': SARVAM_API_KEY },
+                    body: formData,
                 });
+            } catch {
+                sttRes = await fetch('https://api.sarvam.ai/speech-to-text', {
+                    method: 'POST',
+                    headers: { 'api-subscription-key': SARVAM_API_KEY },
+                    body: formData,
+                });
+            }
 
-                if (resTranslate.ok) {
-                    const dataTranslate = await resTranslate.json();
-                    if (dataTranslate.transcript) sarvamEnglishTranslation = dataTranslate.transcript;
-                    if (dataTranslate.language_code && sarvamDetectedLang === "unknown") {
-                        sarvamDetectedLang = dataTranslate.language_code;
-                    }
-                } else {
-                    const filename = `story_audio.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
-                    const formData = new FormData();
-                    formData.append('file', audioBlob, filename);
-                    formData.append('model', 'saaras:v3');
-
-                    const directRes = await fetch('https://api.sarvam.ai/speech-to-text-translate', {
-                        method: 'POST',
-                        headers: { 'api-subscription-key': SARVAM_API_KEY },
-                        body: formData
-                    });
-                    if (directRes.ok) {
-                        const directData = await directRes.json();
-                        if (directData.transcript) sarvamEnglishTranslation = directData.transcript;
-                        if (directData.language_code && sarvamDetectedLang === "unknown") {
-                            sarvamDetectedLang = directData.language_code;
-                        }
+            if (sttRes.ok) {
+                const sttData = await sttRes.json();
+                if (sttData.transcript && sttData.transcript.trim()) {
+                    finalSpokenText = sttData.transcript.trim();
+                }
+            } else if (!finalSpokenText) {
+                // Secondary fallback only if verbatim transcription was empty
+                const fallbackRes = await fetch('https://api.sarvam.ai/speech-to-text-translate', {
+                    method: 'POST',
+                    headers: { 'api-subscription-key': SARVAM_API_KEY },
+                    body: formData,
+                });
+                if (fallbackRes.ok) {
+                    const fallbackData = await fallbackRes.json();
+                    if (fallbackData.transcript && fallbackData.transcript.trim()) {
+                        finalSpokenText = fallbackData.transcript.trim();
                     }
                 }
-            } catch (transErr) {
-                console.warn('[StoryRecorder] Sarvam translate error (non-fatal):', transErr);
             }
-        } catch (err: any) {
-            console.error("[StoryRecorder] Sarvam Audio Processing Exception:", err);
-            setErrorMessage(`[Error: AUDIO_PROCESS_EXC] ${err.message}`);
+        } catch (err) {
+            console.warn('[StoryRecorder] Sarvam STT REST error, using live transcript:', err);
         }
 
-        const activeText = sarvamNativeScript || verbatimTranscript || transcript || sarvamEnglishTranslation || "Story retold by user.";
+        // Translation to English for scoring (if audio is non-English)
+        if (!isEnglish) {
+            try {
+                const transForm = new FormData();
+                transForm.append('file', audioBlob, filename);
+                transForm.append('model', 'saaras:v3');
+                if (selectedLanguage) {
+                    transForm.append('language_code', selectedLanguage);
+                }
 
-        setTranscript(sarvamNativeScript || activeText);
-        setVerbatimTranscript(sarvamNativeScript || activeText);
-        setEnglishTranslation(sarvamEnglishTranslation || englishTranslation);
-        
-        let displayLang: string = sarvamDetectedLang;
-        if (sarvamDetectedLang === 'hi-IN') displayLang = 'Hindi (Devanagari 🇮🇳)';
-        else if (sarvamDetectedLang === 'en-IN' || sarvamDetectedLang === 'en-US') displayLang = 'English 🇬🇧';
-        else if (sarvamDetectedLang === 'ta-IN') displayLang = 'Tamil 🇮🇳';
-        else if (sarvamDetectedLang === 'te-IN') displayLang = 'Telugu 🇮🇳';
-        else if (sarvamDetectedLang === 'mr-IN') displayLang = 'Marathi 🇮🇳';
-        else if (sarvamDetectedLang === 'bn-IN') displayLang = 'Bengali 🇮🇳';
-        else if (sarvamDetectedLang === 'gu-IN') displayLang = 'Gujarati 🇮🇳';
-        else if (sarvamDetectedLang === 'kn-IN') displayLang = 'Kannada 🇮🇳';
-        else if (sarvamDetectedLang === 'ml-IN') displayLang = 'Malayalam 🇮🇳';
-        else if (sarvamDetectedLang === 'pa-IN') displayLang = 'Punjabi 🇮🇳';
+                let transRes: Response;
+                try {
+                    transRes = await fetch('/api/sarvam-stt-translate', {
+                        method: 'POST',
+                        headers: { 'api-subscription-key': SARVAM_API_KEY },
+                        body: transForm,
+                    });
+                } catch {
+                    transRes = await fetch('https://api.sarvam.ai/speech-to-text-translate', {
+                        method: 'POST',
+                        headers: { 'api-subscription-key': SARVAM_API_KEY },
+                        body: transForm,
+                    });
+                }
 
-        setDetectedLanguage(displayLang);
+                if (transRes.ok) {
+                    const transData = await transRes.json();
+                    if (transData.transcript && transData.transcript.trim()) {
+                        englishTrans = transData.transcript.trim();
+                    }
+                }
+            } catch (trErr) {
+                console.warn('[StoryRecorder] English translation fetch error:', trErr);
+            }
+        } else {
+            englishTrans = finalSpokenText;
+        }
+
+        const activeText = finalSpokenText.trim() || englishTrans.trim() || "";
+        const activeEnglish = englishTrans.trim() || activeText;
+
+        setTranscript(activeText);
+        setVerbatimTranscript(activeText);
+        setEnglishTranslation(activeEnglish);
         setIsProcessingAudio(false);
         setDiagnosticStatus("Processed Successfully");
 
         onComplete({
             transcript: activeText,
-            verbatimTranscript: sarvamNativeScript || activeText,
-            englishTranslation: sarvamEnglishTranslation || englishTranslation || activeText,
+            verbatimTranscript: activeText,
+            englishTranslation: activeEnglish,
             durationMs: duration,
             pauseCount: pauseTrackerRef.current.pauseCount,
-            pauseDurationMs: pauseTrackerRef.current.totalPauseDurationMs
+            pauseDurationMs: pauseTrackerRef.current.totalPauseDurationMs,
+            cognitivePauseCount: pauseTrackerRef.current.cognitivePauseCount,
+            syntacticPauseCount: pauseTrackerRef.current.syntacticPauseCount,
         });
     };
 
-    const processResults = () => {
+    const processResults = (fallbackText?: string) => {
         const duration = Date.now() - startTimeRef.current;
-        const activeText = verbatimTranscript || transcript || englishTranslation || "Story retold by user.";
+        const activeText = (fallbackText || liveTranscriptRef.current || verbatimTranscript || transcript || englishTranslation || "").trim();
         setIsProcessingAudio(false);
-        setDiagnosticStatus("Completed with fallback text");
+        setDiagnosticStatus(activeText ? "Completed with fallback text" : "Completed with no speech detected");
 
         onComplete({
             transcript: activeText,
-            verbatimTranscript: verbatimTranscript || activeText,
+            verbatimTranscript: activeText,
             englishTranslation: englishTranslation || activeText,
             durationMs: duration,
             pauseCount: pauseTrackerRef.current.pauseCount,
-            pauseDurationMs: pauseTrackerRef.current.totalPauseDurationMs
+            pauseDurationMs: pauseTrackerRef.current.totalPauseDurationMs,
+            cognitivePauseCount: pauseTrackerRef.current.cognitivePauseCount,
+            syntacticPauseCount: pauseTrackerRef.current.syntacticPauseCount,
         });
     };
 
@@ -663,10 +666,10 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
                     <span className="live-label">{t("story.liveTranscript")}</span>
                     {isRecording && <span className="live-pulse-badge">{t("story.live")}</span>}
                 </div>
-                {transcript || verbatimTranscript ? (
+                {transcript || verbatimTranscript || liveTranscript ? (
                     <div className="live-text-container">
-                        <p className="live-native-text">{verbatimTranscript || transcript}</p>
-                        {englishTranslation && englishTranslation.trim().toLowerCase() !== (verbatimTranscript || transcript).trim().toLowerCase() && (
+                        <p className="live-native-text">{liveTranscript || verbatimTranscript || transcript}</p>
+                        {englishTranslation && englishTranslation.trim().toLowerCase() !== (liveTranscript || verbatimTranscript || transcript).trim().toLowerCase() && (
                             <div className="live-english-translation">
                                 <span className="lang-tag-en">EN</span>
                                 <p className="live-english-text">{englishTranslation}</p>

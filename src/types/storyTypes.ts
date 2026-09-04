@@ -48,6 +48,13 @@ export interface Story {
     comprehensionQuestions: ComprehensionQuestion[];
 }
 
+export interface UnitMatchDetail {
+    unitId: string;
+    matchType: 'verbatim' | 'gist';
+    score: number; // 1.0 for verbatim, 0.6 for gist
+    evidence?: string;
+}
+
 export interface StoryRecallBiomarkers {
     memory: {
         recallAccuracy: number;        // 0 to 1
@@ -55,6 +62,9 @@ export interface StoryRecallBiomarkers {
         totalInfoUnits: number;
         omissionCount: number;
         falseRecallCount: number;
+        gistRecallCount?: number;
+        verbatimRecallCount?: number;
+        perseverationCount?: number;
     };
     comprehension: {
         mcqAccuracy: number;           // 0 to 1
@@ -72,6 +82,8 @@ export interface StoryRecallBiomarkers {
         lexicalDiversity: number;     // Type-Token Ratio
         hesitationRate: number;       // Fillers + pauses per total words
         pauseFrequency: number;       // Pauses per minute
+        cognitivePauseCount?: number; // Hesitation blocks > 2.2s
+        syntacticPauseCount?: number; // Natural pauses 1.0s - 2.0s
     };
 }
 
@@ -81,7 +93,10 @@ export interface StoryMatchResult {
     sequenceMatchScore: number;
     infoUnitsMatched: string[];        // Unit IDs matched
     infoUnitsOmitted: string[];        // Unit IDs missed
-    falseRecalls: string[];           // Unmatched key statements
+    falseRecalls: string[];           // Unmatched key statements / intrusions
+    unitDetails?: Record<string, UnitMatchDetail>;
+    perseverationCount?: number;
+    evaluationSource?: 'gemini' | 'algorithmic';
 }
 
 export interface ComprehensionResponse {

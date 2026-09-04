@@ -14,6 +14,7 @@ export { ErrorBoundary } from "./ErrorBoundary";
 export { VyomFlowLogo } from "./VyomFlowLogo";
 export { TutorialVideoPlaceholder } from "./TutorialVideoPlaceholder";
 export { MotivationalQuoteBlock } from "./MotivationalQuoteBlock";
-export type { MotivationalQuoteBlockProps } from "./MotivationalQuoteBlock";
 export { AiAssistantBubble } from "./AiAssistantBubble";
+export { SpecularButton } from "./SpecularButton";
+export type { SpecularButtonProps } from "./SpecularButton";
 

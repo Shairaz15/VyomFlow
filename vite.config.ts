@@ -52,6 +52,14 @@ export default defineConfig({
           'api-subscription-key': SARVAM_API_KEY,
         },
       },
+      '/api/sarvam-stt-translate': {
+        target: 'https://api.sarvam.ai',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/sarvam-stt-translate/, '/speech-to-text-translate'),
+        headers: {
+          'api-subscription-key': SARVAM_API_KEY,
+        },
+      },
       '/api/sarvam-translate': {
         target: 'https://api.sarvam.ai',
         changeOrigin: true,

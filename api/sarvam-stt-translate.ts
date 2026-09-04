@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const bodyBuffer = Buffer.concat(chunks);
 
-    const response = await fetch('https://api.sarvam.ai/speech-to-text', {
+    const response = await fetch('https://api.sarvam.ai/speech-to-text-translate', {
       method: 'POST',
       headers: {
         'Content-Type': contentType,
@@ -53,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const data = await response.json();
     return res.status(response.status).json(data);
   } catch (error: any) {
-    console.error('Sarvam STT Vercel Proxy Error:', error);
-    return res.status(500).json({ error: 'Failed to transcribe audio with Sarvam AI', details: error.message });
+    console.error('Sarvam STT Translate Vercel Proxy Error:', error);
+    return res.status(500).json({ error: 'Failed to translate speech with Sarvam AI', details: error.message });
   }
 }

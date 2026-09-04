@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { LayoutDashboard, ShieldCheck, ArrowRight } from "lucide-react";
-import { Button, Icon } from "../components/common";
+import { Icon, SpecularButton } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { PageWrapper } from "../components/layout";
@@ -151,8 +151,17 @@ export function Tests() {
                                 })}
                             </div>
 
-                            <Button
-                                variant="primary"
+                            <SpecularButton
+                                size="md"
+                                radius={14}
+                                tint={isJourneyComplete ? "#15803d" : "#4F7C78"}
+                                tintOpacity={0.94}
+                                lineColor={isJourneyComplete ? "#6ee7b7" : "#5EEAD4"}
+                                baseColor="#1e293b"
+                                textColor="#FFFFFF"
+                                intensity={1.25}
+                                followMouse
+                                autoAnimate
                                 onClick={handlePrimaryCtaClick}
                                 className={`journey-compact-cta ${isJourneyComplete ? "journey-completed-cta" : ""}`}
                             >
@@ -165,7 +174,7 @@ export function Tests() {
                                 ) : (
                                     <>{t("journey.startProtocol")} →</>
                                 )}
-                            </Button>
+                            </SpecularButton>
                         </div>
                     </div>
                 </header>

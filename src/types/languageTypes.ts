@@ -24,9 +24,14 @@ export interface LanguageDerivedFeatures {
     speechStability: number; // 0-100 Motor Speech Stability
     semanticCoherence?: number; // 0-100 Prompt Relevance & Thematic Continuity
     syntacticComplexity?: number; // 0-100 Mean Length of Utterance & Structure
-    ideaDensity?: number; // Proportion of Content Words vs Function Words
+    ideaDensity?: number; // Proportion of Content Words vs Function Words / Propositional Density
     cognitiveSpeechIndex?: number; // Composite Cognitive Speech Index (0-100)
     coherenceProxy: number; // Legacy proxy score
+    topicAdherence?: number; // 0-100 Semantic Topic Adherence
+    distinctPropositions?: number; // Count of distinct factual/conceptual propositions
+    circumlocutionCount?: number; // Vague placeholder or empty phrases count
+    clinicalSummary?: string; // AI generated personalized clinical insight
+    evaluationSource?: 'gemini' | 'algorithmic';
 }
 
 export interface LanguageAssessmentResult {
@@ -43,5 +48,6 @@ export interface LanguageAssessmentResult {
     explainability: {
         keyFactors: string[];
     };
+    clinicalSummary?: string;
+    evaluationSource?: 'gemini' | 'algorithmic';
 }
-

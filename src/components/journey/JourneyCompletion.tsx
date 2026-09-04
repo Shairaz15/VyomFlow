@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { JOURNEY_NODES } from '../../hooks/useJourneyState';
-import { Button } from '../common';
+import { SpecularButton } from '../common';
 import { useLanguage } from '../../i18n/LanguageContext';
 import './JourneyCompletion.css';
 
@@ -47,16 +47,37 @@ export function JourneyCompletion({ onClose }: JourneyCompletionProps) {
                 </div>
 
                 <div className="journey-complete-actions">
-                    <Button variant="primary" onClick={onClose} className="action-btn">
+                    <SpecularButton
+                        size="md"
+                        radius={14}
+                        tint="#4F7C78"
+                        tintOpacity={0.96}
+                        lineColor="#5EEAD4"
+                        baseColor="#1e293b"
+                        textColor="#FFFFFF"
+                        intensity={1.25}
+                        followMouse
+                        autoAnimate
+                        onClick={onClose}
+                        className="action-btn"
+                    >
                         {t("journey.returnToMap")}
-                    </Button>
-                    <Button
-                        variant="secondary"
+                    </SpecularButton>
+                    <SpecularButton
+                        size="md"
+                        radius={14}
+                        tint="#1e293b"
+                        tintOpacity={0.88}
+                        lineColor="#38bdf8"
+                        baseColor="#0f172a"
+                        textColor="#FFFFFF"
+                        intensity={1.1}
+                        followMouse
                         onClick={() => navigate('/dashboard')}
                         className="action-btn"
                     >
-                        {t("journey.viewHistoryInsights")}
-                    </Button>
+                        {t("journey.viewHistoryInsights")} →
+                    </SpecularButton>
                 </div>
             </div>
         </div>

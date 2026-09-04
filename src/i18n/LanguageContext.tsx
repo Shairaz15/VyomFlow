@@ -165,6 +165,8 @@ const DEFAULT_FALLBACKS: Record<string, string> = {
     'dashboard.welcomeSubtitle': 'Complete your first cognitive assessment to establish your baseline and generate your digital biomarker profile in Supabase.',
     'dashboard.takeFirstAssessment': 'Take Your First Assessment',
     'dashboard.previewDemo': '🌟 Preview with Demo Dataset',
+    'pattern.practiceOver': 'Practice Over',
+    'pattern.startingLevel1': 'Starting Level 1...',
 };
 
     // Translation function with variable interpolation

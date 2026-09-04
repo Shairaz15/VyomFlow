@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
-import { Card, Icon, MotivationalQuoteBlock } from "../../common";
+import { Card, Icon, MotivationalQuoteBlock, SpecularButton } from "../../common";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../i18n/LanguageContext";
 import type { StoryAssessmentResult } from "../../../types/storyTypes";
@@ -90,16 +90,42 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
                 <div className="overview-header">
                     <div className="overview-title-group">
                         <h2 className="vyom-serif">{t("story.profileTitle")}</h2>
-                        <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
-                            <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
-                            <span>{trend === 'up' ? t('vmra.improving') : t('vmra.declining')}</span>
-                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className={`story-trend-pill ${trend === 'up' ? 'trend-up' : 'trend-down'}`}>
+                                <Icon name={trend === 'up' ? 'trend-up' : 'trend-down'} size={13} />
+                                <span>{trend === 'up' ? t('vmra.improving') : t('vmra.declining')}</span>
+                            </span>
+                            {result.matchResult.evaluationSource === 'gemini' && (
+                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 flex items-center gap-1">
+                                    <Icon name="brain-circuit" size={11} />
+                                    <span>AI Semantic Analysis</span>
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <div className="score-badge-circle">
                         <span className="score-num">{storyRecallScore}</span>
                         <span className="score-denom">/ 100</span>
                     </div>
                 </div>
+
+                {/* Intrusion & Perseveration Clinical Indicators */}
+                {(result.matchResult.falseRecalls?.length > 0 || (result.matchResult.perseverationCount || 0) > 0) && (
+                    <div className="flex flex-wrap gap-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-900 dark:text-amber-200 text-xs mt-3">
+                        {result.matchResult.falseRecalls.length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                                <span>⚠️</span>
+                                <span><strong>{result.matchResult.falseRecalls.length} Intrusion(s):</strong> Non-story content/confabulation detected.</span>
+                            </div>
+                        )}
+                        {(result.matchResult.perseverationCount || 0) > 0 && (
+                            <div className="flex items-center gap-1.5">
+                                <span>🔄</span>
+                                <span><strong>{result.matchResult.perseverationCount} Perseveration(s):</strong> Repetitive recall assertions.</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </Card>
 
             <MotivationalQuoteBlock
@@ -113,6 +139,13 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
                     <div className="metric-info-col">
                         <h4>{t("story.memoryRecall")}</h4>
                         <p className="metric-desc">{t("story.unitsRecalled", { count: biomarkers.memory.infoUnitsRecalled, total: biomarkers.memory.totalInfoUnits })}</p>
+                        {(biomarkers.memory.verbatimRecallCount !== undefined || biomarkers.memory.gistRecallCount !== undefined) && (
+                            <div className="text-[11px] flex items-center gap-2 mt-1 opacity-90">
+                                <span className="text-emerald-700 dark:text-emerald-300 font-semibold">{biomarkers.memory.verbatimRecallCount || 0} Verbatim</span>
+                                <span>•</span>
+                                <span className="text-sky-700 dark:text-sky-300 font-semibold">{biomarkers.memory.gistRecallCount || 0} Gist</span>
+                            </div>
+                        )}
                     </div>
                     <div className="metric-val">{Math.round(biomarkers.memory.recallAccuracy * 100)}%</div>
                 </Card>
@@ -169,16 +202,37 @@ export function StoryResults({ result, onRetake }: StoryResultsProps) {
 
             {/* Centered Actions */}
             <div className="results-actions">
-                <button type="button" onClick={onRetake} className="story-retake-btn">
+                <SpecularButton
+                    size="md"
+                    radius={24}
+                    tint="rgba(255, 255, 255, 0.14)"
+                    tintOpacity={0.92}
+                    lineColor="#38bdf8"
+                    baseColor="rgba(255, 255, 255, 0.3)"
+                    textColor="#FFFFFF"
+                    intensity={1.15}
+                    followMouse
+                    onClick={onRetake}
+                    className="story-retake-btn"
+                >
                     <Icon name="assess" size={16} /> {t("story.retakeTest")}
-                </button>
-                <button 
-                    type="button" 
-                    className="story-primary-start-btn story-back-assessments-btn" 
+                </SpecularButton>
+                <SpecularButton
+                    size="md"
+                    radius={24}
+                    tint="#4F7C78"
+                    tintOpacity={0.96}
+                    lineColor="#5EEAD4"
+                    baseColor="#1e293b"
+                    textColor="#FFFFFF"
+                    intensity={1.25}
+                    followMouse
+                    autoAnimate
                     onClick={() => navigate('/tests')}
+                    className="story-primary-start-btn story-back-assessments-btn"
                 >
                     {t("story.backToAssessments")}
-                </button>
+                </SpecularButton>
             </div>
         </div>
     );

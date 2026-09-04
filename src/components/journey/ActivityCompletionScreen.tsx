@@ -1,5 +1,5 @@
 import { JOURNEY_NODES, type ActivityId } from '../../hooks/useJourneyState';
-import { Button, Icon } from '../common';
+import { SpecularButton, Icon } from '../common';
 import { useLanguage } from '../../i18n/LanguageContext';
 import './ActivityCompletionScreen.css';
 
@@ -49,9 +49,22 @@ export function ActivityCompletionScreen({
                 )}
 
                 <div className="completion-actions">
-                    <Button variant="primary" onClick={onContinue} className="w-full continue-btn">
-                        {t("journey.continueJourney")}
-                    </Button>
+                    <SpecularButton
+                        size="md"
+                        radius={14}
+                        tint="#4F7C78"
+                        tintOpacity={0.96}
+                        lineColor="#5EEAD4"
+                        baseColor="#1e293b"
+                        textColor="#FFFFFF"
+                        intensity={1.25}
+                        followMouse
+                        autoAnimate
+                        onClick={onContinue}
+                        className="w-full continue-btn"
+                    >
+                        {t("journey.continueJourney")} →
+                    </SpecularButton>
                 </div>
             </div>
         </div>

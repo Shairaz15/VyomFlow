@@ -7,8 +7,9 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageWrapper } from '../components/layout';
-import { VyomFlowLogo } from '../components/common';
+import { VyomFlowLogo, SpecularButton } from '../components/common';
 import { useDashboardV3ViewModel } from '../hooks/useDashboardV3ViewModel';
 import { useWeeklyReminder } from '../hooks/useWeeklyReminder';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -27,6 +28,7 @@ import { FileText, SlidersHorizontal } from 'lucide-react';
 import './DashboardV3.css';
 
 export function DashboardV3() {
+    const navigate = useNavigate();
     const vm = useDashboardV3ViewModel();
     const { t } = useLanguage();
     useWeeklyReminder();
@@ -100,23 +102,53 @@ export function DashboardV3() {
                         <p>{t("dashboard.subtitle")}</p>
                     </div>
                     <div className="dv2-header-actions">
-                        <button
-                            className="dv2-btn-report"
+                        <SpecularButton
+                            size="sm"
+                            radius={12}
+                            tint="#1E293B"
+                            tintOpacity={0.88}
+                            lineColor="#38bdf8"
+                            baseColor="#0F172A"
+                            textColor="#F8FAFC"
+                            intensity={1.05}
+                            followMouse
                             onClick={() => setIsReportOpen(true)}
+                            className="dv2-btn-report"
                         >
                             <FileText size={15} />
                             <span>{t("dashboard.exportReport")}</span>
-                        </button>
-                        <button onClick={() => setShowSimControls(!showSimControls)}>
+                        </SpecularButton>
+                        <SpecularButton
+                            size="sm"
+                            radius={12}
+                            tint="rgba(30, 41, 59, 0.65)"
+                            tintOpacity={0.8}
+                            lineColor="#94a3b8"
+                            baseColor="transparent"
+                            textColor="#F8FAFC"
+                            intensity={0.9}
+                            followMouse
+                            onClick={() => setShowSimControls(!showSimControls)}
+                        >
                             <SlidersHorizontal size={14} />
                             <span>{showSimControls ? t("dashboard.hideControls") : t("dashboard.dataControls")}</span>
-                        </button>
-                        <button
+                        </SpecularButton>
+                        <SpecularButton
+                            size="sm"
+                            radius={12}
+                            tint="#4F7C78"
+                            tintOpacity={0.96}
+                            lineColor="#5EEAD4"
+                            baseColor="#1e293b"
+                            textColor="#FFFFFF"
+                            intensity={1.25}
+                            followMouse
+                            autoAnimate
+                            onClick={() => navigate('/tests')}
                             className="dv2-btn-primary"
-                            onClick={() => window.location.href = '/tests'}
                         >
                             {t("dashboard.takeAssessment")}
-                        </button>
+                        </SpecularButton>
                     </div>
                 </header>
 
@@ -145,24 +177,36 @@ export function DashboardV3() {
                         <h3>{t("dashboard.welcomeTitle")}</h3>
                         <p>{t("dashboard.welcomeSubtitle")}</p>
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.25rem' }}>
-                            <button className="dv2-btn-primary" onClick={() => window.location.href = '/tests'}>
+                            <SpecularButton
+                                size="md"
+                                radius={14}
+                                tint="#4F7C78"
+                                tintOpacity={0.96}
+                                lineColor="#5EEAD4"
+                                baseColor="#1e293b"
+                                textColor="#FFFFFF"
+                                intensity={1.3}
+                                followMouse
+                                autoAnimate
+                                onClick={() => navigate('/tests')}
+                                className="dv2-btn-primary"
+                            >
                                 {t("dashboard.takeFirstAssessment")}
-                            </button>
-                            <button
+                            </SpecularButton>
+                            <SpecularButton
+                                size="md"
+                                radius={14}
+                                tint="rgba(56, 189, 248, 0.15)"
+                                tintOpacity={0.9}
+                                lineColor="#38bdf8"
+                                baseColor="#0F172A"
+                                textColor="#38bdf8"
+                                intensity={1.1}
+                                followMouse
                                 onClick={() => vm.seedMockPreset('stable')}
-                                style={{
-                                    background: 'rgba(56, 189, 248, 0.15)',
-                                    color: '#38bdf8',
-                                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                                    borderRadius: '8px',
-                                    padding: '0.5rem 1rem',
-                                    fontSize: '0.8125rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                }}
                             >
                                 {t("dashboard.previewDemo")}
-                            </button>
+                            </SpecularButton>
                         </div>
                     </div>
                 ) : (

@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { JOURNEY_NODES, type ActivityId, type JourneyNodeInfo, type ActivityScoreInfo } from "../../../hooks/useJourneyState";
-import { Icon, type IconName } from "../../common";
+import { Icon, SpecularButton, type IconName } from "../../common";
 import { useLanguage } from "../../../i18n/LanguageContext";
+import { useTheme } from "../../../contexts/ThemeContext";
 import "./SynapseBeamTrail.css";
 
 interface SynapseBeamTrailProps {
@@ -77,6 +78,8 @@ export function SynapseBeamTrail({
 }: SynapseBeamTrailProps) {
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
     const [hoveredNodeId, setHoveredNodeId] = useState<ActivityId | null>(null);
     const [activeInfoId, setActiveInfoId] = useState<ActivityId | null>(null);
 
@@ -444,8 +447,17 @@ export function SynapseBeamTrail({
                                             )}
                                         </div>
 
-                                        <button
-                                            type="button"
+                                        <SpecularButton
+                                            size="sm"
+                                            radius={10}
+                                            tint={isActive ? (isDark ? "#174341" : "#4F7C78") : isCompleted ? (isDark ? "#123b2c" : "#15803d") : (isDark ? "#1a2a3a" : "#475569")}
+                                            tintOpacity={isActive ? 0.96 : 0.88}
+                                            lineColor={isActive ? "#5EEAD4" : isCompleted ? "#34d399" : (isDark ? "#94a3b8" : "#cbd5e1")}
+                                            baseColor={isDark ? "#0f172a" : "#334155"}
+                                            textColor="#FFFFFF"
+                                            intensity={isActive ? 1.4 : 0.85}
+                                            followMouse
+                                            autoAnimate={isActive}
                                             className={`synapse-cta-btn ${
                                                 isActive
                                                     ? "cta-btn-active"
@@ -467,7 +479,7 @@ export function SynapseBeamTrail({
                                             ) : (
                                                 <>{t("journey.startActivity")}</>
                                             )}
-                                        </button>
+                                        </SpecularButton>
                                     </div>
                                 </div>
                             </div>

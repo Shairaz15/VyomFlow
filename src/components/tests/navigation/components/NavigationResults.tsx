@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
-import { Card, Icon, MotivationalQuoteBlock } from "../../../common";
+import { Card, Icon, MotivationalQuoteBlock, SpecularButton } from "../../../common";
 import { useTheme } from "../../../../contexts/ThemeContext";
 import { useLanguage } from "../../../../i18n/LanguageContext";
 import type { ImmersiveNavigationResult } from "../../../../types/navigationTypes";
@@ -183,16 +183,37 @@ export function NavigationResults({
 
             {/* Centered Actions */}
             <div className="results-actions">
-                <button type="button" onClick={onRetake} className="story-retake-btn">
+                <SpecularButton
+                    size="md"
+                    radius={24}
+                    tint="rgba(255, 255, 255, 0.14)"
+                    tintOpacity={0.92}
+                    lineColor="#38bdf8"
+                    baseColor="rgba(255, 255, 255, 0.3)"
+                    textColor="#FFFFFF"
+                    intensity={1.15}
+                    followMouse
+                    onClick={onRetake}
+                    className="story-retake-btn"
+                >
                     <Icon name="assess" size={16} /> {t("navigation.retakeTest")}
-                </button>
-                <button
-                    type="button"
-                    className="story-primary-start-btn story-back-assessments-btn"
+                </SpecularButton>
+                <SpecularButton
+                    size="md"
+                    radius={24}
+                    tint="#4F7C78"
+                    tintOpacity={0.96}
+                    lineColor="#5EEAD4"
+                    baseColor="#1e293b"
+                    textColor="#FFFFFF"
+                    intensity={1.25}
+                    followMouse
+                    autoAnimate
                     onClick={onBackToTests || (() => navigate("/tests"))}
+                    className="story-primary-start-btn story-back-assessments-btn"
                 >
                     {t("navigation.backToAssessments")}
-                </button>
+                </SpecularButton>
             </div>
         </div>
     );

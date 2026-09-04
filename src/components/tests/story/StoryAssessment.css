@@ -204,28 +204,8 @@
     width: 100%;
     max-width: 260px;
     min-height: 44px;
-    border-radius: 22px;
     font-size: 0.95rem;
     font-weight: 600;
-    background: #4F7C78 !important;
-    color: #FFFFFF !important;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(79, 124, 120, 0.25);
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.story-primary-start-btn:hover {
-    background: #3D665F !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(79, 124, 120, 0.35);
-}
-
-.story-primary-start-btn:active {
-    transform: scale(0.98);
 }
 
 /* 5. Language Selection Card */
@@ -591,6 +571,12 @@
 .quiz-footer {
     display: flex;
     justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.quiz-footer .btn {
+    min-width: 170px;
+    gap: 0.5rem;
 }
 
 /* 8. Story Recorder Card */
@@ -1108,59 +1094,27 @@
 }
 
 .story-back-assessments-btn {
-    background: #4F7C78 !important;
-    color: #FFFFFF !important;
-    border: 1px solid transparent !important;
-    box-shadow: 0 4px 14px rgba(79, 124, 120, 0.25);
-}
-
-.story-back-assessments-btn:hover {
-    background: #3D665F !important;
-    color: #FFFFFF !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(79, 124, 120, 0.35);
-}
-
-.story-back-assessments-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(79, 124, 120, 0.2);
+    font-weight: 700;
 }
 
 .story-retake-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #F7F4EC;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+    font-weight: 600;
 }
 
 .story-retake-btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(0, 201, 183, 0.45);
-    color: #00C9B7;
+    background: rgba(255, 255, 255, 0.22) !important;
+    border-color: #38bdf8 !important;
+    color: #FFFFFF !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25) !important;
 }
 
 .story-retake-btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-:root:not(.dark) .story-retake-btn,
-[data-theme="light"] .story-retake-btn {
-    background: rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    color: #1a2e35;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-:root:not(.dark) .story-retake-btn:hover,
-[data-theme="light"] .story-retake-btn:hover {
-    background: rgba(0, 0, 0, 0.08);
-    border-color: #4F7C78;
-    color: #4F7C78;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(79, 124, 120, 0.15);
 }
 
 /* 11. Exit Confirmation Dialog Modal */
@@ -1442,37 +1396,12 @@
 .dark .story-back-assessments-btn,
 [data-theme="dark"] .story-primary-start-btn,
 [data-theme="dark"] .story-back-assessments-btn {
-    background: #4F7C78 !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-}
-
-.dark .story-primary-start-btn:hover,
-.dark .story-back-assessments-btn:hover,
-[data-theme="dark"] .story-primary-start-btn:hover,
-[data-theme="dark"] .story-back-assessments-btn:hover {
-    background: #3D665F !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 8px 22px rgba(79, 124, 120, 0.4) !important;
-    transform: translateY(-2px);
+    font-weight: 700;
 }
 
 .dark .story-retake-btn,
 [data-theme="dark"] .story-retake-btn {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    color: #F7F4EC !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-}
-
-.dark .story-retake-btn:hover,
-[data-theme="dark"] .story-retake-btn:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(0, 201, 183, 0.45) !important;
-    color: #00C9B7 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 201, 183, 0.15) !important;
+    color: #FFFFFF !important;
 }
 
 .dark .lang-select-btn,

@@ -4,7 +4,7 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadius
 import { useAuth } from "../../../contexts/AuthContext";
 import { useLanguage } from "../../../i18n/LanguageContext";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock, SpecularButton } from "../../common";
 import { PageWrapper } from "../../layout";
 import { usePatternResults } from "../../../hooks/useTestResults";
 import { extractPatternFeatures } from "../../../ai/patternFeatures";
@@ -67,6 +67,7 @@ export function PatternAssessment() {
     const [activeTile, setActiveTile] = useState<number | null>(null);
     const [feedbackTile, setFeedbackTile] = useState<{ index: number, status: 'correct' | 'wrong' } | null>(null);
     const [message, setMessage] = useState("");
+    const [isPracticeOver, setIsPracticeOver] = useState(false);
 
     // Data Collection
     const [rounds, setRounds] = useState<PatternRoundData[]>([]);
@@ -203,16 +204,16 @@ export function PatternAssessment() {
                 }, 1500);
                 return;
             }
-        } else if (phase === 'demonstration') {
-            setMessage(success ? t("pattern.greatPractice") : t("pattern.letsBeginReal"));
-            setTimeout(() => setPhase('calibration'), 1500);
-            return;
-        } else if (phase === 'calibration') {
-            setMessage(t("pattern.calibrationComplete"));
+        } else if (phase === 'demonstration' || phase === 'calibration') {
+            setIsPracticeOver(true);
+            setMessage("");
+            setFeedbackTile(null);
+            setActiveTile(null);
             setTimeout(() => {
+                setIsPracticeOver(false);
                 setPhase('assessment');
                 setLevel(1);
-            }, 1500);
+            }, 2000);
             return;
         }
 
@@ -224,7 +225,7 @@ export function PatternAssessment() {
 
     // Auto-start rounds when entering phases
     useEffect(() => {
-        if (phase === 'demonstration' || phase === 'calibration' || (phase === 'assessment' && rounds.length > 0)) {
+        if (phase === 'demonstration' || (phase === 'assessment' && rounds.length > 0)) {
             const timer = setTimeout(() => startRound(), 1000);
             return () => clearTimeout(timer);
         }
@@ -292,6 +293,7 @@ export function PatternAssessment() {
             clearInterval(sequenceIntervalRef.current);
             sequenceIntervalRef.current = null;
         }
+        setIsPracticeOver(false);
         setFeedbackTile(null);
         setActiveTile(null);
         setSequence([]);
@@ -309,6 +311,7 @@ export function PatternAssessment() {
             clearInterval(sequenceIntervalRef.current);
             sequenceIntervalRef.current = null;
         }
+        setIsPracticeOver(false);
         setFeedbackTile(null);
         setActiveTile(null);
         setSequence([]);
@@ -316,7 +319,7 @@ export function PatternAssessment() {
         setRounds([]);
         setLevel(1);
         setGridSize(3);
-        setGameState('idle');
+        setGameState('showing');
         setMessage(t("pattern.watchPattern"));
         setPhase('demonstration');
     };
@@ -439,26 +442,55 @@ export function PatternAssessment() {
 
                     {/* 2. Active Game Arena (Demonstration, Calibration, Assessment) */}
                     {(phase === 'demonstration' || phase === 'calibration' || phase === 'assessment') && (
-                        <div className="pattern-arena-card animate-fadeIn">
-                            <div className="pattern-status-header">
-                                <div className="pattern-level-pill">
-                                    <span>{t("pattern.level", { level }) || t("pattern.levelDisplay", { level }) || `Level ${level}`}</span>
+                        isPracticeOver ? (
+                            <div className="pattern-practice-interstitial-card animate-fadeIn">
+                                {/* Round Progress Pill */}
+                                <div className="pattern-interstitial-pill">
+                                    <span>PRACTICE ROUND</span>
+                                    <span className="pattern-interstitial-tag">COMPLETED</span>
                                 </div>
-                                <div className="pattern-mode-badge">
-                                    {phase === 'demonstration' ? t("pattern.practiceMode") : phase === 'calibration' ? t("pattern.calibration") : t("pattern.scoredAssessment")}
+
+                                {/* State Visual Indicator Icon */}
+                                <div className="pattern-interstitial-icon-bubble" aria-hidden="true">
+                                    ✓
                                 </div>
+
+                                {/* Main Prompt Message */}
+                                <h2 className="pattern-interstitial-title">
+                                    {t("pattern.practiceOver") && t("pattern.practiceOver") !== "pattern.practiceOver"
+                                        ? t("pattern.practiceOver")
+                                        : "Practice Over"}
+                                </h2>
+
+                                {/* Subtitle / Hint */}
+                                <p className="pattern-interstitial-hint">
+                                    {t("pattern.startingLevel1") && t("pattern.startingLevel1") !== "pattern.startingLevel1"
+                                        ? t("pattern.startingLevel1")
+                                        : "Starting Level 1..."}
+                                </p>
                             </div>
+                        ) : (
+                            <div className="pattern-arena-card animate-fadeIn">
+                                <div className="pattern-status-header">
+                                    <div className="pattern-level-pill">
+                                        <span>{t("pattern.level", { level }) || t("pattern.levelDisplay", { level }) || `Level ${level}`}</span>
+                                    </div>
+                                    <div className="pattern-mode-badge">
+                                        {phase === 'demonstration' ? t("pattern.practiceMode") : t("pattern.scoredAssessment")}
+                                    </div>
+                                </div>
 
-                            <p 
-                                className={`pattern-turn-indicator ${gameState === 'showing' ? 'watch' : 'repeat'}`}
-                                role="status"
-                                aria-live="polite"
-                            >
-                                {message}
-                            </p>
+                                <p 
+                                    className={`pattern-turn-indicator ${gameState === 'waiting' ? 'repeat' : 'watch'}`}
+                                    role="status"
+                                    aria-live="polite"
+                                >
+                                    {message}
+                                </p>
 
-                            {renderGrid()}
-                        </div>
+                                {renderGrid()}
+                            </div>
+                        )
                     )}
 
                     {/* 3. Test Complete / Results Phase */}
@@ -603,16 +635,37 @@ export function PatternAssessment() {
 
                                 {/* Centered Actions */}
                                 <div className="results-actions">
-                                    <button type="button" onClick={handleRetake} className="story-retake-btn">
+                                    <SpecularButton
+                                        size="md"
+                                        radius={24}
+                                        tint="rgba(255, 255, 255, 0.14)"
+                                        tintOpacity={0.92}
+                                        lineColor="#38bdf8"
+                                        baseColor="rgba(255, 255, 255, 0.3)"
+                                        textColor="#FFFFFF"
+                                        intensity={1.15}
+                                        followMouse
+                                        onClick={handleRetake}
+                                        className="story-retake-btn"
+                                    >
                                         <Icon name="reaction" size={15} /> {t("pattern.retakeTest")}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="story-primary-start-btn story-back-assessments-btn"
+                                    </SpecularButton>
+                                    <SpecularButton
+                                        size="md"
+                                        radius={24}
+                                        tint="#4F7C78"
+                                        tintOpacity={0.96}
+                                        lineColor="#5EEAD4"
+                                        baseColor="#1e293b"
+                                        textColor="#FFFFFF"
+                                        intensity={1.25}
+                                        followMouse
+                                        autoAnimate
                                         onClick={() => navigate("/tests")}
+                                        className="story-primary-start-btn story-back-assessments-btn"
                                     >
                                         {t("pattern.backToAssessments")}
-                                    </button>
+                                    </SpecularButton>
                                 </div>
                             </div>
                         );

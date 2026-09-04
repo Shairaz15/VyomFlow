@@ -4,7 +4,7 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadius
 import { useAuth } from "../../../contexts/AuthContext";
 import { useLanguage } from "../../../i18n/LanguageContext";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock } from "../../common";
+import { Button, Card, Icon, TutorialVideoPlaceholder, MotivationalQuoteBlock, SpecularButton } from "../../common";
 import type { ReactionState, RoundResult } from "./reactionLogic";
 import {
     DEFAULT_CONFIG,
@@ -584,16 +584,37 @@ export function ReactionTimeTest() {
 
                                 {/* Centered Actions */}
                                 <div className="results-actions">
-                                    <button type="button" onClick={handleRetake} className="story-retake-btn">
+                                    <SpecularButton
+                                        size="md"
+                                        radius={24}
+                                        tint="rgba(255, 255, 255, 0.14)"
+                                        tintOpacity={0.92}
+                                        lineColor="#38bdf8"
+                                        baseColor="rgba(255, 255, 255, 0.3)"
+                                        textColor="#FFFFFF"
+                                        intensity={1.15}
+                                        followMouse
+                                        onClick={handleRetake}
+                                        className="story-retake-btn"
+                                    >
                                         <Icon name="reaction" size={15} /> {t("reaction.retakeTest")}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="story-primary-start-btn story-back-assessments-btn"
+                                    </SpecularButton>
+                                    <SpecularButton
+                                        size="md"
+                                        radius={24}
+                                        tint="#4F7C78"
+                                        tintOpacity={0.96}
+                                        lineColor="#5EEAD4"
+                                        baseColor="#1e293b"
+                                        textColor="#FFFFFF"
+                                        intensity={1.25}
+                                        followMouse
+                                        autoAnimate
                                         onClick={() => navigate("/tests")}
+                                        className="story-primary-start-btn story-back-assessments-btn"
                                     >
                                         {t("reaction.backToAssessments")}
-                                    </button>
+                                    </SpecularButton>
                                 </div>
                             </div>
                         );
