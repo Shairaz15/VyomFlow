@@ -21,7 +21,7 @@ const GEMINI_KEY = env.VITE_GEMINI_API_KEY || '';
 const SARVAM_KEY = env.SARVAM_API_KEY || env.VITE_SARVAM_API_KEY || 'sk_jyptjv87_fsK6fkisYocrdYabftZOapZl';
 
 console.log('====================================================');
-console.log('     COGNITRACK API LIVE HEALTH CHECK & LATENCY     ');
+console.log('     VYOMFLOW API LIVE HEALTH CHECK & LATENCY       ');
 console.log('====================================================');
 console.log(`Timestamp: ${new Date().toISOString()}`);
 console.log(`Gemini Key configured: ${GEMINI_KEY ? 'Yes (' + GEMINI_KEY.slice(0, 8) + '...)' : 'No'}`);

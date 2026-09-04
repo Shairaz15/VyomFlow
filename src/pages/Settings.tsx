@@ -23,7 +23,7 @@ interface UserPreferences {
 }
 
 export function Settings() {
-    const { user, isAdmin, resetOnboarding } = useAuth();
+    const { user, resetOnboarding } = useAuth();
     const navigate = useNavigate();
     const { t, setLocale } = useLanguage();
     const [preferences, setPreferences] = useState<UserPreferences>({
@@ -157,7 +157,7 @@ export function Settings() {
             });
 
             if (success) {
-                setMessage({ type: 'success', text: t('settings.testEmailSent') });
+                setMessage({ type: 'success', text: `${t('settings.testEmailSent')} (${user.email})` });
             } else {
                 setMessage({ type: 'error', text: t('settings.testEmailFailed') });
             }
@@ -286,24 +286,22 @@ export function Settings() {
                         </div>
                     )}
 
-                    {isAdmin && (
-                        <div className="setting-item">
-                            <div className="setting-info">
-                                <span className="setting-label">{t('settings.testEmail')}</span>
-                                <span className="setting-description">
-                                    {t('settings.testEmailDesc')}
-                                </span>
-                            </div>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={handleSendTestEmail}
-                                disabled={sendingTest || !preferences.emailNotifications}
-                            >
-                                {sendingTest ? t('settings.sendingTest') : t('settings.sendTest')}
-                            </Button>
+                    <div className="setting-item">
+                        <div className="setting-info">
+                            <span className="setting-label">{t('settings.testEmail')}</span>
+                            <span className="setting-description">
+                                {t('settings.testEmailDesc')} {user?.email ? `(${user.email})` : ''}
+                            </span>
                         </div>
-                    )}
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleSendTestEmail}
+                            disabled={sendingTest || !user?.email}
+                        >
+                            {sendingTest ? t('settings.sendingTest') : t('settings.sendTest')}
+                        </Button>
+                    </div>
 
                     {preferences.lastReminderSent && (
                         <p className="last-reminder-info">

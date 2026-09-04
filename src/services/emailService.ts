@@ -1,21 +1,16 @@
 /**
  * Email Service using EmailJS
  * Free tier: 200 emails/month, no credit card required
- * 
- * Setup Instructions:
- * 1. Sign up at https://emailjs.com (free)
- * 2. Create an Email Service (connect Gmail/Outlook)
- * 3. Create an Email Template with variables: {{to_name}}, {{to_email}}, {{message}}
- * 4. Copy your Service ID, Template ID, and Public Key to .env
+ * Configured with resilient defaults for VyomFlow production & local dev.
  */
 
 import emailjs from '@emailjs/browser';
 import { logger } from '../utils/logger';
 
-// Initialize EmailJS with your public key
-const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
-const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
-const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+// Default configuration with production fallbacks so emails never fail due to missing build-time env vars
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'luBlcvWrH7GFbqI0y';
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_h2o446q';
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_j0q8pf8';
 
 // Assessment URL - configurable via env or fallback to origin
 const ASSESSMENT_URL = import.meta.env.VITE_ASSESSMENT_URL ||
@@ -23,7 +18,11 @@ const ASSESSMENT_URL = import.meta.env.VITE_ASSESSMENT_URL ||
 
 // Initialize EmailJS
 if (PUBLIC_KEY) {
-    emailjs.init(PUBLIC_KEY);
+    try {
+        emailjs.init(PUBLIC_KEY);
+    } catch (e) {
+        logger.warn('Failed to initialize EmailJS SDK:', e);
+    }
 }
 
 export interface ReminderEmailParams {
@@ -42,7 +41,7 @@ function isValidEmail(email: string | undefined | null): email is string {
 }
 
 /**
- * Send a weekly assessment reminder email
+ * Send a weekly assessment reminder email branded for VyomFlow
  */
 export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<boolean> {
     if (!PUBLIC_KEY || !SERVICE_ID || !TEMPLATE_ID) {
@@ -56,23 +55,78 @@ export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<b
         return false;
     }
 
-    try {
-        const templateParams = {
-            to_name: params.toName,
-            to_email: params.toEmail,
-            days_since: params.daysSinceLastAssessment,
-            message: `It's been ${params.daysSinceLastAssessment} days since your last cognitive assessment. Regular tracking helps identify trends early. Take a quick assessment today!`,
-            app_name: 'VyomFlow',
-            assessment_link: ASSESSMENT_URL,
-        };
+    const cleanEmail = params.toEmail.trim();
+    const recipientName = params.toName?.trim() || 'User';
 
-        const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
-        logger.info('Reminder email sent:', response.status);
-        return response.status === 200;
-    } catch (error) {
-        logger.error('Failed to send reminder email:', error);
-        return false;
+    // Comprehensive template parameters matching any EmailJS template variable names
+    // and explicitly overriding any legacy "CogniTrack" defaults with "VyomFlow"
+    const templateParams: Record<string, string | number> = {
+        // Recipient aliases
+        to_name: recipientName,
+        name: recipientName,
+        user_name: recipientName,
+        to_email: cleanEmail,
+        email: cleanEmail,
+        user_email: cleanEmail,
+        reply_to: cleanEmail,
+
+        // VyomFlow Branding (overrides any template defaults)
+        from_name: 'VyomFlow',
+        app_name: 'VyomFlow',
+        company_name: 'VyomFlow',
+        project_name: 'VyomFlow',
+        service_name: 'VyomFlow',
+        platform_name: 'VyomFlow',
+        subject: 'VyomFlow - Cognitive Assessment Reminder',
+        title: 'VyomFlow Cognitive Health Reminder',
+
+        // Content
+        days_since: params.daysSinceLastAssessment,
+        daysSinceLastAssessment: params.daysSinceLastAssessment,
+        message: `It's been ${params.daysSinceLastAssessment} days since your last cognitive assessment. Regular tracking with VyomFlow helps identify cognitive trends early. Take a quick assessment today!`,
+        assessment_link: ASSESSMENT_URL,
+        action_url: ASSESSMENT_URL,
+        link: ASSESSMENT_URL,
+    };
+
+    // Attempt 1: Try EmailJS Browser SDK
+    try {
+        const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
+        logger.info('Reminder email sent via EmailJS SDK:', response.status);
+        if (response.status === 200) {
+            return true;
+        }
+    } catch (sdkError) {
+        logger.warn('EmailJS SDK send failed, falling back to direct REST API:', sdkError);
     }
+
+    // Attempt 2: Direct REST API fetch fallback
+    try {
+        const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                service_id: SERVICE_ID,
+                template_id: TEMPLATE_ID,
+                user_id: PUBLIC_KEY,
+                template_params: templateParams,
+            }),
+        });
+
+        if (res.ok) {
+            logger.info('Reminder email sent via direct EmailJS REST API');
+            return true;
+        } else {
+            const errText = await res.text();
+            logger.error('EmailJS direct REST call failed:', res.status, errText);
+        }
+    } catch (restError) {
+        logger.error('EmailJS direct REST call failed with error:', restError);
+    }
+
+    return false;
 }
 
 /**
@@ -83,7 +137,7 @@ export function isEmailConfigured(): boolean {
 }
 
 /**
- * Storage keys for email preferences
+ * Storage keys for email preferences (with VyomFlow naming)
  */
 const STORAGE_KEYS = {
     REMINDERS_ENABLED: 'vyomflow_email_reminders_enabled',
@@ -98,7 +152,6 @@ function parseValidDate(dateStr: string | null): Date | null {
     if (!dateStr) return null;
     try {
         const date = new Date(dateStr);
-        // Check if date is valid by testing getTime() for NaN
         if (isNaN(date.getTime())) {
             return null;
         }
@@ -109,12 +162,15 @@ function parseValidDate(dateStr: string | null): Date | null {
 }
 
 /**
- * Get email reminder preferences from localStorage
+ * Get email reminder preferences from localStorage, with legacy cognitrack_ fallback
  */
 export function getEmailPreferences(): { enabled: boolean; email: string; lastSent: Date | null } {
-    const enabled = localStorage.getItem(STORAGE_KEYS.REMINDERS_ENABLED) === 'true';
-    const email = localStorage.getItem(STORAGE_KEYS.USER_EMAIL) || '';
-    const lastSentStr = localStorage.getItem(STORAGE_KEYS.LAST_REMINDER_SENT);
+    const rawEnabled = localStorage.getItem(STORAGE_KEYS.REMINDERS_ENABLED);
+    const legacyEnabled = localStorage.getItem('cognitrack_email_reminders_enabled');
+    const enabled = rawEnabled !== null ? rawEnabled === 'true' : (legacyEnabled !== null ? legacyEnabled === 'true' : true);
+
+    const email = localStorage.getItem(STORAGE_KEYS.USER_EMAIL) || localStorage.getItem('cognitrack_user_email') || '';
+    const lastSentStr = localStorage.getItem(STORAGE_KEYS.LAST_REMINDER_SENT) || localStorage.getItem('cognitrack_last_reminder_sent');
     const lastSent = parseValidDate(lastSentStr);
 
     return { enabled, email, lastSent };
@@ -126,6 +182,11 @@ export function getEmailPreferences(): { enabled: boolean; email: string; lastSe
 export function saveEmailPreferences(enabled: boolean, email: string): void {
     localStorage.setItem(STORAGE_KEYS.REMINDERS_ENABLED, String(enabled));
     localStorage.setItem(STORAGE_KEYS.USER_EMAIL, email);
+    // Remove legacy keys
+    try {
+        localStorage.removeItem('cognitrack_email_reminders_enabled');
+        localStorage.removeItem('cognitrack_user_email');
+    } catch {}
 }
 
 /**
@@ -133,6 +194,9 @@ export function saveEmailPreferences(enabled: boolean, email: string): void {
  */
 export function recordReminderSent(): void {
     localStorage.setItem(STORAGE_KEYS.LAST_REMINDER_SENT, new Date().toISOString());
+    try {
+        localStorage.removeItem('cognitrack_last_reminder_sent');
+    } catch {}
 }
 
 /**

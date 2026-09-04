@@ -553,7 +553,7 @@ export function AssistedFieldBattery({
             `----------------------------------------`,
             `*Reason for Referral:* Frontline digital biomarker screening identified cognitive deviation exceeding demographic norms. Referred to PHC Medical Officer for clinical review.`,
             `*Screened By:* ASHA Community Health Worker (${beneficiary.asha_worker_id})`,
-            `_Powered by CogniTrack / VyomFlow Grassroots AI_`
+            `_Powered by VyomFlow Grassroots AI_`
         ].filter(Boolean).join('\n');
 
         return `https://wa.me/?text=${encodeURIComponent(message)}`;

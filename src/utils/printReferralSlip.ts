@@ -404,7 +404,7 @@ export function printPhcReferralSlip({ beneficiary, latestSession, prediction }:
         </div>
 
         <div class="phc-footer-note">
-            Ayushman Bharat Grassroots Health Screening • Powered by CogniTrack / VyomFlow Health AI
+            Ayushman Bharat Grassroots Health Screening • Powered by VyomFlow Health AI
         </div>
     </div>
 </body>

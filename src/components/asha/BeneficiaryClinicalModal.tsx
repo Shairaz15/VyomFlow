@@ -66,7 +66,7 @@ export function BeneficiaryClinicalModal({
             `*Preferred Language:* ${beneficiary.preferred_language ? beneficiary.preferred_language.toUpperCase() : 'EN'}`,
             `-------------------------------------------`,
             `*Referral Note:* Frontline digital biomarker screening indicates deviation from normative baselines. Patient is referred to the Primary Health Centre (PHC) Medical Officer for comprehensive diagnostic evaluation.`,
-            `*Platform:* VyomFlow CogniTrack ASHA Frontline Suite`
+            `*Platform:* VyomFlow ASHA Frontline Suite`
         ];
         const text = encodeURIComponent(lines.join('\n'));
         const cleanPhone = beneficiary.phone_number ? beneficiary.phone_number.replace(/\D/g, '') : '';
@@ -315,7 +315,7 @@ export function BeneficiaryClinicalModal({
                         <h2>PRIMARY HEALTH CENTRE COGNITIVE TRIAGE REFERRAL</h2>
                         <div className="phc-slip-meta">
                             <span>Date: {new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })}</span>
-                            <span>Frontline Screening Unit: ASHA Frontline CogniTrack</span>
+                            <span>Frontline Screening Unit: ASHA Frontline VyomFlow</span>
                         </div>
                     </div>
 
