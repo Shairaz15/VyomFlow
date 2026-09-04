@@ -226,6 +226,54 @@
     color: #ffffff;
 }
 
+.clean-back-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 11px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #e2e8f0;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.clean-back-nav-btn:hover {
+    background: rgba(14, 165, 233, 0.22);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.55);
+    box-shadow: 0 0 14px rgba(14, 165, 233, 0.3);
+    transform: translateX(-2px);
+}
+
+.clean-exit-portal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.48rem 0.9rem;
+    border-radius: 11px;
+    background: rgba(30, 41, 59, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.clean-exit-portal-btn:hover {
+    background: rgba(14, 165, 233, 0.2);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #38bdf8;
+    box-shadow: 0 0 12px rgba(14, 165, 233, 0.25);
+    transform: translateY(-1px);
+}
+
 /* --------------------------------------------------------------------------
    NOTIFICATION TOAST
    -------------------------------------------------------------------------- */
@@ -715,6 +763,20 @@
     color: #0284c7;
 }
 
+.clean-portal.clean-portal-light .clean-back-nav-btn,
+.clean-portal.clean-portal-light .clean-exit-portal-btn {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.clean-portal.clean-portal-light .clean-back-nav-btn:hover,
+.clean-portal.clean-portal-light .clean-exit-portal-btn:hover {
+    background: #f0f9ff;
+    color: #0284c7;
+    border-color: #7dd3fc;
+}
+
 .clean-portal.clean-portal-light .clean-search-input {
     background: #ffffff;
     border-color: #cbd5e1;
@@ -810,4 +872,28 @@ body:has(.clean-portal) .ai-bubble-container,
 .clean-portal ~ .ai-bubble-container,
 .clean-portal ~ .ai-mini-dock-pill {
     display: none !important;
+}
+
+/* Responsive Header */
+@media (max-width: 680px) {
+    .clean-header {
+        padding: 0.75rem 1rem;
+    }
+    .clean-header-container {
+        gap: 0.75rem;
+    }
+    .clean-brand-group {
+        gap: 0.75rem;
+    }
+    .clean-kpi-ribbon {
+        display: none;
+    }
+    .clean-back-nav-btn span,
+    .clean-exit-portal-btn span {
+        display: none;
+    }
+    .clean-back-nav-btn,
+    .clean-exit-portal-btn {
+        padding: 0.45rem 0.6rem;
+    }
 }

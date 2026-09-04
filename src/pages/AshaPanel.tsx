@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAsha } from '../contexts/AshaContext';
 import { BeneficiaryCard } from '../components/asha/BeneficiaryCard';
 import { CreateBeneficiaryModal } from '../components/asha/CreateBeneficiaryModal';
@@ -21,11 +21,14 @@ import {
     RefreshCw,
     MapPin,
     Languages,
-    Stethoscope
+    Stethoscope,
+    ArrowLeft,
+    LayoutDashboard
 } from 'lucide-react';
 import './AshaPanel.css';
 
 export function AshaPanel() {
+    const navigate = useNavigate();
     const {
         beneficiaries,
         activeBeneficiary,
@@ -256,7 +259,25 @@ export function AshaPanel() {
                 <div className="clean-header-container">
                     {/* Brand & Live Sync */}
                     <div className="clean-brand-group">
-                        <div className="clean-brand-title">
+                        <button
+                            type="button"
+                            className="clean-back-nav-btn"
+                            onClick={() => navigate('/dashboard')}
+                            title="Back to Clinical Dashboard"
+                            aria-label="Back to Dashboard"
+                        >
+                            <ArrowLeft size={16} />
+                            <span>Dashboard</span>
+                        </button>
+
+                        <div
+                            className="clean-brand-title"
+                            onClick={() => navigate('/dashboard')}
+                            style={{ cursor: 'pointer' }}
+                            title="Back to Dashboard"
+                            role="button"
+                            tabIndex={0}
+                        >
                             <span className="clean-brand-accent">VyomFlow</span>
                             <span className="clean-brand-slash">/</span>
                             <span>ASHA Field</span>
@@ -289,6 +310,16 @@ export function AshaPanel() {
 
                     {/* Actions & Utilities */}
                     <div className="clean-header-actions">
+                        <button
+                            type="button"
+                            className="clean-exit-portal-btn"
+                            onClick={() => navigate('/dashboard')}
+                            title="Exit ASHA Portal and return to main dashboard"
+                        >
+                            <LayoutDashboard size={15} />
+                            <span>Exit Portal</span>
+                        </button>
+
                         {pendingSyncCount > 0 && (
                             <button
                                 type="button"
