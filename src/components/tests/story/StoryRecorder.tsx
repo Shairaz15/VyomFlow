@@ -460,86 +460,95 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         const isEnglish = selectedLanguage === 'en-IN';
         const filename = `story_audio.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
 
-        const formData = new FormData();
-        formData.append('file', audioBlob, filename);
-        formData.append('model', 'saaras:v3');
-        formData.append('language_code', 'unknown');
+        // 1. Prepare Primary STT payload (Verbatim native language transcription)
+        const sttFormData = new FormData();
+        sttFormData.append('file', audioBlob, filename);
+        sttFormData.append('model', 'saaras:v3');
+        sttFormData.append('language_code', 'unknown');
 
-        // PRIMARY: Transcribe verbatim in native language (speech-to-text) to keep Hindi in Hindi!
-        try {
-            let sttRes: Response;
-            try {
-                sttRes = await fetch('/api/sarvam-stt', {
-                    method: 'POST',
-                    headers: { 'api-subscription-key': SARVAM_API_KEY },
-                    body: formData,
-                });
-            } catch {
-                sttRes = await fetch('https://api.sarvam.ai/speech-to-text', {
-                    method: 'POST',
-                    headers: { 'api-subscription-key': SARVAM_API_KEY },
-                    body: formData,
-                });
-            }
-
-            if (sttRes.ok) {
-                const sttData = await sttRes.json();
-                if (sttData.transcript && sttData.transcript.trim()) {
-                    finalSpokenText = sttData.transcript.trim();
-                }
-            } else if (!finalSpokenText) {
-                // Secondary fallback only if verbatim transcription was empty
-                const fallbackRes = await fetch('https://api.sarvam.ai/speech-to-text-translate', {
-                    method: 'POST',
-                    headers: { 'api-subscription-key': SARVAM_API_KEY },
-                    body: formData,
-                });
-                if (fallbackRes.ok) {
-                    const fallbackData = await fallbackRes.json();
-                    if (fallbackData.transcript && fallbackData.transcript.trim()) {
-                        finalSpokenText = fallbackData.transcript.trim();
-                    }
-                }
-            }
-        } catch (err) {
-            console.warn('[StoryRecorder] Sarvam STT REST error, using live transcript:', err);
+        // 2. Prepare English Translation payload (if recording is non-English)
+        const transFormData = new FormData();
+        transFormData.append('file', audioBlob, filename);
+        transFormData.append('model', 'saaras:v3');
+        if (selectedLanguage) {
+            transFormData.append('language_code', selectedLanguage);
         }
 
-        // Translation to English for scoring (if audio is non-English)
-        if (!isEnglish) {
+        // Parallel Execution: Fire verbatim STT and English translation concurrently to eliminate ~1s sequential delay!
+        const fetchVerbatimSTT = async (): Promise<string | null> => {
             try {
-                const transForm = new FormData();
-                transForm.append('file', audioBlob, filename);
-                transForm.append('model', 'saaras:v3');
-                if (selectedLanguage) {
-                    transForm.append('language_code', selectedLanguage);
+                let res: Response;
+                try {
+                    res = await fetch('/api/sarvam-stt', {
+                        method: 'POST',
+                        headers: { 'api-subscription-key': SARVAM_API_KEY },
+                        body: sttFormData,
+                    });
+                } catch {
+                    res = await fetch('https://api.sarvam.ai/speech-to-text', {
+                        method: 'POST',
+                        headers: { 'api-subscription-key': SARVAM_API_KEY },
+                        body: sttFormData,
+                    });
                 }
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.transcript && data.transcript.trim()) {
+                        return data.transcript.trim();
+                    }
+                }
+            } catch (err) {
+                console.warn('[StoryRecorder] Sarvam STT REST error:', err);
+            }
+            return null;
+        };
 
+        const fetchEnglishTranslation = async (): Promise<string | null> => {
+            if (isEnglish) return null;
+            try {
                 let transRes: Response;
                 try {
                     transRes = await fetch('/api/sarvam-stt-translate', {
                         method: 'POST',
                         headers: { 'api-subscription-key': SARVAM_API_KEY },
-                        body: transForm,
+                        body: transFormData,
                     });
                 } catch {
                     transRes = await fetch('https://api.sarvam.ai/speech-to-text-translate', {
                         method: 'POST',
                         headers: { 'api-subscription-key': SARVAM_API_KEY },
-                        body: transForm,
+                        body: transFormData,
                     });
                 }
-
                 if (transRes.ok) {
                     const transData = await transRes.json();
                     if (transData.transcript && transData.transcript.trim()) {
-                        englishTrans = transData.transcript.trim();
+                        return transData.transcript.trim();
                     }
                 }
             } catch (trErr) {
                 console.warn('[StoryRecorder] English translation fetch error:', trErr);
             }
-        } else {
+            return null;
+        };
+
+        const [sttRes, transRes] = await Promise.allSettled([
+            fetchVerbatimSTT(),
+            fetchEnglishTranslation(),
+        ]);
+
+        if (sttRes.status === 'fulfilled' && sttRes.value) {
+            finalSpokenText = sttRes.value;
+        }
+        if (transRes.status === 'fulfilled' && transRes.value) {
+            englishTrans = transRes.value;
+        }
+
+        // Cross-fallback: if verbatim failed, fallback to English translation; if translation failed or is English, use verbatim
+        if (!finalSpokenText && englishTrans) {
+            finalSpokenText = englishTrans;
+        }
+        if (isEnglish || !englishTrans) {
             englishTrans = finalSpokenText;
         }
 
