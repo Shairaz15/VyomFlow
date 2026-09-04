@@ -5,6 +5,7 @@ import { Check, Zap, Target, Brain, BookOpen, MessageSquareQuote, Layers, Compas
 
 interface Props {
     prediction: AIPredictionViewModel;
+    isExpandedBattery?: boolean;
 }
 
 function getModuleIcon(key: string, size = 13) {
@@ -30,66 +31,80 @@ function getModuleIcon(key: string, size = 13) {
 }
 
 const ALL_7_MODULES = [
-    { key: 'vmra', name: 'Visual Memory', match: ['Visual Memory (VMRA)', 'Visual Memory'] },
-    { key: 'story', name: 'Story Recall', match: ['Story Recall'] },
-    { key: 'language', name: 'Language & Speech', match: ['Language & Speech'] },
-    { key: 'pattern', name: 'Pattern Memory', match: ['Pattern Working Memory', 'Pattern Memory'] },
     { key: 'reaction', name: 'Reaction Time', match: ['Reaction Time', 'Reaction Time & SAVT'] },
+    { key: 'vmra', name: 'Visual Memory', match: ['Visual Memory (VMRA)', 'Visual Memory'] },
+    { key: 'pattern', name: 'Pattern Memory', match: ['Pattern Working Memory', 'Pattern Memory'] },
+    { key: 'language', name: 'Language & Speech', match: ['Language & Speech'] },
+    { key: 'story', name: 'Story Recall', match: ['Story Recall'] },
     { key: 'attention', name: 'Sustained Attention', match: ['Sustained Attention', 'Attention'] },
     { key: 'navigation', name: 'Video Navigation', match: ['Video Navigation'] },
 ];
 
-export function AIPredictionCard({ prediction }: Props) {
-    const { t } = useLanguage();
-    const completedList = prediction.completedModules || [];
-    const completedCount = completedList.length;
-    const isFullBatteryCompleted = completedCount >= 7;
+const BASELINE_4_MODULES = ALL_7_MODULES.slice(0, 4);
 
-    // ─── If full 7-module battery is NOT yet completed ─────────────
+export function AIPredictionCard({ prediction, isExpandedBattery }: Props) {
+    const { t } = useLanguage();
+    const isExpanded = isExpandedBattery ?? (
+        prediction.predictedStatus === 'MCI' ||
+        prediction.predictedStatus === 'Dementia' ||
+        (prediction.completedModules?.length ?? 0) > 4
+    );
+    const activeTargetModules = isExpanded ? ALL_7_MODULES : BASELINE_4_MODULES;
+    const requiredCount = activeTargetModules.length;
+
+    const completedList = prediction.completedModules || [];
+    const completedCount = activeTargetModules.filter(mod =>
+        completedList.some(c => mod.match.some(m => c.toLowerCase().includes(m.toLowerCase())))
+    ).length;
+    const isFullBatteryCompleted = completedCount >= requiredCount;
+
+    // ─── If full required battery is NOT yet completed ─────────────
     if (!isFullBatteryCompleted) {
-        const remainingCount = Math.max(0, 7 - completedCount);
-        const progressPercent = Math.round((completedCount / 7) * 100);
+        const remainingCount = Math.max(0, requiredCount - completedCount);
+        const progressPercent = Math.round((completedCount / requiredCount) * 100);
 
         return (
             <div className="dv2-card dv2-animate-in">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <h3 className="dv2-section-title" style={{ margin: 0 }}>AI Cognitive Assessment</h3>
                     <span className="dv2-ai-badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)', fontSize: '0.8125rem', fontWeight: 700 }}>
-                        ✦ 7-Module Battery Required ({completedCount}/7)
+                        ✦ {isExpanded ? '7-Module Diagnostic Battery Required' : '4-Module Baseline Battery'} ({completedCount}/{requiredCount})
                     </span>
                 </div>
 
                 <p style={{ fontSize: '0.875rem', color: 'var(--dv2-muted)', margin: '0 0 1.25rem', lineHeight: '1.55' }}>
-                    To provide a clinically validated diagnostic evaluation and Estimated MoCA score, the Multi-Task AI model requires all <strong>7 digital biomarker assessments</strong> to be completed in a full session.
+                    {isExpanded
+                        ? 'To provide a clinically validated diagnostic evaluation and Estimated MoCA score, the Multi-Task AI model requires all 7 digital biomarker assessments to be completed in a full session.'
+                        : 'To provide a clinically validated screening evaluation and Estimated MoCA score, the Multi-Task AI model requires all 4 baseline biomarker assessments (Reaction Time, Visual Memory, Pattern Memory, Language & Speech) to be completed.'}
                 </p>
 
                 {/* Battery Progress Bar */}
                 <div style={{ marginBottom: '1.25rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--dv2-text)', marginBottom: '0.45rem' }}>
                         <span>Session Battery Progress</span>
-                        <span>{completedCount} of 7 Completed ({progressPercent}%)</span>
+                        <span>{completedCount} of {requiredCount} Completed ({progressPercent}%)</span>
                     </div>
                     <div style={{ width: '100%', height: '9px', background: 'rgba(51, 65, 85, 0.25)', borderRadius: '999px', overflow: 'hidden' }}>
                         <div
                             style={{
                                 width: `${progressPercent}%`,
                                 height: '100%',
-                                background: 'linear-gradient(90deg, #38bdf8, #818cf8)',
+                                background: 'linear-gradient(90deg, #4ade80, #38bdf8)',
                                 borderRadius: '999px',
-                                transition: 'width 0.4s ease',
+                                transition: 'width 0.5s ease',
                             }}
                         />
                     </div>
                 </div>
 
-                {/* 7 Modules Status Checklist */}
+                {/* Modules Status Checklist */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))',
                     gap: '0.5rem',
                     marginBottom: '1.25rem',
                 }}>
-                    {ALL_7_MODULES.map(mod => {
+                    {activeTargetModules.map(mod => {
                         const isDone = completedList.some(c => mod.match.some(m => c.toLowerCase().includes(m.toLowerCase())));
                         return (
                             <div
@@ -141,7 +156,7 @@ export function AIPredictionCard({ prediction }: Props) {
         );
     }
 
-    // ─── If Full 7-Module Battery IS Completed ─────────────────────
+    // ─── If Required Battery IS Completed ─────────────────────
     const probBars = [
         { label: 'Normal', value: prediction.probabilities.normal, color: '#4ade80' },
         { label: 'MCI', value: prediction.probabilities.mci, color: '#fbbf24' },
@@ -152,7 +167,7 @@ export function AIPredictionCard({ prediction }: Props) {
         <div className="dv2-card dv2-animate-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h3 className="dv2-section-title" style={{ margin: 0 }}>AI Cognitive Assessment</h3>
-                <span className="dv2-ai-badge">✦ AI Verified (7/7 Battery)</span>
+                <span className="dv2-ai-badge">✦ AI Verified ({requiredCount}/{requiredCount} {isExpanded ? 'Diagnostic Battery' : 'Baseline Battery'})</span>
             </div>
 
             {/* Predicted Status */}
@@ -217,11 +232,10 @@ export function AIPredictionCard({ prediction }: Props) {
                 <div>
                     <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--dv2-muted)' }}>Battery Coverage</div>
                     <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--dv2-text)', marginTop: '0.15rem' }}>
-                        {prediction.completedModules.length}/7 <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--dv2-muted)' }}>modules</span>
+                        {completedCount}/{requiredCount} <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--dv2-muted)' }}>modules</span>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
-

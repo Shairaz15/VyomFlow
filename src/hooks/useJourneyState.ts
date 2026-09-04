@@ -15,8 +15,12 @@ import {
     getCurrentFirebaseUid,
     type RawDashboardData
 } from '../services/supabaseService';
+import { predictCognitiveProfile, type CognitiveModelPrediction } from '../services/clinicalModelEngine';
 
 export type ActivityId = 'story' | 'memory' | 'reaction' | 'pattern' | 'attention' | 'navigation' | 'language';
+
+export const BASELINE_ACTIVITY_IDS: ActivityId[] = ['reaction', 'memory', 'pattern', 'language'];
+export const EXTENDED_ACTIVITY_IDS: ActivityId[] = ['story', 'attention', 'navigation'];
 
 export const PROTOCOL_SESSION_KEY = "vyomflow_protocol_session_started_at";
 export const PROTOCOL_SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24-hour protocol window
@@ -75,21 +79,21 @@ export interface JourneyNodeInfo {
 
 export const JOURNEY_NODES: JourneyNodeInfo[] = [
     {
-        id: 'story',
+        id: 'reaction',
         order: 1,
-        title: 'Story Narration Recall',
-        canonicalTitle: 'Story Narration Recall',
-        route: '/test/story',
-        duration: '5 min',
-        iconName: 'story',
-        description: 'Listen to a short narrated story and retell it in your own words.',
-        userPrompt: "Let's begin with a short story.",
+        title: 'Reaction Time',
+        canonicalTitle: 'Reaction Time',
+        route: '/test/reaction',
+        duration: '1.5 min',
+        iconName: 'reaction',
+        description: 'Tap as quickly as possible when the screen turns green.',
+        userPrompt: 'Test your motor speed and vigilance.',
         biome: {
-            name: 'Story Narration Recall',
-            bgGradient: 'linear-gradient(135deg, #183B56 0%, #2d5a3e 100%)',
-            accentColor: '#8BAE9A',
-            themeClass: 'biome-grove',
-            icon: '📖',
+            name: 'Reaction Time',
+            bgGradient: 'linear-gradient(135deg, #1f2d3d 0%, #4a3e1b 100%)',
+            accentColor: '#D8B878',
+            themeClass: 'biome-firefly',
+            icon: '⚡',
         },
         hasPractice: false,
     },
@@ -113,27 +117,8 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         hasPractice: false,
     },
     {
-        id: 'reaction',
-        order: 3,
-        title: 'Reaction Time',
-        canonicalTitle: 'Reaction Time',
-        route: '/test/reaction',
-        duration: '1.5 min',
-        iconName: 'reaction',
-        description: 'Tap as quickly as possible when the screen turns green.',
-        userPrompt: 'Test your motor speed and vigilance.',
-        biome: {
-            name: 'Reaction Time',
-            bgGradient: 'linear-gradient(135deg, #1f2d3d 0%, #4a3e1b 100%)',
-            accentColor: '#D8B878',
-            themeClass: 'biome-firefly',
-            icon: '⚡',
-        },
-        hasPractice: false,
-    },
-    {
         id: 'pattern',
-        order: 4,
+        order: 3,
         title: 'Pattern Recognition',
         canonicalTitle: 'Pattern Recognition',
         route: '/tests/pattern',
@@ -151,8 +136,46 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
         hasPractice: false,
     },
     {
-        id: 'attention',
+        id: 'language',
+        order: 4,
+        title: 'Language Fluency',
+        canonicalTitle: 'Language Fluency',
+        route: '/test/language',
+        duration: '2 min',
+        iconName: 'language',
+        description: 'Speak freely about an image or topic in your own words.',
+        userPrompt: 'Describe the scene in your own words.',
+        biome: {
+            name: 'Language Fluency',
+            bgGradient: 'linear-gradient(135deg, #7c3aed 0%, #c084fc 100%)',
+            accentColor: '#c084fc',
+            themeClass: 'biome-corner',
+            icon: '🗣️',
+        },
+        hasPractice: false,
+    },
+    {
+        id: 'story',
         order: 5,
+        title: 'Story Narration Recall',
+        canonicalTitle: 'Story Narration Recall',
+        route: '/test/story',
+        duration: '5 min',
+        iconName: 'story',
+        description: 'Listen to a short narrated story and retell it in your own words.',
+        userPrompt: "Let's begin with a short story.",
+        biome: {
+            name: 'Story Narration Recall',
+            bgGradient: 'linear-gradient(135deg, #183B56 0%, #2d5a3e 100%)',
+            accentColor: '#8BAE9A',
+            themeClass: 'biome-grove',
+            icon: '📖',
+        },
+        hasPractice: false,
+    },
+    {
+        id: 'attention',
+        order: 6,
         title: 'Attention',
         canonicalTitle: 'Attention',
         route: '/test/attention',
@@ -171,7 +194,7 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
     },
     {
         id: 'navigation',
-        order: 6,
+        order: 7,
         title: 'Immersive Navigation',
         canonicalTitle: 'Immersive Navigation',
         route: '/test/navigation',
@@ -185,25 +208,6 @@ export const JOURNEY_NODES: JourneyNodeInfo[] = [
             accentColor: '#06b6d4',
             themeClass: 'biome-discovery',
             icon: '🧭',
-        },
-        hasPractice: false,
-    },
-    {
-        id: 'language',
-        order: 7,
-        title: 'Language Fluency',
-        canonicalTitle: 'Language Fluency',
-        route: '/test/language',
-        duration: '2 min',
-        iconName: 'language',
-        description: 'Speak freely about an image or topic in your own words.',
-        userPrompt: 'Describe the scene in your own words.',
-        biome: {
-            name: 'Language Fluency',
-            bgGradient: 'linear-gradient(135deg, #7c3aed 0%, #c084fc 100%)',
-            accentColor: '#c084fc',
-            themeClass: 'biome-corner',
-            icon: '🗣️',
         },
         hasPractice: false,
     },
@@ -232,6 +236,8 @@ export interface JourneyState {
     activityLastCompletedMap: Record<ActivityId, Date | null>;
     activityLatestScoreMap: Record<ActivityId, ActivityScoreInfo | null>;
     isLoading: boolean;
+    isExpandedBattery: boolean;
+    activeNodes: JourneyNodeInfo[];
 }
 
 export function useJourneyState(): JourneyState {
@@ -247,6 +253,7 @@ export function useJourneyState(): JourneyState {
     const [isSupabaseLoading, setIsSupabaseLoading] = useState(true);
 
     const [protocolSessionStart, setProtocolSessionStart] = useState<number>(() => getProtocolSessionStartTime());
+    const [prediction, setPrediction] = useState<CognitiveModelPrediction | null>(null);
 
     useEffect(() => {
         let mounted = true;
@@ -307,6 +314,58 @@ export function useJourneyState(): JourneyState {
             unsubscribe();
         };
     }, []);
+
+    // Reactive ML cognitive prediction run for dynamic battery expansion
+    useEffect(() => {
+        let isCancelled = false;
+        async function runPrediction() {
+            const hasData = (
+                reactionResults.length > 0 ||
+                vmraResults.length > 0 ||
+                patternResults.length > 0 ||
+                languageResults.length > 0 ||
+                storyResults.length > 0 ||
+                attentionResults.length > 0 ||
+                navigationResults.length > 0 ||
+                (supabaseData && Object.values(supabaseData).some(arr => Array.isArray(arr) && arr.length > 0))
+            );
+
+            if (!hasData) {
+                if (!isCancelled) setPrediction(null);
+                return;
+            }
+
+            try {
+                const raw: RawDashboardData = {
+                    reaction: [...(supabaseData?.reaction || []), ...reactionResults],
+                    memory: [...(supabaseData?.memory || []), ...vmraResults],
+                    vmra: [...(supabaseData?.vmra || []), ...vmraResults],
+                    pattern: [...(supabaseData?.pattern || []), ...patternResults],
+                    language: [...(supabaseData?.language || []), ...languageResults],
+                    story: [...(supabaseData?.story || []), ...storyResults],
+                    navigation: [...(supabaseData?.navigation || []), ...navigationResults],
+                    attention: [...(supabaseData?.attention || []), ...attentionResults],
+                };
+                const pred = await predictCognitiveProfile(raw);
+                if (!isCancelled) {
+                    setPrediction(pred);
+                }
+            } catch (err) {
+                // Prediction fallback
+            }
+        }
+        runPrediction();
+        return () => { isCancelled = true; };
+    }, [
+        reactionResults,
+        vmraResults,
+        patternResults,
+        languageResults,
+        storyResults,
+        attentionResults,
+        navigationResults,
+        supabaseData,
+    ]);
 
     const isLoading = (storyLoading || vmraLoading || reactionLoading || patternLoading || attentionLoading || navigationLoading || languageLoading) && isSupabaseLoading;
 
@@ -592,14 +651,24 @@ export function useJourneyState(): JourneyState {
         if (isActivityCompletedInProtocol(mergedNavigation, 'navigation')) completedActivityIds.add('navigation');
         if (isActivityCompletedInProtocol(mergedLanguage, 'language')) completedActivityIds.add('language');
 
-        const completedCount = completedActivityIds.size;
-        const totalCount = JOURNEY_NODES.length;
-        const isJourneyComplete = completedCount === totalCount;
+        // Dynamic 4-to-7 battery activation: only expand when patient evaluates to MCI or Dementia
+        const isExpandedBattery = prediction?.predictedDiagnosis === 'MCI' || prediction?.predictedDiagnosis === 'Dementia';
+        const activeNodes = isExpandedBattery
+            ? JOURNEY_NODES
+            : JOURNEY_NODES.filter((n) => BASELINE_ACTIVITY_IDS.includes(n.id));
 
-        // Determine active node (first uncompleted node in sequence, or first node if all complete)
-        let activeNodeId: ActivityId = 'story';
-        for (const node of JOURNEY_NODES) {
-            if (!completedActivityIds.has(node.id)) {
+        const activeCompletedIds = new Set<ActivityId>(
+            Array.from(completedActivityIds).filter((id) => activeNodes.some((n) => n.id === id))
+        );
+
+        const completedCount = activeCompletedIds.size;
+        const totalCount = activeNodes.length;
+        const isJourneyComplete = completedCount >= totalCount && totalCount > 0;
+
+        // Determine active node (first uncompleted node in active sequence, or first active node if all complete)
+        let activeNodeId: ActivityId = activeNodes[0]?.id || 'reaction';
+        for (const node of activeNodes) {
+            if (!activeCompletedIds.has(node.id)) {
                 activeNodeId = node.id;
                 break;
             }
@@ -641,7 +710,7 @@ export function useJourneyState(): JourneyState {
         }
 
         return {
-            completedActivityIds,
+            completedActivityIds: activeCompletedIds,
             completedCount,
             totalCount,
             activeNodeId,
@@ -651,6 +720,8 @@ export function useJourneyState(): JourneyState {
             activityLastCompletedMap,
             activityLatestScoreMap,
             isLoading,
+            isExpandedBattery,
+            activeNodes,
         };
     }, [
         storyResults,
@@ -662,5 +733,6 @@ export function useJourneyState(): JourneyState {
         languageResults,
         supabaseData,
         isLoading,
+        prediction,
     ]);
 }

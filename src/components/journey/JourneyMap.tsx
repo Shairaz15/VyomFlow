@@ -1,4 +1,4 @@
-import { type ActivityId, type ActivityScoreInfo } from '../../hooks/useJourneyState';
+import { type ActivityId, type ActivityScoreInfo, type JourneyNodeInfo } from '../../hooks/useJourneyState';
 import { SynapseBeamTrail } from './prototypes/SynapseBeamTrail';
 import './JourneyMap.css';
 
@@ -8,6 +8,7 @@ interface JourneyMapProps {
     activityLastCompletedMap?: Record<ActivityId, Date | null>;
     activityLatestScoreMap?: Record<ActivityId, ActivityScoreInfo | null>;
     filterMode?: 'all' | 'remaining' | 'completed';
+    activeNodes?: JourneyNodeInfo[];
 }
 
 export function JourneyMap({ 
@@ -15,7 +16,8 @@ export function JourneyMap({
     activeNodeId,
     activityLastCompletedMap = {} as Record<ActivityId, Date | null>,
     activityLatestScoreMap = {} as Record<ActivityId, ActivityScoreInfo | null>,
-    filterMode = 'all'
+    filterMode = 'all',
+    activeNodes,
 }: JourneyMapProps) {
     return (
         <div className="world-journey-wrapper" role="region" aria-label="VyomFlow Test Journey Trail">
@@ -25,6 +27,7 @@ export function JourneyMap({
                 activityLastCompletedMap={activityLastCompletedMap}
                 activityLatestScoreMap={activityLatestScoreMap}
                 filterMode={filterMode}
+                activeNodes={activeNodes}
             />
         </div>
     );

@@ -27,6 +27,8 @@ export function Tests() {
         activityLastCompletedMap,
         activityLatestScoreMap,
         isLoading,
+        isExpandedBattery,
+        activeNodes,
     } = useJourneyState();
 
     // Modals state
@@ -72,17 +74,17 @@ export function Tests() {
         return t("journey.goodEvening", { name: userName });
     };
 
-    const activeNode = JOURNEY_NODES.find((n) => n.id === activeNodeId) || JOURNEY_NODES[0];
+    const activeNode = activeNodes.find((n) => n.id === activeNodeId) || activeNodes[0] || JOURNEY_NODES[0];
 
     // Compute dynamic remaining estimated protocol duration
     const remainingMinutes = useMemo(() => {
-        const remainingNodes = JOURNEY_NODES.filter((n) => !completedActivityIds.has(n.id));
+        const remainingNodes = activeNodes.filter((n) => !completedActivityIds.has(n.id));
         const totalMin = remainingNodes.reduce((acc, n) => {
             const num = parseFloat(n.duration) || 2;
             return acc + num;
         }, 0);
         return Math.ceil(totalMin);
-    }, [completedActivityIds]);
+    }, [activeNodes, completedActivityIds]);
 
     const handlePrimaryCtaClick = () => {
         if (isJourneyComplete) {
@@ -97,7 +99,7 @@ export function Tests() {
         if (isJourneyComplete) {
             setShowJourneyCompleteModal(true);
         } else {
-            const nextUncompleted = JOURNEY_NODES.find((n) => !completedActivityIds.has(n.id));
+            const nextUncompleted = activeNodes.find((n) => !completedActivityIds.has(n.id));
             if (nextUncompleted) {
                 navigate(nextUncompleted.route);
             }
@@ -137,8 +139,8 @@ export function Tests() {
                             </div>
 
                             {/* Dot progress indicator */}
-                            <div className="dots-mini-row" aria-label={`Progress: ${completedCount} of 7 complete`}>
-                                {JOURNEY_NODES.map((node) => {
+                            <div className="dots-mini-row" aria-label={`Progress: ${completedCount} of ${totalCount} complete`}>
+                                {activeNodes.map((node) => {
                                     const isDone = completedActivityIds.has(node.id);
                                     const isCurrent = node.id === activeNodeId;
                                     return (
@@ -210,6 +212,30 @@ export function Tests() {
                     </button>
                 </div>
 
+                {/* Supportive Clinical Banner when Comprehensive Diagnostic Battery is Unlocked */}
+                {isExpandedBattery && (
+                    <div
+                        className="expanded-battery-banner animate-fadeIn"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.85rem',
+                            padding: '0.9rem 1.25rem',
+                            marginBottom: '1rem',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%)',
+                            border: '1px solid rgba(14, 165, 233, 0.28)',
+                            color: 'var(--text-primary)',
+                        }}
+                    >
+                        <ShieldCheck size={22} style={{ color: '#0ea5e9', flexShrink: 0 }} />
+                        <div style={{ fontSize: '0.875rem', lineHeight: 1.45 }}>
+                            <strong style={{ color: '#0ea5e9', fontWeight: 600 }}>Comprehensive Diagnostic Battery Activated: </strong>
+                            Additional in-depth assessments (Story Recall, Sustained Attention, Video Navigation) have been added to provide your clinician with complete cognitive mapping.
+                        </div>
+                    </div>
+                )}
+
                 {/* Main Feature: Spacious Organic Journey Map Landscape */}
                 <main className="journey-map-main" aria-label="Journey Map">
                     <JourneyMap
@@ -218,6 +244,7 @@ export function Tests() {
                         activityLastCompletedMap={activityLastCompletedMap}
                         activityLatestScoreMap={activityLatestScoreMap}
                         filterMode={filterMode}
+                        activeNodes={activeNodes}
                     />
                 </main>
 

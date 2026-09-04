@@ -211,6 +211,35 @@ export function DashboardV3() {
                     </div>
                 ) : (
                     <div className="dv2-view-content" style={{ marginTop: '0.75rem' }}>
+                        {/* Supportive Clinical Banner when Comprehensive Diagnostic Battery is Unlocked */}
+                        {vm.isExpandedBattery && (
+                            <div
+                                className="expanded-battery-banner animate-fadeIn"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.85rem',
+                                    padding: '0.85rem 1.25rem',
+                                    marginBottom: '1.25rem',
+                                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.05) 100%)',
+                                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                                    borderRadius: '14px',
+                                    color: '#FDE68A',
+                                    backdropFilter: 'blur(8px)',
+                                }}
+                            >
+                                <span style={{ fontSize: '1.35rem', flexShrink: 0 }}>🩺</span>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: 650, fontSize: '0.92rem', color: '#FCD34D' }}>
+                                        Comprehensive Diagnostic Battery Activated
+                                    </div>
+                                    <div style={{ fontSize: '0.82rem', color: 'rgba(253, 230, 138, 0.85)', marginTop: '2px' }}>
+                                        AI clinical risk screening identified patterns indicative of MCI or cognitive decline. Assessment modules and trend tracking have automatically expanded from 4 to all 7 clinical assessments for granular diagnostic mapping.
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Bento Grid: Status + Radar + Trends on Left; AI MoCA + Domains + Tests on Right */}
                         <div className="dv2-bento-grid">
                             {/* Left Bento Column: Overall Status + 6-Domain Cognitive Envelope + Longitudinal Trends */}
@@ -220,6 +249,7 @@ export function DashboardV3() {
                                     scores={vm.radarScores}
                                     baselineScores={vm.baselineRadarScores}
                                     timeline={vm.radarTimeline}
+                                    isExpandedBattery={vm.isExpandedBattery}
                                 />
                                 <ModuleTrendCharts
                                     trends={vm.moduleTrends}
@@ -229,9 +259,9 @@ export function DashboardV3() {
 
                             {/* Right Bento Column: AI MoCA Assessment + 6 Cognitive Domains + 7 Modules Battery */}
                             <div className="dv2-bento-col">
-                                <AIPredictionCard prediction={vm.aiPrediction} />
+                                <AIPredictionCard prediction={vm.aiPrediction} isExpandedBattery={vm.isExpandedBattery} />
                                 <DomainScoreCards domains={vm.domainScores} />
-                                <AssessmentModuleCards modules={vm.assessmentModules} />
+                                <AssessmentModuleCards modules={vm.assessmentModules} isExpandedBattery={vm.isExpandedBattery} />
                             </div>
                         </div>
                     </div>

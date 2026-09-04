@@ -190,6 +190,7 @@ export interface DashboardViewModel {
     hasData: boolean;
     isLoading: boolean;
     sessionCount: number;
+    isExpandedBattery: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1089,7 +1090,11 @@ export function buildDashboardViewModel(
     );
     overview.lastAssessmentDate = findLatestTimestamp(rawData);
 
-    // Compute exact number of completed full sessions (all 7 assessments once = 1 session)
+    // Adaptive 4-to-7 battery expansion flag
+    const isExpandedBattery = prediction?.predictedDiagnosis === 'MCI' || prediction?.predictedDiagnosis === 'Dementia';
+    const BASELINE_MODULE_KEYS = ['reaction', 'vmra', 'memory', 'pattern', 'language'];
+
+    // Compute exact number of completed full sessions (all 7 for expanded, 4 for baseline = 1 session)
     const moduleCounts = [
         deduplicateRawResults(rawData.reaction || []).length,
         deduplicateRawResults(rawData.pattern || []).length,
@@ -1102,9 +1107,24 @@ export function buildDashboardViewModel(
             deduplicateRawResults(rawData.memory || []).length
         ),
     ];
+    const baselineCounts = [
+        deduplicateRawResults(rawData.reaction || []).length,
+        deduplicateRawResults(rawData.pattern || []).length,
+        Math.max(
+            deduplicateRawResults(rawData.vmra || []).length,
+            deduplicateRawResults(rawData.memory || []).length
+        ),
+        deduplicateRawResults(rawData.language || []).length,
+    ];
+
     const fullBatterySessions = Math.min(...moduleCounts);
-    overview.fullSessionsCompleted = Math.max(fullBatterySessions, sessionCount > 0 ? sessionCount : 0);
-    overview.totalTestsCompleted = moduleCounts.reduce((a, b) => a + b, 0);
+    const fullBaselineSessions = Math.min(...baselineCounts);
+    overview.fullSessionsCompleted = isExpandedBattery
+        ? Math.max(fullBatterySessions, sessionCount > 0 ? sessionCount : 0)
+        : Math.max(fullBaselineSessions, sessionCount > 0 ? sessionCount : 0);
+    overview.totalTestsCompleted = isExpandedBattery
+        ? moduleCounts.reduce((a, b) => a + b, 0)
+        : baselineCounts.reduce((a, b) => a + b, 0);
 
     // AI Prediction (Section 2)
     const aiPrediction: AIPredictionViewModel = prediction
@@ -1136,14 +1156,20 @@ export function buildDashboardViewModel(
     // Note: previousPrediction is null for now; future enhancement could track previous session
     const domainScores = buildDomainScores(prediction, null);
 
-    // Module Trends (Section 4)
-    const moduleTrends = buildModuleTrends(rawData);
+    // Module Trends (Section 4) - filtered dynamically based on active battery
+    const allModuleTrends = buildModuleTrends(rawData);
+    const moduleTrends = isExpandedBattery
+        ? allModuleTrends
+        : allModuleTrends.filter(t => BASELINE_MODULE_KEYS.includes(t.moduleKey));
 
     // Changes (Section 5)
     const changes = buildChanges(domainScores);
 
-    // Assessment Modules (Section 6)
-    const assessmentModules = buildAssessmentModules(rawData);
+    // Assessment Modules (Section 6) - filtered dynamically based on active battery
+    const allAssessmentModules = buildAssessmentModules(rawData);
+    const assessmentModules = isExpandedBattery
+        ? allAssessmentModules
+        : allAssessmentModules.filter(m => BASELINE_MODULE_KEYS.includes(m.key));
 
     // Explainability (Section 7)
     const explainability = buildExplainability(prediction);
@@ -1202,5 +1228,6 @@ export function buildDashboardViewModel(
         hasData,
         isLoading,
         sessionCount,
+        isExpandedBattery,
     };
 }

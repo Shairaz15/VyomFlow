@@ -12,6 +12,7 @@ interface SynapseBeamTrailProps {
     activityLastCompletedMap?: Record<ActivityId, Date | null>;
     activityLatestScoreMap?: Record<ActivityId, ActivityScoreInfo | null>;
     filterMode?: 'all' | 'remaining' | 'completed';
+    activeNodes?: JourneyNodeInfo[];
 }
 
 // Domain and clinical biomarker metadata
@@ -73,8 +74,10 @@ const DOMAIN_MAP: Record<
 export function SynapseBeamTrail({
     completedActivityIds,
     activeNodeId,
+    activityLastCompletedMap: _activityLastCompletedMap = {} as Record<ActivityId, Date | null>,
     activityLatestScoreMap = {} as Record<ActivityId, ActivityScoreInfo | null>,
     filterMode = 'all',
+    activeNodes = JOURNEY_NODES,
 }: SynapseBeamTrailProps) {
     const navigate = useNavigate();
     const { t } = useLanguage();
@@ -92,15 +95,15 @@ export function SynapseBeamTrail({
         setActiveInfoId((prev) => (prev === id ? null : id));
     };
 
-    // Filter nodes according to selected tab
+    // Filter nodes according to selected tab and active nodes battery
     const filteredNodes = useMemo(() => {
-        return JOURNEY_NODES.filter((node) => {
+        return activeNodes.filter((node) => {
             const isCompleted = completedActivityIds.has(node.id);
             if (filterMode === 'completed') return isCompleted;
             if (filterMode === 'remaining') return !isCompleted;
             return true;
         });
-    }, [completedActivityIds, filterMode]);
+    }, [activeNodes, completedActivityIds, filterMode]);
 
     const streamLayoutRef = useRef<HTMLDivElement>(null);
     const [splineData, setSplineData] = useState<{ path: string; width: number; height: number }>({

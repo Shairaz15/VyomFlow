@@ -457,8 +457,6 @@ export async function predictCognitiveProfile(
     if (data.attention && data.attention.length > 0) completedModules.push('Sustained Attention');
     if (data.navigation && data.navigation.length > 0) completedModules.push('Video Navigation');
 
-    const batteryCoverage = Math.max(1, completedModules.length) / 7.0;
-
     if (!bundle) {
         // Safe heuristic fallback if bundle fetch failed
         const memScore = (rawMap.vmra_recallAccuracy * 0.5 + rawMap.story_recallAccuracy * 0.5) * 100;
@@ -473,9 +471,16 @@ export async function predictCognitiveProfile(
         const pNorm = clamp(avgScore / 100, 0.05, 0.95);
         const pMci = (1 - pNorm) * 0.6;
         const pDem = (1 - pNorm) * 0.4;
+        const fallbackDiagnosis: 'Normal' | 'MCI' | 'Dementia' = pNorm > 0.6 ? 'Normal' : (pMci > pDem ? 'MCI' : 'Dementia');
+
+        const hasExtended = (data.story && data.story.length > 0) ||
+                            (data.attention && data.attention.length > 0) ||
+                            (data.navigation && data.navigation.length > 0);
+        const targetCount = (fallbackDiagnosis !== 'Normal' || hasExtended) ? 7.0 : 4.0;
+        const batteryCoverageFallback = Math.min(1.0, Math.max(1, completedModules.length) / targetCount);
 
         return {
-            predictedDiagnosis: pNorm > 0.6 ? 'Normal' : (pMci > pDem ? 'MCI' : 'Dementia'),
+            predictedDiagnosis: fallbackDiagnosis,
             probabilities: { normal: pNorm, mci: pMci, dementia: pDem },
             impairmentRiskScore: 1 - pNorm,
             estimatedMoCA: Math.round(estMoCA * 10) / 10,
@@ -490,8 +495,8 @@ export async function predictCognitiveProfile(
             },
             clinicalAlertTier: pNorm > 0.7 ? 'STABLE' : (pNorm > 0.4 ? 'CONTINUE_MONITORING' : 'RECOMMEND_CLINICAL_EVALUATION'),
             topAttributions: [],
-            modelConfidence: Math.round(85 * (0.35 + 0.65 * batteryCoverage)),
-            batteryCoverage,
+            modelConfidence: Math.round(85 * (0.35 + 0.65 * batteryCoverageFallback)),
+            batteryCoverage: Math.round(batteryCoverageFallback * 100) / 100,
             completedModules,
         };
     }
@@ -528,6 +533,13 @@ export async function predictCognitiveProfile(
         predictedDiagnosis = 'MCI';
     }
 
+    const hasExtendedTests = (data.story && data.story.length > 0) ||
+                             (data.attention && data.attention.length > 0) ||
+                             (data.navigation && data.navigation.length > 0);
+    const isExpandedBattery = predictedDiagnosis !== 'Normal' || hasExtendedTests;
+    const targetBatteryCount = isExpandedBattery ? 7.0 : 4.0;
+    const batteryCoverage = Math.min(1.0, Math.max(1, completedModules.length) / targetBatteryCount);
+
     // 2. Head 2: Continuous MoCA Regressor
     let mocaPred = bundle.moca_regressor.intercept;
     for (let j = 0; j < scaledVector.length; j++) {
@@ -549,10 +561,9 @@ export async function predictCognitiveProfile(
     const attributions: BiomarkerAttribution[] = [];
     for (let j = 0; j < bundle.feature_names.length; j++) {
         const feat = bundle.feature_names[j];
-        const dom = bundle.feature_domains[feat] || 'General';
-        const impactScore = bundle.moca_regressor.coefficients[j] * scaledVector[j];
-
-        if (Math.abs(impactScore) > 0.05) {
+        const dom = bundle.feature_domains[feat] || 'general';
+        const impactScore = scaledVector[j] * (bundle.global_feature_importance[feat] || 0.1);
+        if (Math.abs(impactScore) > 0.01) {
             attributions.push({
                 featureName: feat,
                 domain: dom,

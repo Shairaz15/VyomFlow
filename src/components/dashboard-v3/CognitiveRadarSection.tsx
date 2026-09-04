@@ -14,6 +14,7 @@ export interface CognitiveRadarSectionProps {
     baselineScores?: CognitiveRadarDomainScores;
     timeline?: RadarTimelinePoint[];
     normativeScores?: CognitiveRadarDomainScores;
+    isExpandedBattery?: boolean;
 }
 
 export function CognitiveRadarSection({
@@ -21,6 +22,7 @@ export function CognitiveRadarSection({
     baselineScores,
     timeline = [],
     normativeScores = DEFAULT_NORMATIVE,
+    isExpandedBattery,
 }: CognitiveRadarSectionProps) {
     const hasScores = Object.values(scores).some(v => v > 0);
     if (!hasScores && timeline.length === 0) return null;
@@ -153,6 +155,17 @@ export function CognitiveRadarSection({
                     <h3 className="dv2-section-title" style={{ margin: 0, fontSize: '1.125rem' }}>
                         6-Domain Cognitive Envelope
                     </h3>
+                    <span style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 650,
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '999px',
+                        background: isExpandedBattery ? 'rgba(245, 158, 11, 0.12)' : 'rgba(56, 189, 248, 0.12)',
+                        color: isExpandedBattery ? '#fbbf24' : '#38bdf8',
+                        border: isExpandedBattery ? '1px solid rgba(245, 158, 11, 0.28)' : '1px solid rgba(56, 189, 248, 0.25)',
+                    }}>
+                        {isExpandedBattery ? 'Diagnostic Battery' : 'Core Baseline'}
+                    </span>
 
                     {/* Geometry Mode Toggle Switcher */}
                     <div style={{
