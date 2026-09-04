@@ -41,6 +41,71 @@ function isValidEmail(email: string | undefined | null): email is string {
 }
 
 /**
+ * Generate rich, responsive HTML email layout incorporating:
+ * - [Rec #1] High-Contrast Thumb-Friendly Primary CTA Button
+ * - [Rec #2] Personalized Cognitive Snapshot Metric Card
+ */
+export function generateReminderEmailHtml(recipientName: string, daysSince: number, assessmentUrl: string): string {
+    return `
+<div style="max-width: 560px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+  <!-- Brand Header -->
+  <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); padding: 28px 24px; text-align: center;">
+    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">VyomFlow</h1>
+    <p style="color: #bae6fd; margin: 6px 0 0 0; font-size: 13px; font-weight: 500;">Cognitive Wellness & Biomarker Intelligence</p>
+  </div>
+
+  <div style="padding: 28px 24px; color: #334155; line-height: 1.6;">
+    <h2 style="font-size: 18px; color: #0f172a; margin: 0 0 10px 0; font-weight: 600;">Hello ${recipientName},</h2>
+    <p style="font-size: 14px; color: #475569; margin: 0 0 20px 0;">
+      It has been <strong>${daysSince} days</strong> since your last cognitive assessment. Consistent weekly check-ins help identify subtle reaction, memory, and executive focus trends early.
+    </p>
+
+    <!-- [RECOMMENDATION 2] Personalized Cognitive Snapshot Metric Card -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; border-radius: 10px; padding: 16px 18px; margin-bottom: 24px;">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin-bottom: 10px;">
+        📊 Assessment Status Overview
+      </div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 5px 0; font-size: 13px; color: #64748b;">Last Completed:</td>
+          <td style="padding: 5px 0; font-size: 13px; font-weight: 600; color: #0f172a; text-align: right;">${daysSince} days ago</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; font-size: 13px; color: #64748b;">Time Commitment:</td>
+          <td style="padding: 5px 0; font-size: 13px; font-weight: 600; color: #059669; text-align: right;">⏱️ ~3 Minutes</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; font-size: 13px; color: #64748b;">Included Modules:</td>
+          <td style="padding: 5px 0; font-size: 13px; font-weight: 600; color: #0f172a; text-align: right;">Memory • Speed • Fluency</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; font-size: 13px; color: #64748b;">Supported Languages:</td>
+          <td style="padding: 5px 0; font-size: 13px; font-weight: 600; color: #0284c7; text-align: right;">11 Indic Languages</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- [RECOMMENDATION 1] High-Contrast Thumb-Friendly Primary CTA Button -->
+    <div style="text-align: center; margin: 28px 0 20px 0;">
+      <a href="${assessmentUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35); text-align: center;">
+        Start 3-Minute Assessment →
+      </a>
+      <div style="margin-top: 8px; font-size: 12px; color: #94a3b8;">
+        No preparation needed • Works seamlessly on mobile & desktop
+      </div>
+    </div>
+  </div>
+
+  <!-- Trust & Privacy Footer -->
+  <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 20px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.5;">
+    <p style="margin: 0 0 4px 0;">🔒 <strong>Privacy Assurance:</strong> Raw audio is ephemeral and never permanently stored.</p>
+    <p style="margin: 0;">VyomFlow is a non-diagnostic wellness tool for cognitive trend awareness.</p>
+  </div>
+</div>
+`.trim();
+}
+
+/**
  * Send a weekly assessment reminder email branded for VyomFlow
  */
 export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<boolean> {
@@ -57,6 +122,7 @@ export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<b
 
     const cleanEmail = params.toEmail.trim();
     const recipientName = params.toName?.trim() || 'User';
+    const emailHtml = generateReminderEmailHtml(recipientName, params.daysSinceLastAssessment, ASSESSMENT_URL);
 
     // Comprehensive template parameters matching any EmailJS template variable names
     // and explicitly overriding any legacy "CogniTrack" defaults with "VyomFlow"
@@ -80,13 +146,28 @@ export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<b
         subject: 'VyomFlow - Cognitive Assessment Reminder',
         title: 'VyomFlow Cognitive Health Reminder',
 
-        // Content
-        days_since: params.daysSinceLastAssessment,
-        daysSinceLastAssessment: params.daysSinceLastAssessment,
-        message: `It's been ${params.daysSinceLastAssessment} days since your last cognitive assessment. Regular tracking with VyomFlow helps identify cognitive trends early. Take a quick assessment today!`,
+        // [Recommendation 1] High-Contrast Thumb-Friendly Primary CTA Button fields
+        cta_text: 'Start 3-Minute Assessment →',
+        cta_url: ASSESSMENT_URL,
+        cta_button: `<a href="${ASSESSMENT_URL}" style="display:inline-block;background:#0284c7;color:#fff;padding:14px 28px;border-radius:8px;font-weight:600;text-decoration:none;">Start 3-Minute Assessment →</a>`,
         assessment_link: ASSESSMENT_URL,
         action_url: ASSESSMENT_URL,
         link: ASSESSMENT_URL,
+
+        // [Recommendation 2] Personalized Cognitive Snapshot Metric Card fields
+        days_since: params.daysSinceLastAssessment,
+        daysSinceLastAssessment: params.daysSinceLastAssessment,
+        time_estimate: '~3 Minutes',
+        modules_included: 'Memory • Reaction Speed • Language Fluency',
+        status_card: `Last Completed: ${params.daysSinceLastAssessment} days ago | Time Required: ~3 mins | Modules: Memory, Reaction Speed, Language Fluency`,
+
+        // Plain Text Message
+        message: `Hello ${recipientName},\n\nIt's been ${params.daysSinceLastAssessment} days since your last cognitive assessment.\n\n📊 Assessment Snapshot:\n• Last Completed: ${params.daysSinceLastAssessment} days ago\n• Time Required: ~3 Minutes\n• Modules: Memory, Reaction Speed, Language Fluency\n\nStart your 3-minute assessment here:\n${ASSESSMENT_URL}\n\nVyomFlow Cognitive Wellness Team`,
+
+        // Rich HTML Body fields for HTML-enabled EmailJS templates
+        message_html: emailHtml,
+        html_body: emailHtml,
+        content: emailHtml,
     };
 
     // Attempt 1: Try EmailJS Browser SDK

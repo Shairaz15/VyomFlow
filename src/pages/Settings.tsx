@@ -32,6 +32,7 @@ export function Settings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [sendingTest, setSendingTest] = useState(false);
+    const [showEmailPreview, setShowEmailPreview] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
     const emailConfigured = isEmailConfigured();
 
@@ -308,6 +309,70 @@ export function Settings() {
                             {t('settings.lastReminderSent', { date: preferences.lastReminderSent.toLocaleDateString() })}
                         </p>
                     )}
+
+                    <div style={{ marginTop: '0.875rem', paddingTop: '0.5rem', borderTop: '1px dashed rgba(23, 50, 77, 0.12)' }}>
+                        <button
+                            type="button"
+                            className="email-preview-toggle-btn"
+                            onClick={() => setShowEmailPreview((prev) => !prev)}
+                        >
+                            {showEmailPreview ? '▲ Hide Email Format Preview' : '👁️ View Email Format Preview (UI Specs)'}
+                        </button>
+
+                        {showEmailPreview && (
+                            <div className="email-preview-container">
+                                <div className="email-preview-header">
+                                    <h3>VyomFlow</h3>
+                                    <p>Cognitive Wellness & Biomarker Intelligence</p>
+                                </div>
+                                <div className="email-preview-body">
+                                    <p style={{ marginTop: 0, fontWeight: 600, color: 'inherit' }}>
+                                        Hello {user?.displayName || 'User'},
+                                    </p>
+                                    <p style={{ margin: '0 0 1rem' }}>
+                                        It has been <strong>7 days</strong> since your last cognitive assessment. Regular weekly check-ins provide the clearest picture of your cognitive trend baselines.
+                                    </p>
+
+                                    {/* [Recommendation #2] Personalized Cognitive Snapshot Metric Card */}
+                                    <div className="email-preview-snapshot-card">
+                                        <div className="email-preview-snapshot-title">
+                                            📊 Assessment Status Overview
+                                        </div>
+                                        <div className="email-preview-row">
+                                            <span>Last Assessment:</span>
+                                            <span>7 days ago</span>
+                                        </div>
+                                        <div className="email-preview-row">
+                                            <span>Time Commitment:</span>
+                                            <span style={{ color: '#059669', fontWeight: 600 }}>⏱️ ~3 Minutes</span>
+                                        </div>
+                                        <div className="email-preview-row">
+                                            <span>Included Modules:</span>
+                                            <span>Memory • Speed • Fluency</span>
+                                        </div>
+                                        <div className="email-preview-row">
+                                            <span>Supported Languages:</span>
+                                            <span style={{ color: '#0284c7', fontWeight: 600 }}>11 Indic Languages</span>
+                                        </div>
+                                    </div>
+
+                                    {/* [Recommendation #1] High-Contrast Thumb-Friendly Primary CTA Button */}
+                                    <div className="email-preview-cta-wrap">
+                                        <button
+                                            type="button"
+                                            className="email-preview-cta-btn"
+                                            onClick={() => navigate('/tests')}
+                                        >
+                                            Start 3-Minute Assessment →
+                                        </button>
+                                        <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                                            No special setup needed • Voice & touch friendly
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </section>
 
                 <section className="settings-section">
