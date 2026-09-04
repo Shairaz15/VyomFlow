@@ -86,6 +86,10 @@ export function UserMenu() {
                         <Settings className="menu-item-icon" size={16} strokeWidth={1.75} />
                         <span>{t('common.settings')}</span>
                     </Link>
+                    <Link to="/privacy" className="menu-item" onClick={() => setIsOpen(false)}>
+                        <Shield className="menu-item-icon" size={16} strokeWidth={1.75} />
+                        <span>{t('consent.privacy') || 'Privacy & Safeguards'}</span>
+                    </Link>
                     {isAdmin && (
                         <>
                             <div className="menu-divider" />

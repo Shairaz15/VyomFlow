@@ -51,13 +51,14 @@ export function OnboardingModal() {
     const [gender, setGender] = useState<Gender | ''>('');
     const [educationYears, setEducationYears] = useState<number>(16);
     const [language, setLanguage] = useState<LanguageCode>('en');
+    const [consentGiven, setConsentGiven] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Don't render if not authenticated or onboarding already done
     if (!user || onboardingComplete) return null;
 
-    const isValid = age !== '' && Number(age) >= 5 && Number(age) <= 120 && gender !== '';
+    const isValid = age !== '' && Number(age) >= 5 && Number(age) <= 120 && gender !== '' && consentGiven;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -178,6 +179,36 @@ export function OnboardingModal() {
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Informed Consent & Safeguards */}
+                    <div className="onboarding-consent-box">
+                        <label className="onboarding-consent-label" htmlFor="onboarding-consent-checkbox">
+                            <input
+                                id="onboarding-consent-checkbox"
+                                type="checkbox"
+                                className="onboarding-consent-checkbox"
+                                checked={consentGiven}
+                                onChange={(e) => setConsentGiven(e.target.checked)}
+                                required
+                            />
+                            <div className="onboarding-consent-text">
+                                <span className="onboarding-consent-main">
+                                    {t('onboarding.consentLabel')}
+                                </span>
+                                <span className="onboarding-consent-sub">
+                                    {t('onboarding.consentSubtext')}{' '}
+                                    <a
+                                        href="/privacy"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="onboarding-privacy-link"
+                                    >
+                                        {t('onboarding.privacyLink')} &rarr;
+                                    </a>
+                                </span>
+                            </div>
+                        </label>
                     </div>
 
                     {error && <p className="onboarding-error">{error}</p>}

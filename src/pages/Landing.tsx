@@ -72,7 +72,7 @@ export function Landing() {
                         <button onClick={() => handleScrollTo("platform")} className="vyom-nav-link">
                             {t("landing.navTestModules")}
                         </button>
-                        <button onClick={() => handleScrollTo("privacy")} className="vyom-nav-link">
+                        <button onClick={() => navigate("/privacy")} className="vyom-nav-link">
                             {t("landing.navPrivacy")}
                         </button>
                     </nav>
@@ -212,7 +212,7 @@ export function Landing() {
                             <span>{t("nav.testModules")}</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
-                        <button onClick={() => handleScrollTo("privacy")} className="vyom-mobile-nav-item">
+                        <button onClick={() => { setMobileMenuOpen(false); navigate("/privacy"); }} className="vyom-mobile-nav-item">
                             <span>{t("nav.privacy")}</span>
                             <span className="text-[#8FAF8B]">→</span>
                         </button>
@@ -951,7 +951,7 @@ export function Landing() {
                                 <button onClick={() => handleScrollTo("platform")} className="vyom-footer-link text-center">
                                     Test Modules
                                 </button>
-                                <button onClick={() => handleScrollTo("privacy")} className="vyom-footer-link text-center">
+                                <button onClick={() => navigate("/privacy")} className="vyom-footer-link text-center">
                                     Privacy
                                 </button>
                             </nav>

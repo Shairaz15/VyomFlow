@@ -169,7 +169,8 @@
     "comparedSessions": "આની સામે સરખામણી: {{count}} સત્ર(ઓ)",
     "lastUpdated": "છેલ્લે અપડેટ થયું: {{date}}",
     "showClinicalMetrics": "ક્લિનિકલ મેટ્રિક્સ બતાવો ▼",
-    "hideClinicalMetrics": "ક્લિનિકલ મેટ્રિક્સ છુપાવો ▲"
+    "hideClinicalMetrics": "ક્લિનિકલ મેટ્રિક્સ છુપાવો ▲",
+    "noDataYet": "No sessions recorded yet"
   },
   "settings": {
     "title": "સેટિંગ્સ",
@@ -220,7 +221,12 @@
     "preferredLanguage": "પસંદગીની ભાષા",
     "continue": "ચાલુ રાખો",
     "saving": "સાચવી રહ્યા છીએ...",
-    "error": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો."
+    "error": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    "educationLevel": "Education Level (Years)",
+    "consentTitle": "Informed Consent & Safeguards",
+    "consentLabel": "I consent to cognitive exercise tracking and ephemeral voice transcription for personal trend awareness.",
+    "consentSubtext": "VyomFlow is a non-diagnostic wellness tool. Raw audio is never permanently stored.",
+    "privacyLink": "Read Privacy & Safeguards"
   },
   "auth": {
     "signInRequired": "સાઇન ઇન જરૂરી છે",
@@ -350,7 +356,9 @@
     "tryPractice": "પ્રેક્ટિસ અજમાવો",
     "retakeActivity": "પ્રવૃત્તિ ફરીથી લો",
     "clinicalTarget": "ક્લિનિકલ માપન લક્ષ્ય",
-    "done": "પૂર્ણ થયું"
+    "done": "પૂર્ણ થયું",
+    "resetSession": "Reset Protocol / Start Fresh",
+    "resetConfirm": "Start a fresh assessment protocol? This will clear current session test progress."
   },
   "memory": {
     "title": "મૌખિક મેમરી આકારણી",
@@ -521,7 +529,14 @@
     "leaveAssessment": "શું આ મૂલ્યાંકન છોડવું છે?",
     "leaveWarning": "જો તમે હમણાં છોડશો તો તમારી વર્તમાન મૂલ્યાંકન પ્રગતિ ખોવાઈ જશે.",
     "continueTest": "પરીક્ષણ ચાલુ રાખો",
-    "leaveTest": "પરીક્ષણ છોડો"
+    "leaveTest": "પરીક્ષણ છોડો",
+    "practiceOver": "Practice Over",
+    "startingLevel1": "Starting Level 1...",
+    "levelDisplay": "Level {{level}}",
+    "responseSpeed": "Avg sequence response speed",
+    "correctNext": "Correct!",
+    "practiceCompleted": "Great! Practice completed.",
+    "beginRealAssessment": "Let's begin the real assessment."
   },
   "attention": {
     "title": "ધ્યાન",
@@ -808,7 +823,28 @@
     "faq2A": "ક્યારેય નહીં. વ્યોમફ્લો સહભાગી આરોગ્ય ડેટા વેચતું નથી અથવા જાહેરાત નેટવર્ક્સ સાથે વ્યક્તિગત આકારણી ટ્રેકિંગ શેર કરતું નથી.",
     "faq3Q": "હું મારા આકારણી ઇતિહાસને કેવી રીતે મેનેજ અથવા ડિલીટ કરી શકું?",
     "faq3A": "તમે હિસ્ટ્રી પેજ પર તમારા અગાઉના રેકોર્ડ્સનું નિરીક્ષણ કરી શકો છો અથવા તમારા યુઝર પ્રોફાઇલ મેનૂમાંથી તમારા એકાઉન્ટ સેટિંગ્સનું સંચાલન કરી શકો છો.",
-    "returnToJourney": "જર્ની મેપ પર પાછા ફરો →"
+    "returnToJourney": "જર્ની મેપ પર પાછા ફરો →",
+    "badge": "Privacy-by-Design Architecture",
+    "tier1Title": "Tier 1: Edge-Native Assessment",
+    "tier1Badge": "Zero Cloud",
+    "tier1Desc": "Reaction Speed, Visual Memory, Spatial Navigation, and Pattern Recognition execute 100% client-side in your browser. Motor and touch responses never leave your device.",
+    "tier2Title": "Tier 2: Ephemeral Voice Processing",
+    "tier2Badge": "Zero Disk Audio",
+    "tier2Desc": "Voice interactions in 11 vernacular languages are transcribed in-memory via Sarvam AI. Voice audio streams are immediately purged from memory once text tokens are generated — raw audio is never stored on disk or persistent databases.",
+    "tier3Title": "Tier 3: De-Identified Semantic Scoring",
+    "tier3Badge": "Zero PII",
+    "tier3Desc": "Cognitive-linguistic discourse analysis evaluates topic adherence and proposition density using anonymized transcripts. Zero Personally Identifiable Information (no name, email, age, or IP) is ever passed to AI models.",
+    "offlineTitle": "Air-Gapped Offline Fallback",
+    "offlineBadge": "100% Local",
+    "offlineDesc": "For clinical environments or users requiring zero-cloud operation, VyomFlow includes local algorithmic fallback engines (Levenshtein alignment & proposition estimators) that operate completely without an internet connection.",
+    "nonDiagnosticBadge": "Wellness",
+    "dataControlTitle": "Data Sovereignty & Erasure",
+    "dataControlBadge": "DPDP & GDPR",
+    "dataControlDesc": "You retain full ownership of your records. In compliance with DPDP and international data privacy principles, you can inspect your history, export data summaries, or permanently purge your account at any time.",
+    "architectureTitle": "Our 3-Tier Privacy Architecture",
+    "architectureSubtitle": "Engineered so sensitive health information stays under your control at every phase.",
+    "faq4Q": "Can VyomFlow run in an air-gapped or offline clinic?",
+    "faq4A": "Yes. If cloud connectivity is disabled or offline mode is chosen, VyomFlow automatically falls back to local deterministic JavaScript engines that compute acoustic markers and recall scores entirely inside the client browser."
   },
   "dashboardV3": {
     "overallStatus": "એકંદરે જ્ઞાનાત્મક સ્થિતિ",

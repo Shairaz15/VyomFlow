@@ -1,64 +1,286 @@
-/* Privacy Page Styles */
+/* ==========================================================================
+   VyomFlow Privacy Page Styles (Dual-Theme: Light & Dark)
+   ========================================================================== */
 
 .privacy-page {
-    max-width: 900px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 2rem 1rem 4rem;
+    padding: 2rem 1.25rem 5rem;
 }
 
+/* ===== Header ===== */
 .privacy-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2.75rem;
+}
+
+.privacy-badge-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0.85rem 0.35rem 0.45rem;
+    background: rgba(79, 124, 120, 0.08);
+    border: 1px solid rgba(79, 124, 120, 0.22);
+    border-radius: 9999px;
+    margin-bottom: 1.25rem;
 }
 
 .privacy-icon-badge {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 60px;
-    height: 60px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
-    margin-bottom: 1.25rem;
-    border: 1px solid var(--glass-border);
+    background: rgba(79, 124, 120, 0.15);
+}
+
+.privacy-pill-tag {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: #4F7C78;
+    text-transform: uppercase;
+}
+
+.dark .privacy-badge-container,
+[data-theme="dark"] .privacy-badge-container {
+    background: rgba(94, 234, 212, 0.08);
+    border-color: rgba(94, 234, 212, 0.25);
+}
+
+.dark .privacy-icon-badge,
+[data-theme="dark"] .privacy-icon-badge {
+    background: rgba(94, 234, 212, 0.16);
+}
+
+.dark .privacy-pill-tag,
+[data-theme="dark"] .privacy-pill-tag {
+    color: #5EEAD4;
 }
 
 .privacy-header h1 {
-    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-size: clamp(2.1rem, 4vw, 2.75rem);
     font-weight: 800;
-    color: var(--color-text-primary);
-    margin-bottom: 0.5rem;
+    color: var(--color-text-primary, #17324D);
+    letter-spacing: -0.025em;
+    margin-bottom: 0.65rem;
+    line-height: 1.2;
 }
 
 .privacy-subtitle {
-    font-size: 1.1rem;
-    color: var(--color-text-secondary);
-    max-width: 640px;
+    font-size: 1.05rem;
+    color: var(--color-text-secondary, #4F6168);
+    max-width: 680px;
     margin: 0 auto;
-    line-height: 1.6;
+    line-height: 1.65;
 }
 
-/* Privacy Grid */
+/* ===== 3-Tier Architecture Architecture Banner ===== */
+.privacy-architecture-banner {
+    background: var(--bg-surface, #ffffff);
+    border: 1px solid var(--glass-border, rgba(23, 50, 77, 0.12));
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 4px 20px -2px rgba(23, 50, 77, 0.06);
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.architecture-banner-header {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.architecture-banner-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #17324D);
+    margin: 0;
+}
+
+.architecture-banner-header p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary, #64748b);
+    margin: 0.25rem 0 0;
+}
+
+.architecture-pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.pipeline-step {
+    flex: 1 1 240px;
+    background: rgba(79, 124, 120, 0.04);
+    border: 1px solid rgba(79, 124, 120, 0.12);
+    border-radius: 14px;
+    padding: 1.25rem 1rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.pipeline-step:hover {
+    transform: translateY(-2px);
+    border-color: rgba(79, 124, 120, 0.35);
+}
+
+.dark .pipeline-step,
+[data-theme="dark"] .pipeline-step {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .pipeline-step:hover,
+[data-theme="dark"] .pipeline-step:hover {
+    border-color: rgba(94, 234, 212, 0.3);
+}
+
+.step-badge {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+}
+
+.step-tier1 {
+    background: #EAF3EF;
+    color: #2D6A4F;
+}
+
+.step-tier2 {
+    background: #E0F2FE;
+    color: #0369A1;
+}
+
+.step-tier3 {
+    background: #EEF2FF;
+    color: #4338CA;
+}
+
+.dark .step-tier1,
+[data-theme="dark"] .step-tier1 {
+    background: rgba(52, 211, 153, 0.15);
+    color: #6ee7b7;
+}
+
+.dark .step-tier2,
+[data-theme="dark"] .step-tier2 {
+    background: rgba(56, 189, 248, 0.15);
+    color: #7dd3fc;
+}
+
+.dark .step-tier3,
+[data-theme="dark"] .step-tier3 {
+    background: rgba(165, 180, 252, 0.15);
+    color: #a5b4fc;
+}
+
+.step-icon-wrap {
+    color: var(--color-accent, #4F7C78);
+}
+
+.dark .step-icon-wrap,
+[data-theme="dark"] .step-icon-wrap {
+    color: #5EEAD4;
+}
+
+.step-content h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #17324D);
+    margin: 0 0 0.2rem;
+}
+
+.step-content p {
+    font-size: 0.84rem;
+    color: var(--color-text-secondary, #4F6168);
+    margin: 0;
+    line-height: 1.45;
+}
+
+.step-guarantee-pill {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #4F7C78;
+    background: rgba(79, 124, 120, 0.1);
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    margin-top: 0.25rem;
+}
+
+.dark .step-guarantee-pill,
+[data-theme="dark"] .step-guarantee-pill {
+    color: #5EEAD4;
+    background: rgba(94, 234, 212, 0.12);
+}
+
+.pipeline-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted, #94a3b8);
+}
+
+@media (max-width: 768px) {
+    .pipeline-arrow {
+        display: none;
+    }
+}
+
+/* ===== Privacy Grid ===== */
 .privacy-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin-bottom: 3.5rem;
 }
 
 .privacy-card {
     padding: 1.75rem;
-    background: var(--bg-surface);
-    border: 1px solid var(--glass-border);
+    background: var(--bg-surface, #ffffff);
+    border: 1px solid var(--glass-border, rgba(23, 50, 77, 0.12));
     border-radius: 20px;
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 2px 12px -2px rgba(23, 50, 77, 0.05);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .privacy-card:hover {
-    border-color: var(--color-accent);
-    transform: translateY(-2px);
+    border-color: #4F7C78;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -4px rgba(23, 50, 77, 0.1);
+}
+
+.dark .privacy-card,
+[data-theme="dark"] .privacy-card {
+    background: var(--bg-surface, #16161d);
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .privacy-card:hover,
+[data-theme="dark"] .privacy-card:hover {
+    border-color: #5EEAD4;
+    box-shadow: 0 10px 30px rgba(94, 234, 212, 0.1);
+}
+
+.card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
 }
 
 .card-icon-box {
@@ -67,132 +289,235 @@
     justify-content: center;
     width: 3.25rem;
     height: 3.25rem;
-    border-radius: 50%;
-    margin-bottom: 1.25rem;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    border-radius: 14px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .privacy-card:hover .card-icon-box {
-    transform: scale(1.1) translateY(-2px);
+    transform: scale(1.08);
 }
 
-.custom-privacy-icon {
-    width: 1.625rem;
-    height: 1.625rem;
-}
-
-/* Card 1: Sage (Local Audio) */
+/* Card Icons & Badges: Light mode */
 .card-icon-sage {
     background: #EAF3EF;
-    color: #4F7C78;
-    border: 1px solid rgba(79, 124, 120, 0.22);
+    color: #2D6A4F;
+    border: 1px solid rgba(45, 106, 79, 0.2);
+}
+.badge-sage {
+    background: #EAF3EF;
+    color: #2D6A4F;
 }
 
-/* Card 2: Blue (Encrypted Storage) */
 .card-icon-blue {
-    background: #EEF3F8;
-    color: #4A6680;
-    border: 1px solid rgba(74, 102, 128, 0.22);
+    background: #E0F2FE;
+    color: #0369A1;
+    border: 1px solid rgba(3, 105, 161, 0.2);
+}
+.badge-blue {
+    background: #E0F2FE;
+    color: #0369A1;
 }
 
-/* Card 3: Indigo (Health Control) */
 .card-icon-indigo {
     background: #EEF2FF;
-    color: #6366F1;
-    border: 1px solid rgba(99, 102, 241, 0.22);
+    color: #4338CA;
+    border: 1px solid rgba(67, 56, 202, 0.2);
+}
+.badge-indigo {
+    background: #EEF2FF;
+    color: #4338CA;
 }
 
-/* Card 4: Gold (Non-Diagnostic) */
 .card-icon-gold {
-    background: #F7F0E3;
-    color: #A88752;
-    border: 1px solid rgba(168, 135, 82, 0.22);
+    background: #FEF3C7;
+    color: #B45309;
+    border: 1px solid rgba(180, 83, 9, 0.2);
+}
+.badge-gold {
+    background: #FEF3C7;
+    color: #B45309;
 }
 
-/* Dark mode adjustments */
-.dark .card-icon-sage,
-[data-theme="dark"] .card-icon-sage {
-    background: rgba(79, 124, 120, 0.2);
+.card-icon-emerald {
+    background: #ECFDF5;
+    color: #047857;
+    border: 1px solid rgba(4, 120, 87, 0.2);
+}
+.badge-emerald {
+    background: #ECFDF5;
+    color: #047857;
+}
+
+.card-icon-teal {
+    background: #E6FFFA;
+    color: #0D9488;
+    border: 1px solid rgba(13, 148, 136, 0.2);
+}
+.badge-teal {
+    background: #E6FFFA;
+    color: #0D9488;
+}
+
+.card-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+}
+
+/* Card Icons & Badges: Dark mode */
+.dark .card-icon-sage, [data-theme="dark"] .card-icon-sage {
+    background: rgba(52, 211, 153, 0.15);
     color: #6ee7b7;
     border-color: rgba(110, 231, 183, 0.3);
 }
+.dark .badge-sage, [data-theme="dark"] .badge-sage {
+    background: rgba(52, 211, 153, 0.15);
+    color: #6ee7b7;
+}
 
-.dark .card-icon-blue,
-[data-theme="dark"] .card-icon-blue {
-    background: rgba(74, 102, 128, 0.25);
+.dark .card-icon-blue, [data-theme="dark"] .card-icon-blue {
+    background: rgba(56, 189, 248, 0.15);
     color: #7dd3fc;
     border-color: rgba(125, 211, 252, 0.3);
 }
+.dark .badge-blue, [data-theme="dark"] .badge-blue {
+    background: rgba(56, 189, 248, 0.15);
+    color: #7dd3fc;
+}
 
-.dark .card-icon-indigo,
-[data-theme="dark"] .card-icon-indigo {
-    background: rgba(99, 102, 241, 0.2);
+.dark .card-icon-indigo, [data-theme="dark"] .card-icon-indigo {
+    background: rgba(129, 140, 248, 0.15);
     color: #a5b4fc;
     border-color: rgba(165, 180, 252, 0.3);
 }
+.dark .badge-indigo, [data-theme="dark"] .badge-indigo {
+    background: rgba(129, 140, 248, 0.15);
+    color: #a5b4fc;
+}
 
-.dark .card-icon-gold,
-[data-theme="dark"] .card-icon-gold {
-    background: rgba(168, 135, 82, 0.2);
+.dark .card-icon-gold, [data-theme="dark"] .card-icon-gold {
+    background: rgba(251, 191, 36, 0.15);
     color: #fcd34d;
     border-color: rgba(252, 211, 77, 0.3);
 }
+.dark .badge-gold, [data-theme="dark"] .badge-gold {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fcd34d;
+}
+
+.dark .card-icon-emerald, [data-theme="dark"] .card-icon-emerald {
+    background: rgba(52, 211, 153, 0.15);
+    color: #6ee7b7;
+    border-color: rgba(110, 231, 183, 0.3);
+}
+.dark .badge-emerald, [data-theme="dark"] .badge-emerald {
+    background: rgba(52, 211, 153, 0.15);
+    color: #6ee7b7;
+}
+
+.dark .card-icon-teal, [data-theme="dark"] .card-icon-teal {
+    background: rgba(94, 234, 212, 0.15);
+    color: #5eead4;
+    border-color: rgba(94, 234, 212, 0.3);
+}
+.dark .badge-teal, [data-theme="dark"] .badge-teal {
+    background: rgba(94, 234, 212, 0.15);
+    color: #5eead4;
+}
 
 .privacy-card h3 {
-    font-size: 1.15rem;
+    font-size: 1.18rem;
     font-weight: 700;
-    color: var(--color-text-primary);
-    margin-bottom: 0.5rem;
+    color: var(--color-text-primary, #17324D);
+    margin: 0 0 0.5rem;
+    line-height: 1.35;
 }
 
 .privacy-card p {
     font-size: 0.92rem;
-    color: var(--color-text-secondary);
+    color: var(--color-text-secondary, #4F6168);
     line-height: 1.6;
     margin: 0;
+    flex-grow: 1;
 }
 
-/* FAQ Section */
+/* ===== FAQ Section ===== */
 .privacy-faq-section {
-    background: var(--bg-surface);
-    border: 1px solid var(--glass-border);
+    background: var(--bg-surface, #ffffff);
+    border: 1px solid var(--glass-border, rgba(23, 50, 77, 0.12));
     border-radius: 20px;
     padding: 2rem;
     margin-bottom: 3rem;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 12px -2px rgba(23, 50, 77, 0.05);
 }
 
-.privacy-faq-section h2 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--color-text-primary);
+.dark .privacy-faq-section,
+[data-theme="dark"] .privacy-faq-section {
+    background: var(--bg-surface, #16161d);
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+.faq-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--glass-border);
-    padding-bottom: 0.75rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--glass-border, rgba(23, 50, 77, 0.1));
+}
+
+.dark .faq-section-header,
+[data-theme="dark"] .faq-section-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.faq-section-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #17324D);
+    margin: 0;
+}
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .faq-item {
-    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(23, 50, 77, 0.06);
 }
 
 .faq-item:last-child {
-    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.dark .faq-item,
+[data-theme="dark"] .faq-item {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
 .faq-item h4 {
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--color-text-primary);
-    margin-bottom: 0.4rem;
+    color: var(--color-text-primary, #17324D);
+    margin: 0 0 0.45rem;
+    line-height: 1.4;
 }
 
 .faq-item p {
-    font-size: 0.95rem;
-    color: var(--color-text-secondary);
-    line-height: 1.6;
+    font-size: 0.94rem;
+    color: var(--color-text-secondary, #4F6168);
+    line-height: 1.65;
     margin: 0;
 }
 
+/* ===== Footer Action ===== */
 .privacy-actions-footer {
     display: flex;
     justify-content: center;
