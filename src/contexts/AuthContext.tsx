@@ -39,6 +39,7 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     refreshToken: () => Promise<void>;
     completeOnboarding: (data: OnboardingData) => Promise<void>;
+    resetOnboarding: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -86,14 +87,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
                             setRole(claimRole || 'user');
                         }
 
-                        // Create/update user profile in Firestore (for preferences, etc.)
-                        // Run this in background, don't block the auth flow
+                        // Check if onboarding is complete (with Firestore & per-user localStorage fallback)
                         const userDocRef = doc(db, 'users', firebaseUser.uid);
-                        const userDocSnap = await getDoc(userDocRef);
-                        const userData = userDocSnap.exists() ? userDocSnap.data() : null;
+                        let isComplete = false;
+                        let userData: any = null;
 
-                        // Check if onboarding is complete
-                        setOnboardingComplete(userData?.onboardingComplete === true);
+                        try {
+                            const userDocSnap = await getDoc(userDocRef);
+                            if (userDocSnap.exists()) {
+                                userData = userDocSnap.data();
+                                isComplete = userData?.onboardingComplete === true;
+                            }
+                        } catch (fsErr) {
+                            logger.warn('Firestore read error, checking local onboarding state:', fsErr);
+                            isComplete = localStorage.getItem(`vyomflow_onboarding_${firebaseUser.uid}`) === 'true';
+                        }
+
+                        // If not complete in Firestore, check per-user localStorage
+                        if (!isComplete) {
+                            isComplete = localStorage.getItem(`vyomflow_onboarding_${firebaseUser.uid}`) === 'true';
+                        }
+
+                        setOnboardingComplete(isComplete);
 
                         setDoc(
                             userDocRef,
@@ -115,6 +130,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     } catch (error) {
                         logger.error('Error loading user data:', error);
                         setRole('user');
+                        setOnboardingComplete(localStorage.getItem(`vyomflow_onboarding_${firebaseUser.uid}`) === 'true');
                     }
                 } else {
                     setRole('user');
@@ -168,23 +184,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const completeOnboarding = async (data: OnboardingData) => {
         if (!user) return;
-        await setDoc(
-            doc(db, 'users', user.uid),
-            {
-                age: data.age,
-                gender: data.gender,
-                educationYears: data.educationYears || 16,
-                preferredLanguage: data.preferredLanguage,
-                onboardingComplete: true,
-            },
-            { merge: true }
-        );
+        localStorage.setItem(`vyomflow_onboarding_${user.uid}`, 'true');
+        localStorage.setItem('vyomflow_user_profile', JSON.stringify(data));
+        setOnboardingComplete(true);
+
+        try {
+            await setDoc(
+                doc(db, 'users', user.uid),
+                {
+                    age: data.age,
+                    gender: data.gender,
+                    educationYears: data.educationYears || 16,
+                    preferredLanguage: data.preferredLanguage,
+                    onboardingComplete: true,
+                },
+                { merge: true }
+            );
+        } catch (err) {
+            logger.warn('Could not persist onboarding to Firestore:', err);
+        }
+
         syncUserProfileToSupabase({
             age: data.age,
             gender: data.gender,
             educationYears: data.educationYears || 16
         }).catch(err => logger.warn('Failed to sync onboarding to Supabase:', err));
-        setOnboardingComplete(true);
+    };
+
+    const resetOnboarding = () => {
+        if (user) {
+            localStorage.removeItem(`vyomflow_onboarding_${user.uid}`);
+            localStorage.removeItem('vyomflow_user_profile');
+        }
+        setOnboardingComplete(false);
     };
 
     // Force token refresh (call after role change via Cloud Function)
@@ -212,6 +244,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 signOut,
                 refreshToken,
                 completeOnboarding,
+                resetOnboarding,
             }}
         >
             {children}

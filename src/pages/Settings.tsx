@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -22,7 +23,8 @@ interface UserPreferences {
 }
 
 export function Settings() {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, resetOnboarding } = useAuth();
+    const navigate = useNavigate();
     const { t, setLocale } = useLanguage();
     const [preferences, setPreferences] = useState<UserPreferences>({
         emailNotifications: true,
@@ -308,6 +310,40 @@ export function Settings() {
                             {t('settings.lastReminderSent', { date: preferences.lastReminderSent.toLocaleDateString() })}
                         </p>
                     )}
+                </section>
+
+                <section className="settings-section">
+                    <h2>Privacy & Informed Consent</h2>
+                    <div className="setting-item">
+                        <div className="setting-info">
+                            <span className="setting-label">Informed Consent & Demographics</span>
+                            <span className="setting-description">
+                                Review or re-open your research consent, voice processing authorization, and age/gender parameters.
+                            </span>
+                        </div>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => resetOnboarding()}
+                        >
+                            Review Consent
+                        </Button>
+                    </div>
+                    <div className="setting-item">
+                        <div className="setting-info">
+                            <span className="setting-label">Privacy & Data Safeguards</span>
+                            <span className="setting-description">
+                                Read our 3-tier privacy architecture, zero-audio retention guarantee, and DPDP / GDPR rights.
+                            </span>
+                        </div>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate('/privacy')}
+                        >
+                            View Architecture
+                        </Button>
+                    </div>
                 </section>
 
                 <section className="settings-section">
