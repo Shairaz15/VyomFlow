@@ -142,9 +142,10 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         try {
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const langParam = selectedLanguage || 'unknown';
             const verbatimUrl = isLocalDev
-                ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000`
-                : `wss://vyomflow-proxy.onrender.com?model=saaras:v4&language-code=unknown&mode=transcribe&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
+                ? `${wsProtocol}//${window.location.host}/api/sarvam-ws?model=saaras:v4&language-code=${langParam}&mode=transcribe&sample_rate=16000`
+                : `wss://vyomflow-proxy.onrender.com?model=saaras:v4&language-code=${langParam}&mode=transcribe&sample_rate=16000&api_key=${encodeURIComponent(SARVAM_API_KEY)}`;
 
             const wsVerbatim = new WebSocket(verbatimUrl);
 
@@ -461,10 +462,11 @@ export function StoryRecorder({ selectedLanguage, onComplete }: StoryRecorderPro
         const filename = `story_audio.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
 
         // 1. Prepare Primary STT payload (Verbatim native language transcription)
+        const langParam = selectedLanguage || 'unknown';
         const sttFormData = new FormData();
         sttFormData.append('file', audioBlob, filename);
         sttFormData.append('model', 'saaras:v3');
-        sttFormData.append('language_code', 'unknown');
+        sttFormData.append('language_code', langParam);
 
         // 2. Prepare English Translation payload (if recording is non-English)
         const transFormData = new FormData();

@@ -635,11 +635,8 @@ export function LanguageAssessment() {
             const filename = `speech_audio.${ext}`;
 
             const isKnownEnglish = detectedLang === 'en-IN' || detectedLang === 'en-US';
-            const needsSTT = !sarvamTranscript || sarvamTranscript.length < 10;
-            const needsTranslation = !isKnownEnglish && (!sarvamTranslation || sarvamTranslation.length < 5);
 
             const fetchDirectSTT = async () => {
-                if (!needsSTT) return null;
                 try {
                     const fd = new FormData();
                     fd.append('file', _audioBlob, filename);
@@ -670,7 +667,7 @@ export function LanguageAssessment() {
             };
 
             const fetchAudioTranslate = async () => {
-                if (!needsTranslation) return null;
+                if (isKnownEnglish) return null;
                 try {
                     const transFd = new FormData();
                     transFd.append('file', _audioBlob, filename);
