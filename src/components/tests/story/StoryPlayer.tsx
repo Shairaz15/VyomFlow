@@ -4,8 +4,10 @@ import { useLanguage } from "../../../i18n/LanguageContext";
 import type { SupportedLanguage } from "../../../types/storyTypes";
 import { SARVAM_API_KEY } from "../../../utils/sarvamConfig";
 import { getCachedTTS, setCachedTTS } from "../../../utils/aiCache";
+import { getPreRenderedStoryTracks } from "../../../data/stories/storyAudioManifest";
 
 interface StoryPlayerProps {
+    storyId?: string;
     storyText: string;
     languageCode: SupportedLanguage;
     onComplete: () => void;
@@ -135,7 +137,7 @@ async function fetchTTSWithFallback(
     return null;
 }
 
-export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayerProps) {
+export function StoryPlayer({ storyId, storyText, languageCode, onComplete }: StoryPlayerProps) {
     const { t } = useLanguage();
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -260,6 +262,17 @@ export function StoryPlayer({ storyText, languageCode, onComplete }: StoryPlayer
             setError(null);
 
             try {
+                // Step 0: Instant Zero-Latency Pre-Rendered Sarvam AI Audio
+                if (storyId) {
+                    const preRendered = getPreRenderedStoryTracks(storyId, languageCode);
+                    if (preRendered && preRendered.length > 0) {
+                        setTracks(preRendered);
+                        setIsLoading(false);
+                        playLine(0, preRendered);
+                        return;
+                    }
+                }
+
                 const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 const isApexDomain = window.location.hostname === 'vyomflow.me';
                 const apiBase = isApexDomain ? 'https://www.vyomflow.me' : '';
