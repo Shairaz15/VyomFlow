@@ -2,9 +2,10 @@ import type { InformationUnit, StoryMatchResult, UnitMatchDetail, Story } from "
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_MODELS = [
-    'gemini-3.6-flash',
     'gemini-flash-lite-latest',
+    'gemini-3.1-flash-lite',
     'gemini-flash-latest',
+    'gemini-3.6-flash',
     'gemini-pro-latest',
 ];
 

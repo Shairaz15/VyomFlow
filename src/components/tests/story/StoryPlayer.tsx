@@ -3,6 +3,7 @@ import { Button, Card, Icon } from "../../common";
 import { useLanguage } from "../../../i18n/LanguageContext";
 import type { SupportedLanguage } from "../../../types/storyTypes";
 import { SARVAM_API_KEY } from "../../../utils/sarvamConfig";
+import { getCachedTTS, setCachedTTS } from "../../../utils/aiCache";
 
 interface StoryPlayerProps {
     storyText: string;
@@ -59,13 +60,19 @@ async function fetchTTSWithFallback(
     languageCode: string,
     proxyHttpBase: string
 ): Promise<string | null> {
+    // 0ms Cache Hit: check if audio is already synthesized
+    const cached = getCachedTTS(text, languageCode, 'priya');
+    if (cached) {
+        return cached;
+    }
+
     const payload = JSON.stringify({
         inputs: [text],
         target_language_code: languageCode,
         speaker: 'priya',
         model: 'bulbul:v3',
         pace: 0.85,
-        speech_sample_rate: 22050
+        speech_sample_rate: 16000
     });
 
     const isApexDomain = typeof window !== 'undefined' && window.location.hostname === 'vyomflow.me';
@@ -111,7 +118,10 @@ async function fetchTTSWithFallback(
                 if (res.ok) {
                     const data = await res.json();
                     const base64 = data.audios?.[0] || data.audio;
-                    if (base64) return base64;
+                    if (base64) {
+                        setCachedTTS(text, languageCode, base64, 'priya');
+                        return base64;
+                    }
                 }
             } catch (err) {
                 console.warn(`[Sarvam TTS] Attempt ${attempt + 1} on ${ep.url} failed:`, err);

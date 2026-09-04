@@ -67,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         speaker: payload.speaker || 'priya',
         model: payload.model || 'bulbul:v3',
         pace: payload.pace || 0.85,
-        speech_sample_rate: payload.speech_sample_rate || 22050,
+        speech_sample_rate: payload.speech_sample_rate || 16000,
       }),
     });
 

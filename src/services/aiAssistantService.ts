@@ -13,6 +13,7 @@ import { logger } from '../utils/logger';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 import { SARVAM_API_KEY } from '../utils/sarvamConfig';
+import { getCachedTTS, setCachedTTS } from '../utils/aiCache';
 
 let currentPlayingAudio: HTMLAudioElement | null = null;
 let ttsPlaybackId = 0;
@@ -20,9 +21,10 @@ let ttsPlaybackId = 0;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 const GEMINI_MODELS = [
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash-lite',
     'gemini-flash-lite-latest',
+    'gemini-3.1-flash-lite',
+    'gemini-flash-latest',
+    'gemini-3.5-flash-lite',
     'gemini-3.5-flash',
     'gemini-3.6-flash',
 ];
@@ -523,13 +525,19 @@ function splitTextForStreamingTTS(text: string): string[] {
 }
 
 async function fetchSarvamTTSAudio(textChunk: string, targetLanguageCode: string): Promise<string | null> {
+    // 0ms Cache Hit: check if audio is already synthesized
+    const cached = getCachedTTS(textChunk, targetLanguageCode, 'priya');
+    if (cached) {
+        return cached;
+    }
+
     const payload = {
         inputs: [textChunk],
         target_language_code: targetLanguageCode,
         speaker: 'priya',
         model: 'bulbul:v3',
         pace: 0.95,
-        speech_sample_rate: 22050,
+        speech_sample_rate: 16000,
     };
 
     try {
@@ -553,7 +561,11 @@ async function fetchSarvamTTSAudio(textChunk: string, targetLanguageCode: string
 
         if (res && res.ok) {
             const data = await res.json();
-            return data.audios?.[0] || data.audio || null;
+            const audioData = data.audios?.[0] || data.audio || null;
+            if (audioData) {
+                setCachedTTS(textChunk, targetLanguageCode, audioData, 'priya');
+            }
+            return audioData;
         }
     } catch (err) {
         logger.warn('Failed to fetch Sarvam TTS chunk:', err);
