@@ -23,6 +23,44 @@ import { logger } from '../utils/logger';
 
 const OFFLINE_QUEUE_KEY = 'vyomflow_supabase_offline_queue';
 
+export type DashboardDataMode = 'live' | 'mock_stable' | 'mock_mci' | 'mock_decline';
+export const DATA_MODE_STORAGE_KEY = 'vyomflow_data_mode';
+export const DATA_MODE_CHANGED_EVENT = 'vyomflow_data_mode_changed';
+
+/**
+ * Gets the current active data mode from localStorage or defaults to 'live'.
+ */
+export function getActiveDataMode(): DashboardDataMode {
+    try {
+        const saved = localStorage.getItem(DATA_MODE_STORAGE_KEY);
+        if (saved === 'mock_stable' || saved === 'mock_mci' || saved === 'mock_decline') {
+            return saved as DashboardDataMode;
+        }
+    } catch {
+        // Fallback to live
+    }
+    return 'live';
+}
+
+/**
+ * Sets the active data mode, saves to localStorage, and broadcasts the change across the app.
+ */
+export function setActiveDataMode(mode: DashboardDataMode): void {
+    try {
+        if (mode === 'live') {
+            localStorage.removeItem(DATA_MODE_STORAGE_KEY);
+        } else {
+            localStorage.setItem(DATA_MODE_STORAGE_KEY, mode);
+        }
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(DATA_MODE_CHANGED_EVENT, { detail: mode }));
+            window.dispatchEvent(new Event('storage'));
+        }
+    } catch {
+        // Fallback
+    }
+}
+
 /**
  * Gets the active Firebase UID (or the active ASHA beneficiary UID if running a field test).
  */
@@ -616,13 +654,14 @@ export async function seedMockTrajectoryToSupabase(
         };
 
         const config = profiles[trajectoryType] || profiles.stable;
+        const isExpandedMock = trajectoryType === 'mci' || trajectoryType === 'decline';
 
-        // 3. Insert 5 Module Results for each of the 7 modules + Master Sessions
+        // 3. Insert 5 Module Results for each module (4 baseline for stable, 7 for mci/decline) + Master Sessions
         for (let i = 0; i < 5; i++) {
             const sessionDate = new Date(now - daysAgo[i] * 86400000);
             const sessionId = `mock_session_${i + 1}`;
 
-            // A. Reaction
+            // A. Reaction (Baseline)
             await supabase.from('module_results').insert({
                 firebase_uid: firebaseUid,
                 session_id: sessionId,
@@ -636,21 +675,23 @@ export async function seedMockTrajectoryToSupabase(
                 biomarkers: {},
             });
 
-            // B. Sustained Attention (SAVT)
-            await supabase.from('module_results').insert({
-                firebase_uid: firebaseUid,
-                session_id: sessionId,
-                module_type: 'attention',
-                score: config.attentionScore[i],
-                is_mock: true,
-                timestamp: sessionDate.toISOString(),
-                duration_ms: 30000,
-                raw_metrics: {},
-                derived_features: { dPrime: Math.max(0.5, (config.attentionScore[i] / 30)), hitRate: config.attentionScore[i] / 100 },
-                biomarkers: {},
-            });
+            // B. Sustained Attention (SAVT) - Expanded Diagnostic Only
+            if (isExpandedMock) {
+                await supabase.from('module_results').insert({
+                    firebase_uid: firebaseUid,
+                    session_id: sessionId,
+                    module_type: 'attention',
+                    score: config.attentionScore[i],
+                    is_mock: true,
+                    timestamp: sessionDate.toISOString(),
+                    duration_ms: 30000,
+                    raw_metrics: {},
+                    derived_features: { dPrime: Math.max(0.5, (config.attentionScore[i] / 30)), hitRate: config.attentionScore[i] / 100 },
+                    biomarkers: {},
+                });
+            }
 
-            // C. VMRA
+            // C. VMRA (Baseline)
             await supabase.from('module_results').insert({
                 firebase_uid: firebaseUid,
                 session_id: sessionId,
@@ -664,21 +705,23 @@ export async function seedMockTrajectoryToSupabase(
                 biomarkers: {},
             });
 
-            // D. Story
-            await supabase.from('module_results').insert({
-                firebase_uid: firebaseUid,
-                session_id: sessionId,
-                module_type: 'story',
-                score: config.storyAcc[i],
-                is_mock: true,
-                timestamp: sessionDate.toISOString(),
-                duration_ms: 60000,
-                raw_metrics: {},
-                derived_features: {},
-                biomarkers: { memory: { recallAccuracy: config.storyAcc[i] / 100, infoUnitsRecalled: Math.round(config.storyAcc[i] / 5) } },
-            });
+            // D. Story Recall - Expanded Diagnostic Only
+            if (isExpandedMock) {
+                await supabase.from('module_results').insert({
+                    firebase_uid: firebaseUid,
+                    session_id: sessionId,
+                    module_type: 'story',
+                    score: config.storyAcc[i],
+                    is_mock: true,
+                    timestamp: sessionDate.toISOString(),
+                    duration_ms: 60000,
+                    raw_metrics: {},
+                    derived_features: {},
+                    biomarkers: { memory: { recallAccuracy: config.storyAcc[i] / 100, infoUnitsRecalled: Math.round(config.storyAcc[i] / 5) } },
+                });
+            }
 
-            // E. Language
+            // E. Language (Baseline)
             await supabase.from('module_results').insert({
                 firebase_uid: firebaseUid,
                 session_id: sessionId,
@@ -692,7 +735,7 @@ export async function seedMockTrajectoryToSupabase(
                 biomarkers: {},
             });
 
-            // F. Pattern
+            // F. Pattern (Baseline)
             await supabase.from('module_results').insert({
                 firebase_uid: firebaseUid,
                 session_id: sessionId,
@@ -706,19 +749,21 @@ export async function seedMockTrajectoryToSupabase(
                 biomarkers: {},
             });
 
-            // G. Navigation
-            await supabase.from('module_results').insert({
-                firebase_uid: firebaseUid,
-                session_id: sessionId,
-                module_type: 'navigation',
-                score: config.navAcc[i],
-                is_mock: true,
-                timestamp: sessionDate.toISOString(),
-                duration_ms: 50000,
-                raw_metrics: {},
-                derived_features: {},
-                biomarkers: { navigationAccuracy: config.navAcc[i] / 100, landmarkRecognitionAccuracy: Math.min(100, config.navAcc[i] + 4) / 100 },
-            });
+            // G. Navigation - Expanded Diagnostic Only
+            if (isExpandedMock) {
+                await supabase.from('module_results').insert({
+                    firebase_uid: firebaseUid,
+                    session_id: sessionId,
+                    module_type: 'navigation',
+                    score: config.navAcc[i],
+                    is_mock: true,
+                    timestamp: sessionDate.toISOString(),
+                    duration_ms: 50000,
+                    raw_metrics: {},
+                    derived_features: {},
+                    biomarkers: { navigationAccuracy: config.navAcc[i] / 100, landmarkRecognitionAccuracy: Math.min(100, config.navAcc[i] + 4) / 100 },
+                });
+            }
 
             // Master Assessment Session
             await supabase.from('assessment_sessions').insert({
@@ -727,7 +772,7 @@ export async function seedMockTrajectoryToSupabase(
                 session_number: i + 1,
                 is_mock: true,
                 session_date: sessionDate.toISOString(),
-                duration_seconds: 240,
+                duration_seconds: isExpandedMock ? 240 : 130,
                 estimated_moca: config.mocas[i],
                 predicted_diagnosis: config.diagnosis,
                 clinical_alert_tier: config.alert,
@@ -738,13 +783,13 @@ export async function seedMockTrajectoryToSupabase(
                 domain_language: config.csi[i],
                 domain_executive: config.patternLvl[i] * 10,
                 domain_processing_speed: Math.max(20, Math.min(100, Math.round(100 - (config.reactionRt[i] - 200) / 5))),
-                domain_spatial_orientation: config.navAcc[i],
-                domain_attention: config.attentionScore[i],
+                domain_spatial_orientation: isExpandedMock ? config.navAcc[i] : null,
+                domain_attention: isExpandedMock ? config.attentionScore[i] : null,
                 vmra_recall_accuracy: config.vmraAcc[i] / 100,
-                story_recall_accuracy: config.storyAcc[i] / 100,
+                story_recall_accuracy: isExpandedMock ? config.storyAcc[i] / 100 : null,
                 lang_cognitive_speech_index: config.csi[i],
                 reaction_mean_latency_ms: config.reactionRt[i],
-                nav_navigation_accuracy: config.navAcc[i] / 100,
+                nav_navigation_accuracy: isExpandedMock ? config.navAcc[i] / 100 : null,
             });
         }
 

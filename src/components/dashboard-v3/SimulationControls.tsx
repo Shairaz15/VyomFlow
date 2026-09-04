@@ -197,7 +197,7 @@ export function SimulationControls({
                         <span>🌟</span> Demo: Stable (Normal)
                     </div>
                     <div style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: '0.25rem' }}>
-                        5 sessions • MoCA 28-29 • Optimal bounds
+                        4 Baseline Modules • MoCA 28-29 • 3 Diagnostic Locked
                     </div>
                 </button>
 
@@ -220,7 +220,7 @@ export function SimulationControls({
                         <span>⚠️</span> Demo: MCI (Decline)
                     </div>
                     <div style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: '0.25rem' }}>
-                        5 sessions • MoCA 26→21 • Memory drift
+                        All 7 Modules Unlocked • MoCA 26→21 • Memory Drift
                     </div>
                 </button>
 
@@ -243,7 +243,7 @@ export function SimulationControls({
                         <span>🚨</span> Demo: Rapid Decline
                     </div>
                     <div style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: '0.25rem' }}>
-                        5 sessions • MoCA 24→15 • Clinical alert
+                        All 7 Modules Unlocked • MoCA 24→15 • Dementia Risk
                     </div>
                 </button>
             </div>

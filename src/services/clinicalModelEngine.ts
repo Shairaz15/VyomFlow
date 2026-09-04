@@ -473,10 +473,8 @@ export async function predictCognitiveProfile(
         const pDem = (1 - pNorm) * 0.4;
         const fallbackDiagnosis: 'Normal' | 'MCI' | 'Dementia' = pNorm > 0.6 ? 'Normal' : (pMci > pDem ? 'MCI' : 'Dementia');
 
-        const hasExtended = (data.story && data.story.length > 0) ||
-                            (data.attention && data.attention.length > 0) ||
-                            (data.navigation && data.navigation.length > 0);
-        const targetCount = (fallbackDiagnosis !== 'Normal' || hasExtended) ? 7.0 : 4.0;
+        const isExpandedFallback = fallbackDiagnosis === 'MCI' || fallbackDiagnosis === 'Dementia';
+        const targetCount = isExpandedFallback ? 7.0 : 4.0;
         const batteryCoverageFallback = Math.min(1.0, Math.max(1, completedModules.length) / targetCount);
 
         return {
@@ -533,10 +531,7 @@ export async function predictCognitiveProfile(
         predictedDiagnosis = 'MCI';
     }
 
-    const hasExtendedTests = (data.story && data.story.length > 0) ||
-                             (data.attention && data.attention.length > 0) ||
-                             (data.navigation && data.navigation.length > 0);
-    const isExpandedBattery = predictedDiagnosis !== 'Normal' || hasExtendedTests;
+    const isExpandedBattery = predictedDiagnosis === 'MCI' || predictedDiagnosis === 'Dementia';
     const targetBatteryCount = isExpandedBattery ? 7.0 : 4.0;
     const batteryCoverage = Math.min(1.0, Math.max(1, completedModules.length) / targetBatteryCount);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     useStoryResults,
     useVmraResults,
@@ -13,7 +13,13 @@ import {
     fetchLiveModuleResultsFromSupabase,
     subscribeToLiveAssessmentUpdates,
     getCurrentFirebaseUid,
-    type RawDashboardData
+    seedMockTrajectoryToSupabase,
+    clearMockDataFromSupabase,
+    getActiveDataMode,
+    setActiveDataMode,
+    DATA_MODE_CHANGED_EVENT,
+    type DashboardDataMode,
+    type RawDashboardData,
 } from '../services/supabaseService';
 import { predictCognitiveProfile, type CognitiveModelPrediction } from '../services/clinicalModelEngine';
 
@@ -238,6 +244,10 @@ export interface JourneyState {
     isLoading: boolean;
     isExpandedBattery: boolean;
     activeNodes: JourneyNodeInfo[];
+    dataMode: DashboardDataMode;
+    setDataMode: (mode: DashboardDataMode) => void;
+    seedMockPreset: (preset: 'stable' | 'mci' | 'decline') => Promise<void>;
+    clearMockData: () => Promise<void>;
 }
 
 export function useJourneyState(): JourneyState {
@@ -249,11 +259,67 @@ export function useJourneyState(): JourneyState {
     const { results: navigationResults, isLoading: navigationLoading } = useNavigationResults();
     const { results: languageResults, isLoading: languageLoading } = useLanguageResults();
 
+    const [dataMode, setDataModeState] = useState<DashboardDataMode>(() => getActiveDataMode());
     const [supabaseData, setSupabaseData] = useState<RawDashboardData | null>(null);
     const [isSupabaseLoading, setIsSupabaseLoading] = useState(true);
 
     const [protocolSessionStart, setProtocolSessionStart] = useState<number>(() => getProtocolSessionStartTime());
     const [prediction, setPrediction] = useState<CognitiveModelPrediction | null>(null);
+
+    const setDataMode = useCallback((mode: DashboardDataMode) => {
+        setDataModeState(mode);
+        setActiveDataMode(mode);
+    }, []);
+
+    // Listen for global data mode changes from other pages (e.g. Dashboard)
+    // Also re-sync on visibilitychange so navigating back always picks up the persisted mode
+    useEffect(() => {
+        const handleModeChange = (e: any) => {
+            const newMode = e?.detail || getActiveDataMode();
+            setDataModeState(newMode);
+        };
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                const persisted = getActiveDataMode();
+                setDataModeState(prev => {
+                    if (prev !== persisted) {
+                        return persisted;
+                    }
+                    return prev;
+                });
+            }
+        };
+        window.addEventListener(DATA_MODE_CHANGED_EVENT, handleModeChange);
+        window.addEventListener('storage', handleModeChange);
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            window.removeEventListener(DATA_MODE_CHANGED_EVENT, handleModeChange);
+            window.removeEventListener('storage', handleModeChange);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, []);
+
+    const seedMockPreset = useCallback(async (preset: 'stable' | 'mci' | 'decline') => {
+        const uid = getCurrentFirebaseUid();
+        if (!uid) return;
+        setIsSupabaseLoading(true);
+        await seedMockTrajectoryToSupabase(uid, preset);
+        setDataMode(`mock_${preset}` as DashboardDataMode);
+        const data = await fetchLiveModuleResultsFromSupabase(uid, true);
+        setSupabaseData(data);
+        setIsSupabaseLoading(false);
+    }, [setDataMode]);
+
+    const clearMockData = useCallback(async () => {
+        const uid = getCurrentFirebaseUid();
+        if (!uid) return;
+        setIsSupabaseLoading(true);
+        await clearMockDataFromSupabase(uid);
+        setDataMode('live');
+        const data = await fetchLiveModuleResultsFromSupabase(uid, false);
+        setSupabaseData(data);
+        setIsSupabaseLoading(false);
+    }, [setDataMode]);
 
     useEffect(() => {
         let mounted = true;
@@ -265,9 +331,18 @@ export function useJourneyState(): JourneyState {
                 return;
             }
             try {
-                const data = await fetchLiveModuleResultsFromSupabase(uid, false);
+                const isMock = dataMode !== 'live';
+                const data = await fetchLiveModuleResultsFromSupabase(uid, isMock);
                 if (mounted) {
-                    setSupabaseData(data);
+                    const totalMockCount = (data.reaction?.length || 0) + (data.vmra?.length || 0) + (data.pattern?.length || 0) + (data.language?.length || 0);
+                    if (isMock && totalMockCount === 0) {
+                        const trajectory = (dataMode.replace('mock_', '') || 'stable') as 'stable' | 'mci' | 'decline';
+                        await seedMockTrajectoryToSupabase(uid, trajectory);
+                        const fresh = await fetchLiveModuleResultsFromSupabase(uid, true);
+                        if (mounted) setSupabaseData(fresh);
+                    } else {
+                        setSupabaseData(data);
+                    }
                 }
             } catch {
                 // Ignore Supabase load failure
@@ -301,7 +376,7 @@ export function useJourneyState(): JourneyState {
         loadData();
 
         let unsubscribe = () => {};
-        if (uid) {
+        if (uid && dataMode === 'live') {
             unsubscribe = subscribeToLiveAssessmentUpdates(uid, () => {
                 loadData();
             });
@@ -313,7 +388,7 @@ export function useJourneyState(): JourneyState {
             window.removeEventListener("vyomflow_test_results_cleared", handleCleared);
             unsubscribe();
         };
-    }, []);
+    }, [dataMode]);
 
     // Reactive ML cognitive prediction run for dynamic battery expansion
     useEffect(() => {
@@ -336,16 +411,20 @@ export function useJourneyState(): JourneyState {
             }
 
             try {
-                const raw: RawDashboardData = {
-                    reaction: [...(supabaseData?.reaction || []), ...reactionResults],
-                    memory: [...(supabaseData?.memory || []), ...vmraResults],
-                    vmra: [...(supabaseData?.vmra || []), ...vmraResults],
-                    pattern: [...(supabaseData?.pattern || []), ...patternResults],
-                    language: [...(supabaseData?.language || []), ...languageResults],
-                    story: [...(supabaseData?.story || []), ...storyResults],
-                    navigation: [...(supabaseData?.navigation || []), ...navigationResults],
-                    attention: [...(supabaseData?.attention || []), ...attentionResults],
-                };
+                const raw: RawDashboardData = dataMode !== 'live'
+                    ? (supabaseData || {
+                        reaction: [], memory: [], vmra: [], pattern: [], language: [], story: [], navigation: [], attention: []
+                    })
+                    : {
+                        reaction: [...(supabaseData?.reaction || []), ...reactionResults],
+                        memory: [...(supabaseData?.memory || []), ...vmraResults],
+                        vmra: [...(supabaseData?.vmra || []), ...vmraResults],
+                        pattern: [...(supabaseData?.pattern || []), ...patternResults],
+                        language: [...(supabaseData?.language || []), ...languageResults],
+                        story: [...(supabaseData?.story || []), ...storyResults],
+                        navigation: [...(supabaseData?.navigation || []), ...navigationResults],
+                        attention: [...(supabaseData?.attention || []), ...attentionResults],
+                    };
                 const pred = await predictCognitiveProfile(raw);
                 if (!isCancelled) {
                     setPrediction(pred);
@@ -365,6 +444,7 @@ export function useJourneyState(): JourneyState {
         attentionResults,
         navigationResults,
         supabaseData,
+        dataMode,
     ]);
 
     const isLoading = (storyLoading || vmraLoading || reactionLoading || patternLoading || attentionLoading || navigationLoading || languageLoading) && isSupabaseLoading;
@@ -587,13 +667,13 @@ export function useJourneyState(): JourneyState {
         const localNavigation = getLocalFallback(STORAGE_KEYS.navigationResults);
         const localLanguage = getLocalFallback(STORAGE_KEYS.languageResults);
 
-        const mergedStory = [...localStory, ...storyResults, ...(supabaseData?.story || [])];
-        const mergedVmra = [...localVmra, ...vmraResults, ...(supabaseData?.vmra || [])];
-        const mergedReaction = [...localReaction, ...reactionResults, ...(supabaseData?.reaction || [])];
-        const mergedPattern = [...localPattern, ...patternResults, ...(supabaseData?.pattern || [])];
-        const mergedAttention = [...localAttention, ...attentionResults, ...(supabaseData?.attention || [])];
-        const mergedNavigation = [...localNavigation, ...navigationResults, ...(supabaseData?.navigation || [])];
-        const mergedLanguage = [...localLanguage, ...languageResults, ...(supabaseData?.language || [])];
+        const mergedStory = dataMode !== 'live' ? (supabaseData?.story || []) : [...localStory, ...storyResults, ...(supabaseData?.story || [])];
+        const mergedVmra = dataMode !== 'live' ? (supabaseData?.vmra || []) : [...localVmra, ...vmraResults, ...(supabaseData?.vmra || [])];
+        const mergedReaction = dataMode !== 'live' ? (supabaseData?.reaction || []) : [...localReaction, ...reactionResults, ...(supabaseData?.reaction || [])];
+        const mergedPattern = dataMode !== 'live' ? (supabaseData?.pattern || []) : [...localPattern, ...patternResults, ...(supabaseData?.pattern || [])];
+        const mergedAttention = dataMode !== 'live' ? (supabaseData?.attention || []) : [...localAttention, ...attentionResults, ...(supabaseData?.attention || [])];
+        const mergedNavigation = dataMode !== 'live' ? (supabaseData?.navigation || []) : [...localNavigation, ...navigationResults, ...(supabaseData?.navigation || [])];
+        const mergedLanguage = dataMode !== 'live' ? (supabaseData?.language || []) : [...localLanguage, ...languageResults, ...(supabaseData?.language || [])];
 
         const activityLastCompletedMap: Record<ActivityId, Date | null> = {
             story: getLatestTimestamp(mergedStory),
@@ -623,12 +703,17 @@ export function useJourneyState(): JourneyState {
                 const numericScore = extractNumericValue(item, type);
                 if (numericScore <= 0) return false;
 
+                // In mock simulation mode, match mock_session_5 items (the current session)
+                if (dataMode !== 'live' && item.sessionId === 'mock_session_5') {
+                    return true;
+                }
+
                 if (item.timestamp) {
                     const d = item.timestamp instanceof Date ? item.timestamp : new Date(item.timestamp);
                     const timeMs = d.getTime();
                     if (!isNaN(timeMs)) {
                         // Strict Protocol Isolation: only count as completed if performed in the active protocol session
-                        if (timeMs >= protocolSessionStart && (Date.now() - timeMs) <= PROTOCOL_SESSION_MAX_AGE_MS) {
+                        if (timeMs >= (protocolSessionStart - 10000) && (Date.now() - timeMs) <= PROTOCOL_SESSION_MAX_AGE_MS) {
                             return true;
                         }
                     }
@@ -722,6 +807,10 @@ export function useJourneyState(): JourneyState {
             isLoading,
             isExpandedBattery,
             activeNodes,
+            dataMode,
+            setDataMode,
+            seedMockPreset,
+            clearMockData,
         };
     }, [
         storyResults,
@@ -734,5 +823,9 @@ export function useJourneyState(): JourneyState {
         supabaseData,
         isLoading,
         prediction,
+        dataMode,
+        setDataMode,
+        seedMockPreset,
+        clearMockData,
     ]);
 }

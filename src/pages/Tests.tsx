@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ShieldCheck, ArrowRight } from "lucide-react";
+import { LayoutDashboard, ShieldCheck, ArrowRight, Lock } from "lucide-react";
 import { Icon, SpecularButton } from "../components/common";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -181,7 +181,7 @@ export function Tests() {
                     </div>
                 </header>
 
-                {/* Protocol Focus Filter Tabs */}
+                {/* Protocol Focus Filter Tabs & Simulation Switcher */}
                 <div className="journey-filter-bar" role="tablist" aria-label="Assessment Filters">
                     <button
                         type="button"
@@ -210,31 +210,24 @@ export function Tests() {
                     >
                         {t("journey.completed")} <span className="filter-pill-badge">{completedCount}</span>
                     </button>
+
                 </div>
 
-                {/* Supportive Clinical Banner when Comprehensive Diagnostic Battery is Unlocked */}
-                {isExpandedBattery && (
-                    <div
-                        className="expanded-battery-banner animate-fadeIn"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.85rem',
-                            padding: '0.9rem 1.25rem',
-                            marginBottom: '1rem',
-                            borderRadius: '12px',
-                            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%)',
-                            border: '1px solid rgba(14, 165, 233, 0.28)',
-                            color: 'var(--text-primary)',
-                        }}
-                    >
-                        <ShieldCheck size={22} style={{ color: '#0ea5e9', flexShrink: 0 }} />
-                        <div style={{ fontSize: '0.875rem', lineHeight: 1.45 }}>
-                            <strong style={{ color: '#0ea5e9', fontWeight: 600 }}>Comprehensive Diagnostic Battery Activated: </strong>
-                            Additional in-depth assessments (Story Recall, Sustained Attention, Video Navigation) have been added to provide your clinician with complete cognitive mapping.
-                        </div>
-                    </div>
-                )}
+                {/* Adaptive Protocol Status Strip — clean, minimal one-liner */}
+                <div className={`protocol-status-strip animate-fadeIn ${isExpandedBattery ? 'expanded' : 'baseline'}`}>
+                    {isExpandedBattery ? (
+                        <>
+                            <ShieldCheck size={16} className="strip-icon expanded" />
+                            <span className="strip-text">Full diagnostic battery active — <strong>all {totalCount} assessments</strong> unlocked</span>
+                        </>
+                    ) : (
+                        <>
+                            <Lock size={16} className="strip-icon baseline" />
+                            <span className="strip-text">Baseline protocol — <strong>{totalCount} of 7 assessments</strong> active</span>
+                            <span className="strip-hint">Additional tests unlock when needed</span>
+                        </>
+                    )}
+                </div>
 
                 {/* Main Feature: Spacious Organic Journey Map Landscape */}
                 <main className="journey-map-main" aria-label="Journey Map">

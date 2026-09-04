@@ -35,13 +35,17 @@ import {
     clearMockDataFromSupabase,
     deleteAllUserDataFromSupabase,
     getCurrentFirebaseUid,
+    getActiveDataMode,
+    setActiveDataMode,
+    DATA_MODE_CHANGED_EVENT,
+    type DashboardDataMode,
 } from '../services/supabaseService';
 import { buildDashboardViewModel, type DashboardViewModel } from '../services/dashboardViewModel';
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { logger } from '../utils/logger';
 
-export type DashboardDataMode = 'live' | 'mock_stable' | 'mock_mci' | 'mock_decline';
+export type { DashboardDataMode };
 
 export interface DashboardV3HookReturn extends DashboardViewModel {
     dataMode: DashboardDataMode;
@@ -67,7 +71,7 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
     const isHooksLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8;
 
     // ─── 2. State ────────────────────────────────────────────────
-    const [dataMode, setDataMode] = useState<DashboardDataMode>('live');
+    const [dataMode, setDataModeState] = useState<DashboardDataMode>(() => getActiveDataMode());
     const [supabaseRawData, setSupabaseRawData] = useState<RawDashboardData | null>(null);
     const [isSeeding, setIsSeeding] = useState(false);
     const [prediction, setPrediction] = useState<CognitiveModelPrediction | null>(null);
@@ -76,6 +80,40 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
     const [driftMetrics, setDriftMetrics] = useState<DriftMetrics | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const setDataMode = useCallback((mode: DashboardDataMode) => {
+        setDataModeState(mode);
+        setActiveDataMode(mode);
+    }, []);
+
+    // Listen for global data mode changes from other pages (e.g. Tests page)
+    // Also re-sync on visibilitychange so navigating back always picks up the persisted mode
+    useEffect(() => {
+        const handleModeChange = (e: any) => {
+            const newMode = e?.detail || getActiveDataMode();
+            setDataModeState(newMode);
+        };
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                const persisted = getActiveDataMode();
+                setDataModeState(prev => {
+                    if (prev !== persisted) {
+                        setRefreshTrigger(t => t + 1);
+                        return persisted;
+                    }
+                    return prev;
+                });
+            }
+        };
+        window.addEventListener(DATA_MODE_CHANGED_EVENT, handleModeChange);
+        window.addEventListener('storage', handleModeChange);
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            window.removeEventListener(DATA_MODE_CHANGED_EVENT, handleModeChange);
+            window.removeEventListener('storage', handleModeChange);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, []);
 
     const refreshLive = useCallback(() => {
         setRefreshTrigger(prev => prev + 1);
@@ -155,7 +193,7 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
         const data = await fetchLiveModuleResultsFromSupabase(uid, true);
         setSupabaseRawData(data);
         setIsSeeding(false);
-    }, []);
+    }, [setDataMode]);
 
     const clearMockData = useCallback(async () => {
         const uid = auth.currentUser?.uid || getCurrentFirebaseUid();
@@ -166,7 +204,7 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
         const data = await fetchLiveModuleResultsFromSupabase(uid, false);
         setSupabaseRawData(data);
         setIsSeeding(false);
-    }, []);
+    }, [setDataMode]);
 
     const deleteAllData = useCallback(async () => {
         const uid = auth.currentUser?.uid || getCurrentFirebaseUid();
@@ -197,7 +235,7 @@ export function useDashboardV3ViewModel(): DashboardV3HookReturn {
         setDriftMetrics(null);
         setIsSeeding(false);
         setRefreshTrigger(prev => prev + 1);
-    }, []);
+    }, [setDataMode]);
 
 
 
