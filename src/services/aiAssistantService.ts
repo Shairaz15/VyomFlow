@@ -524,11 +524,20 @@ function splitTextForStreamingTTS(text: string): string[] {
     return [clean.slice(0, 450)];
 }
 
+// In-flight deduplication map for ongoing TTS pre-fetches
+const inFlightTtsPromises = new Map<string, Promise<string | null>>();
+
 async function fetchSarvamTTSAudio(textChunk: string, targetLanguageCode: string): Promise<string | null> {
     // 0ms Cache Hit: check if audio is already synthesized
     const cached = getCachedTTS(textChunk, targetLanguageCode, 'priya');
     if (cached) {
         return cached;
+    }
+
+    // Deduplication: if another caller (e.g. background pre-fetch) is already fetching this chunk, reuse promise
+    const dedupeKey = `${targetLanguageCode}:${textChunk.trim().toLowerCase()}`;
+    if (inFlightTtsPromises.has(dedupeKey)) {
+        return inFlightTtsPromises.get(dedupeKey)!;
     }
 
     const payload = {
@@ -540,37 +549,78 @@ async function fetchSarvamTTSAudio(textChunk: string, targetLanguageCode: string
         speech_sample_rate: 16000,
     };
 
-    try {
-        let res: Response;
+    const fetchPromise = (async (): Promise<string | null> => {
         try {
-            res = await fetch('/api/sarvam-tts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-        } catch {
-            res = await fetch('https://api.sarvam.ai/text-to-speech', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'api-subscription-key': SARVAM_API_KEY,
-                },
-                body: JSON.stringify(payload),
-            });
-        }
-
-        if (res && res.ok) {
-            const data = await res.json();
-            const audioData = data.audios?.[0] || data.audio || null;
-            if (audioData) {
-                setCachedTTS(textChunk, targetLanguageCode, audioData, 'priya');
+            let res: Response;
+            try {
+                res = await fetch('/api/sarvam-tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            } catch {
+                res = await fetch('https://api.sarvam.ai/text-to-speech', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'api-subscription-key': SARVAM_API_KEY,
+                    },
+                    body: JSON.stringify(payload),
+                });
             }
-            return audioData;
+
+            if (res && res.ok) {
+                const data = await res.json();
+                const audioData = data.audios?.[0] || data.audio || null;
+                if (audioData) {
+                    setCachedTTS(textChunk, targetLanguageCode, audioData, 'priya');
+                }
+                return audioData;
+            }
+        } catch (err) {
+            logger.warn('Failed to fetch Sarvam TTS chunk:', err);
+        } finally {
+            inFlightTtsPromises.delete(dedupeKey);
         }
-    } catch (err) {
-        logger.warn('Failed to fetch Sarvam TTS chunk:', err);
-    }
-    return null;
+        return null;
+    })();
+
+    inFlightTtsPromises.set(dedupeKey, fetchPromise);
+    return fetchPromise;
+}
+
+/**
+ * Speculatively pre-fetches and caches Sarvam AI TTS audio for an incoming assistant message in any language.
+ * Initiates the audio request in the background the moment the message is generated, so that when the user
+ * clicks "Listen", the audio plays instantly in 0 ms.
+ */
+export function prefetchMessageAudio(text: string, langCode: string = 'en'): void {
+    const cleanText = text
+        .replace(/[#*_`~>-]/g, '')
+        .replace(/\bhttps?:\/\/\S+/gi, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .trim();
+
+    if (!cleanText) return;
+
+    // Auto-detect Indic script directly from text content to guarantee correct TTS model
+    let effectiveLang = langCode;
+    if (/[\u0900-\u097F]/.test(cleanText)) effectiveLang = 'hi';
+    else if (/[\u0C80-\u0CFF]/.test(cleanText)) effectiveLang = 'kn';
+    else if (/[\u0B80-\u0BFF]/.test(cleanText)) effectiveLang = 'ta';
+    else if (/[\u0C00-\u0C7F]/.test(cleanText)) effectiveLang = 'te';
+    else if (/[\u0980-\u09FF]/.test(cleanText)) effectiveLang = 'bn';
+    else if (/[\u0A80-\u0AFF]/.test(cleanText)) effectiveLang = 'gu';
+    else if (/[\u0D00-\u0D7F]/.test(cleanText)) effectiveLang = 'ml';
+    else if (/[\u0A00-\u0A7F]/.test(cleanText)) effectiveLang = 'pa';
+
+    const sarvamLang = SARVAM_LANG_MAP[effectiveLang] || 'hi-IN';
+    const chunks = splitTextForStreamingTTS(cleanText);
+
+    // Speculatively fetch all chunks in the background without awaiting or blocking UI
+    chunks.forEach(chunk => {
+        fetchSarvamTTSAudio(chunk, sarvamLang).catch(() => {});
+    });
 }
 
 /**

@@ -50,6 +50,7 @@ import {
     stopSpeaking,
     checkAiServerStatus,
     detectMessageLanguage,
+    prefetchMessageAudio,
 } from '../../services/aiAssistantService';
 import { SARVAM_API_KEY } from '../../utils/sarvamConfig';
 import './AiAssistantBubble.css';
@@ -386,6 +387,10 @@ export const AiAssistantBubble: React.FC = () => {
                 page_content: pageContent,
                 language: detected,
             });
+
+            // Speculative Audio Pre-fetch: Immediately synthesize & cache audio in background
+            // so if the user clicks "Listen", it begins playing in 0ms with zero delay!
+            prefetchMessageAudio(reply, detected);
 
             // Feature 1: Progressive Streaming / Typewriter Delivery
             const aiMsgId = `ai-${Date.now()}`;
