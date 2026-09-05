@@ -68,7 +68,28 @@
     "navPrivacy": "Privacy",
     "getStarted": "Get Started",
     "yourCognitiveJourney": "Your Cognitive Journey",
-    "cognitiveJourneyDesc": "Explore guided activities designed to observe key cognitive domains over time."
+    "cognitiveJourneyDesc": "Explore guided activities designed to observe key cognitive domains over time.",
+    "domainStoryTitle": "Story Narration Recall",
+    "domainStorySub": "Episodic & Verbal Memory",
+    "domainVmraTitle": "Visual Memory (VMRA)",
+    "domainVmraSub": "Visual Recognition & Recall",
+    "domainReactionTitle": "Reaction Time",
+    "domainReactionSub": "Motor & Processing Latency",
+    "domainPatternTitle": "Pattern Recognition",
+    "domainPatternSub": "Abstract & Fluid Reasoning",
+    "domainAttentionTitle": "Sustained Attention",
+    "domainAttentionSub": "Vigilance & Focus Control",
+    "domainNavigationTitle": "Immersive Navigation",
+    "domainNavigationSub": "Spatial & Route Memory",
+    "domainLanguageTitle": "Language & Speech",
+    "domainLanguageSub": "Acoustic & Semantic Fluency",
+    "ctaHeading": "Measuring the Mind, Beyond Memory",
+    "ctaSubtitle": "Begin your cognitive journey with VyomFlow.",
+    "backToTop": "Back to Top",
+    "footerSubtitle": "Cognitive performance tracking designed for awareness and longitudinal self-observation.",
+    "footerExplore": "EXPLORE",
+    "footerDisclaimer": "VyomFlow is designed for personal cognitive awareness and longitudinal observation. It does not provide medical diagnosis or treatment advice.",
+    "footerCopyright": "© {{year}} VyomFlow. All rights reserved."
   },
   "nav": {
     "home": "Home",
@@ -637,7 +658,31 @@
     "faq3A": "Never. VyomFlow strictly adheres to privacy-by-design standards and does not monetize, sell, or disclose personal assessment records to advertising networks or third-party brokers.",
     "faq4Q": "Can VyomFlow run in an air-gapped or offline clinic?",
     "faq4A": "Yes. If cloud connectivity is disabled or offline mode is chosen, VyomFlow automatically falls back to local deterministic JavaScript engines that compute acoustic markers and recall scores entirely inside the client browser.",
-    "returnToJourney": "Return to Journey Map →"
+    "returnToJourney": "Return to Journey Map →",
+    "landingHeading": "Your mind. Your data.",
+    "landingSubtitle": "Privacy is fundamentally embedded into the design and architecture of VyomFlow.",
+    "landingCard1Badge": "Tier 1 · Zero Cloud",
+    "landingCard1Title": "Edge-Native Assessment",
+    "landingCard1Desc": "Reaction Speed, Visual Memory, Spatial Navigation, and Pattern Recognition execute 100% client-side in your browser. Motor and touch responses never leave your device.",
+    "landingCard2Badge": "Tier 2 · Zero Disk Audio",
+    "landingCard2Title": "Ephemeral Voice Processing",
+    "landingCard2Desc": "Voice interactions across 11 languages are transcribed in-memory. Audio streams are immediately purged post-transcription — raw voice is never stored on disk or persistent databases.",
+    "landingCard3Badge": "Tier 3 · Zero PII",
+    "landingCard3Title": "De-Identified Scoring",
+    "landingCard3Desc": "Cognitive discourse analysis evaluates anonymized transcripts with zero Personally Identifiable Information (no name, email, age, or IP) attached. You retain full data ownership.",
+    "readMore": "Read more",
+    "pipelineTier1": "Tier 1",
+    "pipelineTier1Title": "Edge-Native Client",
+    "pipelineTier1Desc": "Motor & reaction tests compute 100% in-browser.",
+    "pipelineTier1Guarantee": "Zero Cloud",
+    "pipelineTier2": "Tier 2",
+    "pipelineTier2Title": "Ephemeral Audio",
+    "pipelineTier2Desc": "Voice memory buffer purged instantly post-transcription.",
+    "pipelineTier2Guarantee": "Zero Disk Audio",
+    "pipelineTier3": "Tier 3",
+    "pipelineTier3Title": "De-Identified Scoring",
+    "pipelineTier3Desc": "AI receives anonymized text tokens. Zero PII attached.",
+    "pipelineTier3Guarantee": "Zero PII"
   },
   "dashboardV3": {
     "overallStatus": "Overall Cognitive Status",
@@ -708,14 +753,8 @@
     "batteryRequired": "✦ 7-Module Battery Required ({{completed}}/7)",
     "sessionProgress": "Session Battery Progress",
     "completedCountPercent": "{{completed}} of {{total}} Completed ({{percent}}%)",
-    "completeFullBattery": "Complete Full Battery",
-    "nextClinicalSteps": "Next Clinical Steps",
-    "downloadReport": "Download Clinician Report",
     "trendAnalysis": "Trend Analysis",
-    "comparedSessions": "Compared against: {{count}} session(s)",
-    "lastUpdated": "Last updated: {{date}}",
-    "showClinicalMetrics": "Show Clinical Metrics ▼",
-    "hideClinicalMetrics": "Hide Clinical Metrics ▲"
+    "noDataYet": "No sessions recorded yet"
   },
   "settings": {
     "title": "Settings",
@@ -872,12 +911,7 @@
     "problemSolvingPlanning": "Problem Solving & Planning"
   },
   "patientResults": {
-    "yourResults": "Your Results",
-    "yourProgress": "Your Progress",
-    "comparedToLastTime": "Compared to Last Time",
-    "noSignificantChanges": "No significant changes detected.",
-    "continueRegularCheckups": "Continue regular check-ups.",
-    "repeatIn4Weeks": "Please repeat this assessment in 4 weeks."
+    "comparedToLastTime": "Compared to last visit"
   },
   "consent": {
     "consent": "Consent",
@@ -948,33 +982,6 @@
       "tag": "Speech & Flow",
       "rationale": "Evaluates your natural speech flow, vocabulary ease, and clarity of expression."
     }
-  },
-  "dashboard": {
-    "title": "Cognitive Health Dashboard",
-    "subtitle": "Your personalized multi-modal digital biomarker profile",
-    "loadingData": "Loading live cognitive data from Supabase…",
-    "supabaseLive": "Supabase Live",
-    "exportReport": "Export Clinical Report",
-    "dataControls": "Data Controls",
-    "hideControls": "Hide Controls",
-    "takeAssessment": "Take Assessment",
-    "welcomeTitle": "Welcome to VyomFlow",
-    "welcomeSubtitle": "Complete your first cognitive assessment to establish your baseline and generate your digital biomarker profile in Supabase.",
-    "takeFirstAssessment": "Take Your First Assessment",
-    "previewDemo": "🌟 Preview with Demo Dataset",
-    "overallStatus": "Overall Cognitive Status",
-    "confidence": "Confidence: {{val}}%",
-    "lastAssessment": "Last Assessment: {{date}}",
-    "comparedToLastVisit": "Compared to last visit:",
-    "aiAssessment": "AI Cognitive Assessment",
-    "batteryRequired": "✦ 7-Module Battery Required ({{completed}}/7)",
-    "sessionProgress": "Session Battery Progress",
-    "completedCountPercent": "{{completed}} of {{total}} Completed ({{percent}}%)",
-    "trendAnalysis": "Trend Analysis",
-    "noDataYet": "No sessions recorded yet"
-  },
-  "patientResults": {
-    "comparedToLastTime": "Compared to last visit"
   },
   "asha": {
     "portalTitle": "Grassroots Cognitive Screening",

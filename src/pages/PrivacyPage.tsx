@@ -52,15 +52,15 @@ export function PrivacyPage() {
 
                     <div className="architecture-pipeline">
                         <div className="pipeline-step">
-                            <div className="step-badge step-tier1">Tier 1</div>
+                            <div className="step-badge step-tier1">{t("privacy.pipelineTier1")}</div>
                             <div className="step-icon-wrap">
                                 <Cpu size={22} />
                             </div>
                             <div className="step-content">
-                                <h4>Edge-Native Client</h4>
-                                <p>Motor & reaction tests compute 100% in-browser.</p>
+                                <h4>{t("privacy.pipelineTier1Title")}</h4>
+                                <p>{t("privacy.pipelineTier1Desc")}</p>
                             </div>
-                            <span className="step-guarantee-pill">Zero Cloud</span>
+                            <span className="step-guarantee-pill">{t("privacy.pipelineTier1Guarantee")}</span>
                         </div>
 
                         <div className="pipeline-arrow" aria-hidden="true">
@@ -68,15 +68,15 @@ export function PrivacyPage() {
                         </div>
 
                         <div className="pipeline-step">
-                            <div className="step-badge step-tier2">Tier 2</div>
+                            <div className="step-badge step-tier2">{t("privacy.pipelineTier2")}</div>
                             <div className="step-icon-wrap">
                                 <MicOff size={22} />
                             </div>
                             <div className="step-content">
-                                <h4>Ephemeral Audio</h4>
-                                <p>Voice memory buffer purged instantly post-transcription.</p>
+                                <h4>{t("privacy.pipelineTier2Title")}</h4>
+                                <p>{t("privacy.pipelineTier2Desc")}</p>
                             </div>
-                            <span className="step-guarantee-pill">Zero Disk Audio</span>
+                            <span className="step-guarantee-pill">{t("privacy.pipelineTier2Guarantee")}</span>
                         </div>
 
                         <div className="pipeline-arrow" aria-hidden="true">
@@ -84,15 +84,15 @@ export function PrivacyPage() {
                         </div>
 
                         <div className="pipeline-step">
-                            <div className="step-badge step-tier3">Tier 3</div>
+                            <div className="step-badge step-tier3">{t("privacy.pipelineTier3")}</div>
                             <div className="step-icon-wrap">
                                 <EyeOff size={22} />
                             </div>
                             <div className="step-content">
-                                <h4>De-Identified Scoring</h4>
-                                <p>AI receives anonymized text tokens. Zero PII attached.</p>
+                                <h4>{t("privacy.pipelineTier3Title")}</h4>
+                                <p>{t("privacy.pipelineTier3Desc")}</p>
                             </div>
-                            <span className="step-guarantee-pill">Zero PII</span>
+                            <span className="step-guarantee-pill">{t("privacy.pipelineTier3Guarantee")}</span>
                         </div>
                     </div>
                 </section>

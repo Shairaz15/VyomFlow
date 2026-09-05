@@ -1069,6 +1069,58 @@ html.dark .vyom-orbital-card:hover .vyom-orbital-icon {
   transform: scale(1.08);
 }
 
+/* Privacy Guarantee Tier Pill */
+.vyom-privacy-guarantee-pill {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  margin-bottom: 0.75rem;
+  transition: all 0.25s ease;
+}
+
+.vyom-guarantee-sage {
+  background: rgba(79, 124, 120, 0.12);
+  color: #2D6A4F;
+  border: 1px solid rgba(79, 124, 120, 0.25);
+}
+
+.vyom-guarantee-blue {
+  background: rgba(74, 102, 128, 0.12);
+  color: #1E4E79;
+  border: 1px solid rgba(74, 102, 128, 0.25);
+}
+
+.vyom-guarantee-gold {
+  background: rgba(168, 135, 82, 0.12);
+  color: #8C6A2E;
+  border: 1px solid rgba(168, 135, 82, 0.25);
+}
+
+.dark .vyom-guarantee-sage,
+[data-theme="dark"] .vyom-guarantee-sage {
+  background: rgba(94, 234, 212, 0.12);
+  color: #5EEAD4;
+  border-color: rgba(94, 234, 212, 0.25);
+}
+
+.dark .vyom-guarantee-blue,
+[data-theme="dark"] .vyom-guarantee-blue {
+  background: rgba(125, 211, 252, 0.12);
+  color: #7DD3FC;
+  border-color: rgba(125, 211, 252, 0.25);
+}
+
+.dark .vyom-guarantee-gold,
+[data-theme="dark"] .vyom-guarantee-gold {
+  background: rgba(253, 224, 71, 0.12);
+  color: #FDE047;
+  border-color: rgba(253, 224, 71, 0.25);
+}
+
 /* Individual Card Read More Link */
 .vyom-privacy-card-link {
   display: inline-flex;

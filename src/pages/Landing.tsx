@@ -3,7 +3,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { 
     Play, 
     TrendingUp, 
-    Brain
+    Brain,
+    Cpu,
+    MicOff,
+    EyeOff
 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -541,8 +544,8 @@ export function Landing() {
                                 <CognitiveDomainIcon domain="story" size={28} />
                             </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Story Narration Recall</h4>
-                                <p className="text-xs text-[#66757A] text-center">Episodic & Verbal Memory</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">{t("landing.domainStoryTitle")}</h4>
+                                <p className="text-xs text-[#66757A] text-center">{t("landing.domainStorySub")}</p>
                             </div>
                         </div>
 
@@ -552,8 +555,8 @@ export function Landing() {
                                 <CognitiveDomainIcon domain="vmra" size={28} />
                             </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Visual Memory (VMRA)</h4>
-                                <p className="text-xs text-[#66757A] text-center">Visual Recognition & Recall</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">{t("landing.domainVmraTitle")}</h4>
+                                <p className="text-xs text-[#66757A] text-center">{t("landing.domainVmraSub")}</p>
                             </div>
                         </div>
 
@@ -563,8 +566,8 @@ export function Landing() {
                                 <CognitiveDomainIcon domain="reaction" size={28} />
                             </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Reaction Time</h4>
-                                <p className="text-xs text-[#66757A] text-center">Motor & Processing Latency</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">{t("landing.domainReactionTitle")}</h4>
+                                <p className="text-xs text-[#66757A] text-center">{t("landing.domainReactionSub")}</p>
                             </div>
                         </div>
 
@@ -574,8 +577,8 @@ export function Landing() {
                                 <CognitiveDomainIcon domain="pattern" size={28} />
                             </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Pattern Recognition</h4>
-                                <p className="text-xs text-[#66757A] text-center">Abstract & Fluid Reasoning</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">{t("landing.domainPatternTitle")}</h4>
+                                <p className="text-xs text-[#66757A] text-center">{t("landing.domainPatternSub")}</p>
                             </div>
                         </div>
 
@@ -585,8 +588,8 @@ export function Landing() {
                                 <CognitiveDomainIcon domain="attention" size={28} />
                             </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Sustained Attention</h4>
-                                <p className="text-xs text-[#66757A] text-center">Vigilance & Focus Control</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">{t("landing.domainAttentionTitle")}</h4>
+                                <p className="text-xs text-[#66757A] text-center">{t("landing.domainAttentionSub")}</p>
                             </div>
                         </div>
 
@@ -596,8 +599,8 @@ export function Landing() {
                                 <CognitiveDomainIcon domain="navigation" size={28} />
                             </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Immersive Navigation</h4>
-                                <p className="text-xs text-[#66757A] text-center">Spatial & Route Memory</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">{t("landing.domainNavigationTitle")}</h4>
+                                <p className="text-xs text-[#66757A] text-center">{t("landing.domainNavigationSub")}</p>
                             </div>
                         </div>
 
@@ -607,8 +610,8 @@ export function Landing() {
                                 <CognitiveDomainIcon domain="language" size={28} />
                             </div>
                             <div className="flex-1 flex flex-col items-center justify-center text-center min-w-0">
-                                <h4 className="font-semibold text-sm text-[#17324D] text-center">Language & Speech</h4>
-                                <p className="text-xs text-[#66757A] text-center">Acoustic & Semantic Fluency</p>
+                                <h4 className="font-semibold text-sm text-[#17324D] text-center">{t("landing.domainLanguageTitle")}</h4>
+                                <p className="text-xs text-[#66757A] text-center">{t("landing.domainLanguageSub")}</p>
                             </div>
                         </div>
                     </div>
@@ -626,8 +629,8 @@ export function Landing() {
                                     <span className="vyom-mobile-node-num">01</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Story Narration Recall</h4>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Episodic & Verbal Memory</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">{t("landing.domainStoryTitle")}</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">{t("landing.domainStorySub")}</p>
                                 </div>
                             </div>
 
@@ -638,8 +641,8 @@ export function Landing() {
                                     <span className="vyom-mobile-node-num">02</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Visual Memory (VMRA)</h4>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Visual Recognition & Recall</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">{t("landing.domainVmraTitle")}</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">{t("landing.domainVmraSub")}</p>
                                 </div>
                             </div>
 
@@ -650,8 +653,8 @@ export function Landing() {
                                     <span className="vyom-mobile-node-num">03</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Reaction Time</h4>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Motor Speed & Processing Latency</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">{t("landing.domainReactionTitle")}</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">{t("landing.domainReactionSub")}</p>
                                 </div>
                             </div>
 
@@ -662,8 +665,8 @@ export function Landing() {
                                     <span className="vyom-mobile-node-num">04</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Pattern Recognition</h4>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Abstract & Fluid Reasoning</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">{t("landing.domainPatternTitle")}</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">{t("landing.domainPatternSub")}</p>
                                 </div>
                             </div>
 
@@ -674,8 +677,8 @@ export function Landing() {
                                     <span className="vyom-mobile-node-num">05</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Sustained Attention</h4>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Vigilance & Focus Control</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">{t("landing.domainAttentionTitle")}</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">{t("landing.domainAttentionSub")}</p>
                                 </div>
                             </div>
 
@@ -686,8 +689,8 @@ export function Landing() {
                                     <span className="vyom-mobile-node-num">06</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Immersive Navigation</h4>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Spatial & Route Memory</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">{t("landing.domainNavigationTitle")}</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">{t("landing.domainNavigationSub")}</p>
                                 </div>
                             </div>
 
@@ -698,8 +701,8 @@ export function Landing() {
                                     <span className="vyom-mobile-node-num">07</span>
                                 </div>
                                 <div className="w-full flex flex-col items-center justify-center min-w-0">
-                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">Language & Speech</h4>
-                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">Acoustic & Semantic Fluency</p>
+                                    <h4 className="font-bold text-sm text-[#17324D] dark:text-[#F7F4EC] truncate">{t("landing.domainLanguageTitle")}</h4>
+                                    <p className="text-xs text-[#66757A] dark:text-[#A0B0BA] mt-0.5 truncate">{t("landing.domainLanguageSub")}</p>
                                 </div>
                             </div>
                         </div>
@@ -714,10 +717,10 @@ export function Landing() {
                         {/* Centered Heading & Subtitle */}
                         <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-14">
                             <h2 className="vyom-serif vyom-heading-dark text-3xl sm:text-5xl font-bold mb-4 sm:mb-12 tracking-tight">
-                                Your mind. Your data.
+                                {t("privacy.landingHeading")}
                             </h2>
                             <p className="text-base sm:text-lg vyom-sub-dark text-center leading-relaxed">
-                                Privacy is fundamentally embedded into the design and architecture of VyomFlow.
+                                {t("privacy.landingSubtitle")}
                             </p>
 
                             {/* Subtle Decorative Line Divider */}
@@ -728,57 +731,42 @@ export function Landing() {
                             </div>
                         </div>
 
-                        {/* 3 Principles (Soft Tinted Individual Boxes: Sage -> Blue -> Gold) */}
+                        {/* 3 Principles based on Privacy Page 3-Tier Architecture (Sage -> Blue -> Gold) */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-                            {/* Principle 01: Private by Design (Soft Sage Tint: #EAF3EF, Accent: #4F7C78) */}
+                            {/* Principle 01: Edge-Native Client (Soft Sage Tint: #EAF3EF, Accent: #4F7C78) */}
                             <div className="vyom-privacy-card vyom-privacy-card-sage">
                                 <div className="vyom-privacy-icon-box">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
+                                    <Cpu className="w-6 h-6" />
                                 </div>
-                                <h3 className="font-bold text-lg mb-2 text-[#17324D]">Private by Design</h3>
+                                <span className="vyom-privacy-guarantee-pill vyom-guarantee-sage">{t("privacy.landingCard1Badge")}</span>
+                                <h3 className="font-bold text-lg mb-2 text-[#17324D]">{t("privacy.landingCard1Title")}</h3>
                                 <p className="text-xs sm:text-sm text-[#465A65] leading-relaxed">
-                                    Cognitive metrics and ML feature extraction run locally in your browser session whenever possible, reducing unnecessary data exposure.
+                                    {t("privacy.landingCard1Desc")}
                                 </p>
-                                <Link to="/privacy" className="vyom-privacy-card-link" aria-label="Read more about Private by Design">
-                                    <span>Read more</span>
-                                    <span className="readmore-arrow" aria-hidden="true">→</span>
-                                </Link>
                             </div>
 
-                            {/* Principle 02: You Own Your Data (Soft Muted Blue Tint: #EEF3F8, Accent: #4A6680) */}
+                            {/* Principle 02: Ephemeral Audio (Soft Muted Blue Tint: #EEF3F8, Accent: #4A6680) */}
                             <div className="vyom-privacy-card vyom-privacy-card-blue">
                                 <div className="vyom-privacy-icon-box">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
+                                    <MicOff className="w-6 h-6" />
                                 </div>
-                                <h3 className="font-bold text-lg mb-2 text-[#17324D]">You Own Your Data</h3>
+                                <span className="vyom-privacy-guarantee-pill vyom-guarantee-blue">{t("privacy.landingCard2Badge")}</span>
+                                <h3 className="font-bold text-lg mb-2 text-[#17324D]">{t("privacy.landingCard2Title")}</h3>
                                 <p className="text-xs sm:text-sm text-[#465A65] leading-relaxed">
-                                    Your assessment history and performance trends remain confidential and strictly under your control.
+                                    {t("privacy.landingCard2Desc")}
                                 </p>
-                                <Link to="/privacy" className="vyom-privacy-card-link" aria-label="Read more about You Own Your Data">
-                                    <span>Read more</span>
-                                    <span className="readmore-arrow" aria-hidden="true">→</span>
-                                </Link>
                             </div>
 
-                            {/* Principle 03: Awareness, Not Diagnosis (Soft Warm Gold Tint: #F7F0E3, Accent: #A88752) */}
+                            {/* Principle 03: De-Identified Scoring (Soft Warm Gold Tint: #F7F0E3, Accent: #A88752) */}
                             <div className="vyom-privacy-card vyom-privacy-card-gold">
                                 <div className="vyom-privacy-icon-box">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
+                                    <EyeOff className="w-6 h-6" />
                                 </div>
-                                <h3 className="font-bold text-lg mb-2 text-[#17324D]">Awareness, Not Diagnosis</h3>
+                                <span className="vyom-privacy-guarantee-pill vyom-guarantee-gold">{t("privacy.landingCard3Badge")}</span>
+                                <h3 className="font-bold text-lg mb-2 text-[#17324D]">{t("privacy.landingCard3Title")}</h3>
                                 <p className="text-xs sm:text-sm text-[#465A65] leading-relaxed">
-                                    Designed for self-observation and long-term awareness, maintaining clear boundaries with medical diagnosis.
+                                    {t("privacy.landingCard3Desc")}
                                 </p>
-                                <Link to="/privacy" className="vyom-privacy-card-link" aria-label="Read more about Awareness, Not Diagnosis">
-                                    <span>Read more</span>
-                                    <span className="readmore-arrow" aria-hidden="true">→</span>
-                                </Link>
                             </div>
                         </div>
 
@@ -789,7 +777,7 @@ export function Landing() {
                                 className="vyom-privacy-readmore-btn"
                                 aria-label="Read more about our Privacy & Data Safeguards"
                             >
-                                <span>Read more</span>
+                                <span>{t("privacy.readMore")}</span>
                                 <span className="readmore-arrow" aria-hidden="true">→</span>
                             </Link>
                         </div>
@@ -839,14 +827,14 @@ export function Landing() {
                                     className="vyom-serif text-2xl sm:text-4xl md:text-5xl font-normal mb-3 tracking-tight drop-shadow-sm"
                                     style={{ color: '#F7F4EC', textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)' }}
                                 >
-                                    Measuring the Mind, Beyond Memory
+                                    {t("landing.heroSubTitle")}
                                 </h2>
 
                                 <p 
                                     className="text-sm sm:text-base font-medium max-w-md mx-auto mb-4 sm:mb-6 drop-shadow-sm"
                                     style={{ color: '#DCE9F4', textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)' }}
                                 >
-                                    Begin your cognitive journey with VyomFlow.
+                                    {t("landing.ctaSubtitle")}
                                 </p>
 
                                 <div className="mb-4 sm:mb-6 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.75)]">
@@ -871,7 +859,7 @@ export function Landing() {
                                         onClick={handleBeginJourney}
                                         className="!py-3.5 !px-8 sm:!px-10 text-sm sm:text-base font-semibold shadow-xl"
                                     >
-                                        <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
+                                        <span>{isAuthenticated ? t("journey.continueJourney") : t("landing.beginJourney")}</span>
                                         <span className="text-lg leading-none">→</span>
                                     </SpecularButton>
                                 </div>
@@ -893,7 +881,7 @@ export function Landing() {
                                         onClick={handleBeginJourney}
                                         className="w-full max-w-[280px] h-[48px]"
                                     >
-                                        <span>{isAuthenticated ? "Continue Your Journey" : "Begin Your Journey"}</span>
+                                        <span>{isAuthenticated ? t("journey.continueJourney") : t("landing.beginJourney")}</span>
                                         <span className="text-base leading-none">→</span>
                                     </SpecularButton>
 
@@ -911,7 +899,7 @@ export function Landing() {
                                         onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                         className="w-full max-w-[210px] h-[42px]"
                                     >
-                                        <span>Back to Top</span>
+                                        <span>{t("landing.backToTop")}</span>
                                         <span className="text-sm leading-none">↑</span>
                                     </SpecularButton>
                                 </div>
@@ -935,24 +923,24 @@ export function Landing() {
                             </div>
 
                             <p className="w-full max-w-[480px] mx-auto text-sm sm:text-base text-[#FFFFFF] leading-relaxed text-center font-medium opacity-95">
-                                Cognitive performance tracking designed for awareness and longitudinal self-observation.
+                                {t("landing.footerSubtitle")}
                             </p>
                         </div>
 
                         {/* Navigation: EXPLORE */}
                         <div className="w-full flex flex-col items-center justify-center text-center gap-3 mt-1">
                             <div className="text-xs sm:text-sm font-bold tracking-[0.22em] text-[#D8B878] dark:text-[#8FAF8B] uppercase text-center pl-[0.22em]">
-                                EXPLORE
+                                {t("landing.footerExplore")}
                             </div>
                             <nav className="w-full flex flex-wrap items-center justify-center gap-6 sm:gap-10" aria-label="Footer Navigation">
                                 <button onClick={() => handleScrollTo("how-it-works")} className="vyom-footer-link text-center">
-                                    How It Works
+                                    {t("landing.howItWorks")}
                                 </button>
                                 <button onClick={() => handleScrollTo("platform")} className="vyom-footer-link text-center">
-                                    Test Modules
+                                    {t("landing.navTestModules")}
                                 </button>
                                 <button onClick={() => navigate("/privacy")} className="vyom-footer-link text-center">
-                                    Privacy
+                                    {t("landing.navPrivacy")}
                                 </button>
                             </nav>
                         </div>
@@ -960,13 +948,13 @@ export function Landing() {
 
                     {/* Centered Professional Medical Disclaimer */}
                     <div className="pt-8 pb-6 px-4 text-xs sm:text-[13px] text-[#F7F4EC]/60 leading-relaxed max-w-2xl mx-auto text-center">
-                        VyomFlow is designed for personal cognitive awareness and longitudinal observation. It does not provide medical diagnosis or treatment advice.
+                        {t("landing.footerDisclaimer")}
                     </div>
 
                     {/* Bottom Legal Bar */}
                     <div className="pt-4 border-t border-[#F7F4EC]/10 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-[#F7F4EC]/50 text-center">
                         <div>
-                            © {new Date().getFullYear()} VyomFlow. All rights reserved.
+                            {t("landing.footerCopyright", { year: new Date().getFullYear() })}
                         </div>
                     </div>
 
